@@ -61,6 +61,13 @@
 
 \textbf{在异构谱系中的位置。}近年关于预训练模型协作的研究沿着三条轴展开：架构（同 vs 不同）、模态（文本/视觉/多模态）与路由粒度（token-level vs query-level）。在架构同构的极限下，稀疏化升级及其工业化后代——Mixtral \citep{jiang2024mixtral}、Symphony-MoE \citep{wang2025symphony}、Branch-Train-MiX \citep{sukhbaatar2024btx}、Soft MoE \citep{puigcerver2024softmoe}，以及共享+细粒度专家设计 \citep{dai2024}——利用每个专家共享维度、tokenizer 与隐空间几何这一事实扩展到工业规模。架构异构的极限文献稀少：我们融合层最近的已发表前驱是 ScaleKD 的跨注意力投影器加双视图（CLS+空间）模仿 \citep{wang2024scalekd}。Liu 等（2026）在跨境电商相关性排序的异构 LLM 推理场景下，对异构 LLM 专家做 query-level 粗粒度路由并采用各向异性保留的拼接融合 \citep{liu2026orchestrating}，独立论证了加权平均会塌缩不同的嵌入流形——我们的四模式比较也佐证了这一经验性主张。专家感知后训练量化 \citep{du2026eaquant}（验证了跨专家通道相似性假设）与多教师 LLM 蒸馏 \citep{tian2025tinyllm}（通过推理链增强的目标函数恢复知识多样性）处理相邻的压缩与训练问题；我们对跨架构融合采用的非破坏性组合哲学与 adapter 组合工作 \citep{pfeiffer2021,huang2024lorahub} 一脉相承。我们坐落在这些工作的交叉点：每条轴都处于最难位置，部署规模刻意是 CPU 沙箱而非工业级，异构谱系给出一个结构性预测——token-level 路由在跨架构时没有对应物，因此浮现出的粗粒度 query-level 门控，是唯一能与冻结、不匹配的底座自然组合的路由粒度。
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{figs/mermaid/heterogeneity_spectrum.pdf}
+\caption{\textbf{异构谱系}——近期基础模型协作工作沿三轴展开：\emph{架构}（同 vs 不同）、\emph{模态}（文本 / 视觉 / 多模态）、\emph{路由粒度}（token-level vs query-level）。现有工作集中于架构同构的极限；架构异构的极限文献稀少，仅 ScaleKD 和 Orchestrating-HetExp 为最接近的前驱。本文工作在三条较难的轴的交叉处，且在 CPU 沙箱规模而非工业规模上。}
+\label{fig:het-spectrum}
+\end{figure}
+
 在子层层面解决融合问题有一个部署代价：融合系统在推理时仍需所有底座存活。我们用第二个重构步骤来闭环，称为\textbf{嵌合蒸馏}。一个单底座学生——真实的冻结 TinyBERT \citep{jiao2020} 加低秩适配器 \citep{hu2022}——被训练为仅从\emph{自己}模态的输入复现融合教师的输出。蒸馏后的学生在重建误差上超出其多底座教师 $50.1\%$，同时保持 $99.4\%$ 的参数冻结；多模态 BERT+ViT 学生超出同一教师 $50.0\%$。v32 消融（\S\ref{sec:distill-exp}）表明该裕度完全归因于蒸馏损失中 $0.3$ 的直接目标项，而非对教师概念方向的内化；机制证据因此存在于同一损失下的学生间对比，而不是对教师的绝对裕度。\footnote{名称借自神话中的奇美拉（chimera）——由不同动物的部位拼成的一具身体——指由异构底座拼成的集成：学生在单一身体中继承了拼装出来的行为。}
 
 这项研究刻意做到系统化而非英雄主义。全部实验在 CPU-only 沙箱中完成，宽度很小（$D_{\text{shared}}{=}256$，序列长度 16），每个配置取 5 个种子，每条结论都有可执行脚本和单元测试背书。在这一范围内，我们绘制了三块疆域：
@@ -140,7 +147,14 @@
 \label{fig:overview}
 \end{figure}
 
-\textbf{方法贡献的四个创新点。}整个架构可以从四个互为支撑的设计出发阅读，我们会在结论（\S\ref{sec:conclusion}）复述它们。(\textbf{C1})~\emph{门控式稀疏路由。}共享的 256 维空间由一个稀疏路由器与逐专家门控（\S\ref{sec:layer}--\S\ref{sec:training}）维系；门控机制不是学到的组合矩阵，而是\emph{选}+逐专家尺度，这正是让跨架构融合能在 CPU 上训练底座冻结模型的架构级承诺。(\textbf{C2})~\emph{四模式系统比较。}对齐器阶梯（\S\ref{sec:align}）不是一个最佳设计，而是一条由四个对齐模式（线性 / 平均 / 跨注意力 / mixture）构成的严格阶梯，在同一条件下统一评测；这层系统比较本身即是贡献。(\textbf{C3})~\emph{数据规模依赖性的文献汇聚假设。}最优组合对训练数据规模的依赖性由四条独立的近期工作报告（\S\ref{sec:discussion}）；我们的四模式比较在单一训练规模下完成，与该规律一致但本身并未建立规律边界——本文内的数据规模扫描留待未来工作。(\textbf{C4})~\emph{跨子层路由配规模异构的底座。}双通路扩展（\S\ref{sec:dualpath}）把 C1 路由器施加到两个子层（attention + FFN）而不是一个——这是 C1 的应用；真正的新元素是允许两条路由从不同底座（不同宽度、不同模态、不同归纳偏置）选择专家，这就是我们计入创新点~C4 的"规模异构"半边。
+\textbf{方法贡献的四个创新点。}整个架构可以从四个互为支撑的设计出发阅读，我们会在结论（\S\ref{sec:conclusion}）复述它们。(\textbf{C1})~\emph{门控式稀疏路由。}共享的 256 维空间由一个稀疏路由器与逐专家门控（\S\ref{sec:layer}--\S\ref{sec:training}）维系；门控机制不是学到的组合矩阵，而是\emph{选}+逐专家尺度，这正是让跨架构融合能在 CPU 上训练底座冻结模型的架构级承诺。(\textbf{C2})~\emph{四模式系统比较。}对齐器阶梯（\S\ref{sec:align}）不是一个最佳设计，而是一条由四个对齐模式（线性 / 平均 / 跨注意力 / mixture）构成的严格阶梯，在同一条件下统一评测；这层系统比较本身即是贡献。(\textbf{C3})~\emph{数据规模依赖性的文献汇聚假设。}最优组合对训练数据规模的依赖性由四条独立的近期工作报告（\S\ref{sec:discussion}）；我们的四模式比较在单一训练规模下完成，与该规律一致但本身并未建立规律边界——本文内的数据规模扫描留待未来工作。(\textbf{C4})~\emph{跨子层路由配规模异构的底座。}双通路扩展（\S\ref{sec:dualpath}）把 C1 路由器施加到两个子层（attention + FFN）而不是一个——这是 C1 的应用；真正的新元素是允许两条路由从不同底座（不同宽度、不同模态、不同归纳偏置）选择专家，这就是我们计入创新点~C4 的"规模异构"半边。四个创新点的关系见图~\ref{fig:four-inn}。
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{figs/mermaid/four_innovations.pdf}
+\caption{\textbf{四个创新点}：（C1）门控式稀疏 top-K 路由作为机制级核心；（C2）四模式系统比较作为协议级贡献；（C3）数据规模依赖性的文献汇聚假设作为经验规律级贡献；（C4）跨子层路由配规模异构的底座作为设计扩展贡献。每个创新点都可独立证伪，并在 §3（正文）、§5（讨论）和 §8（结论）中均有反向引用锚点。}
+\label{fig:four-inn}
+\end{figure}
 
 图~\ref{fig:overview} 展示了该层。给定残差流输入 $x \in \R^{B \times S \times D_{\text{shared}}}$，每个专家 $m$ 计算
 \begin{align}
@@ -175,13 +189,20 @@ y = x + \sum_{m=1}^{M} \hat\alpha_m \, \alpha_m \, \tilde F_m(h_m),
 \subsection{对齐器阶梯}
 \label{sec:align}
 
-共享空间是异构底座相遇的地方，而它的构造方式被证明比技术栈中任何其他东西都更重要。我们评估四种复杂度递增的设计：
+共享空间是异构底座相遇的地方，而它的构造方式被证明比技术栈中任何其他东西都更重要。我们评估四种复杂度递增的设计（见图~\ref{fig:ladder-chain}）：
 
 \begin{description}[leftmargin=1.4em, itemsep=1pt]
     \item[线性投影（基线）。]每个底座的隐藏态经过矩形投影 $P_m \in \R^{D_{\text{shared}} \times D_m}$，正交初始化且冻结。各底座独立投影、互不知晓。
     \item[均值对齐器。]每个底座先经可学习的降维 $W_m \in \R^{d \times D_m}$，再对投影后的表示取跨底座均值。
     \item[跨架构注意力对齐器。]每个底座投影到共享宽度；跨底座均值提供共享的 K 和 V；每个底座用自己的 query 投影查询共享上下文——即标准 cross-attention 的 Q/K/V 分离设计 \citep{vaswani2017}——并把注意到的概念向量残差地加回。各底座结果取均值。每个底座因此读到一份由\emph{所有}底座共同书写的概念摘要。
     \item[混合对齐器（Mixture）。]每个底座贡献 $n{=}4$ 个小型共享专家（两层 MLP），汇成 $M \times n$ 的专家池。专家输出作为查询，对由其均值导出的共享 K/V 上下文做注意力，聚合注意力输出。对齐器本身成为一个架在异构源之上的微型 mixture-of-experts。
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{figs/mermaid/alignment_ladder.pdf}
+\caption{\textbf{对齐器阶梯}作为一条"严格但饱和"的链条：mode A（线性投影）$\rightarrow$ B（均值对齐器）$\rightarrow$ C（跨架构 attention）$\rightarrow$ D（mixture-of-experts 对齐器）。每种 mode 在 5 种子上的 MSE 都比前一种有提升；嵌套 mixture 对齐器则退步 $4.7\%$（\S5.3），划出这条天花板。}
+\label{fig:ladder-chain}
+\end{figure}
 \end{description}
 
 两个经验事实促成了这条阶梯。第一，\emph{原生编码不是可选项}：在早期对照实验中，三个模态全部由同一个 BERT 编码，融合相对单专家的增益从 $+20.3\%$ 坍缩到 $+4.0\%$。统一编码恰好抹平了路由器赖以区分专家的架构差异。第二，阶梯\emph{严格但饱和}：每一模式都对上一模式有提升，提升在 mixture 对齐器处停止（\S\ref{sec:align-exp}）——这一天花板我们作为受规模限定的假设持有，而非定律。
@@ -279,10 +300,10 @@ v7-B：双通路、同架构 & 0.382 & 0.414 & 0.383 & \textbf{0.378} & $+1.0\%$
 \centering
 \includegraphics[width=\textwidth]{figs_zh/fig_alignment.pdf}
 \caption{对齐器阶梯。(a) 语义对齐优于冻结线性投影，跨底座注意力优于均值。(b) 混合对齐器优于单概念注意力。(c) 嵌套混合对齐器反而轻微退步：阶梯在一级跨专家注意力处饱和。越低越好。}
-\label{fig:ladder}
+\label{fig:ladder-results}
 \end{figure}
 
-表~\ref{tab:ladder} 与图~\ref{fig:ladder} 展示阶梯；图是表内五种子均值的可视化，不新增量，但让次序更易读。linear $<$ mean $<$ attention $<$ mixture 的次序在每组对比中都严格成立，从线性基线到 mixture 对齐器的总爬升为 $-77.4\%$ MSE。负面结果与正面结果同样清晰：两级嵌套的混合对齐器（mixture of mixture）落在 attention 与 mixture \emph{之间}，比单层混合对齐器\emph{差} $4.7\%$。跨底座注意力值一级；第二级层级只增加参数、稀释共享概念上下文，不增加表示能力。
+表~\ref{tab:ladder} 与图~\ref{fig:ladder-results} 展示阶梯；图是表内五种子均值的可视化，不新增量，但让次序更易读。linear $<$ mean $<$ attention $<$ mixture 的次序在每组对比中都严格成立，从线性基线到 mixture 对齐器的总爬升为 $-77.4\%$ MSE。负面结果与正面结果同样清晰：两级嵌套的混合对齐器（mixture of mixture）落在 attention 与 mixture \emph{之间}，比单层混合对齐器\emph{差} $4.7\%$。跨底座注意力值一级；第二级层级只增加参数、稀释共享概念上下文，不增加表示能力。
 
 一个组合测试把这一点磨得更尖。我们把修复后的门控式路由器（配套研究对加性中枢干扰的修复）与注意力对齐器组合：以共同的线性投影基线（v9-linear-gate 配置的 1.1625，由 \texttt{run\_v9\_linear\_gate.py} 计算；不在表~\ref{tab:ladder} 中）为参照，组合达到 $+71.0\%$ 增益（0.3374），而注意力对齐器自带配置为 $+72.6\%$（0.3191）——相差不足 2 个百分点，但在全部 5 个种子上一致偏向对齐器一侧，在种子涨落之内。一旦对齐器已经提供跨底座概念交换，路由器层面的修复就无事可做。技术栈相邻层的改进不可加和；第一个充分的机制会吸走全部增益。
 

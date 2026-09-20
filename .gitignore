@@ -74,6 +74,7 @@ results/
 
 # Pre-baseline and negative findings (kept author-only; paper only references outcomes)
 archive/
+docs/_archive/
 
 # Scale-heterogeneous research line uses proprietary auxiliary models
 # (a proprietary large LM as backbone, tabular-LM, embedding-LM, reranker-LM);
