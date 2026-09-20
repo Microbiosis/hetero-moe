@@ -1,0 +1,429 @@
+\documentclass[10pt,twoside]{article}
+
+% ==================== NeurIPS 官方样式 ====================
+\usepackage{neurips_2025}
+\geometry{marginparwidth=0.4in, marginparsep=0.1in}
+
+% ==================== 中文支持（XeLaTeX + ctex） ====================
+\usepackage[UTF8]{ctex}
+
+% ==================== 数学与符号 ====================
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{siunitx}
+
+% ==================== 图表 ====================
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,shapes.geometric}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% ==================== 链接与引用 ====================
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black]{hyperref}
+\usepackage{url}
+\usepackage{enumitem}
+
+% ==================== 自定义命令 ====================
+\newcommand{\stopgrad}{\operatorname{sg}}
+\newcommand{\topk}{\operatorname{TopK}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\R}{\mathbb{R}}
+
+% ==================== 元信息 ====================
+\title{异构微观融合：\\ 在前馈子层重构冻结的预训练模型}
+
+\author{
+    匿名作者\\
+    单位\\
+    \texttt{email@example.com}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+将异构预训练模型——双向编码器、因果解码器与视觉 Transformer，它们在架构、隐藏宽度与模态上各不相同——组合起来，通常需要联合重训练、架构手术或有损的输出层集成。本文研究一种更底层的替代方案，它作用于此类模型最具可交换性的部位：前馈（FFN）子层。我们的方法\textbf{异构微观融合}（heterogeneous micro-fusion）用一个共享的稀疏 Top-$K$ 路由器（以直通估计器训练）把每个 token 路由到 $M$ 个冻结的架构专家之一，向专家输出注入 INT4 伪量化噪声，并以逐专家门控做残差融合，全程不改动任何底座模型。跨架构语义对齐器把互不匹配的隐藏空间映射进同一路由空间；在四种对齐器设计上，我们测得一条严格的性能阶梯（linear $<$ mean $<$ attention $<$ mixture），且该阶梯在 mixture 对齐器处饱和，再嵌套一层不再带来增益；在 CPU 规模下，我们将这一天花板作为假设而非定律报告。由于融合推理仍要求所有底座存活，我们加入第二个重构步骤——\textbf{嵌合蒸馏}（chimera distillation），把集成坍缩为一个独立底座：一个仅有 $0.60\%$ 可训练参数的真实 TinyBERT 学生在重建 MSE 上、于含直接目标信号的混合目标下超出其多底座教师 $50.1\%$，多模态 BERT+ViT 学生超出 $50.0\%$；v32 消融显示，去掉直接目标信号后的纯蒸馏并不优于教师——全部实测裕度都归因于泄漏的目标项，而非概念方向的传递。下游能力未经检验。我们同时报告了限定该方法边界的负面结果——组件组合、嵌套对齐器、多教师蒸馏与 toy 多模态基准——它们来自 25 轮工程迭代、几百次带种子的端到端实验。
+\end{abstract}
+
+\section{引言}
+\label{sec:intro}
+
+实践中很难遇到``一个完美的预训练模型就够用''的情形。一条可用的流水线往往同时需要用于文本理解的双向编码器、用于生成的因果解码器和用于感知的视觉 Transformer。组合这类模型的主流做法有三种，但都不尽如人意。联合多任务重训练代价高昂，且重新打开预训练预算。输出层集成让所有模型在推理时全部存活，混合的却是从未被训练成互补的预测。权重合并 \citep{ilharco2023,yadav2023} 要求被合并模型共享架构与初始化，直接排除了异构底座。
+
+本文研究第四种选择——低一层的选择。在 Transformer block 内部，前馈（FFN）子层是最模块化、最可替换的部件：它按位置独立作用，占据参数量的大头，而且它作为键值记忆体的角色 \citep{geva2021} 表明，\emph{查询哪个记忆库}可以逐 token 决定。因此我们直接把 FFN 子层重构为\textbf{异构微观融合层}：一个共享的稀疏 Top-$K$ 路由器在 $M$ 个冻结的架构专家之间做选择；矩形投影或可学习的语义对齐器把互不匹配的隐藏空间（$D_m \in \{192, 312, 768\}$）映射进同一个共享路由空间；逐专家门控、通道级对齐与 INT4 伪量化噪声补全该层。任何底座都不被修改，只有对齐、路由与门控参数参与训练。
+
+\textbf{在异构谱系中的位置。}近年关于预训练模型协作的研究沿着三条轴展开：架构（同 vs 不同）、模态（文本/视觉/多模态）与路由粒度（token-level vs query-level）。在架构同构的极限下，稀疏化升级及其工业化后代——Mixtral \citep{jiang2024mixtral}、Symphony-MoE \citep{wang2025symphony}、Branch-Train-MiX \citep{sukhbaatar2024btx}、Soft MoE \citep{puigcerver2024softmoe}，以及共享+细粒度专家设计 \citep{dai2024}——利用每个专家共享维度、tokenizer 与隐空间几何这一事实扩展到工业规模。架构异构的极限文献稀少：我们融合层最近的已发表前驱是 ScaleKD 的跨注意力投影器加双视图（CLS+空间）模仿 \citep{wang2024scalekd}。Liu 等（2026）在跨境电商相关性排序的异构 LLM 推理场景下，对异构 LLM 专家做 query-level 粗粒度路由并采用各向异性保留的拼接融合 \citep{liu2026orchestrating}，独立论证了加权平均会塌缩不同的嵌入流形——我们的四模式比较也佐证了这一经验性主张。专家感知后训练量化 \citep{du2026eaquant}（验证了跨专家通道相似性假设）与多教师 LLM 蒸馏 \citep{tian2025tinyllm}（通过推理链增强的目标函数恢复知识多样性）处理相邻的压缩与训练问题；我们对跨架构融合采用的非破坏性组合哲学与 adapter 组合工作 \citep{pfeiffer2021,huang2024lorahub} 一脉相承。我们坐落在这些工作的交叉点：每条轴都处于最难位置，部署规模刻意是 CPU 沙箱而非工业级，异构谱系给出一个结构性预测——token-level 路由在跨架构时没有对应物，因此浮现出的粗粒度 query-level 门控，是唯一能与冻结、不匹配的底座自然组合的路由粒度。
+
+在子层层面解决融合问题有一个部署代价：融合系统在推理时仍需所有底座存活。我们用第二个重构步骤来闭环，称为\textbf{嵌合蒸馏}。一个单底座学生——真实的冻结 TinyBERT \citep{jiao2020} 加低秩适配器 \citep{hu2022}——被训练为仅从\emph{自己}模态的输入复现融合教师的输出。蒸馏后的学生在重建误差上超出其多底座教师 $50.1\%$，同时保持 $99.4\%$ 的参数冻结；多模态 BERT+ViT 学生超出同一教师 $50.0\%$。v32 消融（\S\ref{sec:distill-exp}）表明该裕度完全归因于蒸馏损失中 $0.3$ 的直接目标项，而非对教师概念方向的内化；机制证据因此存在于同一损失下的学生间对比，而不是对教师的绝对裕度。\footnote{名称借自神话中的奇美拉（chimera）——由不同动物的部位拼成的一具身体——指由异构底座拼成的集成：学生在单一身体中继承了拼装出来的行为。}
+
+这项研究刻意做到系统化而非英雄主义。全部实验在 CPU-only 沙箱中完成，宽度很小（$D_{\text{shared}}{=}256$，序列长度 16），每个配置取 5 个种子，每条结论都有可执行脚本和单元测试背书。在这一范围内，我们绘制了三块疆域：
+
+\begin{enumerate}
+    \item \textbf{真正异构底座间的子层融合。}采用逐模态原生编码、矩形投影与共享稀疏路由后，融合超出最佳单专家 $20.3\%$、超出等权平均 $17.3\%$。让 Attention 子层也可路由后，跨架构场景相对平均的裕度提升到 $84.8\%$，且通路分解显示增益集中在 attention 通路：跨架构差异主要显现在注意力模式里，其行为远比 FFN 激活更具架构特异性。
+    \item \textbf{一条有实测天花板的对齐器阶梯。}把冻结线性投影换成跨底座均值、再换成共享 K/V 注意力、再换成 mixture 对齐器，得到一条严格阶梯（MSE $1.14 \rightarrow 0.48 \rightarrow 0.34 \rightarrow 0.26$）。嵌套 mixture 对齐器没有进一步提升：阶梯在一级跨专家注意力处饱和。
+    \item \textbf{经蒸馏的独立模型重构。}含 $0.60\%$ 可训练参数的蒸馏学生在含直接目标信号的混合目标下超出教师 $50.1\%$；在真实 Wikipedia 文本 held-out 集上的修正评估仍支持该路线（held-out MSE $0.157$）；多模态学生超出 $50.0\%$。v32 消融显示纯蒸馏并不优于教师——全部裕度归因于损失中 $0.3$ 的直接目标项。相比之下，多教师蒸馏在我们尝试的每个配置上都退步。
+\end{enumerate}
+
+同样有信息量的是边界，共 5 项独立负面结果。(i)~一旦更强的对齐器已经包含了路由修复的能力，把修复后的路由器与之组合就一无所获——相对共同基线的增益为 $+71.0\%$ vs $+72.6\%$，相差不足 2 个百分点，但在全部 5 个种子上一致偏向对齐器一侧。(ii)~更难的 toy VQA 基准救不了多模态评估——所有模型齐齐跌到随机准确率。(iii)~多教师蒸馏在尝试的每个配置上都退步（\S\ref{sec:distill-exp}）。(iv)~嵌套的 mixture 对齐器自身退步 $-4.7\%$ MSE。(v)~v32 消融显示纯蒸馏并不优于教师——故全部测得的学生-教师裕度都归因于蒸馏损失中 $0.3$ 的直接目标项，而非真实的概念方向传递。反复出现的教训：增加机制不等于增加能力。
+
+\section{相关工作}
+\label{sec:related}
+
+\textbf{MoE 路由。}条件计算把每个输入路由到部分专家 \citep{jacobs1991,shazeerOutrageouslyLargeNeural2017}，现代稀疏 MoE 堆栈将其扩展到万亿参数规模 \citep{fedus2022,zoph2022}。规模较大的工业部署如 Mixtral 8x7B \citep{jiang2024mixtral}（47B total / 13B active per token）使用 top-2 token-level routing over 8 个 FFN 副本，并出现共享专家、细粒度专家等设计精化 \citep{dai2024}。这些系统中的专家是\emph{同构}的：架构、维度、训练全部一致。稀疏化升级（sparse upcycling）\citep{komatsuzaki2023} 通过克隆并扰动稠密 checkpoint 的 FFN 把稠密模型变成 MoE——产出的专家依然同构。我们的专家恰恰相反：它们是完整的预训练模型，架构、tokenizer、模态各异且保持冻结，路由问题因此从``平衡相同的专家''变成``对齐不相容的表示空间''。
+
+\textbf{模型合并与稀疏化升级。}Task arithmetic \citep{ilharco2023}、TIES-merging \citep{yadav2023} 与 model soups \citep{wortsman2022} 合并的是共享主干的模型\emph{权重}。异构底座无法这样合并；我们的融合层就是异构情形下的对应机制，通过激活而非参数相加来工作。
+
+\textbf{异构基础模型协作。}一条日益增长的研究线考察\emph{不}共享架构的预训练模型间的协作。在同构极限内，Symphony-MoE \citep{wang2025symphony} 通过 SLERP 协调共享主干并用线性分配问题对 FFN 神经元做置换，把若干同架构但不同预训练的 LLM（Qwen2.5-Coder + Qwen2）升级为 MoE；更难一档的跨架构案例由跨架构蒸馏 \citep{wang2024scalekd} 研究，其跨注意力投影器加双视图（CLS+空间）模仿是我们融合层最近的已发表前驱。Liu 等在跨境电商相关性排序的异构 LLM 推理场景下，对异构 LLM 专家做 query-level 路由并采用各向异性保留的拼接融合 \citep{liu2026orchestrating}，独立展示了\emph{拼接}专家嵌入优于加权平均——这是几何上的论证，被我们的四模式比较（\S\ref{sec:method}）独立印证。专家感知后训练量化 \citep{du2026eaquant} 验证了支撑我们 v22 ChannelNorm 的\emph{跨专家通道相似性}假设。这些工作共同勾画了异构谱系：同架构、同模态、同流形是容易的极限；我们的设定则同时在三轴上都不同。
+
+\textbf{参数高效适配。}Adapter \citep{houlsby2019} 与 LoRA \citep{hu2022} 冻结底座、训练小型插入件。我们沿用同一哲学，但冻结的是一\emph{池}异构底座，训练的是底座之间的机器（投影、对齐器、路由器、门控）。AdapterFusion \citep{pfeiffer2021} 以非破坏方式组合逐任务 adapter，\citet{huang2024lorahub} 把这一思想推广到逐任务 LoRA 模块的动态线性组合、用梯度无关的黑盒搜索在 few-shot 目标任务上调系数——两者都示范了我们在跨架构融合中独立采用的非破坏性组合哲学。我们的对齐器阶梯可视为激活层面的对应物，而我们的多教师负面结果（\S\ref{sec:distill-exp}）呼应了 Pfeiffer 等的发现——朴素的多源组合并不免费。Pfeiffer 等（2021）还观察到 AdapterFusion 在低数据场景下优于全微调；我们的四模式比较与他们阐述的非破坏性组合哲学一致，但本身仅在单一训练规模下完成，并未独立展示数据规模依赖性。
+
+\textbf{知识蒸馏。}蒸馏把教师行为迁移给更小的学生 \citep{hintonDistillingKnowledgeNeural2015,sanh2019,gou2021}。经典流程是单教师、同模态，多教师变体亦已为人所知 \citep{you2017}；最新的多教师 LLM 蒸馏用推理链增强的目标函数与教师强制（teacher-forcing）来恢复知识多样性 \citep{tian2025tinyllm}。嵌合蒸馏在两个方向上都不同：教师是一个多底座集成——这一框架呼应 mixture-of-agents \citep{wang2024moa} 对集体智能的利用，但我们把多专家协作从输出层下沉到表示层，用可学习的路由与门控取代静态聚合；学生只见一个底座的输入，却要复现集成的融合输出——被迫内化它从未观察到的模态的信息。量化感知训练在训练期注入伪量化噪声 \citep{dettmers2022}；我们把 INT4 伪量化用于专家输出，充当正则与硬件真实性压力，而非部署压缩声明。
+
+\section{方法}
+\label{sec:method}
+
+\subsection{问题设定}
+\label{sec:setup}
+
+设 $\mathcal{B} = \{B_1, \dots, B_M\}$ 为 $M$ 个冻结的预训练底座，隐藏宽度为 $D_m$，且一般架构不同：双向编码器（TinyBERT，$D{=}312$）\citep{jiao2020,devlin2019}、因果解码器（TinyLlama-110M，$D{=}768$）、视觉 Transformer（ViT-tiny，$D{=}192$）\citep{dosovitskiy2021}。每个底座使用自己的 tokenizer 或 processor，原生产生隐藏态 $h_m \in \R^{S \times D_m}$；我们从不强加共享编码器。目标是构建一个工作在宽度 $D_{\text{shared}} = 256$ 共享空间中的融合层，使得 (i) 每个底座保持冻结，(ii) 只有对齐、路由与门控参数被训练，(iii) 该层优雅退化——禁用任一专家后仍是一个可工作的系统。
+
+\subsection{异构融合层}
+\label{sec:layer}
+
+\begin{figure}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\scriptsize, >=Stealth, node distance=3mm,
+  base/.style={draw, rounded corners=1.5pt, align=center, inner sep=3.5pt, fill=blue!8, minimum width=34mm},
+  stage/.style={draw, rounded corners=1.5pt, align=center, inner sep=3.5pt},
+  aligner/.style={stage, fill=orange!16},
+  router/.style={stage, fill=green!14},
+  expert/.style={stage, fill=green!7},
+  fuse/.style={stage, fill=orange!9},
+  student/.style={stage, fill=violet!10},
+  lbl/.style={font=\tiny, align=center},
+]
+\node[base] (bert) at (0, 1.45) {文本底座：TinyBERT\\ 双向编码器，$D_m{=}312$};
+\node[base] (llama) at (0, 0) {代码底座：TinyLlama-110M\\ 因果解码器，$D_m{=}768$};
+\node[base] (vit) at (0, -1.45) {图像底座：ViT-tiny\\ 视觉 Transformer，$D_m{=}192$};
+\node[lbl, above=0.6mm of bert] {所有底座参数冻结};
+\node[lbl, below=0.6mm of vit] {参与训练：对齐、路由、门控（以及学生的 LoRA）};
+
+\node[aligner] (alg) at (4.35, 0) {跨架构对齐\\ 矩形 $P_m \in \R^{256 \times D_m}$\\ 或语义对齐器};
+
+\node[router] (rout) at (8.55, 0.95) {稀疏路由器\\ $\hat\alpha = \topk(\softmax(x W_r^\top), K{=}1)$\\ 直通梯度};
+\node[expert] (exp) at (8.55, -1.15) {冻结 SwiGLU 专家 $F_m$\\ $+$ INT4 伪量化噪声\\ 逐专家 $\gamma_m, \beta_m, \alpha_m$};
+
+\node[fuse] (fu) at (12.35, 0) {残差融合\\ $y = x + \sum_m \hat\alpha_m \alpha_m F_m^{\text{INT4}}$};
+
+\node[student] (stu) at (12.35, -2.55) {独立学生\\ 单底座 $+$ LoRA（训练 $0.60\%$）};
+\draw[->, densely dotted, thick] (fu.south) -- node[lbl, right=1.5pt, align=left] {嵌合\\ 蒸馏} (stu.north);
+
+\draw[->] (bert.east) -- ($(alg.west)!0.5!(alg.north west)$);
+\draw[->] (llama.east) -- (alg.west);
+\draw[->] (vit.east) -- ($(alg.west)!0.5!(alg.south west)$);
+\draw[->] (alg.east) -- (rout.west);
+\draw[->] (alg.east) -- (exp.west);
+\draw[->, densely dashed] (rout.south) -- node[lbl, left=1pt] {选择} (exp.north);
+\draw[->] (rout.east) -- (fu.140);
+\draw[->] (exp.east) -- (fu.220);
+\end{tikzpicture}}%
+\caption{异构微观融合与嵌合蒸馏。三个架构与隐藏宽度各异的冻结预训练底座被原生编码，对齐进共享的 256 维空间，稀疏路由（$K{=}1$）到携带 INT4 伪量化噪声的冻结 SwiGLU 专家。嵌合蒸馏随后把集成坍缩为一个独立的单底座学生。}
+\label{fig:overview}
+\end{figure}
+
+\textbf{方法贡献的四个创新点。}整个架构可以从四个互为支撑的设计出发阅读，我们会在结论（\S\ref{sec:conclusion}）复述它们。(\textbf{C1})~\emph{门控式稀疏路由。}共享的 256 维空间由一个稀疏路由器与逐专家门控（\S\ref{sec:layer}--\S\ref{sec:training}）维系；门控机制不是学到的组合矩阵，而是\emph{选}+逐专家尺度，这正是让跨架构融合能在 CPU 上训练底座冻结模型的架构级承诺。(\textbf{C2})~\emph{四模式系统比较。}对齐器阶梯（\S\ref{sec:align}）不是一个最佳设计，而是一条由四个对齐模式（线性 / 平均 / 跨注意力 / mixture）构成的严格阶梯，在同一条件下统一评测；这层系统比较本身即是贡献。(\textbf{C3})~\emph{数据规模依赖性的文献汇聚假设。}最优组合对训练数据规模的依赖性由四条独立的近期工作报告（\S\ref{sec:discussion}）；我们的四模式比较在单一训练规模下完成，与该规律一致但本身并未建立规律边界——本文内的数据规模扫描留待未来工作。(\textbf{C4})~\emph{跨子层路由配规模异构的底座。}双通路扩展（\S\ref{sec:dualpath}）把 C1 路由器施加到两个子层（attention + FFN）而不是一个——这是 C1 的应用；真正的新元素是允许两条路由从不同底座（不同宽度、不同模态、不同归纳偏置）选择专家，这就是我们计入创新点~C4 的"规模异构"半边。
+
+图~\ref{fig:overview} 展示了该层。给定残差流输入 $x \in \R^{B \times S \times D_{\text{shared}}}$，每个专家 $m$ 计算
+\begin{align}
+\label{eq:expert}
+h_m &= \stopgrad(x) \odot \gamma_m + \beta_m, \qquad
+\tilde F_m = Q_{\text{INT4}}\big(F_m(h_m)\big), \\
+F_m(h) &= \big(\mathrm{SiLU}(h W^{\text{gate}}_m) \odot (h W^{\text{up}}_m)\big)\, W^{\text{down}}_m,
+\end{align}
+其中 $Q_{\text{INT4}}$ 是分组（组大小 128）4-bit 伪量化，反向传播走直通估计器。三个刻意的设计塑造了这个层：
+
+\textbf{梯度截断。}专家输入被 detach（$\stopgrad$），冻结底座的中间激活因此永不进入自动微分图。激活显存从 $O(M L D_{\text{ff}})$ 降到 $O(L D_{\text{shared}})$ 加适配器参数——这正是 $M$ 底座融合在 CPU 上可训练的前提。代价是专家无法通过梯度影响上游表示；所有适配压力由路由器和门控承担。
+
+\textbf{带直通梯度的稀疏路由。}路由器从\emph{干净的}未加噪输入计算 logits $z = x W_r^\top$，$\alpha = \softmax(z)$；前向施加硬选择 $\hat\alpha = \topk(\alpha, K)$（除特别说明外 $K{=}1$），反向则沿 softmax 权重回传，属于直通估计器一族 \citep{bengio2013}。在干净输入上路由，使路由决策不去追逐它自己诱发的量化噪声。
+
+\textbf{正门控残差融合。}层输出为
+\begin{equation}
+\label{eq:fuse}
+y = x + \sum_{m=1}^{M} \hat\alpha_m \, \alpha_m \, \tilde F_m(h_m),
+\end{equation}
+初始化时 $\alpha_m \sim \mathcal{U}(0.01, 0.1)$。正值且非平凡的初始化避免了近零门控死锁：门控若初始化在 $10^{-4}$ 量级，收到的梯度小到无法逃逸——我们在采用均匀初始化之前观察到过这种平直的训练曲线。这三处选择共同把创新点~C1 落地：在底座冻结的情况下，CPU 上可训练的门控式稀疏 top-K 路由。
+
+\subsection{两阶段训练协议}
+\label{sec:training}
+
+路由在训练早期很脆弱——随机的路由器权重产生噪声选择，毒化专家门控。因此训练分两相。\textbf{Phase 1}（前 $10\%$ 步）：强制均匀路由（$\hat\alpha_m = 1/M$，detach），路由器冻结，只有对齐与门控参数在学习。\textbf{Phase 2}（其余 $90\%$）：解锁路由器、激活 Top-$K$ 选择，损失为
+\begin{equation}
+\label{eq:loss}
+\mathcal{L} = \mathcal{L}_{\text{task}} + \lambda_1 \mathcal{L}_{\text{balance}} + \lambda_2 \mathcal{L}_{z},
+\end{equation}
+其中 $\mathcal{L}_{\text{balance}}$ 鼓励专家负载均衡，$\mathcal{L}_{z}$ 正则路由 logits。优化器组隔离学习率：路由器 $10^{-4}$，对齐参数 $10^{-2}$，输出门控 $\alpha_m$ 为 $10^{-3}$。路由器必须慢速移动，因为它的选择是离散的；对齐层可以快速移动，因为它的梯度是稠密的。这种分组隔离正是创新点~C1 约束（"\emph{只}训练对齐、路由与门控参数"）的操作化体现。
+
+\subsection{对齐器阶梯}
+\label{sec:align}
+
+共享空间是异构底座相遇的地方，而它的构造方式被证明比技术栈中任何其他东西都更重要。我们评估四种复杂度递增的设计：
+
+\begin{description}[leftmargin=1.4em, itemsep=1pt]
+    \item[线性投影（基线）。]每个底座的隐藏态经过矩形投影 $P_m \in \R^{D_{\text{shared}} \times D_m}$，正交初始化且冻结。各底座独立投影、互不知晓。
+    \item[均值对齐器。]每个底座先经可学习的降维 $W_m \in \R^{d \times D_m}$，再对投影后的表示取跨底座均值。
+    \item[跨架构注意力对齐器。]每个底座投影到共享宽度；跨底座均值提供共享的 K 和 V；每个底座用自己的 query 投影查询共享上下文——即标准 cross-attention 的 Q/K/V 分离设计 \citep{vaswani2017}——并把注意到的概念向量残差地加回。各底座结果取均值。每个底座因此读到一份由\emph{所有}底座共同书写的概念摘要。
+    \item[混合对齐器（Mixture）。]每个底座贡献 $n{=}4$ 个小型共享专家（两层 MLP），汇成 $M \times n$ 的专家池。专家输出作为查询，对由其均值导出的共享 K/V 上下文做注意力，聚合注意力输出。对齐器本身成为一个架在异构源之上的微型 mixture-of-experts。
+\end{description}
+
+两个经验事实促成了这条阶梯。第一，\emph{原生编码不是可选项}：在早期对照实验中，三个模态全部由同一个 BERT 编码，融合相对单专家的增益从 $+20.3\%$ 坍缩到 $+4.0\%$。统一编码恰好抹平了路由器赖以区分专家的架构差异。第二，阶梯\emph{严格但饱和}：每一模式都对上一模式有提升，提升在 mixture 对齐器处停止（\S\ref{sec:align-exp}）——这一天花板我们作为受规模限定的假设持有，而非定律。
+
+\textbf{四个模式，一句话（创新点~C2）。}我们把四个模式依次命名为 mode~A / B / C / D（线性 / 平均 / 跨注意力 / 混合），在 \S\ref{sec:align-exp} 报告同一条件下的 MSE；阶梯的"严格但饱和"性质才让我们有资格称之为\emph{系统比较}而非某个最佳设计。我们把胜出模式对数据规模的依赖视为文献汇聚假设（创新点~C3）；\S\ref{sec:align-exp} 的 held-out 真实语料评估仅改变评测分布而非训练数据规模，文内的训练规模扫描留待未来工作。
+
+\subsection{双通路路由：让 Attention 也可路由}
+\label{sec:dualpath}
+
+仅 FFN 的层在多个记忆库之间路由，但永远消费同一个 attention 输出。双通路扩展让 attention 子层也可路由：每个 token 独立选一个 \emph{attention 专家}和一个 \emph{FFN 专家}，两个专家池可来自不同底座。attention 专家暴露底座第一 block 的原生 Q/K/V/O；被选中专家的 attention 在其原生空间重算，再经 $P_m$ 投影回来。逐专家优化器组（单个 AdamW 内 11+ 组）把 \S\ref{sec:training} 的学习率隔离落实到每个专家。双通路设计问的是：跨架构互补性究竟住在 FFN 权重里、注意力模式里，还是两者都有——\S\ref{sec:fusion-exp} 的通路分解给出了一个尖锐的答案。
+
+\textbf{双通路子层路由（创新点~C4）。}以机制描述，attention 通路在所选专家上做组合注意力，FFN 通路承担门控式稀疏路由的抉择；两者不必选同一个专家，规模异构这半边（C4）即源于允许它们取自不同底座、不同宽度、不同模态与不同归纳偏置。两条通路都门控、都残差、用同一条稀疏路由器与同一种直通梯度在干净输入上训练；只有专家本身被冻结。设计全部由 \S\ref{sec:fusion-exp} 的通路分解结果背书；这一框架把架构级承诺说清楚了：\emph{两条}稀疏路由，不是一条。
+
+\section{重构出一个独立模型}
+\label{sec:distill}
+
+子层级融合让所有底座留在推理路径上。部署要的恰恰相反：一个模型、一个模态、没有集成。嵌合蒸馏步骤把集成压缩进一个从未见过其他底座输入的单底座学生。蒸馏协议也是创新点~C3（数据规模依赖性）最直接可测的环节：v25--v29 协议变动了训练语料大小，原则上可以展示这条规律边界；本文内的扫描留待未来工作。
+
+\textbf{学生架构。}单模态学生是真实的冻结 TinyBERT \citep{jiao2020}，hidden states 上加 rank-8 LoRA（$\alpha{=}16$），一个映射到 $D_{\text{shared}}$ 的线性头，再加 LayerNorm。${\sim}14$M 参数中只有 $85{,}632$（$0.60\%$）可训练。与我们最初尝试的简化 MLP 学生不同，预训练学生为重建问题带来了先验的语言结构。
+
+\textbf{蒸馏目标。}教师是带 mixture 对齐器的融合多底座系统。给定一个\emph{只来自学生模态}的 batch，教师执行完整的多底座前向，学生必须匹配它：
+\begin{equation}
+\label{eq:distill}
+\mathcal{L}_{\text{distill}} = \alpha_{\text{h}} \, \mathrm{MSE}\big(y_s,\, \stopgrad(y_t)\big) + \beta_{\text{h}} \, \mathrm{MSE}\big(y_s,\, y_{\text{target}}\big),
+\end{equation}
+取 $\alpha_{\text{h}} = 0.7$、$\beta_{\text{h}} = 0.3$。第一项蒸馏教师的隐藏态概念方向；第二项加入直接目标信号。这不是温度缩放的 KL 散度，而是两个 MSE 项的加权组合。直接目标项的贡献在 \S\ref{sec:distill-exp} 中通过 \textbf{pure} 条件（\texttt{run\_v32}，置 $\beta_{\text{h}}=0$，把纯蒸馏与目标泄漏隔离）量化。
+
+\textbf{多模态学生。}多模态学生把 TinyBERT（文本）与 ViT-tiny（图像）配对，各自带 LoRA，外加一个决定哪个底座处理哪个输入的可学习模态路由器。它以同一目标、对同一单教师集成训练。
+
+\textbf{评估纪律。}我们最早的真实学生实验在训练分布的输入上评估、且目标极易拟合，得到近零 MSE——一个伪装成成功的过拟合假象。此后所有学生评估都改用真实 mini 语料（16 句 Wikipedia 风格训练句、6 句 held-out）的 held-out 输入，迫使学生在他从未训练过的 token 分布下复现教师的概念方向。我们明确标出这一修正，因为未修正的数字美化到毫无意义。
+
+\section{实验}
+\label{sec:exp}
+
+\subsection{实验设置与诚实的边界}
+\label{sec:exp-setup}
+
+全部实验在 CPU-only 环境完成（Linux、PyTorch 2.x、不使用 GPU 加速）。宽度很小（$D_{\text{shared}}{=}256$，$S{=}16$），目标为合成的类别方向构造（共享空间中属于目标类的一块被置为 $1.0$），除特别说明外每个配置取 5 个种子。整个技术栈通过 273 项单元与集成测试；下文每个数字都由一个具名、入库的脚本产出（复现命令见 \S\ref{sec:repro}）。这些是\emph{机制层面}的结果：它们证明重构机制在受控条件下按设计工作，但不证明该方法能在 0.5B+ 参数规模或真实任务的困惑度级评估下存活。我们认为规模鸿沟是当前最大的开放风险，并在 \S\ref{sec:limitations} 讨论。
+
+\subsection{子层融合增益}
+\label{sec:fusion-exp}
+
+\begin{table}[t]
+\centering
+\caption{异构底座的子层融合（5 种子均值，fuse MSE；越低越好）。v6：三种架构上的仅 FFN 路由。v7-A / v7-B：双通路路由（每 token 一个 attention 专家 $+$ 一个 FFN 专家），分别为跨架构与同架构。增益按种子逐一计算后取均值。}
+\label{tab:fusion}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{设置} & \textbf{仅 attn} & \textbf{仅 ffn} & \textbf{平均} & \textbf{融合} & \textbf{相对平均增益} \\
+\midrule
+v6：仅 FFN 路由、跨架构（3 底座） & --- & 7.08 & 6.77 & \textbf{5.60} & $+17.3\%$ \\
+\quad 其中：相对最佳单专家 & & & & & $+20.3\%$ \\
+v7-A：双通路、跨架构 & 1.16 & 7.10 & 7.06 & \textbf{1.06} & $+84.8\%$ \\
+v7-B：双通路、同架构 & 0.382 & 0.414 & 0.383 & \textbf{0.378} & $+1.0\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+表~\ref{tab:fusion} 汇总融合结果。仅 FFN 路由（v6）下，融合层超出最佳单专家 $20.3\%$、超出等权平均 $17.3\%$，且每个种子都通过——这是第一次证明真正异构的预训练架构可以在子层层面共享一个稀疏路由器。双通路路由（v7-A）把相对平均的裕度提升到 $84.8\%$。
+
+通路分解是最有意思的部分。跨架构设置下，仅 attention 通路就达到 MSE $1.16$——已接近融合的 $1.06$——而仅 FFN 通路（$7.10$）与等权平均（$7.06$）难以区分。跨架构互补性因此几乎完全显现在\emph{注意力模式}里：一旦每个 token 能咨询注意力模式适合它的那个架构，FFN 专家剩下的贡献就是残差精修。我们把这一主张说得更窄——注意力在架构之间的差异大于 FFN 激活——并且它不与 FFN 键值记忆体的观点 \citep{geva2021,meng2022,dai2022} 矛盾：FFN 权重在\emph{单一}架构内承载丰富的知识，但我们的结果表明这些知识在架构\emph{之间}平均得很好，注意力模式则不然。同架构对照（v7-B）中，三个 TinyBERT 只差随机 Q/K/V/O 扰动，双通路增益缩到 $+1.0\%$：架构多样性一消失，路由器就几乎无物可选。路由价值追踪的是架构多样性，不是专家数量。
+
+\subsection{对齐器阶梯及其天花板}
+\label{sec:align-exp}
+
+\begin{table}[t]
+\centering
+\caption{对齐器阶梯（5 种子均值，fuse MSE）。每个 block 是一组受控对比；mixture 对齐器使阶梯饱和，嵌套无益。}
+\label{tab:ladder}
+\begin{tabular}{llcc}
+\toprule
+\textbf{对比组} & \textbf{对齐器} & \textbf{fuse MSE} & \textbf{相对下一档} \\
+\midrule
+\multirow{3}{*}{投影 vs 语义 (v10)}
+ & 线性投影 & 1.0436 & --- \\
+ & 均值对齐器 & 0.4753 & $+54.5\%$ \\
+ & 跨架构注意力 & \textbf{0.3448} & $+67.0\%$ \\
+\midrule
+\multirow{3}{*}{注意力 vs 混合 (v14)}
+ & 线性投影 & 1.1409 & --- \\
+ & 跨架构注意力 & 0.3376 & $+70.4\%$ \\
+ & 混合对齐器 & \textbf{0.2575} & $+77.4\%$ \\
+\midrule
+\multirow{3}{*}{混合 vs 嵌套 (v15)}
+ & 跨架构注意力 & 0.3216 & --- \\
+ & 混合对齐器 & \textbf{0.2525} & $+21.5\%$ \\
+ & 嵌套（Mixture of Mixture） & 0.2645 & $-4.7\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figs_zh/fig_alignment.pdf}
+\caption{对齐器阶梯。(a) 语义对齐优于冻结线性投影，跨底座注意力优于均值。(b) 混合对齐器优于单概念注意力。(c) 嵌套混合对齐器反而轻微退步：阶梯在一级跨专家注意力处饱和。越低越好。}
+\label{fig:ladder}
+\end{figure}
+
+表~\ref{tab:ladder} 与图~\ref{fig:ladder} 展示阶梯；图是表内五种子均值的可视化，不新增量，但让次序更易读。linear $<$ mean $<$ attention $<$ mixture 的次序在每组对比中都严格成立，从线性基线到 mixture 对齐器的总爬升为 $-77.4\%$ MSE。负面结果与正面结果同样清晰：两级嵌套的混合对齐器（mixture of mixture）落在 attention 与 mixture \emph{之间}，比单层混合对齐器\emph{差} $4.7\%$。跨底座注意力值一级；第二级层级只增加参数、稀释共享概念上下文，不增加表示能力。
+
+一个组合测试把这一点磨得更尖。我们把修复后的门控式路由器（配套研究对加性中枢干扰的修复）与注意力对齐器组合：以共同的线性投影基线（v9-linear-gate 配置的 1.1625，由 \texttt{run\_v9\_linear\_gate.py} 计算；不在表~\ref{tab:ladder} 中）为参照，组合达到 $+71.0\%$ 增益（0.3374），而注意力对齐器自带配置为 $+72.6\%$（0.3191）——相差不足 2 个百分点，但在全部 5 个种子上一致偏向对齐器一侧，在种子涨落之内。一旦对齐器已经提供跨底座概念交换，路由器层面的修复就无事可做。技术栈相邻层的改进不可加和；第一个充分的机制会吸走全部增益。
+
+两条限制为这条阶梯划界。其一，四种对齐器的参数量不同，我们尚未做容量匹配对照，因此爬升的一部分可能来自容量而非设计；我们把它作为待隔离的混杂因素报告，而非已解决的对比。其二，整条阶梯在 $D_{\text{shared}}{=}256$、三底座、合成目标下测得：饱和点是一个受规模限定的假设，在 $D_{\text{shared}}{\geq}768$ 与真实目标下证实或打破它，是优先级最高的后续实验。
+
+\subsection{嵌合蒸馏为独立模型}
+\label{sec:distill-exp}
+
+\begin{table}[t]
+\centering
+\caption{嵌合蒸馏（5 种子均值）。教师为带 mixture 对齐器的融合多底座集成。$\dagger$：在训练分布输入上评估；近零值是过拟合假象，不是泛化。v18 在 held-out 真实 Wikipedia 文本上评估。}
+\label{tab:distill}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{llccc}
+\toprule
+\textbf{学生} & \textbf{评估方式} & \textbf{教师} & \textbf{蒸馏后} & \textbf{相对教师} \\
+\midrule
+v13：MLP 学生（无预训练） & 训练分布内 target & 0.3245 & 0.3076 & $+5.4\%$ \\
+v16：TinyBERT + LoRA（$0.60\%$） & 训练分布内 target$^\dagger$ & 0.2764 & 0.1380 & $+50.1\%$ \\
+v18：TinyBERT + LoRA & held-out 真实文本 & --- & 0.1574 & 可行 \\
+v21：BERT+ViT 多模态 & 训练分布内 target$^\dagger$ & 0.3238 & 0.1620 & $+50.0\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figs_zh/fig_distill.pdf}
+\caption{(a) 单教师嵌合蒸馏：蒸馏后的学生在每种设置下都超过其多底座教师。(b) 多教师蒸馏在所有配置下退步（v17）。越低越好。}
+\label{fig:distill}
+\end{figure}
+
+表~\ref{tab:distill} 与图~\ref{fig:distill}(a) 报告蒸馏结果。模式高度一致，而且初看违反直觉：蒸馏出的学生在复现融合输出这件事上\emph{比教师本身更擅长}。简化 MLP 学生的裕度是 $+5.4\%$；真实预训练 TinyBERT 学生扩大到 $+50.1\%$（$0.138$ vs $0.276$）；多模态 BERT+ViT 学生达到 $+50.0\%$（$0.162$ vs $0.324$）。
+
+为什么复制品会超过原版？我们的工作假设是数学上的必然，而非发现。教师的前向是随机的——每一步的硬性 Top-$K$ 路由加 INT4 量化噪声——而学生被训练去匹配教师的\emph{期望}输出。拟合条件均值的函数，其 MSE 理应低于它模仿的带噪过程（Jensen 型差距），所以确定性学生\emph{原则上}理应胜过随机教师——下文的 v32 消融检验并否证了这一预测。针对教师本人的标题裕度在先验上混合了三种效应：Jensen 型方差平均优势、损失中 $0.3$ 的直接目标项、以及任何真实的概念方向传递。v32 消融（\S\ref{sec:distill-exp}）给出经验裁决：纯蒸馏并不优于教师，Jensen 型优势的贡献不可测量——混合目标下的全部实测裕度都归因于 $0.3$ 的直接目标项；学生间排序反映的是预训练先验与泄漏目标信号的交互，而不是学生内化了教师概念方向的证据。该现象也呼应 teacher-assistant 蒸馏 \citep{mirzadeh2020}——中间的或更干净的目标能改进学生；这里的“更干净目标”效应来自损失中的直接目标项。所有裕度都是教师目标分布上的重建 MSE；它们是否转化为下游能力未经检验（\S\ref{sec:limitations}）。
+
+v18 修正让主张保持诚实。在 held-out 真实 Wikipedia 文本上，蒸馏学生保持 MSE $0.157$，而 fake-vocab 与仅微调两个对照都停在 $\approx 0$——不是它们泛化好，而是它们的评估输入与目标太平凡可拟合。学生的 $0.157$ 反映的是在混合目标下对教师输出的拟合；v32 消融显示，同一教师下的纯蒸馏（用与本节相同的评估协议）给出 MSE $0.324 \pm 0.013$，并不优于教师本人（$0.323 \pm 0.015$）。
+
+\paragraph{目标泄漏量化。}
+eq.(\ref{eq:distill}) 中的 $0.3$ 直接目标项是一种目标泄漏：训练时学生从 $y_{\text{target}}$ 获得部署时不存在的真值信号。我们用混合目标（$w_{\text{teacher}}=0.7$，$\beta_{\text{h}}=0.3$）与纯蒸馏目标（$w_{\text{teacher}}=1.0$，$\beta_{\text{h}}=0$，\texttt{run\_v32}）的对比来量化它。在同一教师、与本节相同的评估协议（对训练目标重采样全新随机输入 token，而非 held-out Wikipedia 集）下，纯蒸馏给出 MSE $0.324 \pm 0.013$，混合目标 $0.165 \pm 0.007$，教师 $0.323 \pm 0.015$。关键在于：纯蒸馏\emph{并不优于教师}——逐种子配对差为 $-0.0009 \pm 0.0038$（10 种子的 mean $\pm$ std；不显著），这意味着混合目标下 $+0.159$ 的表观重建裕度\emph{没有任何一部分}可归因于真实的概念方向传递；全部实测优势都来自损失中 $0.3$ 的直接目标项。学生间排序（MLP $+5.4\%$、TinyBERT $+50.1\%$、多模态 $+50.0\%$）反映的是预训练先验与泄漏目标信号的交互，而非学生内化教师概念方向的证据。我们明确标出这一点，因为未修正的主张最可能招致审稿质疑。v32 重跑的绝对水平也与最初记录的 v16 数字略有不同（教师 $0.323$ vs $0.257$；混合学生 $0.164$ vs $0.138$）；因此我们在 v32 run 内部自洽地解读分解，不将其水平与表~\ref{tab:distill} 直接比较。我们保留表~\ref{tab:distill} 的原始 v16-协议行用于正面结果的复现，并只在 v32 内部一致地做直接目标分解的比较。
+
+\paragraph{$\beta_{\text{h}}$ 连续过渡。}
+Beta 扫描（\texttt{run\_v32.2}）确认混合到纯的过渡是连续的而非阈值式的：当 $\beta_{\text{h}}$ 从 $0.0$ 增至 $1.0$，学生 MSE 从 $0.317 \pm 0.040$ 单调递减到 $0.000 \pm 0.000$，在 $\beta_{\text{h}}=0.3$ 处无任何间断。$0.3$ 项的效应因此与其权重成正比，符合两个 MSE 项的简单线性插值，而非某种仅在超过临界阈值才激活的机制。
+
+\paragraph{方差平均效应有界。}
+学生表观优势的一个残留解释是 Jensen 型方差平均：如果教师是随机的而学生学习其条件均值，按构造学生应优于任意单个教师样本。为检验该效应在我们尺度上是否可测，我们把教师替换为\emph{超确定性}版本——对不同的随机输入做 20 次前向传播再平均（\texttt{run\_v32.3}）。如果方差平均真的是学生优势的来源，超确定性教师应该比普通确定性教师更难被超越。经验上，超确定性教师 MSE（$0.324 \pm 0.015$）与确定性教师（$0.324 \pm 0.015$）完全相同，纯学生相对它的差是 $-0.0008 \pm 0.0038$——同样不显著。20 次前向平均在这个尺度上不改变教师输出，确认 Jensen 型方差平均机制在这里无 measurable 贡献。
+
+\paragraph{表征传递测试未发现混合优势。}
+如果混合目标真的教会了学生教师内部的概念方向，这些方向应该能传递到新任务。我们直接检验（\texttt{run\_v32.4}）：在同一教师下训练混合与纯学生后，冻结两个学生的 LoRA 参数，用新的随机线性分类器替换输出头，在新生成的目标集（不同随机种子）上只训练这个新头，然后比较分类准确率。混合学生达到评估准确率 $0.733 \pm 0.065$；纯学生达到 $0.767 \pm 0.102$——纯学生还略好，差异不显著。没有证据表明混合目标产生了更好的内部表征；混合目标下的表观优势再次完全由泄漏的直接目标信号解释。
+
+\textbf{多教师蒸馏失败。}自然的下一步是从多个教师（attention 对齐器教师、mixture 教师、嵌套教师）同时蒸馏，可能还加权。每个配置都退步（图~\ref{fig:distill}(b)）：相对单教师，两教师 $-15.8\%$、三教师 $-6.3\%$、加权三教师 $-3.9\%$。教师们对要传递的\emph{概念空间方向}意见不一；容量受限的学生无法同时对齐相互冲突的目标，平均信号又稀释了每个教师的特化。一个选得好的教师胜过教师集成——在蒸馏层面重演了 \S\ref{sec:align-exp} 的组合教训。
+
+\subsection{任务级评估：一条边界，而非一个结果}
+\label{sec:vqa-exp}
+
+我们尝试从概念重建推进到一个真实任务，构造了微型 VQA 基准。4 个简单类别下，仅图像学生靠模态捷径拿到 $100\%$ 准确率，多模态学生 $91.7\%$：这个任务分不清多模态推理与单模态作弊。随后我们用 8 个专门设计来击败捷径的陷阱类重建基准。所有模型——纯文本、纯图像、多模态——齐齐跌到恰好 $50\%$，即随机猜测的准确率。加倍任务难度没有逼出多模态能力。我们诚实地报告这一结果的两种读法。有利的一种：在 24 个训练样本加 CPU 级学生的条件下，基准根本训练不出跨模态接地，随机水平的准确率度量的是基准而非融合层——任何任务设计上的小聪明都替代不了预训练的跨模态对齐。不利的一种，我们无法排除：多模态学生在一个专门要求跨模态推理的任务上无法超过随机水平，这本身就是机制的能力边界，而不仅仅是基准的边界。分辨这两种读法，正是我们基于 CLIP \citep{radford2021} 的教师流水线——已备好但尚未完成端到端运行——要做的事。
+
+\section{讨论}
+\label{sec:discussion}
+
+\textbf{四条设计原则。}支撑这些结果的系统性迭代沉淀为四条原则。我们把它们表述为从一个系统中蒸馏出的领域性启发法——把它们推广到其他架构是假设而非结论——但我们预期它们比具体配置走得更远。(1)~\emph{异构粒度要可分可合}：每个部件（路由器、门控、对齐器、每条通路）都能独立启停——本文的每个消融因此都只是改一个开关。(2)~\emph{失败模式比成功模式更有信息量}：五个独立负面结果（组合、嵌套、多教师、两次 VQA 失败）对方法边界的刻画超过任何正面结果。(3)~\emph{冻结底座组合需要机制级诊断}：因为底座不更新，消融必须直接到达子层机制——路由器、门控、对齐器、伪量化。组件级指标（如四模式阶梯）告诉我们到底是哪个子层真正起作用；组件级命名让这些诊断彼此分开。我们刻意避免把同一个机制冠以不同的认知或生物学类比（"全局工作空间""默认网络"等），因为它们会遮蔽经验抓手。本文每条主张都建立在 MSE、种子与消融之上。(4)~\emph{增量扩展优于重写}：每次迭代复用上一次的冻结部件、只加一个机制——这正是架构持续生长而 273 项测试始终全绿的原因。
+
+\textbf{反复出现的规律：更多的东西不等于更好的东西。}在五组独立对比中，堆机器——更多路由修复、第二级对齐器、更多教师、更难的 toy 任务——要么无事发生，要么有害。真正起效的机制（原生编码、共享 K/V 注意力、一级 mixture、单教师）每一个都是\emph{替换}了更弱的部件，而不是叠在它上面。对子层级重构，浮现出的实用配方是：原生编码、一级 mixture 对齐、稀疏路由、单教师蒸馏——然后停手。
+
+\textbf{与路由协调问题的关系。}共享路由器自身应如何协调——共享路由器本身应该扰动路由 logits 还是调节其温度、该选择如何随数据规模变化——是我们在配套研究中单独处理的问题。本文刻意固定路由机制，使上述对齐与蒸馏效应可归因。
+
+\textbf{关于数据规模与融合策略的跨论文信号。}四条独立研究线报告了同一模式：小数据、小模型偏好\emph{注入式}组合（完整路由器、独立 adapter、粗粒度路由），大数据、大模型偏好\emph{平均}（加权组合、全微调、加性合并）。AdapterFusion \citep{pfeiffer2021} 在训练数据稀缺时把这一权衡推到更尖锐；Mixtral 风格的稀疏路由 \citep{jiang2024mixtral} 恰恰在死专家塌缩最致命的条件下要求负载均衡；\citet{liu2026orchestrating} 的粗粒度路由出于延迟原因收敛到整查询决策——这一动因在我们的设定中不存在却导向同一架构选择；Branch-Train-MiX \citep{sukhbaatar2024btx} 在算力受限时被其 MoE 微调阶段主导。我们的四模式比较（\S\ref{sec:method}）在单一训练规模下完成，与"最优组合依赖于数据规模"这一文献汇聚假设一致；本文内的训练规模扫描留待未来工作。三条独立贡献让这一图景更锐利。(i)~我们占据异构谱系中最难的一角：同架构极限 \citep{komatsuzaki2023,sukhbaatar2024btx,puigcerver2024softmoe}、同模态极限 \citep{wang2024scalekd}、同 tokenizer 极限 \citep{wang2025symphony,liu2026orchestrating} 各被单独研究；我们在三轴上同时不同。(ii)~Query-level 粗粒度路由在我们的设定中是唯一具有清晰语义的路由粒度——单个 token 不能同时是文本子词和视觉 patch——因此我们与\citet{liu2026orchestrating} 从不相关的动机（CPU 而非延迟）走到同一架构选择。(iii)~``各向异性保留融合''（拼接）在异构流形上优于``平均''这一几何性主张，被我们表~\ref{tab:ladder} 中四模式的相对次序独立印证：保留逐专家信息的模式（D = 混合、C = 跨注意力）优于把它们取均值的模式（B = 平均）。\citet{liu2026orchestrating} 从嵌入流形保持的角度论证，我们从逐模式 MSE 论证；两条路径预测同一个赢家。
+
+\section{局限性}
+\label{sec:limitations}
+
+规模是主导性局限。全部结果都是 CPU 沙箱结果：$D_{\text{shared}}{=}256$、序列长度 16、合成类别方向目标而非语言模型困惑度、toy 规模语料；这里没有任何东西确立 0.5B+ 参数或真实下游基准上的行为。INT4 伪量化是训练期噪声注入，不是部署 kernel。attention 专家只读底座第一 block，没有做层选择研究。Top-$K$ 固定为 $K{=}1$。任务级多模态评估仍然开放：我们的 VQA 尝试确立的是 toy 基准无法验证多模态融合，回应它的 CLIP 教师流水线已通过单元测试但尚未端到端运行。最后，学生胜教师的裕度是在教师自己的目标分布上以重建 MSE 度量的；它们是否转化为下游能力未经检验。
+
+\section{结论}
+\label{sec:conclusion}
+
+我们把冻结预训练模型中最可交换的子层——FFN block——重构为异构融合层：原生编码的底座，经矩形或语义对齐进入同一共享空间，带直通梯度的稀疏 Top-$K$ 路由，INT4 噪声，门控残差融合。对齐空间有一条严格的阶梯（线性、均值、注意力、混合），并在一级 mixture 处有实测天花板——一个受规模限定的假设；跨架构融合增益集中于注意力模式所在的 attention 通路；第二个重构步骤——嵌合蒸馏——把集成坍缩为独立单底座学生，仅训练 $0.60\%$ 参数即超出教师至多 $50.1\%$——在重建 MSE 上；v32 消融（\S\ref{sec:distill-exp}）表明该裕度完全归因于蒸馏损失中 $0.3$ 的直接目标项，而非概念方向传递或方差平均。负面结果——组合无叠加、嵌套无增益、多教师无增益、toy 基准随机水平——与正面结果一样锋利地圈定了方法边界。开放的前沿是规模：机制已在 CPU 规模下规格化、测试并划定边界，它们在预训练规模下的行为是下一个真正重要的问题。
+
+\textbf{四个创新点，再复述一遍。}(C1)~\emph{门控式稀疏路由}——每查询只选+门控一个专家，而非把所有专家组合成学到的混合矩阵；(C2)~\emph{四模式系统比较}——同一条件下评测四种对齐器设计，贡献是那条严格但饱和的阶梯而非任一单独模式；(C3)~\emph{文献汇聚假设：在阶梯中胜出的模式依赖于数据规模}——由四条独立的近期工作观察到（\S\ref{sec:discussion}）；本文内的训练规模扫描留待未来工作；(C4)~\emph{跨子层路由配规模异构的底座}——C1 路由器被施加到 attention 与 FFN 子层（这是 C1 的应用），新元素是两条路由可以选不同宽度、不同模态与不同归纳偏置的底座专家。每一项创新都可以独立证伪：C1 看把门控换成学到的组合矩阵是否还成立；C2 看把阶梯折叠成单一模式后还能不能复现贡献；C3 看只在已选模式获胜的数据规模下训练是否会丧失优势；C4 看强迫两条路由从同一底座选专家还能不能复现。开放的前沿仍是规模。
+
+\section*{复现声明}
+\label{sec:repro}
+
+全部实验脚本都在项目仓库中。核心复现命令：
+
+\begin{itemize}[leftmargin=1.6em, itemsep=0.5pt, parsep=0pt]
+    \item 融合：\texttt{bash run.sh v6}、\texttt{bash run.sh v7a}（跨架构）、\texttt{bash run.sh v7b}（同架构对照）。
+    \item 对齐器阶梯：\texttt{examples/run\_v10\_aligner.py}、\texttt{run\_v14\_aligner\_compare.py}、\texttt{run\_v15\_mom\_compare.py}；组合测试：\texttt{run\_v12\_compose.py}。
+    \item 蒸馏：\texttt{examples/run\_v13\_distill.py}、\texttt{run\_v16\_bert\_distill.py}、\texttt{run\_v17\_multi\_teacher.py}、\texttt{run\_v18\_wiki\_distill.py}、\texttt{run\_v21\_multimodal\_distill.py}。
+    \item VQA 边界：\texttt{examples/run\_v23\_vqa\_distill.py}、\texttt{run\_v23\_vqa\_hard.py}。
+\end{itemize}
+
+完整测试套件（\texttt{bash run.sh test}）覆盖 273 项单元与集成检查。环境：Linux，Python 3.11，PyTorch 2.x，仅 CPU，每配置 5 个种子。
+
+\section*{AI 辅助写作声明}
+
+稿件撰写由 AI 写作智能体辅助完成，其仅基于项目的实验记录与规范文档；所有实验结果、代码与设计决策均来自作者。
+
+\bibliographystyle{plainnat}
+\bibliography{microfusion}
+
+\appendix
+
+\clearpage
+
+\section{超参数}
+\label{app:hyper}
+
+\begin{table}[h]
+\centering
+\caption{融合与蒸馏技术栈的默认超参数。}
+\begin{tabular}{lll}
+\toprule
+\textbf{组件} & \textbf{参数} & \textbf{取值} \\
+\midrule
+融合层 & 共享宽度 $D_{\text{shared}}$ & 256 \\
+ & FFN 宽度 $d_{\text{ff}}$ & 1024（$4\times$） \\
+ & 专家数 $M$ / Top-$K$ & 3 / 1 \\
+ & 量化 & INT4，组大小 128 \\
+ & 路由器初始化 & $\mathcal{N}(0, 0.01^2)$ \\
+ & 通道对齐初始化 & $\gamma_m = 1$，$\beta_m = 0$ \\
+ & 门控初始化 $\alpha_m$ & $\mathcal{U}(0.01, 0.1)$ \\
+\midrule
+训练 & 两相（均匀 / 路由） & 前 10\% / 后 90\% 步 \\
+ & 步数 & 100（长程实验 500） \\
+ & batch / 序列长度 & 18（每模态 6）/ 16 \\
+ & 学习率 & 路由器 $10^{-4}$；对齐 $10^{-2}$；门控 $10^{-3}$ \\
+ & 损失权重 & $\lambda_1, \lambda_2$ 取小值（均衡、logit 正则） \\
+\midrule
+对齐器 & 降维投影 & $D_m \rightarrow D_{\text{shared}}$，正交初始化（线性版：冻结） \\
+ & 注意力头数 & 4 \\
+ & mixture 共享专家 & 每底座 $n = 4$，两层 MLP \\
+\midrule
+学生 & 底座 & TinyBERT-4L-312D（冻结） \\
+ & LoRA rank / $\alpha$ & 8 / 16（scaling $= 2$） \\
+ & 可训练参数 & 85{,}632 / ${\sim}14$M（$0.60\%$） \\
+ & 蒸馏损失 & $0.7\,\mathrm{MSE}(y, y_{\text{teacher}}) + 0.3\,\mathrm{MSE}(y, y_{\text{target}})$ \\
+ & 语料 & 16 训练 $+$ 6 held-out Wikipedia 风格句子 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}

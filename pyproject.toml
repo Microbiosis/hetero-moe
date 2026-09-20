@@ -1,0 +1,45 @@
+# 异构微观融合系统 v4.0 — 包定义
+# 可编辑安装: pip install -e . (使 `import hetero_fusion` 全局可用, 源码改动即时生效)
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hetero-fusion"
+version = "4.0.0"
+description = "异构微观融合系统 v4.0 Final — MoE-Style Heterogeneous Micro-Fusion"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Hetero-Fusion Implementation Team" }]
+keywords = ["moe", "heterogeneous", "fusion", "quantization", "transformer"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.0",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+# 包发现:
+#   hetero_fusion      — 主包 (v4.0/v6 baseline)
+#   hetero_fusion.core — 融合核心 (fusion / router / quant / losses / parallel)
+#   hetero_fusion.train — 训练器 (trainer)
+#   hetero_fusion.infer — 推理 (inference)
+#   research.*         — 8 条研究线按域组织
+#   archive.*          — 负面发现 + 前基线
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+    "hetero_fusion*",
+    "research*",
+    "archive*",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

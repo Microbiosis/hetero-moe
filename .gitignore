@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Local environment
+.mcp.json
+.mimosa/
+.v2c/
+.env
+.env.local
+.venv/
+venv/
+
+# Author-only tools / notes
+Obsidian/
+
+# Tool caches
+docs/research_paper/.kimi-latex/
+docs/research_paper/.kimi-cli/
+docs/research_paper/_archive/
+docs/research_paper/build/
+docs/research_paper/pages_mf/
+docs/research_paper/pages_zh/
+
+# Build artifacts (rebuilt by latexmk)
+docs/research_paper/*.aux
+docs/research_paper/*.bbl
+docs/research_paper/*.blg
+docs/research_paper/*.fdb_latexmk
+docs/research_paper/*.fls
+docs/research_paper/*.log
+docs/research_paper/*.out
+docs/research_paper/*.xdv
+docs/research_paper/figs/
+docs/research_paper/figs_zh/
+
+# Author-only research notes and review logs
+docs/research_paper/related_work_notes*.md
+docs/research_paper/review_*.md
+docs/research_paper/checklist.tex
+docs/research_paper/build_paper.py
+docs/research_paper/microfusion_peer_review.md
+docs/research_paper/microfusion_review.md
+docs/research_paper/microfusion_revision_plan.md
+docs/research_paper/ZOTERO_SETUP.md
+docs/V*.md
+docs/FOUR_MODEL_TYPES_ANALYSIS.md
+docs/V5_*.md
+docs/V5_ALPHA_*.md
+
+# Raw experiment outputs (large; reproducible from scripts)
+results/
+
+# Pre-baseline and negative findings (kept author-only; paper only references outcomes)
+archive/
+
+# Scale-heterogeneous research line uses proprietary auxiliary models
+# (a proprietary large LM as backbone, tabular-LM, embedding-LM, reranker-LM);
+# the code is preserved author-only and is available on reasonable request.
+research/scale_heterogeneous/
+examples/run_v33_one_big_many_small.py
+examples/run_v34_dmn_subconscious.py
+examples/run_v35_container_entries.py
+examples/run_v36_alpha2_knn.py
+examples/run_v37_b_selftrained_entry.py
+examples/run_v38_g_adult_boundary.py
+examples/run_v39_g2_interaction.py

@@ -1,0 +1,9 @@
+# 异构微观融合系统 v4.0 依赖
+# CPU 版即可验证梯度流与协议; §8.1 的 0.5B 级验证需 A100-80G (规范原文)
+torch>=2.0
+numpy>=1.24
+
+# v6.0 跨架构族异构模态融合 (docs/V6_0_SPEC.md §9) — 加载 HuggingFace 预训练底座
+# (TinyBERT / TinyLlama / ViT-tiny) 及图像预处理所需; v4.0/v5_alpha 测试不依赖
+transformers>=4.30
+Pillow>=9.0
