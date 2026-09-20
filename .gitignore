@@ -39,6 +39,9 @@ docs/research_paper/_archive/
 docs/research_paper/build/
 docs/research_paper/pages_mf/
 docs/research_paper/pages_zh/
+docs/research_paper/page_*.png
+docs/research_paper/neurips_2025.*
+docs/research_paper/make_figs.py
 
 # Build artifacts (rebuilt by latexmk)
 docs/research_paper/*.aux
