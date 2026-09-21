@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # ============================================================================
-# 异构多架构融合 (Multi-Arch-Fusion) v4.0 — 操作入口 (持久化后的统一命令面板)
+# 异构 Mixture-of-Experts (Hetero-MoE) v4.0 — 操作入口 (持久化后的统一命令面板)
 # 用法: bash run.sh <command>
 # ============================================================================
 set -euo pipefail
-PROJECT_DIR="/workspace/multi-arch-fusion"
+PROJECT_DIR="/workspace/hetero-moe"
 cd "$PROJECT_DIR"
 
 cmd="${1:-help}"

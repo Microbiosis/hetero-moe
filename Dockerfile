@@ -1,5 +1,5 @@
 # ============================================================================
-# 异构多架构融合 (Multi-Arch-Fusion) — 自定义镜像
+# 异构 Mixture-of-Experts (Hetero-MoE) — 自定义镜像
 # ----------------------------------------------------------------------------
 # 基础: debian:12-slim
 # 增量: apt 装 python3 + pip, pip 装 torch(CPU) + numpy + transformers + Pillow
@@ -35,8 +35,8 @@ RUN python3 -m pip install --break-system-packages --no-cache-dir \
 RUN python3 -m pip install --break-system-packages --no-cache-dir \
         "transformers>=4.30" "Pillow>=9.0"
 
-# 4) 工作目录 (与原 Linux 沙箱一致 — 目录重命名为 multi-arch-fusion, Python 包名仍为 hetero_fusion)
-WORKDIR /workspace/multi-arch-fusion
+# 4) 工作目录 (与原 Linux 沙箱一致 — 目录 hetero-moe, Python 包名仍为 hetero_fusion)
+WORKDIR /workspace/hetero-moe
 
 # 5) 入口: 长跑 sleep, exec 进去跑命令
 CMD ["bash", "-c", "while true; do sleep 3600; done"]

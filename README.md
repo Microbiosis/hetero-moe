@@ -1,8 +1,9 @@
-# 异构多架构融合 (Multi-Arch-Fusion)
+# 异构 Mixture-of-Experts (Hetero-MoE)
 
-> 异构底座的微观融合 — MoE-Style Multi-Architecture Fusion
+> 异构架构底座做专家的 MoE — Heterogeneous-Bases Mixture-of-Experts
 > 规范基线: **v4.0 Final (冻结)**
 > 工程实现: **v4.0 → v39 (8 条研究线, 35+ 子包)**
+> GitHub: https://github.com/Microbiosis/hetero-moe
 
 ## 5 秒理解
 

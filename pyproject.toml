@@ -1,19 +1,19 @@
-# 异构多架构融合 (Multi-Arch-Fusion) v4.0 — 包定义
+# 异构 Mixture-of-Experts (Hetero-MoE) v4.0 — 包定义
 # 可编辑安装: pip install -e . (使 `import hetero_fusion` 全局可用, 源码改动即时生效)
-# 注: GitHub 仓库名 = multi-arch-fusion; Python 包名 = hetero_fusion (保留以避免改动 327 个 import)
+# 注: GitHub 仓库名 = hetero-moe; Python 包名 = hetero_fusion (保留以避免改动 327 个 import)
 [build-system]
 requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "multi-arch-fusion"
+name = "hetero-moe"
 version = "4.0.0"
-description = "异构多架构融合 v4.0 Final — MoE-Style Multi-Architecture Fusion"
+description = "异构 MoE v4.0 Final — Heterogeneous-Bases Mixture-of-Experts"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Anonymous" }]
-keywords = ["moe", "heterogeneous", "fusion", "quantization", "transformer", "multi-architecture"]
+keywords = ["moe", "heterogeneous", "mixture-of-experts", "multi-architecture", "quantization", "transformer"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",

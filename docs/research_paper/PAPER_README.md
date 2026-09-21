@@ -204,7 +204,7 @@ docs/research_paper/
 
 ## 10. Contact and Contributions
 
-This paper documents the contributions of the **Multi-Arch-Fusion** project (GitHub repo `multi-arch-fusion`; Python package `hetero_fusion`, kept for backward-compatible imports). The project-level structure (research lines, primitives, archive) is documented at `<repo>/README.md`.
+This paper documents the contributions of the **Hetero-MoE** project (GitHub repo `hetero-moe`; Python package `hetero_fusion`, kept for backward-compatible imports). The project-level structure (research lines, primitives, archive) is documented at `<repo>/README.md`.
 
 For questions about a specific research line, see the per-line README at `<repo>/research/{line}/README.md`.
 
