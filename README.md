@@ -1,6 +1,6 @@
-# 异构微观融合系统 (HeteroFusion)
+# 异构多架构融合 (Multi-Arch-Fusion)
 
-> 异构底座的微观融合 — MoE-Style Heterogeneous Micro-Fusion
+> 异构底座的微观融合 — MoE-Style Multi-Architecture Fusion
 > 规范基线: **v4.0 Final (冻结)**
 > 工程实现: **v4.0 → v39 (8 条研究线, 35+ 子包)**
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # ============================================================================
-# 异构微观融合系统 v4.0 — 操作入口 (持久化后的统一命令面板)
+# 异构多架构融合 (Multi-Arch-Fusion) v4.0 — 操作入口 (持久化后的统一命令面板)
 # 用法: bash run.sh <command>
 # ============================================================================
 set -euo pipefail
-PROJECT_DIR="/workspace/hetero_fusion"
+PROJECT_DIR="/workspace/multi-arch-fusion"
 cd "$PROJECT_DIR"
 
 cmd="${1:-help}"

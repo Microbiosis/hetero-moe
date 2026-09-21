@@ -1,11 +1,11 @@
 # ============================================================================
-# 异构微观融合系统 — 自定义镜像
+# 异构多架构融合 (Multi-Arch-Fusion) — 自定义镜像
 # ----------------------------------------------------------------------------
 # 基础: debian:12-slim
 # 增量: apt 装 python3 + pip, pip 装 torch(CPU) + numpy + transformers + Pillow
 # 镜像特性: docker compose down 后再次 up -d, 镜像层保留,
 #           torch/numpy/python3/transformers/Pillow 全部仍在, 容器秒起可用。
-# hetero_fusion 包不烘进镜像 (用 bind mount + 可编辑安装, 源码改动即时生效)
+# hetero_fusion (Python 包名, import 路径) 不烘进镜像 (用 bind mount + 可编辑安装, 源码改动即时生效)
 #
 # v6+ 跨架构 / v16+ 真实预训练底座 / v24 CLIP 教师 依赖 transformers+Pillow,
 # 已合并到镜像层; v6 之前版本只依赖 torch+numpy 仍能跑.
@@ -35,8 +35,8 @@ RUN python3 -m pip install --break-system-packages --no-cache-dir \
 RUN python3 -m pip install --break-system-packages --no-cache-dir \
         "transformers>=4.30" "Pillow>=9.0"
 
-# 4) 工作目录 (与原 Linux 沙箱一致)
-WORKDIR /workspace/hetero_fusion
+# 4) 工作目录 (与原 Linux 沙箱一致 — 目录重命名为 multi-arch-fusion, Python 包名仍为 hetero_fusion)
+WORKDIR /workspace/multi-arch-fusion
 
 # 5) 入口: 长跑 sleep, exec 进去跑命令
 CMD ["bash", "-c", "while true; do sleep 3600; done"]

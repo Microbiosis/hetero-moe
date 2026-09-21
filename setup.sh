@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # ============================================================================
-# 异构微观融合系统 v4.0 — 可复现环境引导脚本 (幂等, 可重复执行)
+# 异构多架构融合 (Multi-Arch-Fusion) v4.0 — 可复现环境引导脚本 (幂等, 可重复执行)
 # ----------------------------------------------------------------------------
-# 设计目标: 即使 rootfs 被重置, 只要 /workspace/hetero_fusion 源码在,
+# 设计目标: 即使 rootfs 被重置, 只要 /workspace/multi-arch-fusion 源码在,
 #           执行本脚本即可一键重建完整可运行环境。
 # 幂等性: 每一步先检测是否已满足, 已满足则跳过, 可安全重复执行。
+# 注: 本地目录 multi-arch-fusion; Python 包名 hetero_fusion (import 路径不变)
 # ============================================================================
 set -euo pipefail
 
-PROJECT_DIR="/workspace/hetero_fusion"
+PROJECT_DIR="/workspace/multi-arch-fusion"
 PYTHON="python3"
 
 c_ok()   { printf "  \033[32m✓\033[0m %s\n" "$1"; }
