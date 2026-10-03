@@ -236,10 +236,39 @@ python3 tools/validate_generations.py        # 严格模式, 默认
 
 ```
 包数: 32  错误: 0  警告: 39  ✓ ALL GREEN
-警告构成: 30 × LEAKAGE-PENDING + 8 × NO-FORWARDER + 1 × LINEAGE-WARN
+  ├─ 入版本库: 22 包
+  └─ author-only (不在库, 见 .gitignore): 10 包
+       archive/negative_findings (2), archive/pre_baseline (1), research/scale_heterogeneous (7)
 ```
 
-**32 个版本包已全部自包含**(29 个在 `research/`,3 个在 `archive/`)。
+**"自包含"要分两层看:工作树里合规 ≠ 随仓库分发。**
+
+| | 数量 | 说明 |
+|---|---:|---|
+| 工作树中已自包含 | 32 | 全部自带 `MANIFEST.json` / `SPEC.md` / `results/metrics.json` / 包内权威测试 |
+| **其中随仓库分发** | **22** | 这部分的自包含保证对克隆仓库的人有效 |
+| **其中仅本地生效** | **10** | `.gitignore` 标注 author-only, 不随仓库分发 |
+
+**这 10 个包是既有仓库策略决定的,不是本次改造遗漏。** `.gitignore` 写明:
+
+```
+# Pre-baseline and negative findings (kept author-only; paper only references outcomes)
+archive/
+
+# Scale-heterogeneous research line uses proprietary auxiliary models
+# (a proprietary large LM as backbone, tabular-LM, embedding-LM, reranker-LM);
+# the code is preserved author-only and is available on reasonable request.
+research/scale_heterogeneous/
+```
+
+即 `archive/`(v5 前基线 + v12/v23b 负结果)与 `research/scale_heterogeneous/`
+(v33-v39,含刚修好的三个)因**引用 proprietary 辅助模型**而保留在作者本地。
+
+**因此不要笼统地说"32 个包都自包含"** —— 准确表述是:
+**32 个包在工作树中自包含,其中 22 个的自包含保证随仓库分发。**
+
+校验器现在会按 `git check-ignore` 自动区分并打印这个口径,避免误判。
+若将来要改变该策略(取消 author-only),校验器输出会自动跟随,无需改代码。
 
 | 项 | 数量 |
 |---|---|

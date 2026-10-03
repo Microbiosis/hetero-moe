@@ -40,6 +40,12 @@
 
 两层互补:**代码能跑** ≠ **结论可复核**。L1 保证可执行,L2 保证可审计。
 
+L2 还有第三层区分,同样重要:**工作树里合规 ≠ 随仓库分发。**
+校验器按 `git check-ignore` 把包分成"入版本库"与"author-only"两类并分别计数,
+因为本仓库的 `.gitignore` 明确把 `archive/` 与 `research/scale_heterogeneous/`
+标注为 author-only(引用 proprietary 辅助模型,保留本地、available on request)。
+这两类包的自包含只在本地生效,不应与"随仓库分发的自包含保证"混为一谈。
+
 ---
 
 ## 2. 包内必备结构

@@ -23,9 +23,10 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent
 RESEARCH = ROOT / "research"
@@ -44,6 +45,20 @@ REQUIRED_FILES = ["MANIFEST.json", "SPEC.md", "results/metrics.json",
 
 # leakage_audit.status 合法取值
 LEAKAGE_STATUS = {"clean", "invalidated", "not_applicable", "pending"}
+
+
+def git_ignored(rel_path: str) -> Optional[bool]:
+    """该路径是否被 .gitignore 排除。True=排除, False=会入库, None=无法判定。"""
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), "check-ignore", "-q", rel_path],
+                           capture_output=True, timeout=15)
+        if r.returncode == 0:
+            return True
+        if r.returncode == 1:
+            return False
+        return None
+    except Exception:  # noqa: BLE001 - 非 git 仓库 / git 不可用
+        return None
 
 
 def discover_generations() -> List[Path]:
@@ -176,6 +191,7 @@ def main() -> int:
         return 2
 
     recs, total_err, total_warn = [], 0, 0
+    author_only, versioned, unknown = [], [], []
     for pkg in targets:
         errs, warns = check_generation(pkg, args.allow_missing, args.require_leakage_audit)
         man_path = pkg / "MANIFEST.json"
@@ -190,13 +206,18 @@ def main() -> int:
         total_warn += len(warns)
 
         rel = pkg.relative_to(ROOT)
+        # 口径: 该包是否在版本库内。author-only 路径 (.gitignore 标注
+        # "kept author-only", 因引用 proprietary 辅助模型) 只在本地生效, 不随仓库分发。
+        ig = git_ignored(str(rel))
+        (author_only if ig else versioned if ig is False else unknown).append(str(rel))
+        suffix = "  [author-only: 不入库]" if ig else ("  [未入库?]" if ig is None else "")
         if errs:
-            print(f"  ✗ {rel}")
+            print(f"  ✗ {rel}{suffix}")
             for e in errs:
                 print(f"      {e}")
         else:
             mark = "✓" if not warns else "○"
-            print(f"  {mark} {rel}")
+            print(f"  {mark} {rel}{suffix}")
         for w in warns:
             print(f"      {w}")
 
@@ -214,6 +235,18 @@ def main() -> int:
     print(f"  包数: {len(targets)}  错误: {total_err}  警告: {total_warn}  "
           f"{'✓ ALL GREEN' if ok else '✗ HAS FAILURE'}"
           f"{'  (--allow-missing 模式)' if args.allow_missing else ''}")
+    # 口径: 分清"工作树里合规"与"随仓库分发"
+    print(f"  ├─ 入版本库: {len(versioned)} 包")
+    print(f"  └─ author-only (不在库, 见 .gitignore): {len(author_only)} 包")
+    if author_only:
+        lines: Dict[str, int] = {}
+        for p in author_only:
+            top = "/".join(Path(p).parts[:2])
+            lines[top] = lines.get(top, 0) + 1
+        print(f"       {', '.join(f'{k} ({v})' for k, v in sorted(lines.items()))}")
+        print("       这些包的自包含只在本地生效; 其 MANIFEST/SPEC/results/tests 不随仓库分发。")
+    if unknown:
+        print(f"  └─ 入库状态无法判定: {len(unknown)} 包 (git 不可用)")
     return 0 if ok else 1
 
 
