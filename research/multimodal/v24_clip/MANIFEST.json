@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0",
+  "version": "24.0",
+  "package": "v24_clip",
+  "line": "multimodal",
+  "title": "CLIP 预训练教师 + 真实多模态数据",
+  "generation": {
+    "one_mechanism_added": "CLIP 预训练教师 + 真实多模态数据",
+    "parent": null,
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "16.0",
+    "line_children": [],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "corpus.py",
+      "teacher.py"
+    ]
+  },
+  "claim": {
+    "asserts": null,
+    "metric": null,
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": null,
+      "value": null
+    },
+    "delta_pct": null,
+    "seeds": null
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": null,
+    "outcome": null
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "pending",
+    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+  },
+  "falsified": [
+    {
+      "hypothesis": null,
+      "verdict": "启示: toy 数据集根本不可行, 必须用真实数据 (v24)",
+      "evidence": "research/负面发现 README 小节"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v24_clip.py",
+    "forwarder_spec": "docs/V24_0_CLIP.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/multimodal/README.md"
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "version": "19.0",
+  "package": "v19_c1_analysis",
+  "line": "central_diagnostics",
+  "title": "5 假设对照实验 (H1-H5)",
+  "generation": {
+    "one_mechanism_added": "5 假设对照实验 (H1-H5)",
+    "parent": null,
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "8.0",
+    "line_children": [],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "diagnostics.py"
+    ]
+  },
+  "claim": {
+    "asserts": null,
+    "metric": null,
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": null,
+      "value": null
+    },
+    "delta_pct": null,
+    "seeds": null
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": null,
+    "outcome": null
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "pending",
+    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+  },
+  "falsified": [],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v19_c1_analysis.py",
+    "forwarder_spec": "docs/V19_0_C1_ROOT_CAUSE.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/central_diagnostics/README.md"
+  ]
+}

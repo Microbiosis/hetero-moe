@@ -26,6 +26,7 @@ PRIMITIVES = {
     "research._primitives.central_theory",
     "research._primitives.real_corpus",
     "research._primitives.scale_hetero_loaders",
+    "research._primitives.testing",
 }
 
 # 允许的"intra-line" 兄弟引用 (同研究线内引用)
@@ -100,18 +101,28 @@ def check_package(pkg_dir: Path, strict: bool = False) -> Tuple[bool, List[str]]
     for py in pkg_dir.rglob("*.py"):
         if "__pycache__" in py.parts:
             continue
+        # 包内自包含测试 (tests/) 允许跨线导入 —— 集成测试按定义就要引用其他包;
+        # 本检查针对的是**实现模块**的依赖闭包。测试搬进包内是 2026-10 的改造,
+        # 搬之前它们位于顶层 tests/, 本来就不在任何包的扫描范围内。
+        if "tests" in py.relative_to(pkg_dir).parts[:-1]:
+            continue
         all_imports.update(parse_imports(py))
 
     # 过滤: 忽略自身
     external = {imp for imp in all_imports if imp != self_path and not imp.startswith(f"{self_path}.")}
 
     # 分类: primitives / 同线允许 / 同包内 / 跨线 (可疑)
-    primitives_used = external & PRIMITIVES
+    # 原语判定: research/_primitives/ 下的**任何**模块都是共享原语 —— 按前缀判定,
+    # 而不是逐个枚举包名, 否则新增子模块 (如 scale_hetero_loaders.paths) 会被误判为跨线。
+    def is_primitive(imp: str) -> bool:
+        return imp in PRIMITIVES or imp.startswith("research._primitives.")
+
+    primitives_used = {imp for imp in external if is_primitive(imp)}
     allowed_used: Set[str] = set()
     cross_line_external: Set[str] = set()
 
     for imp in external:
-        if imp in PRIMITIVES:
+        if is_primitive(imp):
             continue
         # 同研究线内?
         if self_path in ALLOWED_INTRA_LINE and imp in ALLOWED_INTRA_LINE[self_path]:

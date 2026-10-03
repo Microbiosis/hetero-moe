@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "version": "30.0",
+  "package": "v30_gate_softplus",
+  "line": "central_stability",
+  "title": "softplus 替代 tanh (消除饱和区)",
+  "generation": {
+    "one_mechanism_added": "softplus 替代 tanh (消除饱和区)",
+    "parent": null,
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "9.0",
+    "line_children": [],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "layer.py",
+      "workspace.py"
+    ]
+  },
+  "claim": {
+    "asserts": null,
+    "metric": null,
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": null,
+      "value": null
+    },
+    "delta_pct": null,
+    "seeds": null
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": null,
+    "outcome": null
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "pending",
+    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+  },
+  "falsified": [
+    {
+      "hypothesis": null,
+      "verdict": "v27 4 patch (L2/Dropout/warmup/noise) **全部失败** — v22 patch 已局部最优",
+      "evidence": "research/负面发现 README 小节"
+    },
+    {
+      "hypothesis": null,
+      "verdict": "v28 7 架构变体 (LayerNorm/RMSNorm/zero U 等) **全部失败** — 架构层救不了数据规模问题",
+      "evidence": "research/负面发现 README 小节"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "none",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": null,
+    "results": "results/metrics.json",
+    "forwarder_tests": null,
+    "forwarder_spec": "docs/V30_0_GATE_STYLE_CENTRAL_THEORY.md"
+  },
+  "_note": "本代在仓库中没有对应测试文件 (tests/ 下不存在 test_<vN>_*.py, 包内也无 tests/), 故 artifacts.tests 为 null。这是派生结论, 非遗漏。",
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/central_stability/README.md"
+  ]
+}

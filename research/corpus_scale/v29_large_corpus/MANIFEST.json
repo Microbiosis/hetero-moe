@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0",
+  "version": "29.0",
+  "package": "v29_large_corpus",
+  "line": "corpus_scale",
+  "title": "大型真实语料 (64 text + 32 code + 50 image, 4×)",
+  "generation": {
+    "one_mechanism_added": "大型真实语料 (64 text + 32 code + 50 image, 4×)",
+    "parent": null,
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "22.0",
+    "line_children": [],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "code_corpus.py",
+      "image_corpus.py",
+      "layer.py",
+      "text_corpus.py"
+    ]
+  },
+  "claim": {
+    "asserts": null,
+    "metric": null,
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": null,
+      "value": null
+    },
+    "delta_pct": null,
+    "seeds": null
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": null,
+    "outcome": null
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "pending",
+    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+  },
+  "falsified": [
+    {
+      "hypothesis": null,
+      "verdict": "**v27**: 4 patch (L2/Dropout/warmup/noise) **全部失败**, v22 patch 已局部最优",
+      "evidence": "research/负面发现 (重要) README 小节"
+    },
+    {
+      "hypothesis": null,
+      "verdict": "**v28**: 7 架构变体 **全部失败**, 架构层救不了数据规模问题",
+      "evidence": "research/负面发现 (重要) README 小节"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v29_large_corpus.py",
+    "forwarder_spec": "docs/V29_0_LARGE_CORPUS.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/corpus_scale/README.md"
+  ]
+}

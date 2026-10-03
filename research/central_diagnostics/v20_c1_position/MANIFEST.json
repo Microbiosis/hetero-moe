@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "version": "20.0",
+  "package": "v20_c1_position",
+  "line": "central_diagnostics",
+  "title": "H5 (位置) 验证 — broadcast 加到 attn vs ffn vs both",
+  "generation": {
+    "one_mechanism_added": "H5 (位置) 验证 — broadcast 加到 attn vs ffn vs both",
+    "parent": null,
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "8.0",
+    "line_children": [],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "position.py"
+    ]
+  },
+  "claim": {
+    "asserts": null,
+    "metric": null,
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": null,
+      "value": null
+    },
+    "delta_pct": null,
+    "seeds": null
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": null,
+    "outcome": null
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "pending",
+    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+  },
+  "falsified": [],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v20_c1_position.py",
+    "forwarder_spec": "docs/V20_0_C1_POSITION.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/central_diagnostics/README.md"
+  ]
+}

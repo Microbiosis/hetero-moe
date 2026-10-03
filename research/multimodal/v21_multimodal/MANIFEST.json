@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "version": "21.0",
+  "package": "v21_multimodal",
+  "line": "multimodal",
+  "title": "BERT-text + ViT-image + 模态路由器 + LoRA (蒸馏自 v13 mixture 教师)",
+  "generation": {
+    "one_mechanism_added": "BERT-text + ViT-image + 模态路由器 + LoRA (蒸馏自 v13 mixture 教师)",
+    "parent": null,
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "16.0",
+    "line_children": [],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "student.py"
+    ]
+  },
+  "claim": {
+    "asserts": null,
+    "metric": null,
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": null,
+      "value": null
+    },
+    "delta_pct": null,
+    "seeds": null
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": null,
+    "outcome": null
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "pending",
+    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+  },
+  "falsified": [],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v21_multimodal.py",
+    "forwarder_spec": "docs/V21_0_MULTIMODAL.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/multimodal/README.md"
+  ]
+}

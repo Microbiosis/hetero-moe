@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "version": "9.0",
+  "package": "v9_gate_central",
+  "line": "routing_evolution",
+  "title": "gate-style 中枢修正 C (v8 C-1 失败的根因修复)",
+  "generation": {
+    "one_mechanism_added": "gate-style 中枢修正 C (v8 C-1 失败的根因修复)",
+    "parent": null,
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "4.0",
+    "line_children": [],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "lifted",
+    "lifted_to": "research._primitives.central_mechanism",
+    "modules": [
+      "layer.py"
+    ]
+  },
+  "claim": {
+    "asserts": null,
+    "metric": null,
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": null,
+      "value": null
+    },
+    "delta_pct": null,
+    "seeds": null
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": null,
+    "outcome": null
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "pending",
+    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+  },
+  "falsified": [
+    {
+      "hypothesis": null,
+      "verdict": "v8 C-1 broadcast 单独启用会反向增益 — 引出 v9 根因分析",
+      "evidence": "research/负面发现 / 边界 README 小节"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v9_gate.py",
+    "forwarder_spec": "docs/V9_0_GATE_CENTRAL.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/routing_evolution/README.md"
+  ]
+}

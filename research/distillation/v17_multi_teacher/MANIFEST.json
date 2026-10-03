@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "version": "17.0",
+  "package": "v17_multi_teacher",
+  "line": "distillation",
+  "title": "多教师蒸馏 (2 / 3 / 3-weighted) — 已知负结果",
+  "generation": {
+    "one_mechanism_added": "把单教师 MSE 换成多教师加权和 sum_k w_k * MSE(student_k, teacher_k), 教师组 = {v10 attn, v13 mixture, v15 mom}",
+    "parent": "16.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "13.0",
+    "line_children": [
+      "21.0"
+    ],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "distill.py"
+    ]
+  },
+  "claim": {
+    "asserts": "多个教师提供不同视角的概念方向, 多教师蒸馏应优于单教师",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": 0.3814,
+    "baseline": {
+      "ref": "16.0 单教师 (teacher-single)",
+      "value": 0.3267
+    },
+    "delta_pct": -16.7,
+    "seeds": 5,
+    "outcome_label": "regressed"
+  },
+  "variants": [
+    {
+      "mode": "teacher-single",
+      "fuse": 0.3267,
+      "delta_pct": 0.0,
+      "teachers": [
+        "v13"
+      ]
+    },
+    {
+      "mode": "teacher-multi-2",
+      "fuse": 0.3814,
+      "delta_pct": -16.7,
+      "teachers": [
+        "v10",
+        "v13"
+      ]
+    },
+    {
+      "mode": "teacher-multi-3",
+      "fuse": 0.3486,
+      "delta_pct": -6.7,
+      "teachers": [
+        "v10",
+        "v13",
+        "v15"
+      ]
+    },
+    {
+      "mode": "teacher-multi-3-weighted",
+      "fuse": 0.3379,
+      "delta_pct": -3.4,
+      "teachers": [
+        "v10",
+        "v13",
+        "v15"
+      ],
+      "weights": {
+        "v13": 0.5,
+        "v10": 0.25,
+        "v15": 0.25
+      }
+    }
+  ],
+  "protocol": {
+    "eval_set": "train_distribution",
+    "input": "同 v16 协议 (fake vocab-sampled input_ids)",
+    "caveat": "论文正文复述为 -15.8 / -6.3 / -3.9, 与 docs 所载 -16.7 / -6.7 / -3.4 存在轻微差异; 本 manifest 采用 docs 记录"
+  },
+  "acceptance": {
+    "criterion": "多教师 fuse_mse < 单教师 fuse_mse",
+    "outcome": "fail",
+    "note": "5 个变体全部不优于单教师; 本代是一条被证伪的路线, 其价值在于划定边界"
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "not_applicable",
+    "note": "本代的负结论不依赖收益幅度, 而是相对单教师的符号; 目标项泄漏只会同向抬高两者, 不足以把负号翻成正号。但若要引用具体百分比, 需先做 beta_h=0 重测"
+  },
+  "falsified": [
+    {
+      "hypothesis": "多教师 > 单教师",
+      "verdict": "5/5 变体全部证伪",
+      "evidence": "docs/V17_0_MULTI_TEACHER.md; examples/run_v17_multi_teacher.py"
+    },
+    {
+      "hypothesis": "教师加权可缓解冲突",
+      "verdict": "部分成立但仍为负 (加权 -3.4% 优于等权 -6.7%, 仍差于单教师)",
+      "evidence": "同上"
+    }
+  ],
+  "root_cause_identified_later": {
+    "finding": "失败源于'同时多目标回归'的实现形式, 而非多教师本身不可行",
+    "evidence": [
+      "research/distillation/v17_multi_teacher/distill.py:51  — total = total + w_k * MSE_k (加权和)",
+      "examples/run_v17_multi_teacher.py:159  — student_outs = {kind: y for kind in teacher_kinds} (同一张量 y 别名进全部教师槽位)",
+      "distill.py:11 docstring  — '每个教师对齐的是同一学生的同一前向输出, 不是不同的学生'"
+    ],
+    "note": "代码中不存在任何按样本的分派路径; 对照 MOPD (arXiv:2606.30406) 的 per-prompt 单教师分派, 本代从未测过分派式多教师"
+  },
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v17_multi.py",
+    "forwarder_spec": "docs/V17_0_MULTI_TEACHER.md"
+  }
+}

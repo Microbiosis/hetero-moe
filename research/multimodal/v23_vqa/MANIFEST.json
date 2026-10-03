@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "version": "23.0",
+  "package": "v23_vqa",
+  "line": "multimodal",
+  "title": "Mini-VQA 4 类 toy 任务",
+  "generation": {
+    "one_mechanism_added": "Mini-VQA 4 类 toy 任务",
+    "parent": null,
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "16.0",
+    "line_children": [],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "dataset.py"
+    ]
+  },
+  "claim": {
+    "asserts": null,
+    "metric": null,
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": null,
+      "value": null
+    },
+    "delta_pct": null,
+    "seeds": null
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": null,
+    "outcome": null
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "pending",
+    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+  },
+  "falsified": [
+    {
+      "hypothesis": null,
+      "verdict": "**v23b**: 8 类陷阱设计下所有模型 (含 multimodal) 仍 50% = 随机水平",
+      "evidence": "research/负面发现 README 小节"
+    },
+    {
+      "hypothesis": null,
+      "verdict": "已移到 `archive/negative_findings/v23b_hard_vqa/` (从 v23 抽出)",
+      "evidence": "research/负面发现 README 小节"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v23_vqa.py",
+    "forwarder_spec": "docs/V23_0_VQA.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/multimodal/README.md"
+  ]
+}

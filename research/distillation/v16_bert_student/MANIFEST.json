@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0",
+  "version": "16.0",
+  "package": "v16_bert_student",
+  "line": "distillation",
+  "title": "真实 BERT 学生 + LoRA 蒸馏 (chimera distillation 第一版)",
+  "generation": {
+    "one_mechanism_added": "把 v13 的简化 MLP 学生换成真实预训练 TinyBERT 底座 + LoRA(0.60% 可训练参数), 学生只看自己的输入却要复现多底座融合输出",
+    "parent": "13.0",
+    "children": [
+      "17.0",
+      "18.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "13.0",
+    "line_children": [
+      "21.0"
+    ],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "student.py"
+    ]
+  },
+  "claim": {
+    "asserts": "单教师蒸馏可行, 且学生可以超过其多底座教师 (表观 +47.5%)",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": 0.135,
+    "baseline": {
+      "ref": "13.0 (mixture aligner 教师)",
+      "value": 0.257
+    },
+    "delta_pct": 47.5,
+    "seeds": 5
+  },
+  "runs": [
+    {
+      "id": "v16-protocol",
+      "eval_set": "train_distribution",
+      "input": "从 vocab 随机采样的 fake input_ids",
+      "teacher_fuse": 0.257,
+      "student_fuse": 0.135,
+      "delta_pct": 47.5,
+      "note": "原始记录行"
+    },
+    {
+      "id": "v32-rerun",
+      "eval_set": "train_distribution",
+      "input": "同协议, 全新随机 token",
+      "teacher_fuse": 0.324,
+      "student_fuse": 0.164,
+      "delta_pct": 49.4,
+      "note": "v32 重跑的内部一致水平; 绝对值与 v16-protocol 不同, 论文已声明两行不跨协议比较"
+    }
+  ],
+  "protocol": {
+    "eval_set": "train_distribution",
+    "input": "fake vocab-sampled input_ids, 评估输入与训练分布同源",
+    "caveat": "表观收益中包含 Jensen 型方差平均优势与 beta_h=0.3 直接目标项, 两者已由 v32 分别排除"
+  },
+  "acceptance": {
+    "criterion": "student fuse_mse < teacher fuse_mse (即学生超越教师)",
+    "outcome": "invalidated",
+    "note": "在 beta_h=0 的无泄漏条件下不成立, 见 leakage_audit"
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "invalidated",
+    "audited_in": "32.0",
+    "leak_term": "beta_h=0.3 direct target term in the distillation loss",
+    "leak_free_value": 0.324,
+    "leak_free_teacher_value": 0.323,
+    "paired_gap": -0.0009,
+    "paired_gap_std": 0.0038,
+    "paired_gap_seeds": 10,
+    "significant": false,
+    "note": "纯蒸馏(beta_h=0)0.324±0.013 vs 教师 0.323±0.015, 配对差不显著; +0.159 表观收益全部归因于直接目标项, 非概念方向迁移"
+  },
+  "falsified": [
+    {
+      "hypothesis": "单教师蒸馏可使学生超越其多底座教师",
+      "verdict": "证伪(在无泄漏条件下)",
+      "evidence": "examples/run_v32_representation_transfer.py; docs/research_paper/microfusion.tex §distill-exp"
+    },
+    {
+      "hypothesis": "教师前向的随机性(硬 Top-K + INT4 噪声)带来 Jensen 型优势",
+      "verdict": "证伪",
+      "evidence": "examples/run_v32_super_deterministic.py — 超确定教师 0.324±0.015, 完全相同"
+    }
+  ],
+  "superseded_by": "18.0",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v16_bert.py",
+    "forwarder_spec": "docs/V16_0_BERT_STUDENT.md"
+  }
+}

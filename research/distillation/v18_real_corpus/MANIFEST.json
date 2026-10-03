@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "version": "18.0",
+  "package": "v18_real_corpus",
+  "line": "distillation",
+  "title": "真实 Wikipedia 语料蒸馏 (修正 v16 的过拟合假象)",
+  "generation": {
+    "one_mechanism_added": "引入 MiniCorpus (16 句训练 + 6 句 held-out 真实 Wikipedia 文本), 把评估从训练分布移到 held-out 真实文本",
+    "parent": "16.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "13.0",
+    "line_children": [
+      "21.0"
+    ],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "lifted",
+    "lifted_to": "research._primitives.real_corpus",
+    "modules": [],
+    "note": "本包实现已整体提升为共享原语, 本目录是 thin re-export shim"
+  },
+  "consumers": [
+    "research.corpus_scale.v25_corpus_central",
+    "research.corpus_scale.v26_real_corpus"
+  ],
+  "claim": {
+    "asserts": "在 held-out 真实语料上蒸馏路线仍然可行, v16 的表观收益不是纯过拟合",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": 0.157,
+    "baseline": {
+      "ref": "fake-vocabulary 与 fine-tune-only 对照",
+      "value": 0.0
+    },
+    "delta_pct": null,
+    "seeds": 5
+  },
+  "protocol": {
+    "eval_set": "held_out",
+    "input": "6 句 held-out 真实 Wikipedia 文本 (与 16 句训练文本不重叠)",
+    "caveat": "对照组(约 0 值)之所以接近 0, 是因为其评估输入与目标本身平凡可拟合, 不代表泛化; 0.157 才是反映拟合教师输出的数字"
+  },
+  "acceptance": {
+    "criterion": "held-out 真实语料上学生 fuse_mse 明显高于平凡可拟合的对照组 (即不是靠记训练分布)",
+    "outcome": "pass",
+    "note": "同时它修正了 v16 的解读, 因此 superseded_by 指向 v18"
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "pending",
+    "note": "v18 与 v16 用同一混合目标 (beta_h=0.3), 因此共享 v16 的泄漏问题; v32 已证明纯蒸馏在该教师下 0.324, 故 v18 的 0.157 同样包含目标项贡献, 尚未做 beta_h=0 的 held-out 重测"
+  },
+  "falsified": [
+    {
+      "hypothesis": "v16 的收益主要来自训练分布过拟合",
+      "verdict": "部分证伪 — held-out 上仍有 0.157, 不是纯记忆",
+      "evidence": "examples/run_v18_wiki_distill.py"
+    },
+    {
+      "hypothesis": "v16 的收益来自概念方向迁移",
+      "verdict": "证伪(由 v32 在 v16 上直接给出)",
+      "evidence": "docs/research_paper/microfusion.tex §distill-exp"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v18_real_corpus.py",
+    "forwarder_spec": "docs/V18_0_REAL_CORPUS.md"
+  }
+}
