@@ -87,3 +87,6 @@ examples/run_v36_alpha2_knn.py
 examples/run_v37_b_selftrained_entry.py
 examples/run_v38_g_adult_boundary.py
 examples/run_v39_g2_interaction.py
+
+# Local preview server state (built personal-site bundle + serve logs)
+.personal-site-staging/
