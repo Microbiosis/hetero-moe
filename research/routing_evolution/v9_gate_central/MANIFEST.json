@@ -6,8 +6,11 @@
   "title": "gate-style 中枢修正 C (v8 C-1 失败的根因修复)",
   "generation": {
     "one_mechanism_added": "gate-style 中枢修正 C (v8 C-1 失败的根因修复)",
-    "parent": null,
-    "children": []
+    "parent": "8.0",
+    "children": [
+      "12.0",
+      "22.0"
+    ]
   },
   "lineage": {
     "line_parent": "4.0",

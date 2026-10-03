@@ -6,8 +6,11 @@
   "title": "MixtureAligner (跨底座 + 跨专家注意力) + 蒸馏入口",
   "generation": {
     "one_mechanism_added": "MixtureAligner (跨底座 + 跨专家注意力) + 蒸馏入口",
-    "parent": null,
-    "children": []
+    "parent": "10.0",
+    "children": [
+      "15.0",
+      "16.0"
+    ]
   },
   "lineage": {
     "line_parent": "7.0",

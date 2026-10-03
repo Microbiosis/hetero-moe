@@ -6,8 +6,11 @@
   "title": "跨架构族 Attn + FFN 双路由",
   "generation": {
     "one_mechanism_added": "跨架构族 Attn + FFN 双路由",
-    "parent": null,
-    "children": []
+    "parent": "6.0",
+    "children": [
+      "10.0",
+      "8.0"
+    ]
   },
   "lineage": {
     "line_parent": "4.0",

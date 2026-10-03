@@ -6,8 +6,10 @@
   "title": "BERT-text + ViT-image + 模态路由器 + LoRA (蒸馏自 v13 mixture 教师)",
   "generation": {
     "one_mechanism_added": "BERT-text + ViT-image + 模态路由器 + LoRA (蒸馏自 v13 mixture 教师)",
-    "parent": null,
-    "children": []
+    "parent": "16.0",
+    "children": [
+      "23.0"
+    ]
   },
   "lineage": {
     "line_parent": "16.0",

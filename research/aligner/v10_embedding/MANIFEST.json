@@ -6,8 +6,10 @@
   "title": "attn aligner (跨底座共享 K/V 注意力)",
   "generation": {
     "one_mechanism_added": "attn aligner (跨底座共享 K/V 注意力)",
-    "parent": null,
-    "children": []
+    "parent": "7.0",
+    "children": [
+      "13.0"
+    ]
   },
   "lineage": {
     "line_parent": "7.0",

@@ -6,8 +6,10 @@
   "title": "router-norm / adaptive-ema held-out 修正补丁 (4 patch × 4 mode × 5 seeds = 80 run)",
   "generation": {
     "one_mechanism_added": "router-norm / adaptive-ema held-out 修正补丁 (4 patch × 4 mode × 5 seeds = 80 run)",
-    "parent": null,
-    "children": []
+    "parent": "26.0",
+    "children": [
+      "28.0"
+    ]
   },
   "lineage": {
     "line_parent": "22.0",

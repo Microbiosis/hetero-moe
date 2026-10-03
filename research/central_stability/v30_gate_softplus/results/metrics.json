@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "version": "30.0",
+  "package": "v30_gate_softplus",
+  "line": "central_stability",
+  "metric": null,
+  "direction": "lower_is_better",
+  "baseline": null,
+  "value": null,
+  "recorded_by": "extract_generation_manifest.py 骨架, 指标待人工填"
+}

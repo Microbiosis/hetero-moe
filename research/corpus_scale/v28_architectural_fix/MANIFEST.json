@@ -6,8 +6,10 @@
   "title": "架构层面修正 (11 架构变体 × 5 seeds = 55 run)",
   "generation": {
     "one_mechanism_added": "架构层面修正 (11 架构变体 × 5 seeds = 55 run)",
-    "parent": null,
-    "children": []
+    "parent": "27.0",
+    "children": [
+      "29.0"
+    ]
   },
   "lineage": {
     "line_parent": "22.0",

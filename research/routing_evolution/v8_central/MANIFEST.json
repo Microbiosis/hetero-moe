@@ -6,8 +6,11 @@
   "title": "全局中枢三路线 (C-1 broadcast / C-2 协同 / C-3 层级)",
   "generation": {
     "one_mechanism_added": "全局中枢三路线 (C-1 broadcast / C-2 协同 / C-3 层级)",
-    "parent": null,
-    "children": []
+    "parent": "7.0",
+    "children": [
+      "19.0",
+      "9.0"
+    ]
   },
   "lineage": {
     "line_parent": "4.0",

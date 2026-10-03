@@ -6,8 +6,10 @@
   "title": "5 假设对照实验 (H1-H5)",
   "generation": {
     "one_mechanism_added": "5 假设对照实验 (H1-H5)",
-    "parent": null,
-    "children": []
+    "parent": "8.0",
+    "children": [
+      "20.0"
+    ]
   },
   "lineage": {
     "line_parent": "8.0",

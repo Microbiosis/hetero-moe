@@ -6,8 +6,10 @@
   "title": "softplus 替代 tanh (消除饱和区)",
   "generation": {
     "one_mechanism_added": "softplus 替代 tanh (消除饱和区)",
-    "parent": null,
-    "children": []
+    "parent": "22.0",
+    "children": [
+      "31.0"
+    ]
   },
   "lineage": {
     "line_parent": "9.0",

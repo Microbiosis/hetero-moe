@@ -6,7 +6,7 @@
   "title": "大型真实语料 (64 text + 32 code + 50 image, 4×)",
   "generation": {
     "one_mechanism_added": "大型真实语料 (64 text + 32 code + 50 image, 4×)",
-    "parent": null,
+    "parent": "28.0",
     "children": []
   },
   "lineage": {

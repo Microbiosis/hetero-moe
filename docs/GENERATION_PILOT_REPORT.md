@@ -4,6 +4,8 @@
 > **日期**: 2026-10-03
 > **规范**: [`docs/GENERATION_MANIFEST_SCHEMA.md`](GENERATION_MANIFEST_SCHEMA.md)
 > **校验器**: `tools/validate_generations.py` (已接入 `run.sh generations`)
+> **后续**: 试点之后的迭代见文末 [§11 试点后迭代](#11-试点后迭代2026-10-03)。
+>   本文 §1–§10 保持试点当时的原始记录不改写, 数字以 §11 为准。
 
 ---
 
@@ -369,3 +371,114 @@ python3 tools/extract_generation_manifest.py --print-human
 - 未改 `pyproject.toml`(`tools` 不在 `packages.include` 内,新校验器与抽取器均为开发期工具)
 - 未提交 / 未打 tag(git 仍是 1 个 commit;补版本标记需另行确认)
 - 未跑任何 `examples/run_v*.py` 复现实验,manifest 中的指标均为**从既有文档转录**,非本次实测
+
+---
+
+## 11. 试点后迭代 (2026-10-03)
+
+目标不变: **每一代都成一个自包含独立子包**。本节记录试点之后补齐的部分,
+以及试点 "ALL GREEN" 掩盖掉的两个真实缺陷。§1–§10 的数字以本节为准。
+
+### 11.1 试点报绿, 但自包含在分发层面是断的
+
+试点 §7 报 `包数: 32  错误: 0  ✓ ALL GREEN`。但校验器当时只检查
+**产物在本机磁盘上是否存在**, 不检查它是否**随仓库分发**。实测:
+
+| 产物 | 磁盘 | 版本库 | 被谁吞掉 |
+|---|---|---|---|
+| 32 个包的 `results/metrics.json` | 有 | **0 个** | `.gitignore` 的 `results/` |
+| 34 份 `docs/V*_0_*.md` 薄指针 | 有 | **0 份** | `.gitignore` 的 `docs/V*.md` |
+
+根因是两条 gitignore 规则的**作用域比意图宽**:
+
+- `results/`(无前导斜杠)匹配**任意层级**的 results 目录, 于是把每个版本包
+  自己的 `results/metrics.json` 一起排除了。而顶层 `results/` 的注释写的是
+  "Raw experiment outputs (large; reproducible from scripts)" —— 只想排原始输出。
+- `docs/V*.md` 同样是通配。试点新建的薄指针就落在这个模式下, 于是
+  `MANIFEST.artifacts.forwarder_spec` 指向一个**克隆者永远拿不到**的文件。
+
+**结论**: "自包含"必须分两个口径问 —— 本机是否有, 分发后是否有。试点只答了第一个。
+现已在 `.gitignore` 里把两条规则收窄(`/results/` 加前导斜杠; `!docs/V*_0_*.md`
+放行薄指针), 并给校验器加了一道闸门:
+
+```
+[ARTIFACT-UNSHIPPED]  产物被 .gitignore 排除        → 错误
+[ARTIFACT-UNTRACKED]  产物尚未 git add            → 警告
+```
+
+author-only 包不做该判定(它们本来就不入库, 属既有仓库策略)。
+
+### 11.2 补齐 v32: 产出 `leakage_audit` 概念的那一代, 自己却没有子包
+
+试点把 `leakage_audit` 立为必备字段, 并在 v16/v17 的 MANIFEST 里写了
+`audited_in: "32.0"` —— **但 v32 自己不是子包**。它有 5 个 runner、
+4 份结果记录, 却散在仓库根那个被 gitignore 的 `results/` 里。
+也就是说, 论文里最关键的负结果("纯蒸馏不超越教师"), 其证据链在分发版本里是断的。
+
+新增 `research/distillation/v32_leakage_audit/`, 特点是**自带原始记录**:
+
+| 文件 | 作用 |
+|---|---|
+| `results/v32_*.json` (4 份) | 从仓库根 `results/` 搬入包内, 随包分发 |
+| `audit.py` | 纯标准库, 只读包内记录, 重算整代结论 |
+| `tests/test_package.py` | 8 项, 全部从原始记录重算而非对字面量 |
+
+于是论文那句话变成**可重算的判据**:
+
+```bash
+python -c "from research.distillation.v32_leakage_audit import leakage_verdict; print(leakage_verdict())"
+# pure_beats_teacher=False, paired_gap=-0.0009 ± 0.0038
+```
+
+`test_headline_number_reproduces_paper` 钉住的就是这个数能算回论文的 −0.0009 ± 0.0038。
+审计时发现两个容易引错的口径, 已在代码与 SPEC 中显式注明:
+配对差是 `teacher − student`(反过来会读成"学生反超"), 标准差是**样本**标准差
+(ddof=1, 用总体标准差会得到 ±0.0036), 且头条数字取自 `deterministic` 条件而非 `base`。
+
+**`forwarder_tests` 故意为 null**: 加顶层转发层会让全套件从 327 变 335,
+而论文里的 327 已校准并编译进 PDF, 此处无法重编译 LaTeX。
+与 v5 / v30 / v31 同样处理, 包内权威测试可直接运行。
+
+### 11.3 版本号撞号: v23b 在谱系图里被静默吞掉
+
+抽取器的目录名正则 `v(\d+)[a-z]*_` 认得 `v23b` 的 `b` 后缀, 但生成版本号时
+`version_dotted = f"{version.lstrip('v')}.0"` 把它丢了 —— 于是
+`v23b_hard_vqa` 与 `v23_vqa` 的 `version` 都是 `"23.0"`。
+
+后果不是报错, 而是**静默丢数据**: `check_lineage` 用 `version_map[v] = rec`,
+后写的覆盖先写的, v23b 的整条谱系从图里消失, 校验器还报 ALL GREEN。
+v23b 是独立的一代(multimodal README 单列一行: 8 类陷阱 toy, multimodal 50% = 随机)。
+
+- 版本号改为 `23b.0`;
+- 校验器新增 `[VERSION-DUP]` 检查, 撞号直接判错。
+
+这与 §8 的结论一致: 校验器该抓到的都抓到了, 前提是**检查项本身覆盖到那一类**。
+
+### 11.4 接上代际链: 29 个孤儿包不再是孤儿
+
+试点只有 v16/v17/v18 填了 `generation.parent`, 其余 29 个全空 —— 抽取器
+按设计不猜父版本。于是"代际链"当时只是一堆孤岛, 谱系查询无从谈起。
+
+本轮按各研究线 README 的父/子版本声明 + `research/README.md` 的自演进序列
+补齐 28 个父版本(4 个试点已填的保留), 再用 `tools/extract_generation_manifest.py --link`
+由父代反推 children。现在 `LINEAGE-WARN` 归零, 谱系双向自洽。
+
+### 11.5 本轮之后的准确状态
+
+```
+包数: 33  错误: 0  ✓ ALL GREEN
+  ├─ 入版本库: 23 包
+  └─ author-only (不在库, 见 .gitignore): 10 包
+```
+
+**仍未做(诚实记录, 不粉饰)**:
+
+1. **v4 / v6 / v14 三个代仍无子包**。它们各有完整规范与 runner, 本轮未建成包。
+2. 32 个存量包的 `results/metrics.json` 仍是抽取器骨架, `metric`/`value` 为 `null`,
+   待逐代从证据填写(`tools/manifest_worksheet.py` 已备好工作表)。
+3. `--require-leakage-audit` 仍未打开: 现有 30 代 `status` 为 `pending`。
+4. §3 记录的两处 `check_self_containment.py` 缺陷(`__deps__` 空实现、
+   `ALLOWED_INTRA_LINE` 键方向)**仍未修**。
+5. `run.sh` 的 `PROJECT_DIR` 硬编码 `/workspace/hetero-moe`, 在本机跑不了,
+   全套件是按其逻辑等价执行的。
+

@@ -6,8 +6,10 @@
   "title": "v22 + v18 跨版本集成 (首个跨版本包)",
   "generation": {
     "one_mechanism_added": "v22 + v18 跨版本集成 (首个跨版本包)",
-    "parent": null,
-    "children": []
+    "parent": "22.0",
+    "children": [
+      "26.0"
+    ]
   },
   "lineage": {
     "line_parent": "22.0",

@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "version": "32.0",
+  "package": "v32_leakage_audit",
+  "line": "distillation",
+  "metric": "fuse_mse_paired_gap",
+  "direction": "lower_is_better",
+  "gap_convention": "paired_gap := teacher - pure_student; 负值 = 学生更差。标准差为样本标准差 (ddof=1)。",
+  "headline": {
+    "condition": "deterministic",
+    "seeds": 10,
+    "teacher_mse": 0.3231,
+    "teacher_std": 0.0146,
+    "pure_student_mse": 0.324,
+    "pure_student_std": 0.013,
+    "mixed_student_mse": 0.1647,
+    "mixed_student_std": 0.007,
+    "paired_gap": -0.0009,
+    "paired_gap_std": 0.0038,
+    "significant": false,
+    "note": "复算自 results/v32_variance_isolation.json 的 deterministic 条件; 与论文 §Target-leakage quantification 及 v16 MANIFEST 引用的 -0.0009 ± 0.0038 一致。"
+  },
+  "variance_isolation": {
+    "seeds": 10,
+    "base":           { "teacher": 0.325,  "mixed": 0.1655, "pure": 0.3265, "paired_gap": -0.0015 },
+    "no-int4":        { "teacher": 0.3251, "mixed": 0.1659, "pure": 0.3261, "paired_gap": -0.001 },
+    "soft-route":     { "teacher": 0.3231, "mixed": 0.1646, "pure": 0.323,  "paired_gap": 0.0001 },
+    "deterministic":  { "teacher": 0.3231, "mixed": 0.1647, "pure": 0.324,  "paired_gap": -0.0009 },
+    "note": "四个教师随机性条件下配对差全部在 ±0.01 内 —— 移除 INT4 噪声与硬 Top-K 路由都不改变结论。"
+  },
+  "beta_scan": {
+    "seeds": 5,
+    "beta_values": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+    "student_mse_at_beta_0": 0.3174,
+    "student_mse_at_beta_1": 0.0001,
+    "monotonic_non_increasing": true,
+    "max_single_step_drop": 0.057,
+    "note": "连续单调过渡, 在 beta_h=0.3 处无跳变 —— 收益与泄漏权重成比例, 而非阈值机制。"
+  },
+  "super_deterministic": {
+    "seeds": 5,
+    "base":                { "teacher_mse": 0.3257, "gap_pure_mean": -0.0003 },
+    "deterministic":       { "teacher_mse": 0.3243, "gap_pure_mean": 0.001 },
+    "super_deterministic": { "teacher_mse": 0.3243, "gap_pure_mean": -0.0008 },
+    "note": "20 次前向平均的超确定教师与确定教师数值完全相同 —— Jensen 型方差平均优势在此规模不可测量。"
+  },
+  "representation_transfer": {
+    "seeds": 5,
+    "new_task_seed": 999,
+    "mixed": { "eval_accuracy": 0.7333, "eval_std": 0.0648 },
+    "pure":  { "eval_accuracy": 0.7667, "eval_std": 0.1018 },
+    "note": "冻结 LoRA 后换随机线性头重训; 纯学生略优且差异不显著 —— 混合目标未产生可迁移的更好内部表示。"
+  },
+  "conclusion": "混合目标下 +0.159 的表观学生-教师差距全部来自 0.3 直接目标项 (目标泄漏); 纯蒸馏不超越教师 (-0.0009 ± 0.0038, 10 seeds, 不显著)。",
+  "scope_caveat": "全部结论只在 CPU 规模、合成数据下成立; 准确表述是\"该规模下测不到概念方向迁移\", 不是\"概念方向迁移不存在\"。",
+  "raw_evidence": [
+    "results/v32_variance_isolation.json",
+    "results/v32_beta_scan.json",
+    "results/v32_super_deterministic.json",
+    "results/v32_representation_transfer.json"
+  ],
+  "recompute_with": "python -c \"from research.distillation.v32_leakage_audit import leakage_verdict; print(leakage_verdict())\""
+}

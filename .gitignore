@@ -65,12 +65,23 @@ docs/research_paper/microfusion_review.md
 docs/research_paper/microfusion_revision_plan.md
 docs/research_paper/ZOTERO_SETUP.md
 docs/V*.md
+# ...但 docs/V<N>_0_*.md 是"薄指针"层: 权威正文已搬进版本包的 SPEC.md 并随仓库
+# 分发, 这里只保留一份导航桩 (每份 <1.3KB)。放行它们, MANIFEST.artifacts.forwarder_spec
+# 才是真正可达的路径, 而不是指向一个克隆者永远拿不到的文件。
+!docs/V*_0_*.md
+# 实质性报告(非指针)仍留在作者本地
+docs/V22_0_DATA_VERIFICATION_REPORT.md
 docs/FOUR_MODEL_TYPES_ANALYSIS.md
 docs/V5_*.md
 docs/V5_ALPHA_*.md
 
-# Raw experiment outputs (large; reproducible from scripts)
-results/
+# Raw experiment outputs at the REPO ROOT (large; reproducible from scripts).
+# The leading slash is load-bearing: an unanchored "results/" also matches the
+# results/ directory of every version package (research/<line>/v<N>_*/results/),
+# which silently kept all 32 packages' metrics/metrics.json out of the repo.
+# Those snapshots are part of the self-contained contract
+# (docs/GENERATION_MANIFEST_SCHEMA.md), so they must ship.
+/results/
 
 # Pre-baseline and negative findings (kept author-only; paper only references outcomes)
 archive/

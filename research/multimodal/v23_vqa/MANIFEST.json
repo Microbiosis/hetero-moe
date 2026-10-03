@@ -6,8 +6,11 @@
   "title": "Mini-VQA 4 类 toy 任务",
   "generation": {
     "one_mechanism_added": "Mini-VQA 4 类 toy 任务",
-    "parent": null,
-    "children": []
+    "parent": "21.0",
+    "children": [
+      "23b.0",
+      "24.0"
+    ]
   },
   "lineage": {
     "line_parent": "16.0",

@@ -7,7 +7,9 @@
   "generation": {
     "one_mechanism_added": "引入 MiniCorpus (16 句训练 + 6 句 held-out 真实 Wikipedia 文本), 把评估从训练分布移到 held-out 真实文本",
     "parent": "16.0",
-    "children": []
+    "children": [
+      "32.0"
+    ]
   },
   "lineage": {
     "line_parent": "13.0",

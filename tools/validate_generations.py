@@ -61,6 +61,24 @@ def git_ignored(rel_path: str) -> Optional[bool]:
         return None
 
 
+_TRACKED: Optional[set] = None
+
+
+def git_tracked() -> Optional[set]:
+    """仓库内已被 git 跟踪的路径集合 (仓库相对, 正斜杠)。非 git 仓库返回 None。"""
+    global _TRACKED
+    if _TRACKED is None:
+        try:
+            r = subprocess.run(["git", "-C", str(ROOT), "ls-files"],
+                               capture_output=True, timeout=60)
+            _TRACKED = set() if r.returncode != 0 else {
+                p.replace("\\", "/") for p in r.stdout.decode("utf-8", "replace").splitlines() if p
+            }
+        except Exception:  # noqa: BLE001 - git 不可用
+            _TRACKED = None
+    return _TRACKED
+
+
 def discover_generations() -> List[Path]:
     """找出 research/ 与 archive/ 下所有形如 v<N>_<name>/ 的版本包."""
     out = []
@@ -78,8 +96,13 @@ def discover_generations() -> List[Path]:
 
 
 def check_generation(pkg: Path, allow_missing: bool,
-                     require_audit: bool) -> Tuple[List[str], List[str]]:
-    """返回 (errors, warnings)."""
+                     require_audit: bool, pkg_versioned: bool = True
+                     ) -> Tuple[List[str], List[str]]:
+    """返回 (errors, warnings).
+
+    pkg_versioned: 该包本身会随仓库分发。author-only 包 (.gitignore 标注) 的产物
+    本来就不入库, 不做"必须已跟踪"判定 —— 否则会把既有仓库策略误报成缺陷。
+    """
     errors: List[str] = []
     warnings: List[str] = []
 
@@ -122,10 +145,11 @@ def check_generation(pkg: Path, allow_missing: bool,
             and not man.get("implementation", {}).get("lifted_to"):
         errors.append("[LIFTED-NO-TARGET] implementation.location=lifted 但未声明 lifted_to")
 
-    # --- 4) artifacts 路径真实存在 ---
+    # --- 4) artifacts 路径真实存在, 且对会分发的包必须真的随仓库分发 ---
     # forwarder_* 是仓库级薄转发层, 其余是包内路径
     REPO_LEVEL = {"forwarder_spec", "forwarder_tests"}
     art = man.get("artifacts", {})
+    tracked = git_tracked()
     for k, rel in art.items():
         if rel is None:
             # 该代没有对应的转发层 (例如无独立测试文件), 不算错误
@@ -134,6 +158,20 @@ def check_generation(pkg: Path, allow_missing: bool,
         cand = (ROOT / rel) if k in REPO_LEVEL else (pkg / rel)
         if not cand.exists():
             errors.append(f"[ARTIFACT-MISSING] artifacts.{k} -> {rel}")
+            continue
+        # 存在还不够: 对会入库的包, 产物若被 .gitignore 吞掉, 克隆仓库的人就拿不到,
+        # "自包含" 只在作者本机成立。这是已发生过的真实事故(顶层 `results/` 规则
+        # 曾把全部 32 个包的 results/metrics.json 一起排除), 故单列一道闸门。
+        if not pkg_versioned:
+            continue
+        repo_rel = str(cand.relative_to(ROOT)).replace("\\", "/")
+        if git_ignored(repo_rel):
+            errors.append(
+                f"[ARTIFACT-UNSHIPPED] artifacts.{k} -> {rel} 被 .gitignore 排除, "
+                f"不会随仓库分发 (自包含只在本机成立)")
+        elif tracked is not None and repo_rel not in tracked:
+            warnings.append(
+                f"[ARTIFACT-UNTRACKED] artifacts.{k} -> {rel} 尚未 git add, 提交后才随仓库分发")
 
     # --- 5) 版本号与目录名一致性 ---
     pkgname = pkg.name
@@ -147,10 +185,22 @@ def check_lineage(pkgs: List[Dict]) -> List[str]:
     """跨包检查谱系自洽: A.children 含 B  <=>  B.parent 是 A."""
     errors: List[str] = []
     version_map: Dict[str, Dict] = {}
+
+    # 版本号必须全局唯一。撞号会让下面的 version_map 静默丢包 (后写的覆盖先写的),
+    # 被丢掉那条的谱系就从图里消失, 而且校验器本身不报错 —— 属"假绿"。
+    # 已发生过的实例: v23b_hard_vqa 与 v23_vqa 都曾写作 23.0 (抽取器的
+    # v(\d+)[a-z]*_ 认得 b 后缀, 但版本号生成时把它丢了)。
+    seen: Dict[str, str] = {}
     for rec in pkgs:
-        man = rec.get("manifest") or {}
-        v = man.get("version")
-        if v:
+        v = (rec.get("manifest") or {}).get("version")
+        if not v:
+            continue
+        if v in seen:
+            errors.append(
+                f"[VERSION-DUP] version={v!r} 同时被 {seen[v]} 与 "
+                f"{rec['path'].name} 使用; 谱系图会静默丢掉其中一条")
+        else:
+            seen[v] = rec["path"].name
             version_map[v] = rec
 
     for v, rec in version_map.items():
@@ -193,7 +243,14 @@ def main() -> int:
     recs, total_err, total_warn = [], 0, 0
     author_only, versioned, unknown = [], [], []
     for pkg in targets:
-        errs, warns = check_generation(pkg, args.allow_missing, args.require_leakage_audit)
+        rel = pkg.relative_to(ROOT)
+        # 口径: 该包是否在版本库内。author-only 路径 (.gitignore 标注
+        # "kept author-only", 因引用 proprietary 辅助模型) 只在本地生效, 不随仓库分发。
+        ig = git_ignored(str(rel))
+        ships = ig is False
+
+        errs, warns = check_generation(pkg, args.allow_missing, args.require_leakage_audit,
+                                      pkg_versioned=ships)
         man_path = pkg / "MANIFEST.json"
         man = None
         if man_path.exists():
@@ -205,10 +262,6 @@ def main() -> int:
         total_err += len(errs)
         total_warn += len(warns)
 
-        rel = pkg.relative_to(ROOT)
-        # 口径: 该包是否在版本库内。author-only 路径 (.gitignore 标注
-        # "kept author-only", 因引用 proprietary 辅助模型) 只在本地生效, 不随仓库分发。
-        ig = git_ignored(str(rel))
         (author_only if ig else versioned if ig is False else unknown).append(str(rel))
         suffix = "  [author-only: 不入库]" if ig else ("  [未入库?]" if ig is None else "")
         if errs:

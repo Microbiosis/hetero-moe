@@ -6,7 +6,7 @@
   "title": "H5 (位置) 验证 — broadcast 加到 attn vs ffn vs both",
   "generation": {
     "one_mechanism_added": "H5 (位置) 验证 — broadcast 加到 attn vs ffn vs both",
-    "parent": null,
+    "parent": "19.0",
     "children": []
   },
   "lineage": {

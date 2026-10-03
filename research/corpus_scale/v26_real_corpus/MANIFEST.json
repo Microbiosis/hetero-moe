@@ -6,8 +6,10 @@
   "title": "fully-real-corpus (text+code+image 全部真实)",
   "generation": {
     "one_mechanism_added": "fully-real-corpus (text+code+image 全部真实)",
-    "parent": null,
-    "children": []
+    "parent": "25.0",
+    "children": [
+      "27.0"
+    ]
   },
   "lineage": {
     "line_parent": "22.0",

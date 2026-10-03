@@ -6,8 +6,11 @@
   "title": "4 种中枢模式基类 + adaptive-ema 探索",
   "generation": {
     "one_mechanism_added": "4 种中枢模式基类 + adaptive-ema 探索",
-    "parent": null,
-    "children": []
+    "parent": "9.0",
+    "children": [
+      "25.0",
+      "30.0"
+    ]
   },
   "lineage": {
     "line_parent": "9.0",

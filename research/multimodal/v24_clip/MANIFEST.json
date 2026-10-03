@@ -6,7 +6,7 @@
   "title": "CLIP 预训练教师 + 真实多模态数据",
   "generation": {
     "one_mechanism_added": "CLIP 预训练教师 + 真实多模态数据",
-    "parent": null,
+    "parent": "23.0",
     "children": []
   },
   "lineage": {

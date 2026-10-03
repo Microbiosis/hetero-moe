@@ -1,0 +1,222 @@
+{
+  "config": {
+    "seeds": 5,
+    "steps": 100,
+    "n_avg": 20,
+    "d_shared": 256,
+    "n_cls": 3,
+    "seq_len": 16,
+    "conditions": [
+      "base",
+      "deterministic",
+      "super-deterministic"
+    ],
+    "objectives": {
+      "mixed": 0.7,
+      "pure": 1.0
+    }
+  },
+  "summary": {
+    "base": {
+      "teacher_mse_mean": 0.325726,
+      "teacher_mse_std": 0.012357,
+      "mixed_mean": 0.16533,
+      "mixed_std": 0.005279,
+      "pure_mean": 0.326047,
+      "pure_std": 0.011424,
+      "gap_pure_mean": -0.000321
+    },
+    "deterministic": {
+      "teacher_mse_mean": 0.324327,
+      "teacher_mse_std": 0.014583,
+      "mixed_mean": 0.164635,
+      "mixed_std": 0.006125,
+      "pure_mean": 0.323345,
+      "pure_std": 0.012588,
+      "gap_pure_mean": 0.000982
+    },
+    "super-deterministic": {
+      "teacher_mse_mean": 0.324327,
+      "teacher_mse_std": 0.014583,
+      "mixed_mean": 0.165223,
+      "mixed_std": 0.00641,
+      "pure_mean": 0.325113,
+      "pure_std": 0.013718,
+      "gap_pure_mean": -0.000786
+    }
+  },
+  "per_seed": {
+    "config": {
+      "seeds": 5,
+      "steps": 100,
+      "n_avg": 20,
+      "d_shared": 256,
+      "n_cls": 3,
+      "seq_len": 16,
+      "conditions": [
+        "base",
+        "deterministic",
+        "super-deterministic"
+      ],
+      "objectives": {
+        "mixed": 0.7,
+        "pure": 1.0
+      }
+    },
+    "seeds": [
+      {
+        "seed": 0,
+        "teacher": {
+          "base": 0.303805,
+          "deterministic": 0.298616,
+          "super-deterministic": 0.298616
+        },
+        "student": {
+          "base/mixed": 0.156573,
+          "base/pure": 0.306577,
+          "deterministic/mixed": 0.1539,
+          "deterministic/pure": 0.301246,
+          "super-deterministic/mixed": 0.154292,
+          "super-deterministic/pure": 0.301468
+        }
+      },
+      {
+        "seed": 1,
+        "teacher": {
+          "base": 0.330471,
+          "deterministic": 0.33013,
+          "super-deterministic": 0.33013
+        },
+        "student": {
+          "base/mixed": 0.169794,
+          "base/pure": 0.333943,
+          "deterministic/mixed": 0.168212,
+          "deterministic/pure": 0.329137,
+          "super-deterministic/mixed": 0.169815,
+          "super-deterministic/pure": 0.332162
+        }
+      },
+      {
+        "seed": 2,
+        "teacher": {
+          "base": 0.330796,
+          "deterministic": 0.331673,
+          "super-deterministic": 0.331673
+        },
+        "student": {
+          "base/mixed": 0.164492,
+          "base/pure": 0.325009,
+          "deterministic/mixed": 0.16572,
+          "deterministic/pure": 0.325321,
+          "super-deterministic/mixed": 0.165612,
+          "super-deterministic/pure": 0.325029
+        }
+      },
+      {
+        "seed": 3,
+        "teacher": {
+          "base": 0.333864,
+          "deterministic": 0.334004,
+          "super-deterministic": 0.334004
+        },
+        "student": {
+          "base/mixed": 0.168598,
+          "base/pure": 0.332358,
+          "deterministic/mixed": 0.168767,
+          "deterministic/pure": 0.332133,
+          "super-deterministic/mixed": 0.16992,
+          "super-deterministic/pure": 0.335015
+        }
+      },
+      {
+        "seed": 4,
+        "teacher": {
+          "base": 0.329696,
+          "deterministic": 0.327212,
+          "super-deterministic": 0.327212
+        },
+        "student": {
+          "base/mixed": 0.167194,
+          "base/pure": 0.332349,
+          "deterministic/mixed": 0.166575,
+          "deterministic/pure": 0.328889,
+          "super-deterministic/mixed": 0.166478,
+          "super-deterministic/pure": 0.331892
+        }
+      }
+    ],
+    "teacher_mse": {
+      "base": [
+        0.30380455984009636,
+        0.3304712838596768,
+        0.3307957765128877,
+        0.3338639785846074,
+        0.3296959333949619
+      ],
+      "deterministic": [
+        0.29861584305763245,
+        0.33012958533234066,
+        0.3316730509201686,
+        0.3340043326218923,
+        0.3272121482425266
+      ],
+      "super-deterministic": [
+        0.29861584305763245,
+        0.33012958533234066,
+        0.3316730509201686,
+        0.3340043326218923,
+        0.3272121482425266
+      ]
+    },
+    "student_mse": {
+      "base": {
+        "mixed": [
+          0.1565728262066841,
+          0.16979437818129858,
+          0.1644922395547231,
+          0.16859784225622812,
+          0.1671941727399826
+        ],
+        "pure": [
+          0.3065769126017888,
+          0.33394300440947217,
+          0.32500937581062317,
+          0.3323582460482915,
+          0.3323494493961334
+        ]
+      },
+      "deterministic": {
+        "mixed": [
+          0.15390039483706155,
+          0.16821188231309256,
+          0.1657203584909439,
+          0.16876683135827383,
+          0.16657510896523794
+        ],
+        "pure": [
+          0.3012456198533376,
+          0.32913661003112793,
+          0.32532087961832684,
+          0.3321327020724614,
+          0.328889121611913
+        ]
+      },
+      "super-deterministic": {
+        "mixed": [
+          0.15429180363814035,
+          0.16981509824593863,
+          0.16561158001422882,
+          0.1699200545748075,
+          0.16647778203090033
+        ],
+        "pure": [
+          0.30146817366282147,
+          0.332162082195282,
+          0.32502909501393634,
+          0.33501456181208294,
+          0.33189234137535095
+        ]
+      }
+    }
+  }
+}

@@ -6,7 +6,7 @@
   "title": "tanh 前梯度重缩放",
   "generation": {
     "one_mechanism_added": "tanh 前梯度重缩放",
-    "parent": null,
+    "parent": "30.0",
     "children": []
   },
   "lineage": {

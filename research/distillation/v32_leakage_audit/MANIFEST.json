@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0",
+  "version": "32.0",
+  "package": "v32_leakage_audit",
+  "line": "distillation",
+  "title": "目标泄漏审计 — 学生-教师差距的归因分解 (V32.0-V32.4)",
+  "generation": {
+    "one_mechanism_added": "不引入新机制, 引入**审计**: 把 v16 头条结论里混杂的三种效应(教师前向随机性的 Jensen 型优势 / 0.3 直接目标项 / 真正的概念方向迁移)逐一隔离复测, 并在论文里把未修正的表观收益主动标注为泄漏所致",
+    "parent": "18.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "13.0",
+    "line_children": [
+      "21.0"
+    ],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置。v32 是 distillation 线的审计代, 父代取该线最后一个机制代 v18。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "audit.py"
+    ],
+    "note": "audit.py 是纯标准库的重算模块: 只读包内 results/ 的四份原始记录, 不依赖 torch/numpy, 也不引用仓库根的 results/。实验脚本本身仍是 examples/run_v32_*.py (五个变体), 保持历史复现路径不变。"
+  },
+  "claim": {
+    "asserts": "纯蒸馏(移除 0.3 直接目标项)的学生**不**超越其教师; 混合目标下的全部表观学生-教师差距来自目标泄漏, 而非概念方向迁移",
+    "metric": "fuse_mse_paired_gap",
+    "direction": "lower_is_better",
+    "value": -0.0009,
+    "baseline": {
+      "ref": "同协议教师 (deterministic 条件)",
+      "value": 0.3231
+    },
+    "delta_pct": 0.3,
+    "seeds": 10,
+    "note": "value 是配对差均值 gap := teacher - pure_student, 负值表示学生更差。标准差 ±0.0038 为样本标准差(ddof=1)。"
+  },
+  "runs": [
+    {
+      "id": "v32.0-variance_isolation",
+      "eval_set": "train_distribution (fresh random tokens vs training targets)",
+      "seeds": 10,
+      "note": "四个教师随机性条件: base / no-int4 / soft-route / deterministic。教师 0.3231-0.3251, 纯学生 0.3230-0.3265, 配对差全部在 ±0.01 噪声内"
+    },
+    {
+      "id": "v32.2-beta_scan",
+      "eval_set": "train_distribution",
+      "seeds": 5,
+      "note": "beta_h 0.0→1.0 共 11 个取值, 学生 MSE 从 0.3174 单调降到 0.0001, 单步最大降幅 0.0570, 在 beta_h=0.3 处无跳变"
+    },
+    {
+      "id": "v32.3-super_deterministic",
+      "eval_set": "train_distribution",
+      "seeds": 5,
+      "note": "20 次前向平均的超确定教师 0.3243 与确定教师 0.3243 完全相同, 纯学生配对差 -0.0008"
+    },
+    {
+      "id": "v32.4-representation_transfer",
+      "eval_set": "新生成的目标集 (new_task_seed=999)",
+      "seeds": 5,
+      "note": "冻结 LoRA 后换随机线性头重训: 混合学生 eval 0.7333 ± 0.0648, 纯学生 0.7667 ± 0.1018, 纯学生略优且差异不显著"
+    }
+  ],
+  "protocol": {
+    "eval_set": "train_distribution — 与 distillation 线其余各代同一评估协议(对训练目标做 fresh random token 重建), 不是 held-out Wikipedia 集",
+    "input": "对训练目标分布采样 fresh random token; v32 重跑的绝对水平与 v16 原记录不同(教师 0.324 vs 0.257), 两行不跨协议比较, 论文已声明",
+    "caveat": "本代全部结论只在 CPU 规模、合成数据下成立; 结论是\"该规模下测不到概念方向迁移\", 不是\"概念方向迁移不存在\"。"
+  },
+  "acceptance": {
+    "criterion": "在移除 0.3 直接目标项(beta_h=0)的条件下, 配对差应显著大于 0, 即学生仍超越教师",
+    "outcome": "not_met",
+    "note": "配对差 -0.0009 ± 0.0038 (10 seeds) 不显著, 判据未达成 —— 这正是本代要记录的负结果"
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "clean",
+    "note": "本代自身就是执行泄漏审计的那一代: 它的每一条结论都是在**移走直接目标信号**的条件下测得的(beta_h=0 的 pure 条件), 因此对本代结论而言不存在待审计的泄漏。v16/v17 的审计结论记录在各自的 MANIFEST.leakage_audit 中, 并以 audited_in=32.0 指回本代。",
+    "audits": [
+      "16.0",
+      "17.0"
+    ]
+  },
+  "falsified": [
+    {
+      "hypothesis": "教师前向的随机性(硬 Top-K 路由 + INT4 量化噪声)带来 Jensen 型方差平均优势, 使拟合条件均值的学生天然优于任何单次教师采样",
+      "verdict": "证伪",
+      "evidence": "results/v32_variance_isolation.json (四条件配对差均在 ±0.01 内) + results/v32_super_deterministic.json (20 次前向平均的超确定教师 0.3243 与确定教师 0.3243 完全相同, 配对差 -0.0008)"
+    },
+    {
+      "hypothesis": "混合目标(w_teacher=0.7 + beta_h=0.3)培养出了可迁移的内部表示, 即学生内化了教师的概念方向",
+      "verdict": "证伪",
+      "evidence": "results/v32_representation_transfer.json — 冻结 LoRA 换新任务重训后, 混合学生 eval 0.7333 ± 0.0648 低于纯学生 0.7667 ± 0.1018, 差异不显著"
+    },
+    {
+      "hypothesis": "表观收益来自某个只在 beta_h 高于某阈值才激活的机制",
+      "verdict": "证伪",
+      "evidence": "results/v32_beta_scan.json — beta_h 0.0→1.0 连续单调过渡, 单步最大降幅 0.0570, 在 beta_h=0.3 处无跳变, 符合两个 MSE 项的线性组合"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": null,
+    "forwarder_spec": "docs/V32_0_LEAKAGE_AUDIT.md"
+  },
+  "evidence": {
+    "variance_isolation": "results/v32_variance_isolation.json",
+    "beta_scan": "results/v32_beta_scan.json",
+    "super_deterministic": "results/v32_super_deterministic.json",
+    "representation_transfer": "results/v32_representation_transfer.json",
+    "note": "四份原始记录随包分发, 因此 leakage_verdict() 的结论可被第三方重算, 而非只能相信本文件的自述。历史上这些文件只存在于仓库根 results/, 该目录是 gitignore 的原始实验输出, 克隆仓库的人拿不到。"
+  },
+  "_needs_human": [],
+  "_note": "forwarder_tests 为 null 是有意决定: 顶层 tests/ 转发层只为保持 run.sh 全量扫描与论文所报测试数(327)不变; 本包的权威测试在包内, 可直接 python research/distillation/v32_leakage_audit/tests/test_package.py 运行。加顶层转发层会让全套件变成 335 并使论文中的 327 失准。"
+}
