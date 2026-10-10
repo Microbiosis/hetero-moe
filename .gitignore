@@ -28,6 +28,10 @@ dist/
 .env.local
 .venv/
 venv/
+# 本机 Docker 容器的重建配方: 内含 E:\ 项目盘与 D:\hf-models 模型备份这类
+# 机器专属绝对路径, 只是本机的操作手册 —— 克隆者拿到也没有对应路径可用。
+# 前导斜杠是刻意的: 只锚定仓库根, 不误伤将来可能出现的同名文件。
+/compose.rebuild.yaml
 
 # Author-only tools / notes
 Obsidian/
