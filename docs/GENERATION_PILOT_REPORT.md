@@ -482,3 +482,72 @@ v23b 是独立的一代(multimodal README 单列一行: 8 类陷阱 toy, multimo
 5. `run.sh` 的 `PROJECT_DIR` 硬编码 `/workspace/hetero-moe`, 在本机跑不了,
    全套件是按其逻辑等价执行的。
 
+### 11.6 复核: 上一轮的两个数字是坏的, 已修的两处缺陷已收
+
+对 §11 结论做独立复核, 推翻了两处说法, 并修掉了 §11.5 列的 4/5 两项欠账。
+
+**(a) 全套件不是 221/221, 而是 327/327 —— 论文那个数是对的。**
+上一轮记录"全套件 221/221 全通过"且"11 个测试文件因缺 `transformers` /
+`safetensors` 而 0 PASS"。在**依赖齐备**的环境重跑: `transformers 5.16.1` /
+`safetensors 0.8.0` 实际已安装, 40 个测试文件**无一 0 PASS**, 合计 **327/327**。
+即 221 是坏环境下 11 个文件被 harness 静默排除后的降级数字, 而非真实总量。
+
+这一点直接回答了 v32 那个悬而未决的取舍: 根 `tests/` 套件的权威值就是 **327**,
+与论文 `microfusion.tex` 三处(中英各一)以及 `run.sh` 帮助文本"实测 327/327"完全一致。
+所以"`forwarder_tests` 留 null 以免 327→335"这个决定是**对的** —— 327 是真实值,
+v32 包内那 8 项测试不在 `bash run.sh test` 的口径内, 加转发层才会把它推到 335。
+
+**(b) §11.5 第 4 项: `ALLOWED_INTRA_LINE` 键方向已修 (strict 25/30 → 27/30)。**
+字典键是**被导入方**(基准代), 值是**允许导入它的代**(注释即"v26/v27/v28/v29
+都可以 import v25"), 但查询写成 `self_path` 查键 / `imp` 比对值 —— 方向相反,
+使放行分支成为**死代码**。还有第二层: 实际 import 写作 `v25_corpus_central.layer`
+(子模块), 字典键是包, 精确相等也匹配不到。两层都要修才生效。
+
+结果: 4 处合法同线复用 (v26/v27/v28/v29 → v25) 不再被 `--strict` 误报为
+`[CROSS-LINE]`; 剩下 3 个失败是**真跨线依赖**, 保留 (v25→v10, v27→v22,
+v28→v10/v22)。normal 模式 30/30 不变。
+
+`__deps__` 空实现**没有**补: 兑现它需先给各包补 `__deps__`, 否则一次性把全仓判红。
+改为把 docstring 里那条从未实现的承诺**删掉并写明未实现**, 不留看起来已覆盖的条目 ——
+与 §11.1 同一个病根。同时让 `allowed_used` 真正输出, 兑现"要标记"那句承诺;
+标记一上线就暴露: `routing_evolution` 与 `scale_heterogeneous` 两条声明在代码里
+**零对应复用**, 是已经腐烂的声明。
+
+**(c) §11.5 第 5 项: `run.sh` 已可被克隆者直接执行, 并另修一处 argv 泄漏。**
+`/workspace/hetero-moe` 并非不存在, 而是本机一个指向仓库的**自建软链** —— 作者机器
+能跑是因为这个软链, 任何克隆者都没有。而论文 `\Srepro` 恰恰让复现者执行
+`bash run.sh test`。改为由 `${BASH_SOURCE[0]}` 推导仓库根。
+
+顺带发现并修掉一个独立缺陷: `cmd="${1:-help}"` 之后没有 `shift`, 子命令名会漏进
+工具 argv —— `bash run.sh selfcontain` 实际执行 `check_self_containment.py selfcontain`,
+被当成包名过滤而报"未找到目标包" (与 cwd 无关, 从仓库内调用同样失败)。加上守卫式
+`shift` 后, 从**仓库外**调用 `selfcontain` / `generations` / `selfcontain --strict`
+均正常 (30/30 · 33 包 0 错 · 27/30)。
+
+**(d) 顺手修掉 `run.sh test` 汇总行的一个"假绿"读法。**
+复核时在**并发负载**下跑了一次 `bash run.sh test`, 得到
+`合计: 319/319 ✗ HAS FAILURE` —— `test_v8_central.py` 零通过(单独连跑 3 次均 8 PASS,
+确认是资源竞争下的偶发, 非代码缺陷)。问题出在汇总行本身:
+
+- `pass` 与 `total` 是同步自增的, 恒相等, 故原判定 `[ "$pass" -eq "$total" ]` 是**死逻辑**;
+- 零通过文件会**整体从比值里消失**, 于是失败时照样显示 100%(327 → 319, 分母跟着变小)。
+
+读者只扫比值会把 `319/319` 当绿。已改为: 判定只看 `nfail`; 汇总行追加
+`(N 个测试文件, M 个零通过)`; 并在零通过时补打该文件输出末尾两行 —— 这类失败常是
+import 崩了或被 OOM 杀掉, 只留"无输出/无 PASS 标记"分不清是代码坏了还是环境问题。
+
+### 11.7 本轮复核后的准确状态
+
+```
+validate_generations.py    33 包 / 0 错 / 39 警告   (23 入库 + 10 author-only)
+check_self_containment     30/30 (normal) · 27/30 (strict, 3 个真跨线)
+v32 包内测试                8/8
+bash run.sh test           327/327 ✓ ALL GREEN, exit 0
+                           ← 论文口径, 且已从仓库外目录执行验证(克隆者路径)
+```
+
+
+仍未做: v4 / v6 / v14 三个代仍无子包(各自有完整规范与 runner); 32 个存量
+`results/metrics.json` 仍是待填骨架; `--require-leakage-audit` 仍未打开。
+
+

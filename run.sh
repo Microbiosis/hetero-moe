@@ -4,10 +4,17 @@
 # 用法: bash run.sh <command>
 # ============================================================================
 set -euo pipefail
-PROJECT_DIR="/workspace/hetero-moe"
+# 仓库根由脚本自身位置推导, 而不是写死绝对路径: 论文 \Srepro 让复现者执行
+# `bash run.sh test`, 而写死的 /workspace/hetero-moe 只在作者机器上靠一个自建
+# 软链存在 —— 任何克隆者都会在这一行 cd 直接失败。
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
 cmd="${1:-help}"
+# 把子命令名从 "$@" 里摘掉: 否则它会漏进工具的 argv —— 例如
+# `bash run.sh selfcontain` 会执行 `check_self_containment.py selfcontain`,
+# 被当成包名过滤而报 "未找到目标包"。守卫是必需的: set -e 下无参 shift 会退出。
+[ "$#" -gt 0 ] && shift
 
 case "$cmd" in
     setup)
@@ -20,16 +27,21 @@ case "$cmd" in
         # `grep -c` 返回 1 会让整段脚本提前退出, 导致后续测试被静默跳过且"合计"行不打印.
         # 改为: 单个测试失败只计数, 照常跑完全部并给出失败清单.
         echo "=== 全套 V&V 测试 ==="
-        total=0; pass=0; nfail=0; faillist=""
+        total=0; pass=0; nfail=0; nfiles=0; faillist=""
         for t in tests/test_*.py; do
+            nfiles=$((nfiles+1))
             out=$(python3 "$t" 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning" || true)
             n=$(echo "$out" | grep -c "\[PASS\]" || true)
             rc_line=$(echo "$out" | grep -E "^\[FAIL\]|合计:" | tail -1 || true)
+            # 零通过时把输出末尾一并带出来: 这类失败常是 import 崩了或被 OOM 杀掉,
+            # 不留痕迹就只剩"无输出/无 PASS 标记", 分不清是代码坏了还是环境问题。
+            out_tail=$(echo "$out" | grep -v '^[[:space:]]*$' | tail -2 | tr '\n' ' ' || true)
             total=$((total+n)); pass=$((pass+n))
             if [ "$n" -eq 0 ]; then
                 nfail=$((nfail+1))
                 faillist="$faillist $(basename "$t")"
-                echo "  $(basename $t): 0 PASS  ✗ ${rc_line:-无输出/无 PASS 标记}"
+                echo "  $(basename $t): 0 PASS  ✗ ${rc_line:-无 [FAIL]/合计 行}"
+                if [ -n "$out_tail" ]; then echo "      末尾输出: $out_tail"; fi
             else
                 echo "  $(basename $t): $n PASS"
             fi
@@ -38,8 +50,11 @@ case "$cmd" in
         if [ "$nfail" -gt 0 ]; then
             echo "  零通过文件 ($nfail):$faillist"
         fi
-        if [ "$pass" -eq "$total" ] && [ "$nfail" -eq 0 ]; then status="✓ ALL GREEN"; else status="✗ HAS FAILURE"; fi
-        echo "  合计: $pass/$total $status"
+        # 判定只看 nfail: pass 与 total 同步自增、恒相等, 早前的 `pass -eq total`
+        # 比较是死逻辑。且零通过文件会整体从比值里消失 —— 失败时照样显示 100%
+        # (实测出现过 `合计: 319/319 ✗ HAS FAILURE`), 只扫比值就会误判为绿。
+        if [ "$nfail" -eq 0 ]; then status="✓ ALL GREEN"; else status="✗ HAS FAILURE"; fi
+        echo "  合计: $pass/$total $status  ($nfiles 个测试文件, $nfail 个零通过)"
         [ "$nfail" -eq 0 ]
         ;;
     v5)
