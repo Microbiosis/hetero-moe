@@ -11,7 +11,6 @@
 - 软件: Python 3.x, PyTorch 2.0+, 小规模张量 D≤128
 - 随机种子: 5 seeds (0-4)
 - 复现: 直接运行此脚本即可
-"""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

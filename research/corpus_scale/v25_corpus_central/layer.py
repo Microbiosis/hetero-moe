@@ -29,7 +29,7 @@ import torch.nn.functional as F
 
 # 委托 v22 + v18
 from research._primitives.attention import AttnPool
-from research.aligner.v10_embedding import CrossArchAttnAligner
+from research._primitives.aligners import CrossArchAttnAligner
 from research._primitives.central_theory import (
     CentralTheory,
     freeze_u,

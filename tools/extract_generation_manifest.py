@@ -156,8 +156,12 @@ def build_skeleton(pkg: Path) -> Tuple[Dict, List[str]]:
         line = rel.parts[1]
         readme = find_line_readme(line)
 
+    # 版本号必须保留字母后缀。旧的 group(1) 只取数字段, 会把 v23b_hard_vqa 归一成
+    # "23.0", 与 v23_vqa 撞版本 —— validate_generations.py 的 [VERSION-DUP] 就是
+    # 因此报出来的 (v23b 的 MANIFEST 当时只能手写 "23b.0" 绕过)。
     version = re.match(r"(v\d+)[a-z]*_", pkg.name).group(1)
-    version_dotted = f"{version.lstrip('v')}.0"
+    suffix = re.match(r"(v\d+)([a-z]*)_", pkg.name).group(2)
+    version_dotted = f"{version.lstrip('v')}{suffix}.0"
 
     parent, children = (None, [])
     contrib = None

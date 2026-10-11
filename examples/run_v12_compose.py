@@ -34,10 +34,13 @@ def make_layer(mode, attn_pools, encoders):
     modal_dims = [D_bert, D_llama, D_vit]
 
     if mode == "v9-linear-gate":
+        # 2026-10-11 修正: CentralAugmentedFusionLayer 没有 c1_alpha 参数 —— 它的
+        # broadcast 权重是自学习的 alphas_attn / alphas, 初始化幅度由 central_init_scale
+        # 控制。原代码传 c1_alpha=0.1 会 TypeError, 该 runner 从未真正跑起来过。
         return CentralAugmentedFusionLayer(
             d_shared=D_SHARED, d_ff=4 * D_SHARED,
             attn_pools=attn_pools, modal_dims=modal_dims,
-            c1_alpha=0.1,
+            central_init_scale=0.1,
         )
 
     if mode in ("v10-attn-broadcast", "v12-attn-gate", "v10-attn-gate-original"):

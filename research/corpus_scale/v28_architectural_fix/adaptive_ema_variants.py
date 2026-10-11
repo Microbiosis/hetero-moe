@@ -25,7 +25,7 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
-from research.central_stability.v22_central_theory import CentralTheory
+from research._primitives.central_theory import CentralTheory
 
 
 class _AdaptiveEMAVariantBase(CentralTheory):

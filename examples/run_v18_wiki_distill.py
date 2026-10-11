@@ -213,10 +213,10 @@ def main():
     print(f"  v18-distill  (真实语料 + 蒸馏, 拟合教师):  {f18d:.4f}  (真实泛化能力)")
     print()
     print("注意: v16-fake / v18-finetune 都能拟合 task target (MSE ≈ 0),")
-    print("      因为 batch 简单 + task target 确定. 真正测"蒸馏是否学到教师能力"")
+    print("      因为 batch 简单 + task target 确定. 真正测『蒸馏是否学到教师能力』")
     print("      应看 v18-distill 在 held-out 真实句子上能否匹配教师 — 0.16 是真实泛化 MSE.")
     print()
-    print("✅ 真实 Wikipedia 蒸馏路线可行: 学生能学到教师的"概念方向" (0.16 真实泛化)")
+    print("✅ 真实 Wikipedia 蒸馏路线可行: 学生能学到教师的『概念方向』(0.16 真实泛化)")
 
 
 if __name__ == "__main__":

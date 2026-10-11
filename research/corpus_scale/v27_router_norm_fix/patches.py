@@ -28,7 +28,7 @@ from typing import Dict, List, Tuple
 import torch
 import torch.nn as nn
 
-from research.central_stability.v22_central_theory import CentralTheory
+from research._primitives.central_theory import CentralTheory
 
 
 # ---------------------------------------------------------------------------

@@ -22,7 +22,9 @@ import torch.nn.functional as F
 from transformers import AutoTokenizer
 
 from research.multimodal.v21_multimodal import MultiModalStudent
-from research.multimodal.v23_vqa import HardVQADataset
+# 2026-10-10 修正: HardVQADataset 属于 v23b (8 类陷阱集), 定义在 archive 的
+# v23b_hard_vqa 包内; v23_vqa 只有 4 类 MiniVQADataset, 从中导入必然 ImportError
+from archive.negative_findings.v23b_hard_vqa.hard_dataset import HardVQADataset
 from examples.run_v8_full import D_SHARED
 
 

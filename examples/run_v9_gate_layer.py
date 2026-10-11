@@ -30,7 +30,10 @@ import torch.nn.functional as F
 from research._primitives.attention import AttnPool
 from research.routing_evolution.v7_attention import CrossArchAttnFFNFusionLayer, V7Trainer
 from research.routing_evolution.v8_central import CentralAugmentedFusionLayer, HierarchicalCentralLayer, V8Trainer
-from research._primitives.central_mechanism import GateStyleWorkspace, make_v9_layer
+from research._primitives.central_mechanism import GateStyleWorkspace
+# make_v9_layer 定义在 v9 包内, 不在 _primitives.central_mechanism —— 此前错从
+# _primitives 导入, 导致本 runner 一开始就 ImportError, 无法复现 v9 的任何结果。
+from research.routing_evolution.v9_gate_central import make_v9_layer
 from examples.run_v8_full import (
     load_encoders, make_pools, encode_text, encode_code, encode_image,
     D_SHARED, N_CLS, B, S, STEPS, LR, SEEDS,

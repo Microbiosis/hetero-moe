@@ -22,6 +22,26 @@ case "$cmd" in
         bash setup.sh
         ;;
     test)
+        # 转发层一致性: tests/test_*.py 必须 import **自己**的权威副本。
+        # 2026-11 之前无此检查, 曾出现 4 个转发层全部指向 v45 的包 —— 因为每个文件
+        # 都有 ≥1 PASS, run.sh 的"零 PASS 判失败"防不住"指错对象"这种假绿。
+        python3 - <<'PYEOFCHK'
+import re, sys, pathlib
+bad = []
+for f in sorted(pathlib.Path("tests").glob("test_*.py")):
+    src = f.read_text(encoding="utf-8")
+    m = re.search(r"from (research\.[\w\.]+)\.tests\.test_package import", src)
+    if not m:
+        continue
+    tgt = m.group(1).split(".")[-1]
+    if f.name != f"test_{tgt}.py":
+        bad.append((f.name, tgt))
+if bad:
+    for n, t in bad:
+        print(f"  [转发层错配] {n} 实际指向 {t}", file=sys.stderr)
+    sys.exit(1)
+PYEOFCHK
+        [ $? -ne 0 ] && { echo "✗ 转发层指向错误, 套件结果不可信"; exit 1; }
         # 全套 V&V 测试
         # 注意: 原本此处未防 set -e —— 某个测试若输出 0 条 [PASS] (例如 import 失败),
         # `grep -c` 返回 1 会让整段脚本提前退出, 导致后续测试被静默跳过且"合计"行不打印.
@@ -142,17 +162,33 @@ case "$cmd" in
         python3 tools/validate_generations.py "$@" 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
         ;;
     selfcontain)
-        # L1 import 自包含 (包能否单独 import, 有无未声明跨线依赖)
-        python3 tools/check_self_containment.py "$@" 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        # L1 import 自包含 (包能否单独 import, 有无未声明跨线引用)
+        #
+        # 2026-10-11: 显式加 --strict。此前本分支**不带** --strict, 而
+        # check_self_containment.py 在非 strict 模式下**静默忽略**跨线引用
+        # (工具自己的注释称之为 "a genuine false-green risk") —— 也就是说
+        # `run.sh selfcontain` 一直在报 "normal mode 全部通过", 与实际跨线数量无关。
+        # 另: 管道会吞掉 python3 的退出码, 故用 PIPESTATUS 取真实结果。
+        # 注意用 exit 而非 return —— case 分支里 return 只在函数/被 source 时合法。
+        python3 tools/check_self_containment.py --strict "$@" 2>&1 \
+            | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        exit "${PIPESTATUS[0]}"
         ;;
     verify)
         # 验收组合: 测试 + L1 import 自包含 + L2 交付自包含
+        #
+        # 2026-10-11: 去掉 `|| echo "(L1 存在跨线引用, 见上)"`。那句吞掉退出码,
+        # 使 verify 无论 L1 是否失败都"通过" —— 与 selfcontain 缺 --strict 叠加,
+        # 构成**双重假绿**。三步全过才算过, 任一步失败即非零退出。
         echo "=== 1/3 全量测试 ==="
-        bash run.sh test
-        echo "=== 2/3 L1 import 自包含 ==="
-        bash run.sh selfcontain || echo "  (L1 存在跨线引用, 见上)"
-        echo "=== 3/3 L2 交付自包含 (仅试点包, 存量用 --allow-missing 摸底) ==="
-        python3 tools/validate_generations.py --allow-missing 2>&1 | tail -3
+        bash run.sh test || { echo "✗ 全量测试失败"; exit 1; }
+        echo "=== 2/3 L1 import 自包含 (--strict) ==="
+        bash run.sh selfcontain || { echo "✗ L1 存在未声明跨线引用"; exit 1; }
+        echo "=== 3/3 L2 交付自包含 ==="
+        python3 tools/validate_generations.py 2>&1 | tail -4
+        rc=${PIPESTATUS[0]}
+        [ "$rc" -eq 0 ] || { echo "✗ L2 校验失败"; exit "$rc"; }
+        echo "=== verify 三步全部通过 ==="
         ;;
     clean)
         find . -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true

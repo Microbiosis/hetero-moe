@@ -27,7 +27,9 @@ from experiment_env import log_experiment_env
 from research._primitives.attention import AttnPool
 from research.aligner.v10_embedding import CrossArchAttnAligner
 from research.central_stability.v22_central_theory import CentralTheory, freeze_u, set_u_init_scale
-from research.routing_evolution.v9_gate_central.workspace import GateStyleWorkspace
+# 2026-10-10 修正: GateStyleWorkspace 实际在 _primitives.central_mechanism,
+# v9_gate_central 包内没有 workspace 子模块 —— 原导入路径不存在
+from research._primitives.central_mechanism import GateStyleWorkspace
 from research.central_stability.v30_gate_softplus.workspace import SoftplusGateStyleWorkspace
 from research.central_stability.v31_gate_gradient_scale.workspace import GradientScaledGateStyleWorkspace
 from examples.run_v8_full import (

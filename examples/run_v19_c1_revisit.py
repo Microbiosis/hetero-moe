@@ -32,61 +32,6 @@ from examples.run_v8_full import (
 )
 
 
-class C1OnlyModel(nn.Module):
-    """C-1 中枢 + 双路由 + 中枢 broadcast (gate-style).
-
-    对应 v9 的 C-1 单独 baseline (v8.0 c1-default), 用于对照 v9 修正 C.
-    """
-
-    def __init__(self, d_shared, num_experts=3, student_capacity=None):
-        super().__init__()
-        self.num_experts = num_experts
-        # 路由器
-        self.W_router = nn.Parameter(torch.randn(num_experts, d_shared) * 0.01)
-        # 中枢 (v9_gate_central.BroadcastWorkspace, v8 broadcast 模式)
-        from research._primitives.central_mechanism import BroadcastWorkspace
-        self.cw = BroadcastWorkspace(d_shared, num_experts, ema_decay=0.9)
-        # SwiGLU FFN (简化, 冻结)
-        d_ff = 4 * d_shared
-        self.w_gates = nn.ParameterList([
-            nn.Parameter(torch.randn(d_ff, d_shared) * 0.02, requires_grad=False)
-            for _ in range(num_experts)
-        ])
-        self.w_ups = nn.ParameterList([
-            nn.Parameter(torch.randn(d_ff, d_shared) * 0.02, requires_grad=False)
-            for _ in range(num_experts)
-        ])
-        self.w_downs = nn.ParameterList([
-            nn.Parameter(torch.randn(d_shared, d_ff) * 0.02, requires_grad=False)
-            for _ in range(num_experts)
-        ])
-        # 对齐参数 (γ/β/α)
-        from hetero_fusion.core.router import SparseRouterSTE
-        self.gammas = nn.ParameterList([nn.Parameter(torch.ones(d_shared)) for _ in range(num_experts)])
-        self.betas = nn.ParameterList([nn.Parameter(torch.zeros(d_shared)) for _ in range(num_experts)])
-        self.alphas = nn.ParameterList([nn.Parameter(torch.tensor([0.05])) for _ in range(num_experts)])
-
-    def forward(self, x):
-        """x: [B, S, D] -> y: [B, S, D]"""
-        from hetero_fusion.core.quant import FakeQuantSTE
-        from hetero_fusion.core.router import SparseRouterSTE
-        x_det = x.detach()
-        # 双路由 + 中枢
-        z = F.linear(x_det, self.W_router)
-        z = self.cw.augment_router_logits(z)
-        alpha = F.softmax(z, dim=-1)
-        ahat = SparseRouterSTE.apply(alpha, 1)
-        # FFN 专家池 (简化)
-        ffn_sum = torch.zeros_like(x)
-        for m in range(self.num_experts):
-            h_a = x_det * self.gammas[m] + self.betas[m]
-            f_m = F.linear(F.silu(F.linear(h_a, self.w_gates[m])) *
-                           F.linear(h_a, self.w_ups[m]), self.w_downs[m])
-            f_q = FakeQuantSTE.apply(f_m, 4, 128)
-            ffn_sum = ffn_sum + ahat[..., m:m+1] * self.alphas[m] * f_q
-        return x + ffn_sum
-
-
 def prepare_data(seed, encoders):
     (bert_tok, bert, _, _), (llama_tok, llama, _, _), (vit_proc, vit, _, _) = encoders
     texts = ["cat dog bird", "animal pet wild", "feline canine fowl"]
@@ -152,12 +97,11 @@ def train_eval(layer, modal_seqs, modal_indices, targets, steps):
 def run_seed(mode, seed, encoders, attn_pools, steps=100, capacity=None):
     """mode ∈ {baseline-100, c1-100, c1-500, c1-small, c1-large}.
 
-    baseline / c1: 用 AttnPool + P_m (v7 框架)
-    baseline-100 实际上跑 C1OnlyModel (无 c 中枢 broadcast)
+    capacity 给定时 (H4 轴): 缩放 FFN 隐宽 d_ff —— 1× / 默认 4× / 8×。
     """
     torch.manual_seed(seed)
     (bert_tok, bert, _, _), (llama_tok, llama, _, _), (vit_proc, vit, _, _) = encoders
-    print(f"  [seed {seed}] mode={mode} steps={steps} ...")
+    print(f"  [seed {seed}] mode={mode} steps={steps} capacity={capacity} ...")
 
     modal_seqs, modal_indices, targets = prepare_data(seed, encoders)
 
@@ -165,8 +109,13 @@ def run_seed(mode, seed, encoders, attn_pools, steps=100, capacity=None):
     (_, _, D_bert, _), (_, _, D_llama, _), (_, _, D_vit, _) = encoders
     modal_dims = [D_bert, D_llama, D_vit]
     aligner = CrossArchAttnAligner(modal_dims=modal_dims, d_shared=D_SHARED, num_heads=4)
+    # 2026-10-11 修正: H4「学生容量」轴此前是空转 —— run_seed 收了 capacity 参数却从
+    # 不用, C1OnlyModel(student_capacity=…) 也从未被构造, 于是 c1-small / c1-large 与
+    # c1-100 逐位同构, 「容量不是根因」这个结论在构造上就没有支撑。这里让 capacity
+    # 真正作用在 FFN 隐宽 d_ff 上 (专家数被 len(modal_dims) 钉死, 隐宽才是真容量轴)。
+    mult = {"c1-small": 1, "c1-large": 8}.get(mode, 4)
     layer = AlignedFusionLayer(
-        d_shared=D_SHARED, d_ff=4 * D_SHARED,
+        d_shared=D_SHARED, d_ff=mult * D_SHARED,
         attn_pools=attn_pools, modal_dims=modal_dims,
         aligner=aligner, c1_alpha=0.0, c1_mode="broadcast",   # 复现 v8.0 c1-default broadcast 模式
     )
@@ -217,7 +166,9 @@ def main():
         for seed in range(SEEDS):
             try:
                 steps = 500 if mode == "c1-500" else 100
-                fuse = run_seed(mode, seed, encoders, attn_pools, steps=steps)
+                capacity = {"c1-small": 1, "c1-large": 8}.get(mode)
+                fuse = run_seed(mode, seed, encoders, attn_pools, steps=steps,
+                                capacity=capacity)
                 results[mode].append(fuse)
                 print(f"  [{mode:>13} seed {seed}] fuse={fuse:.4f}")
                 # 记录到 diagnostic runner

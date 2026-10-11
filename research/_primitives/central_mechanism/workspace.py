@@ -209,6 +209,13 @@ def make_workspace(
     if mode == "gate":
         return GateStyleWorkspace(d_shared=d_shared, num_experts=num_experts, **kwargs)
     elif mode == "broadcast":
+        # 2026-10-11 修正: BroadcastWorkspace 没有 alpha 参数 (它的广播幅度由
+        # init_scale 控制), 而 AlignedFusionLayer 对两个分支都传 alpha=c1_alpha ——
+        # 于是任何 c1_mode="broadcast" 的层都在构造时 TypeError, v19 与 v12 的
+        # broadcast 对照臂**从未真正跑起来过**。这里把 alpha 译成 init_scale:
+        # 两者都只决定中枢广播的初始幅度, 语义一致。
+        if "alpha" in kwargs:
+            kwargs["init_scale"] = kwargs.pop("alpha")
         return BroadcastWorkspace(d_shared=d_shared, num_experts=num_experts, **kwargs)
     else:
         raise ValueError(f"unknown mode {mode!r}; expected 'gate' or 'broadcast'")

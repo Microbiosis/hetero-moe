@@ -24,7 +24,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from research.central_stability.v22_central_theory import CentralTheory
+from research._primitives.central_theory import CentralTheory
 
 
 class _RouterNormVariantBase(CentralTheory):

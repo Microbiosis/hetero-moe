@@ -46,7 +46,7 @@ def make_v9_layer(
         v9 layer, 其中 cw_attn / cw_ffn 已被替换为 GateStyleWorkspace.
         C-2 (V_coop) / C-3 (central_expert) 保持 v8 原状.
     """
-    from research.routing_evolution.v9_gate_central.workspace import GateStyleWorkspace
+    from research._primitives.central_mechanism import GateStyleWorkspace  # 2026-10-10 修正: 本包无 workspace 子模块, 该符号在 _primitives
 
     layer = v8_layer_factory(d_shared=d_shared, **kwargs)
     if hasattr(layer, "cw_attn"):

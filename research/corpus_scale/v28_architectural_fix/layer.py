@@ -67,7 +67,7 @@ class ArchitecturalFixLayer(RealCorpusTheoryLayer):
             )
 
             # aligner (冻结, 与 v22 一致)
-            from research.aligner.v10_embedding import CrossArchAttnAligner
+            from research._primitives.aligners import CrossArchAttnAligner
             aligner = CrossArchAttnAligner(modal_dims=modal_dims, d_shared=d_shared, num_heads=4)
             for p in aligner.parameters():
                 p.requires_grad_(False)
