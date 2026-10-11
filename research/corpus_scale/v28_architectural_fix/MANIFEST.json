@@ -27,16 +27,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "7 个架构变体能否在 held-out 上超越 gate",
+    "metric": "fuse_mse_heldout",
     "direction": "lower_is_better",
-    "value": null,
+    "value": 0.4687,
     "baseline": {
-      "ref": null,
-      "value": null
+      "ref": "gate (v22 baseline)",
+      "value": 0.4512
     },
-    "delta_pct": null,
-    "seeds": null
+    "delta_pct": -3.9,
+    "seeds": 5,
+    "outcome_label": "falsified",
+    "note": "数值取自 SPEC.md:77-78。**没有任何变体能超越 gate**(held-out 0.4512); router-norm 变体退步 −3.9%; adaptive-ema-bounded 退步最严重(gap +39.8%)。"
   },
   "protocol": {
     "eval_set": null,
@@ -44,24 +46,22 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "存在架构变体在 held-out 上超越 gate",
+    "outcome": "fail",
+    "note": "55 run(11 modes × 5 seeds)全部退步; router-norm-affine-false 最接近 baseline(gap +7.5%)"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "clean",
+    "audits": [
+      "28.0"
+    ],
+    "note": "2026-10-11 结清。负面发现 + runner 原生报 held-out(ho_fuse), 结论直接建立在样本外。与 v27 同类: **同一现象在 v26/v27/v28 三轮独立复现**(router-norm/adaptive-ema 样本外退步)。"
   },
   "falsified": [
     {
-      "hypothesis": null,
-      "verdict": "**v27**: 4 patch (L2/Dropout/warmup/noise) **全部失败**, v22 patch 已局部最优",
-      "evidence": "research/负面发现 (重要) README 小节"
-    },
-    {
-      "hypothesis": null,
-      "verdict": "**v28**: 7 架构变体 **全部失败**, 架构层救不了数据规模问题",
-      "evidence": "research/负面发现 (重要) README 小节"
+      "hypothesis": "router-norm / adaptive-ema 的 held-out 退步可由架构层面修正",
+      "verdict": "7/7 变体被证伪 — 无一超越 gate",
+      "evidence": "SPEC.md:12-16,77-78"
     }
   ],
   "superseded_by": null,

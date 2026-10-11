@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0",
+  "version": "39.0",
+  "package": "v39_g2_interaction",
+  "line": "scale_heterogeneous",
+  "title": "γ2 加性 vs 交互融合框架",
+  "generation": {
+    "one_mechanism_added": "γ2 加性 vs 交互融合框架",
+    "parent": "38.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "6.0",
+    "line_children": [
+      "33.0",
+      "34.0",
+      "35.0",
+      "36.0",
+      "37.0",
+      "38.0",
+      "39.0"
+    ],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "heads.py",
+      "paths.py"
+    ]
+  },
+  "claim": {
+    "asserts": "把加性融合头换成交互头能否解除 v38 的伪边界",
+    "metric": "accuracy",
+    "direction": "higher_is_better",
+    "value": 0.997,
+    "baseline": {
+      "ref": "加性头 (v38 C 臂)",
+      "value": 0.755
+    },
+    "delta_pct": 32.1,
+    "seeds": 5,
+    "outcome_label": "confirmed",
+    "note": "**构造性证明 + 修正**: XOR 无加性分解(不存在 f,g 使 a XOR b = f(a)+g(b)), 加性头 XOR acc=0.543 ≈ 随机, 交互头 1.000。换头后 adult C/D/E 从 ~0.77 → **0.997 / 0.994 / 0.988**, shoppers 0.881/0.925/0.912"
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": "交互头解除加性头的表达力天花板",
+    "outcome": "pass",
+    "note": "换头后大幅提升; 且换头指纹只抬升带信息的臂, 不抬零信息臂"
+  },
+  "leakage_audit": {
+    "status": "clean",
+    "audits": [
+      "39.0"
+    ],
+    "note": "**更正此前 MANIFEST 里『本包无 held-out 评估』的错误说法**。v39 原生 384/128 留出: `examples/run_v39_g2_interaction.py:143-146` 置换切分, 第 111 行的准确率只在 `te_idx` 上量。五臂 × 双数据集共用同一 split。",
+    "audited_by": "47.0"
+  },
+  "falsified": [
+    {
+      "hypothesis": null,
+      "verdict": "**v39.0 γ2: 架构层修正** — 加性 vs 交互融合框架, 双数据集 (Adult + Shoppers)",
+      "evidence": "research/关键发现 README 小节"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v39_g2_interaction.py",
+    "forwarder_spec": "docs/V39_0_SPEC.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/scale_heterogeneous/README.md"
+  ]
+}

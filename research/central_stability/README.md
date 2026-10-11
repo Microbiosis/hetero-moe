@@ -42,5 +42,5 @@
 
 ## 测试
 
-- test_v22_theory.py (14 PASS)
+- test_v22_central_theory.py (14 PASS)
 - v30/v31 由 v22 测试覆盖 + 端到端脚本

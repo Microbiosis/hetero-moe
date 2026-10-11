@@ -9,7 +9,8 @@
     "parent": "8.0",
     "children": [
       "12.0",
-      "22.0"
+      "22.0",
+      "43.0"
     ]
   },
   "lineage": {
@@ -25,16 +26,15 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "gate-style 中枢修正 C-1 的 −38.1% 负增益至 +44.5%; v43 证明该增益是 in-sample 的, held-out 塌到 +4.0%(3/5)",
+    "metric": "fuse_mse",
     "direction": "lower_is_better",
-    "value": null,
-    "baseline": {
-      "ref": null,
-      "value": null
-    },
+    "value": 0.0,
+    "baseline": null,
     "delta_pct": null,
-    "seeds": null
+    "seeds": 5,
+    "outcome_label": "invalidated",
+    "note": "2026-10-11 补录 claim。leakage_audit.status=invalidated, 详见该字段的 note; 对应测试 tests/test_v9_gate_central.py 12/12。value 取该包 SPEC 记录的实测值。"
   },
   "protocol": {
     "eval_set": null,
@@ -42,13 +42,16 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "gate-style 中枢修正 C-1 的 −38.1% 负增益至 +44.5%; v43 证明该增益是 in-sample 的, held-out 塌到 +4.0%(3/5)",
+    "outcome": "见 claim.outcome_label",
+    "note": "本包结论的最终裁决见 leakage_audit 与其审计包(v41–v46)。"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "invalidated",
+    "audits": [
+      "43.0"
+    ],
+    "note": "2026-10-10 由 v43_central_audit 改判。runner 在训练同源数据上评估; held-out 上 gate-c1 的配对中位增益从 +52.2%(4/5) 塌到 +4.0%(3/5), 论文的 +44.5% 不成立于样本外。**但完美退化与保序两条结构性论证成立, 不受此影响。**"
   },
   "falsified": [
     {
@@ -63,7 +66,7 @@
     "spec": "SPEC.md",
     "tests": "tests/test_package.py",
     "results": "results/metrics.json",
-    "forwarder_tests": "tests/test_v9_gate.py",
+    "forwarder_tests": "tests/test_v9_gate_central.py",
     "forwarder_spec": "docs/V9_0_GATE_CENTRAL.md"
   },
   "_needs_human": [

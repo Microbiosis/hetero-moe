@@ -39,6 +39,6 @@
 
 ## 测试
 
-- test_v16_bert.py (8 PASS)
-- test_v17_multi.py (8 PASS)
+- test_v16_bert_student.py (8 PASS)
+- test_v17_multi_teacher.py (8 PASS)
 - test_v18_real_corpus.py (8 PASS)

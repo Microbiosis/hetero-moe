@@ -25,16 +25,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "4 个 patch (noise / warmup / dropout / l2) 能否修正 router-norm / adaptive-ema 的 held-out 退步",
+    "metric": "fuse_mse_heldout",
     "direction": "lower_is_better",
-    "value": null,
+    "value": 0.4481,
     "baseline": {
-      "ref": null,
-      "value": null
+      "ref": "v22 默认 patch (none)",
+      "value": 0.4583
     },
-    "delta_pct": null,
-    "seeds": null
+    "delta_pct": -2.2,
+    "seeds": 5,
+    "outcome_label": "falsified",
+    "note": "数值取自 SPEC.md:23 与 :77-80。held-out 排序 gate(+2.3%) > broadcast > router-norm(−5.1%) ≈ adaptive-ema(−6.6%); 四个 mode 的最佳 patch 全是 'none'。"
   },
   "protocol": {
     "eval_set": null,
@@ -42,24 +44,22 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "任一 patch 能让 router-norm / adaptive-ema 的 held-out 转正",
+    "outcome": "fail",
+    "note": "80 run(5 patch × 4 mode × 5 seeds)全部退步; 'none' 即 v22 默认已是局部最优"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "clean",
+    "audits": [
+      "27.0"
+    ],
+    "note": "2026-10-11 结清。**本包的结论本身就是负面发现, 且 runner 原生同时报 held-out**(examples/run_v27_router_norm_fix.py 含 ho_fuse), 结论直接建立在 held-out 上, 无需补测。"
   },
   "falsified": [
     {
-      "hypothesis": null,
-      "verdict": "**v27**: 4 patch (L2/Dropout/warmup/noise) **全部失败**, v22 patch 已局部最优",
-      "evidence": "research/负面发现 (重要) README 小节"
-    },
-    {
-      "hypothesis": null,
-      "verdict": "**v28**: 7 架构变体 **全部失败**, 架构层救不了数据规模问题",
-      "evidence": "research/负面发现 (重要) README 小节"
+      "hypothesis": "noise/warmup/dropout/l2 四个 patch 能修正 held-out 退步",
+      "verdict": "4/4 被证伪 — 所有 mode 的最佳 patch 都是 'none'",
+      "evidence": "SPEC.md:40,77-83"
     }
   ],
   "superseded_by": null,

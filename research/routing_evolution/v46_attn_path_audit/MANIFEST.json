@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "version": "46.0",
+  "package": "v46_attn_path_audit",
+  "line": "routing_evolution",
+  "title": "「增益集中在 attention 通路」的样本外审计 — 主张成立",
+  "_note": "version 46.0 手写。",
+  "generation": {
+    "one_mechanism_added": "不引入新机制; 给 v7 的四个通路分解量补 held-out 口径 + 配对通路差判据",
+    "parent": "7.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "7.0",
+    "line_children": [
+      "8.0"
+    ],
+    "note": "承接 routing_evolution 线"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "path_audit.py"
+    ],
+    "note": "path_audit.py 只依赖标准库, 不 import torch 也不 import 任何 research.* 子包。层构造/训练器/编码全部从 examples/run_v7_cross_arch.py import。"
+  },
+  "claim": {
+    "asserts": "microfusion.tex:77/151 — 跨架构互补增益集中在 attention 通路 (attn_only 明显优于 ffn_only)",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": 2.133,
+    "baseline": {
+      "ref": "ffn_only (held-out 中位)",
+      "value": 7.1651
+    },
+    "delta_pct": 70.6,
+    "seeds": 5,
+    "outcome_label": "confirmed"
+  },
+  "protocol": {
+    "eval_set": "held-out = 同分布不同抽样 (seed+1000: 换噪声 + 换随机图像)",
+    "input": "5 seeds × 2 口径 × 4 个通路量",
+    "caveat": "fuse 的绝对值 out-of-sample 劣化显著 (1.106 → 2.063), 但通路间的**相对**比较在两个口径下同向, 故主张判定不受影响"
+  },
+  "acceptance": {
+    "criterion": "若 attn 通路在 held-out 上仍稳定优于 ffn 通路, 则主张成立",
+    "outcome": "pass",
+    "note": "in-sample +82.7% (5/5), held-out +70.6% (5/5), 两口径同向"
+  },
+  "leakage_audit": {
+    "status": "clean",
+    "audits": [
+      "7.0"
+    ],
+    "note": "v7 原 runner 的四个通路量全部 in-sample 且无任何 held-out 构造; 本代补 held-out 后**主张依然成立**, 故不推翻。绝对值确有 out-of-sample 劣化, 但通路排序不受影响。"
+  },
+  "falsified": [],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v46_attn_path_audit.py",
+    "forwarder_spec": "docs/V46_0_ATTN_PATH_AUDIT.md"
+  },
+  "consumers": [
+    "docs/research_paper/microfusion.tex:77,151,218",
+    "Obsidian/路由演化/中枢主线.md",
+    "Obsidian/综合笔记/负面结果与设计原则.md"
+  ]
+}

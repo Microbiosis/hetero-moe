@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0",
+  "version": "41.0",
+  "package": "v41_capacity_audit",
+  "line": "aligner",
+  "title": "对齐器阶梯的容量-泄漏双重审计 — E2 结清",
+  "_note": "E2 自 v14 起挂账: 对齐器阶梯的性能序与容量序完全一致, 无法判定『设计』还是『规模』。本代用构造出来的精确等容量对结清它。version 41.0 手写, 避开 extract_generation_manifest.py 的正则归一撞车。forwarder_tests / forwarder_spec 刻意为 null —— 新增根目录转发层会改变 run.sh test 的套件计数, 与 v32 / v40 同理由。 2026-10-11: 已接入根目录转发层, artifacts.forwarder_tests 回填为实际路径(此前误留 null, 造成 12 条 NO-FORWARDER 警告)。",
+  "generation": {
+    "one_mechanism_added": "不引入新机制; 加入 (a) 对齐器容量的解析式与等容量配对 (MixtureAligner n_shared_experts=1 恰等于 CrossArchAttnAligner 的 720,640 参数), (b) held-out 评估口径(同分布不同抽样), 用于把『设计』从『规模』里剥出来",
+    "parent": "13.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [
+      "15.0"
+    ],
+    "note": "承接 aligner 线; 本代是 v13 阶梯主张的审计, 不是新阶梯"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "audit.py"
+    ],
+    "note": "audit.py 只依赖 torch, 不 import 任何 research.* 子包 —— research/aligner 在 check_self_containment.py 的 ALLOWED_INTRA_LINE 中无条目。对齐器构造与训练留在 examples/run_v41_capacity_audit.py (L1 不扫描 examples/)。"
+  },
+  "claim": {
+    "asserts": "对齐器阶梯从 attn 到 mixture 的增益来自**机制**(共享专家池)而非**容量**(参数量)",
+    "metric": "fuse_mse_heldout_median",
+    "direction": "lower_is_better",
+    "value": 0.2422,
+    "baseline": {
+      "ref": "attn (等容量 720,640 参数)",
+      "value": 0.3813
+    },
+    "delta_pct": 36.5,
+    "seeds": 5,
+    "outcome_label": "confirmed",
+    "note": "等容量对在 held-out 上 +36.5%(中位数), 5/5 配对种子全胜, 去掉最好种子后仍 +33.5%。故 E2 的容量混杂在 attn→mixture 这一步被排除。"
+  },
+  "protocol": {
+    "eval_set": "held-out = prepare_data(base_seed + 1000), 同分布不同抽样",
+    "input": "6 臂 × 5 seeds = 30 run; 教师训练与数据构造直接 import examples/run_v13_distill.py, 与被审计对象同口径",
+    "arms": [
+      "attn",
+      "mixture-n1",
+      "mixture-n2",
+      "mixture-n4",
+      "mixture-n8",
+      "mom"
+    ],
+    "capacity_reporting": "只数**对齐器**参数量; AlignedFusionLayer 自带的 gammas/betas/alphas/W_router 共 266,246 参数各臂完全相同, 数进去会淹没等容量对",
+    "caveat": "臂间只做 seed 对齐, 不做 state_dict 对齐(架构不同无法共享); 结论依赖配对而非同初始化"
+  },
+  "acceptance": {
+    "criterion": "若 attn 与 mixture-n1(参数量严格相等)的 held-out MSE 接近, 则阶梯增益来自容量(E2 成立, 阶梯需降级); 若 mixture-n1 显著更优, 则容量混杂被排除",
+    "outcome": "pass",
+    "note": "0.2422 vs 0.3813, mixture-n1 优 36.5%, 5/5 配对全胜 ⇒ 容量混杂被排除"
+  },
+  "leakage_audit": {
+    "status": "clean",
+    "audits": [
+      "13.0",
+      "10.0",
+      "15.0"
+    ],
+    "note": "同时结清 v13 的 in-sample 评估问题。每个臂同时报 in-sample 与 held-out: attn 落差 +4.6% 是唯一有实质泛化落差的臂, mixture 家族与 mom 落差均 ≤0.6%。对齐器阶梯的主张因此在 held-out 上依然成立。",
+    "leakage_ranking": {
+      "attn": 0.046,
+      "mixture-n1": 0.002,
+      "mixture-n2": 0.003,
+      "mixture-n4": 0.006,
+      "mixture-n8": 0.001,
+      "mom": -0.0
+    }
+  },
+  "falsified": [
+    {
+      "hypothesis": "对齐器阶梯的爬升可能来自容量而非设计 (E2, 自 v14 起挂账)",
+      "verdict": "被证伪 — 精确等容量对下 mixture 仍优 36.5%, 5/5 配对全胜",
+      "evidence": "results/metrics.json:e2_verdict"
+    },
+    {
+      "hypothesis": "v15 嵌套天花板 (mom 差于 mixture) 可能是容量差异",
+      "verdict": "被证伪 — mom 容量是 mixture-n1 的 2.37× 反而差 28.6%",
+      "evidence": "results/metrics.json:nesting_ceiling_not_capacity"
+    },
+    {
+      "hypothesis": "更大容量能继续降低对齐器 MSE",
+      "verdict": "被证伪 — 容量从 720,640 翻到 4,387,072 (6.09×) 只换来 -5.6% 且非单调; n2 反而差于 n1",
+      "evidence": "results/metrics.json:capacity_curve_flat"
+    }
+  ],
+  "not_audited": [
+    "v16 学生蒸馏 +47.5% (status=invalidated, v32 已推翻)",
+    "v21 多模态 +50.5% —— 仍 pending, 且形状与被推翻的 +47.5% 同形, 是下一个风险面",
+    "本代只审对齐器阶梯, 不含学生蒸馏与多模态线"
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v41_capacity_audit.py",
+    "forwarder_spec": "docs/V41_0_ALIGNER_CAPACITY_AUDIT.md"
+  },
+  "consumers": [
+    "docs/research_paper/microfusion.tex (E2 未闭项)",
+    "Obsidian/综合笔记/负面结果与设计原则.md (E2 未隔离混杂)",
+    "Obsidian/论文笔记/微融合论文.md"
+  ],
+  "external_reference": {
+    "paper": null,
+    "note": "本代不使用外部对照; 方法上沿用 v32 的『混杂必须参数化隔离』纪律"
+  }
+}

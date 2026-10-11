@@ -23,16 +23,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
-    "direction": "lower_is_better",
+    "asserts": "CLIP 预训练教师 + 真实颜色图能否修复 v23b 的失败",
+    "metric": "pass_rate",
+    "direction": "higher_is_better",
     "value": null,
     "baseline": {
-      "ref": null,
-      "value": null
+      "ref": "v23b 随机水平",
+      "value": 0.5
     },
     "delta_pct": null,
-    "seeds": null
+    "seeds": 3,
+    "outcome_label": "unverified",
+    "note": "SPEC.md:9 —— 单测 8/8 PASS, 端到端 9 run **均可执行**, 但**从未产生区分性结果**(pipeline 通了, 效果未验证)"
   },
   "protocol": {
     "eval_set": null,
@@ -40,13 +42,17 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "CLIP 教师在真实数据上产生优于随机的表现",
+    "outcome": "not_met",
+    "note": "pipeline 可执行, 但无区分性结论; 论文 Limitations 明列此项为未闭"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "clean",
+    "audits": [
+      "24.0"
+    ],
+    "note": "**更正此前 MANIFEST 里『本包无 held-out 评估』的错误说法**。v24 原生 train/eval 分离: `research/multimodal/v24_clip/corpus.py:105-111` 两个 split 用不同的 seed 偏移构造(源码注释即写明『不同 split 用不同的 seed 偏移避免完全重复』); `examples/run_v24_clip_distill.py:81` 只在 `all_train()` 上训练, 第 106-118 行的 eval MSE 只在 `all_eval()` 上量。",
+    "audited_by": "47.0"
   },
   "falsified": [
     {

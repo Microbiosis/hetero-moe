@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "version": "37.0",
+  "package": "v37_b_selftrained_entry",
+  "line": "scale_heterogeneous",
+  "title": "β 自训练预测编码入口",
+  "generation": {
+    "one_mechanism_added": "β 自训练预测编码入口",
+    "parent": "36.0",
+    "children": [
+      "38.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "6.0",
+    "line_children": [
+      "33.0",
+      "34.0",
+      "35.0",
+      "36.0",
+      "37.0",
+      "38.0",
+      "39.0"
+    ],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "lifted",
+    "lifted_to": "research._primitives.scale_hetero_loaders",
+    "modules": []
+  },
+  "claim": {
+    "asserts": "入口编码器参与自训练能否优于被动入口",
+    "metric": "accuracy",
+    "direction": "higher_is_better",
+    "value": null,
+    "baseline": {
+      "ref": "v36 被动入口",
+      "value": null
+    },
+    "delta_pct": null,
+    "seeds": 5,
+    "outcome_label": "confirmed",
+    "note": "入口编码器端到端可训练(预测编码), β=0.781 vs α2 被动 0.556–0.650"
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": "自训练入口优于被动入口",
+    "outcome": "pass",
+    "note": "3 配置全 5/5"
+  },
+  "leakage_audit": {
+    "status": "clean",
+    "audits": [
+      "37.0"
+    ],
+    "note": "**更正此前 MANIFEST 里『本包无 held-out 评估』的错误说法**。v37 原生 96/32 留出: `examples/run_v37_b_selftrained_entry.py:77-79` 用 `RandomState(1234)` 的置换切成互不相交的 `tr_idx`/`te_idx`, 训练循环只从 `tr_idx` 取 batch, 准确率只在 `te_idx` 上量 (`research/_primitives/scale_hetero_loaders/arm.py:41-47`)。四臂共用同一个 split, 对照公平。\n⚠️ 旁证 `knn_acc(h_all, y)` 走的是全部 128 条的 leave-one-out, 含训练样本 —— 但它是**无参数**的拓扑读数, 报告里已与 test_acc 分列, 不构成泄漏。",
+    "audited_by": "47.0"
+  },
+  "falsified": [
+    {
+      "hypothesis": null,
+      "verdict": "**v37.0 β: 自训练入口预测编码闭环** — 4 臂对照 (无/随机/被动/自训练)",
+      "evidence": "research/关键发现 README 小节"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v37_b_selftrained_entry.py",
+    "forwarder_spec": "docs/V37_0_SPEC.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/scale_heterogeneous/README.md"
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "schema_version": "1.0",
+  "version": "41.0",
+  "package": "v41_capacity_audit",
+  "line": "aligner",
+  "metric": "fuse_mse",
+  "direction": "lower_is_better",
+  "baseline": "0.3813 (attn 的 held-out 5-seed 中位数)",
+  "value": 0.2422,
+  "recorded_by": "examples/run_v41_capacity_audit.py (6 臂 × 5 seed = 30 run)",
+  "statistic": "median over 5 seeds (该指标种子间方差大, 与 v40 同纪律: 均值不可单独引用)",
+  "aligner_capacity": {
+    "note": "只数对齐器参数; AlignedFusionLayer 自带 266,246 参数各臂相同",
+    "linear_P_m": 325632,
+    "attn": 720640,
+    "mixture_n1": 720640,
+    "mixture_n2": 1244416,
+    "mixture_n4": 2291968,
+    "mixture_n8": 4387072,
+    "mom": 1704448,
+    "doc_ladder_performance": {
+      "linear": 1.0436,
+      "attn": 0.3448,
+      "mixture": 0.2575,
+      "mom": 0.2645
+    },
+    "confound": "docs 的性能序与容量序完全一致 ⇒ 阶梯与容量混淆, E2 挂账"
+  },
+  "arms": [
+    {
+      "arm": "attn",
+      "params": 720640,
+      "in_mean": 0.3629387534326977,
+      "in_median": 0.3813075125217438,
+      "out_mean": 0.379707266887029,
+      "out_median": 0.3951682133807076
+    },
+    {
+      "arm": "mixture-n1",
+      "params": 720640,
+      "in_mean": 0.25781511151128345,
+      "in_median": 0.2378726369804806,
+      "out_mean": 0.25834916631380717,
+      "out_median": 0.24220379773113462
+    },
+    {
+      "arm": "mixture-n2",
+      "params": 1244416,
+      "in_mean": 0.26740311582883197,
+      "in_median": 0.29573294520378113,
+      "out_mean": 0.2681087793575393,
+      "out_median": 0.2964344968398412
+    },
+    {
+      "arm": "mom",
+      "params": 1704448,
+      "in_mean": 0.295183437400394,
+      "in_median": 0.31153688993718887,
+      "out_mean": 0.29514889948897893,
+      "out_median": 0.31145849492814803
+    },
+    {
+      "arm": "mixture-n4",
+      "params": 2291968,
+      "in_mean": 0.24861471073495017,
+      "in_median": 0.2407168158226543,
+      "out_mean": 0.25009937898980245,
+      "out_median": 0.2405006703403261
+    },
+    {
+      "arm": "mixture-n8",
+      "params": 4387072,
+      "in_mean": 0.25407401472330093,
+      "in_median": 0.2553884486357371,
+      "out_mean": 0.25421681486897996,
+      "out_median": 0.25574613279766506
+    }
+  ],
+  "e2_verdict": {
+    "capacity_matched_pair": {
+      "attn": 720640,
+      "mixture_n1": 720640,
+      "identical": true
+    },
+    "heldout_median": {
+      "attn": 0.3813,
+      "mixture_n1": 0.2422,
+      "mixture_better_pct": 36.5
+    },
+    "heldout_mean": {
+      "attn": 0.3629,
+      "mixture_n1": 0.2583,
+      "mixture_better_pct": 28.8
+    },
+    "paired_per_seed_pct": [
+      25.5,
+      3.3,
+      40.4,
+      27.1,
+      42.6
+    ],
+    "mixture_wins_seeds": "5/5",
+    "leave_best_seed_out_pct": 33.5,
+    "conclusion": "**E2 结清: 容量混杂被排除.** 参数量严格相同的两个机制相差 36.5%, 5/5 配对种子全胜, 去掉最好种子后仍 33.5% ⇒ attn→mixture 的增益来自『共享专家池』这一机制, 不是规模。对齐器阶梯作为 main finding 成立。"
+  },
+  "capacity_curve_flat": {
+    "note": "mixture 家族沿容量扫描, held-out 中位数",
+    "points": [
+      {
+        "n_shared_experts": 1,
+        "params": 720640,
+        "heldout_median": 0.2422
+      },
+      {
+        "n_shared_experts": 2,
+        "params": 1244416,
+        "heldout_median": 0.2964
+      },
+      {
+        "n_shared_experts": 4,
+        "params": 2291968,
+        "heldout_median": 0.2405
+      },
+      {
+        "n_shared_experts": 8,
+        "params": 4387072,
+        "heldout_median": 0.2557
+      }
+    ],
+    "conclusion": "容量翻 6.09× 只带来 -5.6% 且**非单调**(n2 差于 n1)。容量在 n_shared_experts=1 之后基本不再产生收益 —— 这正是 E2 当初担心的『阶梯读的是规模』被证伪的另一半。",
+    "caveat": "该曲线受种子方差支配(单臂 5 seed 范围可达 0.22-0.31), 非单调很可能是噪声而非真实趋势; 结论只取『无单调上升趋势』这一定性判断。"
+  },
+  "nesting_ceiling_not_capacity": {
+    "mom_params": 1704448,
+    "mixture_n1_params": 720640,
+    "capacity_ratio": 2.37,
+    "heldout_median": {
+      "mom": 0.3115,
+      "mixture_n1": 0.2422,
+      "mom_worse_pct": 28.6
+    },
+    "conclusion": "v15『嵌套天花板』同样不是容量造成的: mom 容量是 mixture-n1 的 2.37×, 反而差 28.6%。嵌套退化是**架构表达力**问题, 与规模无关 —— 这与 v39 对加性融合头的构造性证明同族。"
+  },
+  "leakage_audit_result": {
+    "issue": "v13 的 eval_teacher 在训练同源数据上评估 (in-sample)",
+    "fix": "每个臂同时报 in-sample 与 held-out (prepare_data 换 base seed +1000, 同分布不同抽样)",
+    "gap_pct": {
+      "attn": 4.6,
+      "mixture-n1": 0.2,
+      "mixture-n2": 0.3,
+      "mixture-n4": 0.6,
+      "mixture-n8": 0.1,
+      "mom": -0.0
+    },
+    "conclusion": "attn 是唯一有实质泛化落差的臂 (+4.6%), mixture 家族与 mom 均 ≤0.6%。但注意 attn 的 **in-sample 本身也差**(0.3813 vs 0.2422), 所以不是『in-sample 好看、held-out 穿帮』, 而是 attn 两头都差。对齐器阶梯的主张在 held-out 上依然成立。"
+  },
+  "scope_caveat": "本代**只审对齐器阶梯**(v10/v13/v15)。学生蒸馏线的 +47.5%(v16, 已被 v32 推翻)与多模态线的 +50.5%(v21)**不在本代范围内**, v21 仍是 pending 且与被推翻的 +47.5% 同形, 是下一个风险面。全部结果仍在 CPU 沙箱、D_shared=256、序列长 16、合成 class-direction 目标上取得。",
+  "recompute_with": "python3 examples/run_v41_capacity_audit.py",
+  "raw_evidence": [
+    "research/aligner/v41_capacity_audit/results/raw.json"
+  ]
+}

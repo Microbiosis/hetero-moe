@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "version": "33.0",
+  "package": "v33_scale_hetero",
+  "line": "scale_heterogeneous",
+  "metric": null,
+  "direction": "lower_is_better",
+  "baseline": null,
+  "value": null,
+  "recorded_by": "extract_generation_manifest.py 骨架, 指标待人工填",
+  "post_bugfix_rerun_2026_10_10": {
+    "reason": "修广播错配后重跑 (expert_seqs 由整个 [3,S,D] block 改为单样本 [S,D])",
+    "seeds": 5,
+    "fuse": [
+      8.3154,
+      8.3443,
+      8.7387,
+      8.5226,
+      8.0807
+    ],
+    "gain_vs_big_pct": {
+      "mean": 25.6,
+      "range": [
+        22.4,
+        27.7
+      ],
+      "per_seed": [
+        24.5,
+        26.8,
+        22.4,
+        27.7,
+        26.7
+      ]
+    },
+    "gain_vs_small_pct": {
+      "mean": 25.0,
+      "range": [
+        23.5,
+        28.3
+      ]
+    },
+    "route_distribution": {
+      "big": 32,
+      "small1": 36,
+      "small2": 22,
+      "pct": {
+        "big": 35.6,
+        "small1": 40.0,
+        "small2": 24.4
+      },
+      "tokens": 90
+    },
+    "seeds_pass": "5/5",
+    "supersedes": {
+      "gain_vs_big": "26.1%",
+      "route_big_pct": "49.2%",
+      "route_small1_pct": "19.7%",
+      "route_small2_pct": "31.1%"
+    },
+    "note": "**路由分布变化显著**: 大专家 49.2% → 35.6%, 小1 19.7% → 40.0%, 小2 31.1% → 24.4%. 『大模型未被碾压』的定性结论仍成立(35.6% 仍是主力之一), 但具体数字全部失效, 需按新值引用."
+  }
+}

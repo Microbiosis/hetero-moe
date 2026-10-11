@@ -28,16 +28,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "C-1 中枢广播单独启用是否改善跨架构融合",
+    "metric": "fuse_mse",
     "direction": "lower_is_better",
-    "value": null,
+    "value": 1.8581,
     "baseline": {
-      "ref": null,
-      "value": null
+      "ref": "v7 baseline (无中枢)",
+      "value": 1.3451
     },
-    "delta_pct": null,
-    "seeds": null
+    "delta_pct": -38.1,
+    "seeds": 5,
+    "outcome_label": "falsified",
+    "note": "SPEC.md:74-77 —— C-1 单独 -38.1%❌ / C-2 +14.3% / C-3 +90.1%(0.1331)。C-1 的负增益正是 v9 的起因"
   },
   "protocol": {
     "eval_set": null,
@@ -45,13 +47,17 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "C-1 中枢广播单独启用能改善 fuse MSE",
+    "outcome": "fail",
+    "note": "-38.1%, 直接引出 v9 的温度调制修正"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "clean",
+    "audits": [
+      "v8.0"
+    ],
+    "audited_by": "47.0",
+    "note": "v47.0 样本外审计 (5 seeds × 3 口径, 配对逐种子中位数)。\n\n被审计主张: C-1 中枢广播单独启用是否改善跨架构融合\n\n| 口径 | 中位改进 | 胜出 | 算子判定 | 保留率 |\n|---|---:|---:|:---:|---:|\n| in_sample | -306.7% | — | — | — |\n| heldout_noise | -51.0% | 1/5 | invalidated |  |\n| heldout_stimulus | -50.6% | 1/5 | invalidated |  |\n\n**三个口径同向**（负向结论在样本外复现）⇒ 原结论不依赖 in-sample 口径，`leakage_audit` 记 clean。\n口径: in_sample 与原 runner 同构; heldout_noise = seed+1000 同刺激换噪声;\nheldout_stimulus = 换文本的未见刺激。算子与判据见\n`research/central_stability/v47_heldout_audit/SPEC.md`。\n\n⚠️ 审计顺带发现本线 runner 的两个既有缺陷, 已修并记录在案:\n(1) `research/_primitives/attention/attn_pool.py:107,116` 的 `P_m` / `W_o` 在\n**任何种子上下文之外**随机初始化 ⇒ 同一配置跨进程不可复现 (实测同一配置\nin-sample 读数在 0.23~0.61 之间跳); (2) numpy 全局 RNG 不受 `torch.manual_seed`\n控制, 原 runner 的随机图像不受 seed 约束。本审计对两者都做了固定, 被审计的原\nrunner 没有 —— 因此上表的绝对值与原文档里的绝对值**不必逐位相等**, 但同一行内的\n三口径是同源同口径的。\n"
   },
   "falsified": [
     {

@@ -24,16 +24,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "H3(训练步数不足) 与 H4(学生容量不足) 是否是 C-1 负增益的根因",
+    "metric": "fuse_mse",
     "direction": "lower_is_better",
     "value": null,
     "baseline": {
-      "ref": null,
+      "ref": "v8 C-1 单独",
       "value": null
     },
     "delta_pct": null,
-    "seeds": null
+    "seeds": 5,
+    "outcome_label": "partial",
+    "note": "⚠️ 2026-10-11 更正: 本包原 claim 写『长训练(500 步)与大容量都能改善 C-1』, 其中**『大容量』一半从未被真正测过** —— `examples/run_v19_c1_revisit.py` 的 `run_seed(..., capacity=None)` 收了 capacity 参数却从不用它, 文件里为它准备的 `C1OnlyModel(student_capacity=…)` 类也从未被构造, 于是 `c1-small` / `c1-large` 与 `c1-100` 逐位同构。原 SPEC.md:9 与 acceptance 里『两者都能改善』的表述因此**无实测支撑**。\n已修: capacity 现在真正作用在 FFN 隐宽 d_ff (小=1× / 默认=4× / 大=8×), 死代码 `C1OnlyModel` 已删除。H4 这一轴**修后尚未重测**, 下面的 value/delta 仍只覆盖 H3 轴。\nSPEC.md:9 —— H3(长训练 500 步) 确实改善 C-1, 但五个假设中无一被确认为『主矛盾』"
   },
   "protocol": {
     "eval_set": null,
@@ -41,13 +43,17 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "H3 与 H4 是 C-1 负增益的主因",
+    "outcome": "partial",
+    "note": "H3 有实测支撑; **H4 此前空转, 现已修复但未重测**, 因此『两者都能改善』这一表述已撤回。已确认的只有: H3 有效, 且主矛盾后来定位为 U 的训练扰动(C2)"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "clean",
+    "audits": [
+      "v19.0"
+    ],
+    "audited_by": "47.0",
+    "note": "v47.0 样本外审计 (5 seeds × 3 口径, 配对逐种子中位数)。\n\n被审计主张: H3(训练步数不足) 与 H4(学生容量不足) 是否是 C-1 负增益的根因\n\n| 口径 | 中位改进 | 胜出 | 算子判定 | 保留率 |\n|---|---:|---:|:---:|---:|\n| in_sample | +4.3% | — | — | — |\n| heldout_noise | +1.5% | 3/5 | clean | 34% |\n| heldout_stimulus | +2.4% | 3/5 | clean | 54% |\n\n**三个口径同向**（增益结论在样本外复现）⇒ 原结论不依赖 in-sample 口径，`leakage_audit` 记 clean。\n幅度上样本外只保留 34%~54% —— 方向站得住，但**效应量远小于 in-sample 的报数**。\n口径: in_sample 与原 runner 同构; heldout_noise = seed+1000 同刺激换噪声;\nheldout_stimulus = 换文本的未见刺激。算子与判据见\n`research/central_stability/v47_heldout_audit/SPEC.md`。\n\n⚠️ 审计顺带发现本线 runner 的两个既有缺陷, 已修并记录在案:\n(1) `research/_primitives/attention/attn_pool.py:107,116` 的 `P_m` / `W_o` 在\n**任何种子上下文之外**随机初始化 ⇒ 同一配置跨进程不可复现 (实测同一配置\nin-sample 读数在 0.23~0.61 之间跳); (2) numpy 全局 RNG 不受 `torch.manual_seed`\n控制, 原 runner 的随机图像不受 seed 约束。本审计对两者都做了固定, 被审计的原\nrunner 没有 —— 因此上表的绝对值与原文档里的绝对值**不必逐位相等**, 但同一行内的\n三口径是同源同口径的。\n"
   },
   "falsified": [],
   "superseded_by": null,

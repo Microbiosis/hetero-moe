@@ -24,16 +24,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "在真实 Wikipedia 语料上, 四种中枢模式的排序保持, adaptive-ema 真实泛化优势最大 (held-out +11.1% vs broadcast)",
+    "metric": "fuse_mse",
     "direction": "lower_is_better",
     "value": null,
     "baseline": {
-      "ref": null,
+      "ref": "broadcast (对照)",
       "value": null
     },
-    "delta_pct": null,
-    "seeds": null
+    "delta_pct": 11.1,
+    "seeds": 5,
+    "outcome_label": "confirmed",
+    "note": "数值取自 SPEC.md『adaptive-ema 真实泛化优势最大: 训练集 +13.2%, held-out +11.1%』。**训练集与 held-out 排序一致**(adaptive-ema > gate ≈ router-norm > broadcast), 这是本线少见的训练集优势能传递到样本外的情形。"
   },
   "protocol": {
     "eval_set": null,
@@ -41,24 +43,22 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "真实语料下四模式排序是否与合成语料一致, 且 held-out 上优势是否保持",
+    "outcome": "pass",
+    "note": "训练集 +13.2% / held-out +11.1%, 两口径同序。"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "clean",
+    "audits": [
+      "25.0"
+    ],
+    "note": "2026-10-11 结清(补录, 非新实验)。该包**本就用 held-out 评估**(examples/run_v25_corpus_central.py 同时报 train 与 held-out), 只是结论从未写进机器可读 manifest。held-out 优势 +11.1%, 泄漏不成立。"
   },
   "falsified": [
     {
-      "hypothesis": null,
-      "verdict": "**v27**: 4 patch (L2/Dropout/warmup/noise) **全部失败**, v22 patch 已局部最优",
-      "evidence": "research/负面发现 (重要) README 小节"
-    },
-    {
-      "hypothesis": null,
-      "verdict": "**v28**: 7 架构变体 **全部失败**, 架构层救不了数据规模问题",
-      "evidence": "research/负面发现 (重要) README 小节"
+      "hypothesis": "合成语料上的四模式排序在真实语料上会翻转",
+      "verdict": "未成立 — 排序保持",
+      "evidence": "SPEC.md:13-15"
     }
   ],
   "superseded_by": null,

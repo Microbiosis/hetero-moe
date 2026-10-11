@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "version": "46.0",
+  "package": "v46_attn_path_audit",
+  "line": "routing_evolution",
+  "metric": "fuse_mse",
+  "direction": "lower_is_better",
+  "baseline": "ffn_only",
+  "value": 2.133,
+  "recorded_by": "examples/run_v46_attn_path_audit.py (5 seeds × 2 口径)",
+  "statistic": "配对逐样本中位数 (不用均值 — v40 起的纪律)",
+  "decomposition": {
+    "in_sample": {
+      "fuse": 1.1061,
+      "attn_only": 1.2784,
+      "ffn_only": 7.2002,
+      "avg": 7.1677,
+      "path_gap_pct": 82.7,
+      "attn_wins": "5/5"
+    },
+    "heldout": {
+      "fuse": 2.0626,
+      "attn_only": 2.133,
+      "ffn_only": 7.1651,
+      "avg": 7.1947,
+      "path_gap_pct": 70.6,
+      "attn_wins": "5/5"
+    }
+  },
+  "verdict": {
+    "claim": "增益集中在 attention 通路",
+    "holds": true,
+    "conclusion": "**主张成立且在样本外更强地成立。** attn 通路相对 ffn 通路的优势: in-sample +82.7%(5/5), held-out +70.6%(5/5)。两口径同向, 是本轮审计中唯一未被推翻的主张之一。",
+    "caveat": "fuse 绝对值 out-of-sample 从 1.106 劣化到 2.063 (86%), 说明通路分解本身泛化不佳; 但**通路之间的相对次序**稳定, 因此『增益集中在 attention 通路』这一**相对**主张不受影响。"
+  },
+  "scope_caveat": "CPU 沙箱 D_shared=256, 序列长 16, 合成 class-direction 目标; v7-A 跨架构路径, v7-B 同架构多任务未审",
+  "recompute_with": "python3 examples/run_v46_attn_path_audit.py",
+  "raw_evidence": [
+    "research/routing_evolution/v46_attn_path_audit/results/raw.json"
+  ]
+}

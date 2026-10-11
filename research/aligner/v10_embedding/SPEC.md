@@ -107,7 +107,7 @@ v10 复用了 v9 的 gate-style 中枢 (`central_mode="gate"`, `freeze_u=True`)�
 - `v10_embedding/aligner.py` — `CrossArchMeanAligner` + `CrossArchAttnAligner`
 - `v10_embedding/fusion.py` — `AlignedFusionLayer` (替换 P_m 为 aligner)
 - `examples/run_v10_aligner.py` — 3 变体 × 5 seeds 对照
-- `tests/test_v10_aligner.py` — 8 项单元测试
+- `tests/test_v10_embedding.py` — 8 项单元测试
 - `pyproject.toml` — packages.include 加 `v10_embedding*`
 
 ## 8. 给 v11 的方向

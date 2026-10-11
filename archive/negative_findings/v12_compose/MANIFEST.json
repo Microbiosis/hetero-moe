@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "version": "12.0",
+  "package": "v12_compose",
+  "line": "archive/negative_findings",
+  "title": "v12 (待补标题)",
+  "generation": {
+    "one_mechanism_added": null,
+    "parent": "9.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": null,
+    "line_children": [],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "fusion.py"
+    ]
+  },
+  "claim": {
+    "asserts": "v9(gate 中枢) 与 v10(attn 对齐器) 两个改进组合是否叠加",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": "v9-linear-gate",
+      "value": 1.1625
+    },
+    "delta_pct": null,
+    "seeds": 5,
+    "outcome_label": "no_additive_gain",
+    "note": "SPEC.md:9,18-19 —— 『v12 ≈ v10』, 主贡献来自 attn 对齐器(v10 比 v9 线性 P_m 改善 +67%)。value 暂留 null: SPEC 表未给单一 v12 数字"
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": "v9 + v10 的增益可叠加",
+    "outcome": "fail",
+    "note": "两者相加 <2 个百分点 ⇒ 叠加不成立"
+  },
+  "leakage_audit": {
+    "status": "clean",
+    "audits": [
+      "v12.0"
+    ],
+    "audited_by": "47.0",
+    "note": "v47.0 样本外审计 (5 seeds × 3 口径, 配对逐种子中位数)。\n\n被审计主张: v9(gate 中枢) 与 v10(attn 对齐器) 两个改进组合是否叠加\n\n| 口径 | 中位改进 | 胜出 | 算子判定 | 保留率 |\n|---|---:|---:|:---:|---:|\n| in_sample | -43.0% | — | — | — |\n| heldout_noise | -41.4% | 2/5 | invalidated |  |\n| heldout_stimulus | -69.4% | 1/5 | invalidated |  |\n\n**三个口径同向**（负向结论在样本外复现）⇒ 原结论不依赖 in-sample 口径，`leakage_audit` 记 clean。\n口径: in_sample 与原 runner 同构; heldout_noise = seed+1000 同刺激换噪声;\nheldout_stimulus = 换文本的未见刺激。算子与判据见\n`research/central_stability/v47_heldout_audit/SPEC.md`。\n\n⚠️ 审计顺带发现本线 runner 的两个既有缺陷, 已修并记录在案:\n(1) `research/_primitives/attention/attn_pool.py:107,116` 的 `P_m` / `W_o` 在\n**任何种子上下文之外**随机初始化 ⇒ 同一配置跨进程不可复现 (实测同一配置\nin-sample 读数在 0.23~0.61 之间跳); (2) numpy 全局 RNG 不受 `torch.manual_seed`\n控制, 原 runner 的随机图像不受 seed 约束。本审计对两者都做了固定, 被审计的原\nrunner 没有 —— 因此上表的绝对值与原文档里的绝对值**不必逐位相等**, 但同一行内的\n三口径是同源同口径的。\n"
+  },
+  "falsified": [],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v12_compose.py",
+    "forwarder_spec": "docs/V12_0_COMPOSE.md"
+  },
+  "_needs_human": [
+    "generation.one_mechanism_added",
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": []
+}

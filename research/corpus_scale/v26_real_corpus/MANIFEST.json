@@ -26,16 +26,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "fully-real-corpus 下, 训练集 gate 最佳 (+11.1%) 但 held-out 上 router-norm / adaptive-ema 退步 (−5.1% / −6.6%); gate 是唯一在两个口径都保持正增益的模式",
+    "metric": "fuse_mse",
     "direction": "lower_is_better",
     "value": null,
     "baseline": {
-      "ref": null,
+      "ref": "broadcast (对照)",
       "value": null
     },
-    "delta_pct": null,
-    "seeds": null
+    "delta_pct": 11.1,
+    "seeds": 5,
+    "outcome_label": "confirmed_with_caveat",
+    "note": "数值取自 SPEC.md『训练集 gate 最佳 (+11.1%), 但 held-out 上 router-norm / adaptive-ema 退步(−5.1% / −6.6%)』。**这是本项目最早记录到的『训练集最优 ≠ held-out 最优』的样本**(2026-09-13 前后), 与 v44 在 v22 上独立发现的是同一现象。"
   },
   "protocol": {
     "eval_set": null,
@@ -43,24 +45,22 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "四个模式在训练集与 held-out 上是否同序",
+    "outcome": "fail",
+    "note": "不同序 —— 训练集 gate 最优, held-out 上 gate 反而是仅存的正增益模式, 而训练集并不突出的 router-norm / adaptive-ema 在 held-out 退步。"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "invalidated",
+    "audits": [
+      "26.0"
+    ],
+    "note": "2026-10-11 补录并改判。包本身用 held-out 评估, 但**若只引训练集结论会得到错误排序**。本包的正确结论是『训练集最优的模式不一定是样本外最优』, 而非『gate 最优』。"
   },
   "falsified": [
     {
-      "hypothesis": null,
-      "verdict": "**v27**: 4 patch (L2/Dropout/warmup/noise) **全部失败**, v22 patch 已局部最优",
-      "evidence": "research/负面发现 (重要) README 小节"
-    },
-    {
-      "hypothesis": null,
-      "verdict": "**v28**: 7 架构变体 **全部失败**, 架构层救不了数据规模问题",
-      "evidence": "research/负面发现 (重要) README 小节"
+      "hypothesis": "训练集上最优的中枢模式在 held-out 上仍然最优",
+      "verdict": "被证伪 — gate 训练集 +11.1% 最优, 但 held-out 上仅它保持正增益, 训练集并不突出的 router-norm(−5.1%)/adaptive-ema(−6.6%)反而退步",
+      "evidence": "SPEC.md:14"
     }
   ],
   "superseded_by": null,

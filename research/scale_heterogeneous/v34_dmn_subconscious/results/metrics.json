@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "version": "34.0",
+  "package": "v34_dmn_subconscious",
+  "line": "scale_heterogeneous",
+  "metric": null,
+  "direction": "lower_is_better",
+  "baseline": null,
+  "value": null,
+  "recorded_by": "extract_generation_manifest.py 骨架, 指标待人工填",
+  "v34c_homostasis_wired": {
+    "note": "2026-10-10: 把 C 接进前向路径后的第三臂. 原 v34 的 C 是只写不读的 buffer.",
+    "mechanism": "DMNSubconscious.inject(): r_eff = r − Ĉ, Ĉ = (C/‖C‖)·‖r‖, 纯前向门控(Ĉ 对 r 不可微), C=0 时完美退化回原 v34",
+    "seeds": 5,
+    "fuse": {
+      "v33": [
+        8.3154,
+        8.3443,
+        8.7387,
+        8.5226,
+        8.0807
+      ],
+      "v34": [
+        7.7842,
+        7.8339,
+        8.0361,
+        7.9338,
+        7.5532
+      ],
+      "v34c": [
+        8.3008,
+        8.3248,
+        8.7088,
+        8.1036,
+        8.82
+      ]
+    },
+    "delta_vs_v33_pct": {
+      "v34": [
+        6.4,
+        6.1,
+        8.0,
+        6.9,
+        6.5
+      ],
+      "v34c": [
+        0.2,
+        0.2,
+        0.3,
+        4.9,
+        -9.1
+      ]
+    },
+    "mean_delta_vs_v33_pct": {
+      "v33": 0.0,
+      "v34": 6.8,
+      "v34c": -0.7
+    },
+    "seeds_v34_beats_v33": "5/5",
+    "seeds_v34c_beats_v33": "4/5",
+    "seeds_v34c_beats_v34": "0/5",
+    "net_effect_pp": -7.49,
+    "verdict": "**负结果(修 bug 后复测, 结论更强)**. C 接进前向后 v34c 在 5/5 个种子上都不如 v34, 均值甚至略差于 v33 (−0.7%).",
+    "mechanism_explanation": "C = Σ η·r_τ 累积的是联想方向的历史平均. 但 runner 里每步的 r 由**同一个固定输入**驱动 (F.linear(h_big.mean(dim=(0,1)), layer.P_m[0]) 在一个 seed 内恒定), 所以 r 几乎不随步变化, C 的方向与 r 高度重合 ⇒ Ĉ ≈ r ⇒ 注入被自身抵消. 单元测试 test_inject_subtracts_accumulated_direction 直接观察到同向时 1.0000 → 0.0000 的完全抵消. **C 与 r 同源, 因此 C 只是 r 的低通版本, 不携带独立信息 —— 抵消 C 等于抵消自己.**",
+    "design_lesson": "要让慢变状态携带真正独立的信息, 它的驱动信号必须与被门控的信号不同源; 否则『抑制已累积的部分』退化为『抑制自己』. 这是同族教训的第 4 条形态: 机制层看似接通(v34c), 但因信息冗余而空转 —— 与 v35 mean-pool 塌缩属同一类别",
+    "supersedes_pre_fix": {
+      "net_effect_pp": -5.29,
+      "v34_delta": 6.0,
+      "v34c_delta": 0.7,
+      "note": "修复广播错配后的复测值, 本组数字取代上一版"
+    }
+  },
+  "preexisting_bug_broadcast_mismatch": {
+    "status": "**已修 (2026-10-10)**",
+    "found": "2026-10-10 全项目扫描时发现, 非本次改动引入",
+    "detail": "runner 的 expert_seqs 每个元素是整个 [3,S,D] block (对照 v17/v40 的做法是先取 src=h_block[i % n] 单样本), 而 tgt = targets[i:i+1] 是 [1,S,D_shared]. F.mse_loss 广播到 [3,S,D_shared]. 后果: (a) 每步的 loss 是 3 样本平均被当单样本用, MSE 被稀释 3 倍; (b) 更严重的是 targets[i] 是第 i//6 类的 one-hot, 但 xi_shared 同时含有 3 条文本 —— 输入与目标不对应. PyTorch 已就此发 UserWarning.",
+    "impact": "v33/v34 的**绝对** fuse 值建立在被稀释且输入-目标错配的指标上. 三臂共用同一管线, 故 v34c vs v34 vs v33 的**相对**比较仍然成立.",
+    "affects": [
+      "examples/run_v34_dmn_subconscious.py",
+      "examples/run_v33_scale_hetero.py"
+    ],
+    "fix": [
+      "examples/run_v34_dmn_subconscious.py: 数据循环改为 src = h[i % n] 取单样本, 与 v17/v40 一致",
+      "examples/run_v34_dmn_subconscious.py: tgt = targets[i] (精确 [S,D_SHARED], 不再隐式广播)",
+      "examples/run_v33_one_big_many_small.py: 同一处修复 + 删掉为旧 bug 留的 .dim()==2 防御分支",
+      "examples/run_v33_one_big_many_small.py: 另修既有 ImportError — CrossModalFusionLayer 改从 research.scale_heterogeneous.v33_scale_hetero 导入(此前错从 _primitives.scale_hetero_loaders 导入, 导致 bash run.sh v33 一直无法启动)",
+      "复跑后全链路无 UserWarning"
+    ],
+    "impact_after_fix": "v34 相对 v33 的增益由 +6.0% 变为 **+6.8%**(5/5 仍全正); v33 增益 +26.1% → **+25.6%**; v33 路由分布变化较大(见 v33 metrics)."
+  }
+}

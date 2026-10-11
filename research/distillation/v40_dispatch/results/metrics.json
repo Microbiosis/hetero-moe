@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0",
+  "version": "40.0",
+  "package": "v40_dispatch",
+  "line": "distillation",
+  "metric": "fuse_mse",
+  "direction": "lower_is_better",
+  "baseline": "0.3194 (single-mixture 的 5-seed 中位数)",
+  "value": 0.3195,
+  "recorded_by": "examples/run_v40_dispatch.py (8 arm × 5 seed = 40 run)",
+  "headline": {
+    "asserts": "v17 MANIFEST.root_cause_identified_later 的归因『失败源于同时多目标回归的实现形式』只是伤害来源, 不是增益来源",
+    "headline_statistic": "median (5 seeds), 非 mean",
+    "why_not_mean": "多教师臂的种子间标准差是单教师的 5-12 倍, 均值口径被单个好种子主导。dispatch-oracle 的 mean +6.0% 在中位数口径下塌回 +0.6%, 去掉最好种子后仅 +1.1% —— 是单种子假象, 不是效应。",
+    "seeds": 5
+  },
+  "arms": {
+    "weighted-3-v17style": {
+      "mean": 0.3278,
+      "sd": 0.0367,
+      "median": 0.3338,
+      "min": 0.2655,
+      "delta_pct_vs_median_base": -4.5,
+      "delta_pct_loo_best_seed": -7.4,
+      "leaks": false,
+      "note": "v17 原始逐样本循环, 复现锚点"
+    },
+    "weighted-3": {
+      "mean": 0.3281,
+      "sd": 0.0379,
+      "median": 0.3344,
+      "min": 0.2638,
+      "delta_pct_vs_median_base": -4.7,
+      "delta_pct_loo_best_seed": -7.6,
+      "leaks": false,
+      "note": "v17 加权和的批量版; 与 v17style 相差 <0.2%, 说明批量化不是混杂"
+    },
+    "consensus-target": {
+      "mean": 0.328,
+      "sd": 0.037,
+      "median": 0.3335,
+      "min": 0.2656,
+      "delta_pct_vs_median_base": -4.4,
+      "delta_pct_loo_best_seed": -7.4,
+      "leaks": false,
+      "note": "朝教师均值蒸馏(不分派)。**尽管教师均值本身是最优教师侧目标(0.2764), 该臂仍劣于单教师** —— 见 teacher_side_headroom"
+    },
+    "single-mixture": {
+      "mean": 0.3198,
+      "sd": 0.0072,
+      "median": 0.3194,
+      "min": 0.3095,
+      "delta_pct_vs_median_base": 0.0,
+      "delta_pct_loo_best_seed": -0.8,
+      "leaks": false,
+      "note": "基线 (= v17 的 teacher-single)"
+    },
+    "single-mom": {
+      "mean": 0.3213,
+      "sd": 0.0032,
+      "median": 0.3201,
+      "min": 0.3178,
+      "delta_pct_vs_median_base": -0.2,
+      "delta_pct_loo_best_seed": -0.7,
+      "leaks": false,
+      "note": "v17 的 teacher-best-single"
+    },
+    "dispatch-cyclic": {
+      "mean": 0.33,
+      "sd": 0.0372,
+      "median": 0.3398,
+      "min": 0.2662,
+      "delta_pct_vs_median_base": -6.4,
+      "delta_pct_loo_best_seed": -8.2,
+      "leaks": false,
+      "note": "零信息分派基线(只用样本序号)。中位数最差, 证明多教师臂的表现不来自分派信号的信息量"
+    },
+    "dispatch-consensus": {
+      "mean": 0.3203,
+      "sd": 0.0031,
+      "median": 0.3195,
+      "min": 0.3173,
+      "delta_pct_vs_median_base": -0.1,
+      "delta_pct_loo_best_seed": -0.4,
+      "leaks": false,
+      "note": "**无泄漏分派**。与单教师打平 —— 消除了加权和的损害, 但无增益。方差也降到单教师水平(0.0031)"
+    },
+    "dispatch-oracle": {
+      "mean": 0.3005,
+      "sd": 0.0358,
+      "median": 0.3174,
+      "min": 0.2369,
+      "delta_pct_vs_median_base": 0.6,
+      "delta_pct_loo_best_seed": 1.1,
+      "leaks": true,
+      "note": "⚠️ **读目标的泄漏上界, 不得引用为结论**。mean +6.0% 完全由 seed 0 (0.2369) 驱动; 中位数 +0.6% / 去最好种子 +1.1%。等价于 v32 记账法里的 β=1 表观增益。"
+    }
+  },
+  "teacher_side_diagnostic": {
+    "note": "无需训练, 直接量教师侧。seed 0。",
+    "pairwise_disagreement": 0.13603,
+    "teacher_target_mse": {
+      "attn": 0.318,
+      "mixture": 0.32121,
+      "mom": 0.32616,
+      "__consensus_mean__": 0.27645
+    },
+    "targets_all_identical": true,
+    "teacher_side_headroom": "共识均值 0.27645 比最优单教师 0.31800 低 **13.0%** —— 多教师携带的互补信息在**教师侧确实存在**",
+    "but": "**没有任何训练形式把它传给学生**: 朝均值蒸馏的 consensus-target 臂中位数 0.3335, 反而劣于单教师 0.3194。"
+  },
+  "dispatch_degeneracy": {
+    "note": "每个 arm 实际用到的不同教师数",
+    "single-mixture": 1,
+    "single-mom": 1,
+    "consensus-target": 0,
+    "dispatch-cyclic": 3,
+    "dispatch-consensus": "1-2 (5 个 seed 中大多只选中 1 个)",
+    "dispatch-oracle": "2-3"
+  },
+  "verdict": {
+    "v17_negative_reproduced": true,
+    "v17_reported_delta": "-6.7% (docs: multi-3 0.3486 vs single 0.3267)",
+    "root_cause_attribution": "**部分成立但不足**。实现形式确实是伤害来源 (加权中位数 0.3344 → 无泄漏分派 0.3195, 损害消失), 但修复后只回到单教师水平, **没有超过**。",
+    "v17_body_conclusion": "「一个选得好的教师胜过教师集成」在无泄漏条件下**未被推翻** —— 六个无泄漏臂没有一个在稳健口径上超过 single-mixture",
+    "form_invariance": "加权 / 均值 / 轮转分派三种多教师形式的中位数是 0.3335-0.3398, 彼此无差别。**形式不重要, 单教师 vs 多教师才重要**",
+    "capacity_ceiling": "第三条 capacity ceiling 证据: v15 对齐器天花板、v39 加性融合头天花板、v23b toy 数据天花板之后, 本代显示**学生无法吸收融合后的教师目标**",
+    "mopd_transferability": "**定量否证**。MOPD 的增益来自 per-prompt 分派到域专家; v17 教师无域划分 → consensus 分派退化为 1-2 个教师, 分派前提条件是硬的",
+    "v40_reproduced_delta": "-4.7% (weighted-3 中位数 0.3344 vs single 0.3194)"
+  },
+  "protocol_deviations_from_v17": [
+    "评估输入由独立固定种子的 generator 生成, 所有 arm 面对同一批评估样本(配对比较); v17 的评估 torch.randint 消耗全局 RNG, 不同 arm 抽到不同样本",
+    "教师按 seed 训一次并在 8 个 arm 间共享(v17 是每个 mode 重训)",
+    "除 weighted-3-v17style 锚点外, 学生前向按 6 样本批量进行(已验证与逐样本口径相差 <0.2%)"
+  ],
+  "scope_caveat": "全部在 CPU 沙箱、D_SHARED=256、序列长 16、合成 class-direction 目标上完成。教师是三个对齐器变体而非领域专家, 因此本代**不能**外推到 MOPD 的能力整合场景 —— 只能说明『分派在无域划分时不可移植』。",
+  "raw_evidence": [
+    "research/distillation/v40_dispatch/results/raw.json"
+  ],
+  "recompute_with": "python3 examples/run_v40_dispatch.py",
+  "next_experiment": "学生容量与融合目标的关系 —— 若 capacity ceiling 成立, 放宽学生容量应让 consensus-target 臂吃到那 13% 的教师侧 headroom; 若仍吃不到, 则说明瓶颈在目标空间的对齐而非容量"
+}

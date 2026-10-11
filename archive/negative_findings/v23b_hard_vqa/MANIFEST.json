@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "version": "23b.0",
+  "package": "v23b_hard_vqa",
+  "line": "archive/negative_findings",
+  "title": "v23 (待补标题)",
+  "generation": {
+    "one_mechanism_added": null,
+    "parent": "23.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": null,
+    "line_children": [],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "hard_dataset.py"
+    ]
+  },
+  "claim": {
+    "asserts": "8 类陷阱设计的 toy VQA 能否暴露多模态能力",
+    "metric": "accuracy",
+    "direction": "higher_is_better",
+    "value": 0.5,
+    "baseline": {
+      "ref": "random",
+      "value": 0.5
+    },
+    "delta_pct": 0.0,
+    "seeds": 3,
+    "outcome_label": "falsified",
+    "note": "**所有 4 臂(含 multimodal)全部恰为 50% = 随机**。结论是 toy 数据集本身无区分度, 不是多模态能力被证伪"
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": "存在某臂显著高于随机",
+    "outcome": "fail",
+    "note": "全部恰为 50%, 零区分度"
+  },
+  "leakage_audit": {
+    "status": "clean",
+    "audits": [
+      "23b.0"
+    ],
+    "note": "**更正此前 MANIFEST 里『本包无 held-out 评估』的错误说法**。v23b 原生 24/8 留出: `archive/negative_findings/v23b_hard_vqa/hard_dataset.py:104-106` 训练取 idx 0-23, 评估取 idx 24-31 且换 `seed + 10000` 且 `is_train=False`; `examples/run_v23_vqa_hard.py:59-60, 91` 分别取 `all_train()` / `all_eval()`。\n四臂全部恰为 50%(=随机) 这一**否定**结论不依赖 held-out —— 泄漏只会虚高 in-sample 优势, 不会凭空造出一个负结果; 但切分确实是原生的, 上面这条是据实核实而非推定。",
+    "audited_by": "47.0"
+  },
+  "falsified": [],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v23_vqa.py",
+    "forwarder_spec": "docs/V23_0_VQA.md"
+  },
+  "_needs_human": [
+    "generation.one_mechanism_added",
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [],
+  "_note": "版本号修正: 原为 23.0, 与 research/multimodal/v23_vqa 撞号。抽取器的 v(\\\\d+)[a-z]*_ 正则认得 v23b 的 b 后缀, 但版本号生成时把它丢了, 导致 check_lineage 的 version_map 里本包被 v23_vqa 静默覆盖, 整条谱系在图里消失且校验器不报错。改为 23b.0 以保持唯一, 并给校验器加了重复版本号检查。"
+}

@@ -25,16 +25,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "attn 对齐器(跨底座共享 K/V 注意力)比线性 P_m 更优",
+    "metric": "fuse_mse",
     "direction": "lower_is_better",
-    "value": null,
+    "value": 0.3448,
     "baseline": {
-      "ref": null,
-      "value": null
+      "ref": "attn aligner",
+      "value": 1.0436
     },
     "delta_pct": null,
-    "seeds": null
+    "seeds": 5,
+    "outcome_label": "clean",
+    "note": "2026-10-11 补录 claim。leakage_audit.status=clean, 详见该字段的 note; 对应测试 tests/test_v10_embedding.py 8/8。value 取该包 SPEC 记录的实测值。"
   },
   "protocol": {
     "eval_set": null,
@@ -42,13 +44,16 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "attn 对齐器(跨底座共享 K/V 注意力)比线性 P_m 更优",
+    "outcome": "见 claim.outcome_label",
+    "note": "本包结论的最终裁决见 leakage_audit 与其审计包(v41–v46)。"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "clean",
+    "audits": [
+      "41.0"
+    ],
+    "note": "2026-10-10 由 v41_capacity_audit 结清。泄漏: 每个臂同时报 in-sample 与 held-out, attn 泛化落差 +4.6% 是唯一有实质落差者。容量: attn 与 MixtureAligner(n=1) 参数量逐位相等 (720,640), 但 mixture-n1 held-out 中位数优 36.5%, 5/5 配对全胜。"
   },
   "falsified": [
     {
@@ -63,7 +68,7 @@
     "spec": "SPEC.md",
     "tests": "tests/test_package.py",
     "results": "results/metrics.json",
-    "forwarder_tests": "tests/test_v10_aligner.py",
+    "forwarder_tests": "tests/test_v10_embedding.py",
     "forwarder_spec": "docs/V10_0_ALIGNER.md"
   },
   "_needs_human": [

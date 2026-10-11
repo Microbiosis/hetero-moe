@@ -98,7 +98,7 @@ teacher-multi-3-weighted seed 0..4: 0.3263, 0.3362, 0.3463, 0.3401, 0.3406
 - `v17_multi_teacher/__init__.py`
 - `v17_multi_teacher/distill.py` — `MultiTeacherDistiller` (加权聚合)
 - `examples/run_v17_multi_teacher.py` — 5 变体 × 5 seeds 对照
-- `tests/test_v17_multi.py` — 8 项单元测试
+- `tests/test_v17_multi_teacher.py` — 8 项单元测试
 - `pyproject.toml` — packages.include 加 `v17_multi_teacher*`
 
 ## 7. 给后续工作的意义

@@ -23,16 +23,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
-    "direction": "lower_is_better",
+    "asserts": "在 tanh 前做梯度重缩放能否修复饱和而保持完美退化",
+    "metric": "grad_norm_central",
+    "direction": "higher_is_better",
     "value": null,
     "baseline": {
-      "ref": null,
-      "value": null
+      "ref": "v9 纯 tanh",
+      "value": 0.0
     },
     "delta_pct": null,
-    "seeds": null
+    "seeds": 5,
+    "outcome_label": "confirmed",
+    "note": "2026-11 补测(9 项)证实: **完美退化成立**(初始偏差 0.000000), 饱和区梯度存活(v31=6.7e-01 vs v9=0.0e+00), 渐近按 **~1/t 多项式**衰减(g·t 在 t≥25 后近似常数 33.3→33.9)。⚠️ 修正 SPEC 过强主张: docstring 说『梯度始终有下界(不会为 0)』, 实测仍趋于 0, 只是比 tanh 的指数慢。"
   },
   "protocol": {
     "eval_set": null,
@@ -40,13 +42,17 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "重缩放修复饱和且保持完美退化",
+    "outcome": "pass",
+    "note": "两项都成立, 是 v30 与 v9 之间的第三条路"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "clean",
+    "audits": [
+      "v31.0"
+    ],
+    "audited_by": "47.0",
+    "note": "v47.0 样本外审计 (5 seeds × 3 口径, 配对逐种子中位数)。\n\n被审计主张: 在 tanh 前做梯度重缩放能否修复饱和而保持完美退化\n\n| 口径 | 中位改进 | 胜出 | 算子判定 | 保留率 |\n|---|---:|---:|:---:|---:|\n| in_sample | -0.1% | — | — | — |\n| heldout_noise | -0.1% | 0/5 | invalidated |  |\n| heldout_stimulus | -0.1% | 0/5 | invalidated |  |\n\n**三个口径同向**（负向结论在样本外复现）⇒ 原结论不依赖 in-sample 口径，`leakage_audit` 记 clean。\n口径: in_sample 与原 runner 同构; heldout_noise = seed+1000 同刺激换噪声;\nheldout_stimulus = 换文本的未见刺激。算子与判据见\n`research/central_stability/v47_heldout_audit/SPEC.md`。\n\n⚠️ 审计顺带发现本线 runner 的两个既有缺陷, 已修并记录在案:\n(1) `research/_primitives/attention/attn_pool.py:107,116` 的 `P_m` / `W_o` 在\n**任何种子上下文之外**随机初始化 ⇒ 同一配置跨进程不可复现 (实测同一配置\nin-sample 读数在 0.23~0.61 之间跳); (2) numpy 全局 RNG 不受 `torch.manual_seed`\n控制, 原 runner 的随机图像不受 seed 约束。本审计对两者都做了固定, 被审计的原\nrunner 没有 —— 因此上表的绝对值与原文档里的绝对值**不必逐位相等**, 但同一行内的\n三口径是同源同口径的。\n"
   },
   "falsified": [
     {
@@ -61,15 +67,15 @@
     }
   ],
   "superseded_by": null,
-  "tests_status": "none",
+  "tests_status": "present",
   "artifacts": {
     "spec": "SPEC.md",
-    "tests": null,
+    "tests": "tests/test_package.py",
     "results": "results/metrics.json",
-    "forwarder_tests": null,
-    "forwarder_spec": null
+    "forwarder_tests": "tests/test_v31_gate_gradient_scale.py",
+    "forwarder_spec": "docs/V31_0_GATE_GRADIENT_SCALE.md"
   },
-  "_note": "本代在仓库中没有对应测试文件 (tests/ 下不存在 test_<vN>_*.py, 包内也无 tests/), 故 artifacts.tests 为 null。这是派生结论, 非遗漏。",
+  "_note": "本代在仓库中没有对应测试文件 (tests/ 下不存在 test_<vN>_*.py, 包内也无 tests/), 故 artifacts.tests 为 null。这是派生结论, 非遗漏。 2026-10-11: 补齐包内单元测试(9 项)并接入根转发层。补测实测出 SPEC 过强主张: docstring 称『梯度 ∂scaled/∂t 始终有下界(不会为 0)』, 实测渐近为 ~1/t 多项式衰减(g·t 在 t≥25 后近似常数 33.3→33.9), 仍趋于 0, 只是比 tanh 的指数慢。",
   "_needs_human": [
     "generation.parent",
     "claim.metric",

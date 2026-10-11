@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "version": "44.0",
+  "package": "v44_hub_modes_audit",
+  "line": "central_stability",
+  "metric": "fuse_mse",
+  "direction": "lower_is_better",
+  "baseline": "broadcast (对照基线)",
+  "value": 0.3342,
+  "recorded_by": "examples/run_v44_hub_modes_audit.py (4 模式 × 5 seeds = 20 run)",
+  "statistic": "同 seed 配对中位数; 均值不可单独引用(v40/v43 两次教训)",
+  "capacity": {
+    "note": "gate 的中枢参数是其余三种的一半 —— 混杂方向需实测确认",
+    "table": [
+      {
+        "mode": "gate",
+        "total": 512,
+        "ratio_vs_gate": 1.0
+      },
+      {
+        "mode": "broadcast",
+        "total": 1024,
+        "ratio_vs_gate": 2.0
+      },
+      {
+        "mode": "router-norm",
+        "total": 1024,
+        "ratio_vs_gate": 2.0
+      },
+      {
+        "mode": "adaptive-ema",
+        "total": 1025,
+        "ratio_vs_gate": 2.001953125
+      }
+    ],
+    "reading": "gate 512 / broadcast·router-norm 1024 / adaptive-ema 1025(+1 衰减标量)"
+  },
+  "rows": [
+    {
+      "mode": "broadcast",
+      "in_median": 0.3236,
+      "out_median": 0.3538,
+      "gap_pct": 9.3,
+      "gain_in_pct": 0.0,
+      "gain_out_pct": 0.0,
+      "won_in": "0/5",
+      "won_out": "0/5",
+      "per_seed_out": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "mode": "gate",
+      "in_median": 0.2983,
+      "out_median": 0.3462,
+      "gap_pct": 16.1,
+      "gain_in_pct": 7.9,
+      "gain_out_pct": 5.8,
+      "won_in": "5/5",
+      "won_out": "3/5",
+      "per_seed_out": [
+        6,
+        -7,
+        20,
+        7,
+        -6
+      ]
+    },
+    {
+      "mode": "router-norm",
+      "in_median": 0.2835,
+      "out_median": 0.3342,
+      "gap_pct": 17.9,
+      "gain_in_pct": 9.6,
+      "gain_out_pct": 4.3,
+      "won_in": "5/5",
+      "won_out": "5/5",
+      "per_seed_out": [
+        4,
+        0,
+        11,
+        10,
+        2
+      ]
+    },
+    {
+      "mode": "adaptive-ema",
+      "in_median": 0.2859,
+      "out_median": 0.3573,
+      "gap_pct": 25.0,
+      "gain_in_pct": 4.0,
+      "gain_out_pct": 0.3,
+      "won_in": "5/5",
+      "won_out": "3/5",
+      "per_seed_out": [
+        -6,
+        0,
+        -37,
+        4,
+        2
+      ]
+    }
+  ],
+  "headline": {
+    "paper_claim": "paper.tex 主表:『Adaptive-EMA achieves the lowest MSE on v22 (0.2972)』",
+    "in_sample_best": "router-norm",
+    "heldout_best": "router-norm",
+    "verdict": "**主表结论不成立。** in-sample 最优是 **router-norm**(0.2835),不是 adaptive-ema; held-out 最优是 **router-norm**(0.3342)。\n\nadaptive-ema 的样本外优势塌到 **+0.3%(3/5 种子)**, 且有单种子 **−38%**; 它的泛化落差 **25.0%** 是四模式里最差的 —— in-sample 领先、样本外垫底。\n\n**router-norm 是唯一在 held-out 上 5/5 全胜 broadcast 的模式**(+4.3%), gate 为 +5.8%(3/5),adaptive-ema 为 +0.3%(3/5)。",
+    "capacity_interaction": "容量上 gate(512) 最省却只拿到样本外 +5.8%,而 router-norm / adaptive-ema(1024/1025) 样本外分别只有 +4.3% / +0.3% —— **更多参数没有换来更好的样本外表现**, 容量在中枢这条线上同样不是主导因素(与 v43 的方向一致)。"
+  },
+  "tooling_defect_fixed": [
+    "examples/run_v22_theory_compare.py: 第 14 行是一个多余的 `\"\"\"`, 提前关闭了模块 docstring, 导致整文件 SyntaxError —— **v22 的四模式比较此前根本无法运行**, 主表不可复现"
+  ],
+  "scope_caveat": "held-out 构造除换噪声外还换了随机图像, 漂移比'只换噪声'更强; 所有臂看到同一份, 故配对比较有效但绝对值不可与 in-sample 比。CPU 沙箱, D_shared=256, 序列长 16, 合成 class-direction 目标。",
+  "not_audited": [
+    "v29 的语料规模边界(gate vs adaptive-ema 随规模切换)仍 pending —— 它才是论文的理论主张",
+    "v30/v31 的 tanh 饱和修复未审"
+  ],
+  "recompute_with": "python3 examples/run_v44_hub_modes_audit.py",
+  "raw_evidence": [
+    "research/central_stability/v44_hub_modes_audit/results/raw.json"
+  ]
+}

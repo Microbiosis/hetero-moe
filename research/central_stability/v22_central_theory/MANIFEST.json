@@ -9,7 +9,9 @@
     "parent": "9.0",
     "children": [
       "25.0",
-      "30.0"
+      "30.0",
+      "44.0",
+      "47.0"
     ]
   },
   "lineage": {
@@ -23,16 +25,18 @@
     "modules": []
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "四中枢模式比较; v44 证明主表『adaptive-ema 最优』不成立(held-out 最优是 router-norm 0.3342, 5/5)",
+    "metric": "fuse_mse",
     "direction": "lower_is_better",
-    "value": null,
+    "value": 0.2972,
     "baseline": {
-      "ref": null,
-      "value": null
+      "ref": "adaptive-ema vs broadcast",
+      "value": 0.3236
     },
     "delta_pct": null,
-    "seeds": null
+    "seeds": 5,
+    "outcome_label": "invalidated",
+    "note": "2026-10-11 补录 claim。leakage_audit.status=invalidated, 详见该字段的 note; 对应测试 tests/test_v22_central_theory.py 14/14。value 取该包 SPEC 记录的实测值。"
   },
   "protocol": {
     "eval_set": null,
@@ -40,13 +44,16 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "四中枢模式比较; v44 证明主表『adaptive-ema 最优』不成立(held-out 最优是 router-norm 0.3342, 5/5)",
+    "outcome": "见 claim.outcome_label",
+    "note": "本包结论的最终裁决见 leakage_audit 与其审计包(v41–v46)。"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "invalidated",
+    "audits": [
+      "44.0"
+    ],
+    "note": "2026-10-10 由 v44_hub_modes_audit 改判。runner 在训练同源数据上评估(line 357-365), 且该 runner 此前因第 14 行多余三引号而完全无法运行。held-out 上最优模式是 router-norm (0.3342, 5/5 配对全胜 broadcast), 而非主表所称的 adaptive-ema(0.3573); adaptive-ema 的 held-out 优势仅 +0.3%, 泛化落差 25.0% 为四模式最差。"
   },
   "falsified": [
     {
@@ -66,7 +73,7 @@
     "spec": "SPEC.md",
     "tests": "tests/test_package.py",
     "results": "results/metrics.json",
-    "forwarder_tests": "tests/test_v22_theory.py",
+    "forwarder_tests": "tests/test_v22_central_theory.py",
     "forwarder_spec": "docs/V22_0_CENTRAL_THEORY.md"
   },
   "_needs_human": [

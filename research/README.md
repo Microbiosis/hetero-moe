@@ -33,7 +33,7 @@ python tools/check_self_containment.py --strict         # L1 import 自包含
 | 2 | [central_diagnostics](./central_diagnostics/) | 为什么 v8 C-1 单独会反向增益? 5 个根因假设 | v19→v20 | H1 U 训练扰动是主因; H5 位置不关键 |
 | 3 | [central_stability](./central_stability/) | 除 v9 gate-style 还有哪些结构修复? | v22→v30→v31 | 4 种中枢模式; v30 softplus +3.0%; v31 grad-scale +1.9% |
 | 4 | [aligner](./aligner/) | 异构底座怎么对齐语义空间? | v10→v13→v15 | mixture > attn > linear; 嵌套对齐器有天花板 |
-| 5 | [distillation](./distillation/) | 能不能蒸出真正独立的单底座? | v16→v17→v18→**v32** | 单教师蒸馏**表观** +47.5%; v32 审计证明该收益全部来自目标泄漏 |
+| 5 | [distillation](./distillation/) | 能不能蒸出真正独立的单底座? | v16→v17→v18→**v32**→**v40** | 单教师蒸馏**表观** +47.5%; v32 审计证明该收益全部来自目标泄漏; v40 检验 v17 归因: 分派式消除了加权和的损害但**未超过单教师**, 且形式不变 (加权/均值/轮转无差别), 教师侧 13% headroom 传不到学生 |
 | 6 | [multimodal](./multimodal/) | 多模态能超单模态? | v21→v23→v24 | BERT+ViT 蒸馏可; toy 不可行 |
 | 7 | [corpus_scale](./corpus_scale/) | 中枢机制在真实语料下还稳吗? | v25→v26→v27→v28→v29 | 最优模式依赖数据规模 |
 | 8 | [scale_heterogeneous](./scale_heterogeneous/) | "1大+N小" + "大模型容器"独立范式 | v33→v34→v35→v36→v37→v38→v39 | 容器范式与路由范式是两条路径 |
@@ -71,6 +71,6 @@ research/scale_heterogeneous/ (独立范式)
 
 1. **v8 C-1 broadcast 单独启用反向增益** (research/routing_evolution/)
 2. **v12 组合 v9+v10 无叠加** (archive/negative_findings/v12_compose/)
-3. **v17 多教师蒸馏全部退步** (research/distillation/)
+3. **v17 多教师蒸馏全部退步** (research/distillation/) —— v40 复现 −4.7%, 并证明**换形式无用**: 加权 / 均值 / 轮转分派中位数彼此无差别
 4. **v23b 8 类陷阱 toy 全部 = 随机** (archive/negative_findings/v23b_hard_vqa/)
 5. **v27+v28 中枢修正 patch/架构变体全部失败** (research/corpus_scale/)

@@ -7,7 +7,9 @@
   "generation": {
     "one_mechanism_added": "大型真实语料 (64 text + 32 code + 50 image, 4×)",
     "parent": "28.0",
-    "children": []
+    "children": [
+      "45.0"
+    ]
   },
   "lineage": {
     "line_parent": "22.0",
@@ -25,16 +27,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "语料规模边界: 最优中枢模式随规模切换; v45 证明 in-sample 成立、held-out 不稳健, 且摘要方向与主表相反",
+    "metric": "fuse_mse",
     "direction": "lower_is_better",
-    "value": null,
+    "value": 0.7136,
     "baseline": {
-      "ref": null,
-      "value": null
+      "ref": "medium/large gate vs adaptive-ema",
+      "value": 0.6984
     },
     "delta_pct": null,
-    "seeds": null
+    "seeds": 5,
+    "outcome_label": "invalidated",
+    "note": "2026-10-11 补录 claim。leakage_audit.status=invalidated, 详见该字段的 note; 对应测试 tests/test_v29_large_corpus.py 12/12。value 取该包 SPEC 记录的实测值。"
   },
   "protocol": {
     "eval_set": null,
@@ -42,13 +46,16 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "语料规模边界: 最优中枢模式随规模切换; v45 证明 in-sample 成立、held-out 不稳健, 且摘要方向与主表相反",
+    "outcome": "见 claim.outcome_label",
+    "note": "本包结论的最终裁决见 leakage_audit 与其审计包(v41–v46)。"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "invalidated",
+    "audits": [
+      "45.0"
+    ],
+    "note": "2026-10-10 由 v45_scale_boundary_audit 改判。规模边界在 in-sample 口径下成立(adaptive-ema -> gate), 但 held-out 的中位数口径下不成立(两档都是 adaptive-ema); 大规模档中位数与配对两种口径互相矛盾(adaptive-ema 有 seed 1 的 held-out=0.767 重灾值)。**边界在样本外不稳健**, medium 档未测。"
   },
   "falsified": [
     {

@@ -7,7 +7,9 @@
   "generation": {
     "one_mechanism_added": "把单教师 MSE 换成多教师加权和 sum_k w_k * MSE(student_k, teacher_k), 教师组 = {v10 attn, v13 mixture, v15 mom}",
     "parent": "16.0",
-    "children": []
+    "children": [
+      "40.0"
+    ]
   },
   "lineage": {
     "line_parent": "13.0",
@@ -121,7 +123,8 @@
     "spec": "SPEC.md",
     "tests": "tests/test_package.py",
     "results": "results/metrics.json",
-    "forwarder_tests": "tests/test_v17_multi.py",
+    "forwarder_tests": "tests/test_v17_multi_teacher.py",
     "forwarder_spec": "docs/V17_0_MULTI_TEACHER.md"
-  }
+  },
+  "tests_status": "present"
 }

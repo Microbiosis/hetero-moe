@@ -25,16 +25,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
-    "direction": "lower_is_better",
+    "asserts": "多模态嵌合能否在 VQA 类任务上显出优于单模态的优势",
+    "metric": "accuracy",
+    "direction": "higher_is_better",
     "value": null,
     "baseline": {
-      "ref": null,
-      "value": null
+      "ref": "image-only",
+      "value": 1.0
     },
-    "delta_pct": null,
-    "seeds": null
+    "delta_pct": 0.0,
+    "seeds": 3,
+    "outcome_label": "falsified",
+    "note": "SPEC.md:9 —— pipeline 跑通, 但 toy 任务太简单, **image-only 100% > multimodal 91.7%**"
   },
   "protocol": {
     "eval_set": null,
@@ -42,13 +44,17 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "多模态学生优于单模态基线",
+    "outcome": "fail",
+    "note": "multimodal 反而输给 image-only"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "clean",
+    "audits": [
+      "23.0"
+    ],
+    "note": "**更正此前 MANIFEST 里『本包无 held-out 评估』的错误说法**。v23 原生 train/eval 分离: `research/multimodal/v23_vqa/dataset.py:78-79` 用 `seed` 生成训练集、`seed + 1000` 生成评估集(不同随机图像); `examples/run_v23_vqa_distill.py:63-64` 分别取 `all_train()` / `all_eval()`, 第 92-96 行的准确率只在 eval 集上量。",
+    "audited_by": "47.0"
   },
   "falsified": [
     {

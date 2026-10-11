@@ -48,7 +48,7 @@ research/distillation/v16_bert_student/
 
 | 转发层 | 作用 |
 |---|---|
-| `tests/test_v16_bert.py` | 只 import 包内 `TESTS, TITLE`,输出与退出码完全一致 |
+| `tests/test_v16_bert_student.py` | 只 import 包内 `TESTS, TITLE`,输出与退出码完全一致 |
 | `docs/V16_0_BERT_STUDENT.md` | 指向包内 `SPEC.md` 的指针 + 快速索引 |
 
 ---
@@ -130,6 +130,14 @@ student_outs = {kind: y for kind in teacher_kinds}   # 同一张量 y 别名进�
 **代码中不存在任何按样本的分派路径**——对照 MOPD (arXiv:2606.30406) 的
 per-prompt 单教师分派,本代从未测过分派式多教师。
 这一条过去只存在于分析对话里,现在进了机器可读声明。
+
+> **2026-10-10 后续**:这条归因已由 **`research/distillation/v40_dispatch/`**(version 40.0)
+> 实际检验,结论是**部分成立但不足** ——
+> 分派式确实消除了加权和的损害(中位数 0.3344 → 0.3195,方差 0.037 → 0.003),
+> 但**没有超过单教师** 0.3194;且加权 / 均值 / 轮转分派三种形式中位数彼此无差别。
+> 同时确认了上面这个类比的**前提问题**:v17 的教师是同数据同目标的对齐器变体、
+> 6 个样本共享同一目标,**不具备 MOPD 那种域划分**,所以分派信号无处可分。
+> 详见 [`V40_0_DISPATCH.md`](V40_0_DISPATCH.md)。
 
 ---
 

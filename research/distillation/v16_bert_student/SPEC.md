@@ -85,7 +85,7 @@ bert-distill     seed 0..4: 0.1134, 0.1182, 0.1554, 0.1571, 0.1298  (mean 0.1348
 - `v16_bert_student/__init__.py`
 - `v16_bert_student/student.py` — `BERTStudent` + `LoRAAdapter`
 - `examples/run_v16_bert_distill.py` — 3 变体 × 5 seeds 蒸馏验证
-- `tests/test_v16_bert.py` — 8 项单元测试
+- `tests/test_v16_bert_student.py` — 8 项单元测试
 - `pyproject.toml` — packages.include 加 `v16_bert_student*`
 
 ## 7. 给 v17 的方向

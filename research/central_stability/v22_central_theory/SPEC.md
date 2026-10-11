@@ -7,7 +7,7 @@
 > **状态**: ✅✅ Verified (单测 14/14 PASS, 端到端 4 mode × 5 seeds 全跑通)
 > **实验环境**: Docker 容器（hostname=941507f22847）运行在 WSL2 上；Debian 12；Python 3.11.2；PyTorch 2.13.0+cpu；CPU only（32 核 AMD Ryzen 9 8945HX）；小规模张量 D≤128；5 seeds 取均值
 > **复现命令**:
->   - `python3 tests/test_v22_theory.py` (单元测试 14 项)
+>   - `python3 tests/test_v22_central_theory.py` (单元测试 14 项)
 >   - `python3 examples/run_v22_theory_compare.py` (端到端 4 mode × 5 seeds)
 > **核心结论**:
 >   - 完整实现修复了 v22.0 简化层的不稳定问题
@@ -245,7 +245,7 @@ adaptive-ema:                   decay 自适应 — 训练初期 base_decay=0.9 
 - `v22_central_theory/theory.py` — `CentralTheory` + `RouterNormCentral` + `AdaptiveEMACentral`
   + `gate_style_analysis` + `freeze_u` + `freeze_c` + `set_u_init_scale` + `diagnose_theory_layer`
 - `examples/run_v22_theory_compare.py` — 4 mode × 5 seeds 端到端 (含 6 项稳定性 patch)
-- `tests/test_v22_theory.py` — 14 项单元测试 (含 6 项新增覆盖)
+- `tests/test_v22_central_theory.py` — 14 项单元测试 (含 6 项新增覆盖)
 - `pyproject.toml` — packages.include 加 `v22_central_theory*` (已存在)
 
 ## 9. 给 v23+ 的建议

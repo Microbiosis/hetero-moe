@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "version": "37.0",
+  "package": "v37_b_selftrained_entry",
+  "line": "scale_heterogeneous",
+  "metric": null,
+  "direction": "lower_is_better",
+  "baseline": null,
+  "value": null,
+  "recorded_by": "extract_generation_manifest.py 骨架, 指标待人工填"
+}

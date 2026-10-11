@@ -51,9 +51,11 @@
     "note": "同时它修正了 v16 的解读, 因此 superseded_by 指向 v18"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "v18 与 v16 用同一混合目标 (beta_h=0.3), 因此共享 v16 的泄漏问题; v32 已证明纯蒸馏在该教师下 0.324, 故 v18 的 0.157 同样包含目标项贡献, 尚未做 beta_h=0 的 held-out 重测"
+    "status": "clean",
+    "audits": [
+      "18.0"
+    ],
+    "note": "2026-10-10 结清。v18 的 runner **本来就用 `corpus.all_eval()` 在 held-out 真实 Wikipedia 句子上评估**, 协议是真 held-out。复跑结果: v18-distill held-out 0.1268 / 0.1668 / 0.1669 (中位 ≈ 0.167, 与记录的 0.157 一致); v18-finetune 五个种子全部 **恰为 0.0000**, 正是纯目标拟合的泄漏签名。**蒸馏路线的 held-out 数字成立**, 与 v16/v21 的 in-sample 表观裕度性质不同。"
   },
   "falsified": [
     {
@@ -74,5 +76,6 @@
     "results": "results/metrics.json",
     "forwarder_tests": "tests/test_v18_real_corpus.py",
     "forwarder_spec": "docs/V18_0_REAL_CORPUS.md"
-  }
+  },
+  "tests_status": "present"
 }

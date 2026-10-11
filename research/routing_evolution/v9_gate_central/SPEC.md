@@ -5,7 +5,7 @@
 
 > **日期**: 2026-09-02
 > **状态**: ✅✅ Verified (单测 12/12 PASS, 端到端 3 mode × 5 seeds)
-> **复现命令**: `python3 tests/test_v9_gate.py` + (端到端) `python3 examples/run_v9_gate_layer.py`
+> **复现命令**: `python3 tests/test_v9_gate_central.py` + (端到端) `python3 examples/run_v9_gate_layer.py`
 > **核心结论**: `v9_gate_central` 是路线 A 的**唯一**中枢模块, 收服了 v8 broadcast 模式, 提供 BroadcastWorkspace + GateStyleWorkspace + make_workspace 工厂 + 修正 A/B 函数式 patch + 根因诊断工具
 
 ---
@@ -127,7 +127,7 @@ diag = diagnose_c1_root_cause(layer)
 
 ## 4. 验证结果
 
-### 4.1 单测 12/12 PASS (`tests/test_v9_gate.py`)
+### 4.1 单测 12/12 PASS (`tests/test_v9_gate_central.py`)
 
 | 测试 | 验证内容 |
 |---|---|
@@ -169,7 +169,7 @@ v9_gate_central 标准接口预期复现相近数字 (在相同 seeds 下差异 
 | `examples/run_v9_fix_bc.py` | **已删除** | 由 `run_v9_gate_layer.py` 替代 |
 | `examples/run_v9_gate_layer.py` | **唯一入口** | v9 端到端 3 mode × 5 seeds |
 | `tests/test_v8_central.py` | 保留 | v8 C-2/C-3 单测, 8/8 PASS |
-| `tests/test_v9_gate.py` | **统一** | v9 单测, 12/12 PASS |
+| `tests/test_v9_gate_central.py` | **统一** | v9 单测, 12/12 PASS |
 
 唯一入口 (新代码):
 ```python

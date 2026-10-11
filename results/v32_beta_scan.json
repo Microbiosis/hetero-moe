@@ -1,0 +1,587 @@
+{
+  "config": {
+    "seeds": 5,
+    "steps": 100,
+    "d_shared": 256,
+    "n_cls": 3,
+    "beta_values": [
+      0.0,
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9,
+      1.0
+    ],
+    "teacher_mode": "deterministic (soft_route=True, no_quant=True)"
+  },
+  "summary": [
+    {
+      "beta_h": 0.0,
+      "w_teacher": 1.0,
+      "w_target": 0.0,
+      "teacher_mse_mean": 0.3168703450096978,
+      "teacher_mse_std": 0.043080997712922196,
+      "student_mse_mean": 0.31738912363847094,
+      "student_mse_std": 0.04088053601586196,
+      "gap_mean": -0.0005187786287731422,
+      "vs_pure": 0.3172960894233256
+    },
+    {
+      "beta_h": 0.1,
+      "w_teacher": 0.9,
+      "w_target": 0.1,
+      "teacher_mse_mean": 0.3168703450096978,
+      "teacher_mse_std": 0.043080997712922196,
+      "student_mse_mean": 0.2604383816321691,
+      "student_mse_std": 0.03341945961776454,
+      "gap_mean": 0.056431963377528704,
+      "vs_pure": 0.26034534741702375
+    },
+    {
+      "beta_h": 0.2,
+      "w_teacher": 0.8,
+      "w_target": 0.2,
+      "teacher_mse_mean": 0.3168703450096978,
+      "teacher_mse_std": 0.043080997712922196,
+      "student_mse_mean": 0.20864669034878414,
+      "student_mse_std": 0.026014560977763418,
+      "gap_mean": 0.10822365466091366,
+      "vs_pure": 0.20855365613363877
+    },
+    {
+      "beta_h": 0.3,
+      "w_teacher": 0.7,
+      "w_target": 0.3,
+      "teacher_mse_mean": 0.3168703450096978,
+      "teacher_mse_std": 0.043080997712922196,
+      "student_mse_mean": 0.16129365116357802,
+      "student_mse_std": 0.020051416194167008,
+      "gap_mean": 0.15557669384611977,
+      "vs_pure": 0.16120061694843266
+    },
+    {
+      "beta_h": 0.4,
+      "w_teacher": 0.6,
+      "w_target": 0.4,
+      "teacher_mse_mean": 0.3168703450096978,
+      "teacher_mse_std": 0.043080997712922196,
+      "student_mse_mean": 0.11813060666124026,
+      "student_mse_std": 0.01576665590203313,
+      "gap_mean": 0.19873973834845754,
+      "vs_pure": 0.1180375724460949
+    },
+    {
+      "beta_h": 0.5,
+      "w_teacher": 0.5,
+      "w_target": 0.5,
+      "teacher_mse_mean": 0.3168703450096978,
+      "teacher_mse_std": 0.043080997712922196,
+      "student_mse_mean": 0.08101081699132918,
+      "student_mse_std": 0.010568639057224409,
+      "gap_mean": 0.23585952801836862,
+      "vs_pure": 0.08091778277618383
+    },
+    {
+      "beta_h": 0.6,
+      "w_teacher": 0.4,
+      "w_target": 0.6,
+      "teacher_mse_mean": 0.3168703450096978,
+      "teacher_mse_std": 0.043080997712922196,
+      "student_mse_mean": 0.050788342704375586,
+      "student_mse_std": 0.0065450148291793485,
+      "gap_mean": 0.2660820023053222,
+      "vs_pure": 0.05069530848923023
+    },
+    {
+      "beta_h": 0.7,
+      "w_teacher": 0.3,
+      "w_target": 0.7,
+      "teacher_mse_mean": 0.3168703450096978,
+      "teacher_mse_std": 0.043080997712922196,
+      "student_mse_mean": 0.028022344410419463,
+      "student_mse_std": 0.0034059421491874696,
+      "gap_mean": 0.28884800059927834,
+      "vs_pure": 0.027929310195274108
+    },
+    {
+      "beta_h": 0.8,
+      "w_teacher": 0.2,
+      "w_target": 0.8,
+      "teacher_mse_mean": 0.3168703450096978,
+      "teacher_mse_std": 0.043080997712922196,
+      "student_mse_mean": 0.012468080781400204,
+      "student_mse_std": 0.0013902617058404035,
+      "gap_mean": 0.3044022642282976,
+      "vs_pure": 0.012375046566254847
+    },
+    {
+      "beta_h": 0.9,
+      "w_teacher": 0.1,
+      "w_target": 0.9,
+      "teacher_mse_mean": 0.3168703450096978,
+      "teacher_mse_std": 0.043080997712922196,
+      "student_mse_mean": 0.00336464517749846,
+      "student_mse_std": 0.00031655145112465433,
+      "gap_mean": 0.31350569983219934,
+      "vs_pure": 0.0032716109623531033
+    },
+    {
+      "beta_h": 1.0,
+      "w_teacher": 0.0,
+      "w_target": 1.0,
+      "teacher_mse_mean": 0.3168703450096978,
+      "teacher_mse_std": 0.043080997712922196,
+      "student_mse_mean": 9.303421514535633e-05,
+      "student_mse_std": 6.18916106719375e-05,
+      "gap_mean": 0.31677731079455246,
+      "vs_pure": 0.0
+    }
+  ],
+  "raw": [
+    {
+      "seed": 0,
+      "beta_h": 0.0,
+      "w_teacher": 1.0,
+      "w_target": 0.0,
+      "teacher_mse": 0.2449021836121877,
+      "student_mse": 0.2487963338692983
+    },
+    {
+      "seed": 0,
+      "beta_h": 0.1,
+      "w_teacher": 0.9,
+      "w_target": 0.1,
+      "teacher_mse": 0.2449021836121877,
+      "student_mse": 0.20565243065357208
+    },
+    {
+      "seed": 0,
+      "beta_h": 0.2,
+      "w_teacher": 0.8,
+      "w_target": 0.2,
+      "teacher_mse": 0.2449021836121877,
+      "student_mse": 0.1654959519704183
+    },
+    {
+      "seed": 0,
+      "beta_h": 0.3,
+      "w_teacher": 0.7,
+      "w_target": 0.3,
+      "teacher_mse": 0.2449021836121877,
+      "student_mse": 0.1276342992981275
+    },
+    {
+      "seed": 0,
+      "beta_h": 0.4,
+      "w_teacher": 0.6,
+      "w_target": 0.4,
+      "teacher_mse": 0.2449021836121877,
+      "student_mse": 0.09196618447701137
+    },
+    {
+      "seed": 0,
+      "beta_h": 0.5,
+      "w_teacher": 0.5,
+      "w_target": 0.5,
+      "teacher_mse": 0.2449021836121877,
+      "student_mse": 0.06344495465358098
+    },
+    {
+      "seed": 0,
+      "beta_h": 0.6,
+      "w_teacher": 0.4,
+      "w_target": 0.6,
+      "teacher_mse": 0.2449021836121877,
+      "student_mse": 0.03989949946602186
+    },
+    {
+      "seed": 0,
+      "beta_h": 0.7,
+      "w_teacher": 0.3,
+      "w_target": 0.7,
+      "teacher_mse": 0.2449021836121877,
+      "student_mse": 0.022394719844063122
+    },
+    {
+      "seed": 0,
+      "beta_h": 0.8,
+      "w_teacher": 0.2,
+      "w_target": 0.8,
+      "teacher_mse": 0.2449021836121877,
+      "student_mse": 0.010173096942404905
+    },
+    {
+      "seed": 0,
+      "beta_h": 0.9,
+      "w_teacher": 0.1,
+      "w_target": 0.9,
+      "teacher_mse": 0.2449021836121877,
+      "student_mse": 0.0028606532141566277
+    },
+    {
+      "seed": 0,
+      "beta_h": 1.0,
+      "w_teacher": 0.0,
+      "w_target": 1.0,
+      "teacher_mse": 0.2449021836121877,
+      "student_mse": 0.00020098969980608672
+    },
+    {
+      "seed": 1,
+      "beta_h": 0.0,
+      "w_teacher": 1.0,
+      "w_target": 0.0,
+      "teacher_mse": 0.33919602632522583,
+      "student_mse": 0.3425905605157216
+    },
+    {
+      "seed": 1,
+      "beta_h": 0.1,
+      "w_teacher": 0.9,
+      "w_target": 0.1,
+      "teacher_mse": 0.33919602632522583,
+      "student_mse": 0.27828263243039447
+    },
+    {
+      "seed": 1,
+      "beta_h": 0.2,
+      "w_teacher": 0.8,
+      "w_target": 0.2,
+      "teacher_mse": 0.33919602632522583,
+      "student_mse": 0.22279098381598791
+    },
+    {
+      "seed": 1,
+      "beta_h": 0.3,
+      "w_teacher": 0.7,
+      "w_target": 0.3,
+      "teacher_mse": 0.33919602632522583,
+      "student_mse": 0.17270604272683462
+    },
+    {
+      "seed": 1,
+      "beta_h": 0.4,
+      "w_teacher": 0.6,
+      "w_target": 0.4,
+      "teacher_mse": 0.33919602632522583,
+      "student_mse": 0.1275886818766594
+    },
+    {
+      "seed": 1,
+      "beta_h": 0.5,
+      "w_teacher": 0.5,
+      "w_target": 0.5,
+      "teacher_mse": 0.33919602632522583,
+      "student_mse": 0.08722235759099324
+    },
+    {
+      "seed": 1,
+      "beta_h": 0.6,
+      "w_teacher": 0.4,
+      "w_target": 0.6,
+      "teacher_mse": 0.33919602632522583,
+      "student_mse": 0.05469953827559948
+    },
+    {
+      "seed": 1,
+      "beta_h": 0.7,
+      "w_teacher": 0.3,
+      "w_target": 0.7,
+      "teacher_mse": 0.33919602632522583,
+      "student_mse": 0.029958500837286312
+    },
+    {
+      "seed": 1,
+      "beta_h": 0.8,
+      "w_teacher": 0.2,
+      "w_target": 0.8,
+      "teacher_mse": 0.33919602632522583,
+      "student_mse": 0.013341313848892847
+    },
+    {
+      "seed": 1,
+      "beta_h": 0.9,
+      "w_teacher": 0.1,
+      "w_target": 0.9,
+      "teacher_mse": 0.33919602632522583,
+      "student_mse": 0.003568871800477306
+    },
+    {
+      "seed": 1,
+      "beta_h": 1.0,
+      "w_teacher": 0.0,
+      "w_target": 1.0,
+      "teacher_mse": 0.33919602632522583,
+      "student_mse": 8.357641733406733e-05
+    },
+    {
+      "seed": 2,
+      "beta_h": 0.0,
+      "w_teacher": 1.0,
+      "w_target": 0.0,
+      "teacher_mse": 0.3573033759991328,
+      "student_mse": 0.3520047614971797
+    },
+    {
+      "seed": 2,
+      "beta_h": 0.1,
+      "w_teacher": 0.9,
+      "w_target": 0.1,
+      "teacher_mse": 0.3573033759991328,
+      "student_mse": 0.2925586849451065
+    },
+    {
+      "seed": 2,
+      "beta_h": 0.2,
+      "w_teacher": 0.8,
+      "w_target": 0.2,
+      "teacher_mse": 0.3573033759991328,
+      "student_mse": 0.23342004418373108
+    },
+    {
+      "seed": 2,
+      "beta_h": 0.3,
+      "w_teacher": 0.7,
+      "w_target": 0.3,
+      "teacher_mse": 0.3573033759991328,
+      "student_mse": 0.17885609716176987
+    },
+    {
+      "seed": 2,
+      "beta_h": 0.4,
+      "w_teacher": 0.6,
+      "w_target": 0.4,
+      "teacher_mse": 0.3573033759991328,
+      "student_mse": 0.13256017863750458
+    },
+    {
+      "seed": 2,
+      "beta_h": 0.5,
+      "w_teacher": 0.5,
+      "w_target": 0.5,
+      "teacher_mse": 0.3573033759991328,
+      "student_mse": 0.09048701201876004
+    },
+    {
+      "seed": 2,
+      "beta_h": 0.6,
+      "w_teacher": 0.4,
+      "w_target": 0.6,
+      "teacher_mse": 0.3573033759991328,
+      "student_mse": 0.05658463512857755
+    },
+    {
+      "seed": 2,
+      "beta_h": 0.7,
+      "w_teacher": 0.3,
+      "w_target": 0.7,
+      "teacher_mse": 0.3573033759991328,
+      "student_mse": 0.031189075360695522
+    },
+    {
+      "seed": 2,
+      "beta_h": 0.8,
+      "w_teacher": 0.2,
+      "w_target": 0.8,
+      "teacher_mse": 0.3573033759991328,
+      "student_mse": 0.013728261770059666
+    },
+    {
+      "seed": 2,
+      "beta_h": 0.9,
+      "w_teacher": 0.1,
+      "w_target": 0.9,
+      "teacher_mse": 0.3573033759991328,
+      "student_mse": 0.0036702857275183
+    },
+    {
+      "seed": 2,
+      "beta_h": 1.0,
+      "w_teacher": 0.0,
+      "w_target": 1.0,
+      "teacher_mse": 0.3573033759991328,
+      "student_mse": 5.9520728730907045e-05
+    },
+    {
+      "seed": 3,
+      "beta_h": 0.0,
+      "w_teacher": 1.0,
+      "w_target": 0.0,
+      "teacher_mse": 0.3156099104219013,
+      "student_mse": 0.31442712744077045
+    },
+    {
+      "seed": 3,
+      "beta_h": 0.1,
+      "w_teacher": 0.9,
+      "w_target": 0.1,
+      "teacher_mse": 0.3156099104219013,
+      "student_mse": 0.2556315114100774
+    },
+    {
+      "seed": 3,
+      "beta_h": 0.2,
+      "w_teacher": 0.8,
+      "w_target": 0.2,
+      "teacher_mse": 0.3156099104219013,
+      "student_mse": 0.20742379873991013
+    },
+    {
+      "seed": 3,
+      "beta_h": 0.3,
+      "w_teacher": 0.7,
+      "w_target": 0.3,
+      "teacher_mse": 0.3156099104219013,
+      "student_mse": 0.16005605707565942
+    },
+    {
+      "seed": 3,
+      "beta_h": 0.4,
+      "w_teacher": 0.6,
+      "w_target": 0.4,
+      "teacher_mse": 0.3156099104219013,
+      "student_mse": 0.11708803350726764
+    },
+    {
+      "seed": 3,
+      "beta_h": 0.5,
+      "w_teacher": 0.5,
+      "w_target": 0.5,
+      "teacher_mse": 0.3156099104219013,
+      "student_mse": 0.07993992790579796
+    },
+    {
+      "seed": 3,
+      "beta_h": 0.6,
+      "w_teacher": 0.4,
+      "w_target": 0.6,
+      "teacher_mse": 0.3156099104219013,
+      "student_mse": 0.05011614412069321
+    },
+    {
+      "seed": 3,
+      "beta_h": 0.7,
+      "w_teacher": 0.3,
+      "w_target": 0.7,
+      "teacher_mse": 0.3156099104219013,
+      "student_mse": 0.027645554083089035
+    },
+    {
+      "seed": 3,
+      "beta_h": 0.8,
+      "w_teacher": 0.2,
+      "w_target": 0.8,
+      "teacher_mse": 0.3156099104219013,
+      "student_mse": 0.012324460782110691
+    },
+    {
+      "seed": 3,
+      "beta_h": 0.9,
+      "w_teacher": 0.1,
+      "w_target": 0.9,
+      "teacher_mse": 0.3156099104219013,
+      "student_mse": 0.00328532214431713
+    },
+    {
+      "seed": 3,
+      "beta_h": 1.0,
+      "w_teacher": 0.0,
+      "w_target": 1.0,
+      "teacher_mse": 0.3156099104219013,
+      "student_mse": 7.365360518936843e-05
+    },
+    {
+      "seed": 4,
+      "beta_h": 0.0,
+      "w_teacher": 1.0,
+      "w_target": 0.0,
+      "teacher_mse": 0.3273402286900414,
+      "student_mse": 0.32912683486938477
+    },
+    {
+      "seed": 4,
+      "beta_h": 0.1,
+      "w_teacher": 0.9,
+      "w_target": 0.1,
+      "teacher_mse": 0.3273402286900414,
+      "student_mse": 0.27006664872169495
+    },
+    {
+      "seed": 4,
+      "beta_h": 0.2,
+      "w_teacher": 0.8,
+      "w_target": 0.2,
+      "teacher_mse": 0.3273402286900414,
+      "student_mse": 0.21410267303387323
+    },
+    {
+      "seed": 4,
+      "beta_h": 0.3,
+      "w_teacher": 0.7,
+      "w_target": 0.3,
+      "teacher_mse": 0.3273402286900414,
+      "student_mse": 0.16721575955549875
+    },
+    {
+      "seed": 4,
+      "beta_h": 0.4,
+      "w_teacher": 0.6,
+      "w_target": 0.4,
+      "teacher_mse": 0.3273402286900414,
+      "student_mse": 0.12144995480775833
+    },
+    {
+      "seed": 4,
+      "beta_h": 0.5,
+      "w_teacher": 0.5,
+      "w_target": 0.5,
+      "teacher_mse": 0.3273402286900414,
+      "student_mse": 0.08395983278751373
+    },
+    {
+      "seed": 4,
+      "beta_h": 0.6,
+      "w_teacher": 0.4,
+      "w_target": 0.6,
+      "teacher_mse": 0.3273402286900414,
+      "student_mse": 0.05264189653098583
+    },
+    {
+      "seed": 4,
+      "beta_h": 0.7,
+      "w_teacher": 0.3,
+      "w_target": 0.7,
+      "teacher_mse": 0.3273402286900414,
+      "student_mse": 0.02892387192696333
+    },
+    {
+      "seed": 4,
+      "beta_h": 0.8,
+      "w_teacher": 0.2,
+      "w_target": 0.8,
+      "teacher_mse": 0.3273402286900414,
+      "student_mse": 0.01277327056353291
+    },
+    {
+      "seed": 4,
+      "beta_h": 0.9,
+      "w_teacher": 0.1,
+      "w_target": 0.9,
+      "teacher_mse": 0.3273402286900414,
+      "student_mse": 0.003438093001022935
+    },
+    {
+      "seed": 4,
+      "beta_h": 1.0,
+      "w_teacher": 0.0,
+      "w_target": 1.0,
+      "teacher_mse": 0.3273402286900414,
+      "student_mse": 4.743062466635214e-05
+    }
+  ]
+}

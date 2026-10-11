@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "version": "45.0",
+  "package": "v45_scale_boundary_audit",
+  "line": "corpus_scale",
+  "title": "语料规模边界审计 — 摘要与主表方向相反, 且边界不稳健",
+  "_note": "version 45.0 手写。forwarder_tests/forwarder_spec 刻意为 null。 2026-10-11: 已接入根目录转发层, artifacts.forwarder_tests 回填为实际路径(此前误留 null, 造成 12 条 NO-FORWARDER 警告)。",
+  "generation": {
+    "one_mechanism_added": "不引入新机制; 加入边界方向判定算子 + 把两个被审计 runner 早已算出却从未汇总的 held-out 数字取出来",
+    "parent": "29.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "25.0",
+    "line_children": [],
+    "note": "承接 corpus_scale 线"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "boundary.py"
+    ],
+    "note": "boundary.py 只依赖标准库, 不 import torch 也不 import 任何 research.* 子包。语料与训练循环直接复用 examples/run_v26_real_corpus.py 与 examples/run_v29_large_corpus_v26.py。"
+  },
+  "claim": {
+    "asserts": "paper.tex 摘要: 最优中枢模式随规模从 gate-style 切换到 adaptive-EMA",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": 0.4472,
+    "baseline": {
+      "ref": "同规模另一模式 (small 档 held-out)",
+      "value": 0.4572
+    },
+    "delta_pct": 2.2,
+    "seeds": 5,
+    "outcome_label": "invalidated"
+  },
+  "protocol": {
+    "eval_set": "两个 runner 原本就同时算 train_fuse 与 ho_fuse; 本代只是把 held-out 汇总出来",
+    "input": "2 规模(small=v26 配置 / large=v29 配置) × 2 模式 × 5 seeds = 20 run",
+    "caveat": "只测 4 档中的 2 档, medium(翻转点所在)未测"
+  },
+  "acceptance": {
+    "criterion": "若边界在 held-out 上稳健存在且方向与摘要一致, 则理论主张成立",
+    "outcome": "fail",
+    "note": "方向与摘要相反(两种口径都不符); 且大规模档 held-out 的胜者在中位数与配对两种口径下互相矛盾, 边界不稳健"
+  },
+  "leakage_audit": {
+    "status": "invalidated",
+    "audits": [
+      "29.0",
+      "26.0"
+    ],
+    "note": "边界在 in-sample 口径下成立(adaptive-ema -> gate), 但在 held-out 的中位数口径下不成立。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "最优中枢模式随规模从 gate-style 切换到 adaptive-EMA (摘要)",
+      "verdict": "被推翻 — 与论文自己的主表方向相反, 且 held-out 两种口径下都不支持",
+      "evidence": "results/metrics.json:verdict"
+    },
+    {
+      "hypothesis": "语料规模边界在样本外稳健存在",
+      "verdict": "不稳健 — 大规模档 held-out 的最优者在中位数与配对两种口径下互相矛盾",
+      "evidence": "results/metrics.json:measurement_fragility"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v45_scale_boundary_audit.py",
+    "forwarder_spec": "docs/V45_0_SCALE_BOUNDARY_AUDIT.md"
+  },
+  "consumers": [
+    "docs/research_paper/paper.tex (摘要 + 主表 + 理论主张)",
+    "Obsidian/中枢稳定性/中枢稳定性理论与修复.md"
+  ],
+  "paper_defect_found": "paper.tex 摘要陈述的边界方向与其主表相反; 贡献点/讨论/结论三处与主表一致, 仅摘要写反"
+}

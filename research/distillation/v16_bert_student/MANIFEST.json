@@ -99,7 +99,8 @@
     "spec": "SPEC.md",
     "tests": "tests/test_package.py",
     "results": "results/metrics.json",
-    "forwarder_tests": "tests/test_v16_bert.py",
+    "forwarder_tests": "tests/test_v16_bert_student.py",
     "forwarder_spec": "docs/V16_0_BERT_STUDENT.md"
-  }
+  },
+  "tests_status": "present"
 }

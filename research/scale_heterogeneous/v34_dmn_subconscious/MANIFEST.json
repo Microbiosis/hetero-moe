@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0",
+  "version": "34.0",
+  "package": "v34_dmn_subconscious",
+  "line": "scale_heterogeneous",
+  "title": "DMN 潜意识创造性联想 (v33 之上的\"涌现\"层)",
+  "generation": {
+    "one_mechanism_added": "DMN 潜意识创造性联想 (v33 之上的\"涌现\"层)",
+    "parent": "33.0",
+    "children": [
+      "35.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "6.0",
+    "line_children": [
+      "33.0",
+      "34.0",
+      "35.0",
+      "36.0",
+      "37.0",
+      "38.0",
+      "39.0"
+    ],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "dmn.py",
+      "fusion.py"
+    ]
+  },
+  "claim": {
+    "asserts": "DMN 联想层能否在 v33 基础上进一步降低融合损失",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": "v33",
+      "value": null
+    },
+    "delta_pct": 6.8,
+    "seeds": 5,
+    "outcome_label": "confirmed",
+    "note": "**2026-11 修广播 bug 后复测**: v34 相对 v33 **+6.8%**(5/5), 修复前为 +5.8%。"
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": "DMN 联想优于纯线性路由",
+    "outcome": "pass",
+    "note": "5/5 PASS"
+  },
+  "leakage_audit": {
+    "status": "clean",
+    "audits": [
+      "v34.0"
+    ],
+    "audited_by": "47.0",
+    "note": "v47.0 样本外审计 (5 seeds × 3 口径, 配对逐种子中位数)。\n\n被审计主张: DMN 联想层能否在 v33 基础上进一步降低融合损失\n\n| 口径 | 中位改进 | 胜出 | 算子判定 | 保留率 |\n|---|---:|---:|:---:|---:|\n| in_sample | +6.4% | — | — | — |\n| heldout_noise | +6.4% | 5/5 | clean | 100% |\n| heldout_stimulus | +6.5% | 5/5 | clean | 102% |\n\n**三个口径同向**（增益结论在样本外复现）⇒ 原结论不依赖 in-sample 口径，`leakage_audit` 记 clean。\n幅度上样本外只保留 100%~102% —— 方向站得住，但**效应量远小于 in-sample 的报数**。\n口径: in_sample 与原 runner 同构; heldout_noise = seed+1000 同刺激换噪声;\nheldout_stimulus = 换文本的未见刺激。算子与判据见\n`research/central_stability/v47_heldout_audit/SPEC.md`。\n\n⚠️ 审计顺带发现本线 runner 的两个既有缺陷, 已修并记录在案:\n(1) `research/_primitives/attention/attn_pool.py:107,116` 的 `P_m` / `W_o` 在\n**任何种子上下文之外**随机初始化 ⇒ 同一配置跨进程不可复现 (实测同一配置\nin-sample 读数在 0.23~0.61 之间跳); (2) numpy 全局 RNG 不受 `torch.manual_seed`\n控制, 原 runner 的随机图像不受 seed 约束。本审计对两者都做了固定, 被审计的原\nrunner 没有 —— 因此上表的绝对值与原文档里的绝对值**不必逐位相等**, 但同一行内的\n三口径是同源同口径的。\n"
+  },
+  "falsified": [
+    {
+      "hypothesis": null,
+      "verdict": "v34 DMN 联想层 > v33 纯线性路由 (\"灵光一现\" > \"理性选择\")",
+      "evidence": "research/关键发现 README 小节"
+    },
+    {
+      "hypothesis": "把慢变状态 C 接进前向路径(突触稳态)能进一步提升 v34 的联想增益",
+      "verdict": "5/5 被证伪 — v34c 在每个种子上都不如 v34, 净效应 −5.29 个百分点",
+      "evidence": "results/metrics.json:v34c_homostasis_wired; 复现 python3 examples/run_v34_dmn_subconscious.py"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v34_dmn_subconscious.py",
+    "forwarder_spec": "docs/V34_0_SPEC.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/scale_heterogeneous/README.md"
+  ],
+  "known_defects": [
+    {
+      "id": "broadcast-mismatch",
+      "severity": "high",
+      "status": "unfixed",
+      "summary": "expert_seqs 元素为 [3,S,D] 而 tgt 为 [1,S,D], mse_loss 广播 ⇒ 绝对 fuse 值被稀释且输入-目标错配",
+      "evidence": "results/metrics.json:preexisting_bug_broadcast_mismatch",
+      "note": "三臂共用管线, 故相对比较成立; 绝对值不可引用"
+    }
+  ]
+}

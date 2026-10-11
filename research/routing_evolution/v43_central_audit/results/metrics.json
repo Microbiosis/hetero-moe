@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "version": "43.0",
+  "package": "v43_central_audit",
+  "line": "routing_evolution",
+  "metric": "fuse_mse",
+  "direction": "lower_is_better",
+  "baseline": "v7-baseline (无中枢)",
+  "value": 0.6698,
+  "recorded_by": "examples/run_v43_central_audit.py (3 臂 × 5 seeds = 15 run)",
+  "statistic": "配对中位数 (同 seed 内与 v7 比较); 同时报逐 seed 胜出数",
+  "capacity_audit": {
+    "note": "不需要训练实验, 直接数中枢参数",
+    "v8_broadcast": {
+      "c": 256,
+      "U": 768,
+      "total": 1024
+    },
+    "v9_gate": {
+      "c": 256,
+      "W_t": 256,
+      "total": 512
+    },
+    "ratio_gate_over_broadcast": 0.5,
+    "verdict": "**容量混杂方向与担心的相反**: gate 的中枢参数 (512) 是 broadcast (1,024) 的**一半**。且 gate 的参数量与专家数无关 (标量温度), broadcast 的 U[M,d] 随 M 线性增长。v9 相对 v8 的 +44.5% 不可能来自参数更多。",
+    "separability": "**容量与机制在中枢这里不可分离** —— 与 v41 对齐器不同。把 gate 展宽到 broadcast 的容量必须改用逐专家温度, 而随机检验显示 保序破坏率从 0.000 升到 0.049。即: 买到容量就必须放弃保序。"
+  },
+  "structural_claims": {
+    "perfect_degradation": {
+      "attn_identity": true,
+      "ffn_identity": true,
+      "max_dev": 0.0,
+      "verdict": "✓ 成立。初始 W_t=0,c=0 ⇒ temperature=1 ⇒ 输出恒等于输入 (最大偏差 0.000e+00)"
+    },
+    "order_preservation": {
+      "scalar_break_rate": 0.0,
+      "n_trials": 20000,
+      "verdict": "✓ 成立。标量温度在 20000 次随机检验中保序破坏率 0.000 —— 这是结构性质, 不依赖训练, 泄漏无法伪造"
+    },
+    "note": "这两条是 v9 论文的核心论证, 它们是**结构性**的, 不受本代 held-out 发现影响"
+  },
+  "leakage_audit": {
+    "status": "invalidated",
+    "issue": "examples/run_v9_gate_layer.py:121-124 在训练同源数据 (x_shared_list / targets) 上评估",
+    "fix": "本代对每个臂同时报 in-sample 与 held-out (build_data(seed + 1000), 同分布不同抽样)",
+    "in_sample_median": {
+      "v7-baseline": 1.0957,
+      "v9-gate-c1": 0.6698,
+      "v9-gate-full": 0.0884
+    },
+    "heldout_median": {
+      "v7-baseline": 2.4876,
+      "v9-gate-c1": 2.5307,
+      "v9-gate-full": 2.0134
+    },
+    "generalization_gap_pct": {
+      "v7-baseline": 127.0,
+      "v9-gate-c1": 277.8,
+      "v9-gate-full": 2178.6
+    },
+    "verdict": "**v9 的 +44.5% 是 in-sample 数字, 在 held-out 上不存活。** 见 verdict_headline。"
+  },
+  "verdict_headline": {
+    "paper_claim": "v9 gate C-1 相对无中枢基线 +44.5% (对应 v9-gate-c1 臂)",
+    "v9_gate_c1": {
+      "in_sample_paired_median_pct": 52.2,
+      "in_sample_seeds_won": "4/5",
+      "heldout_paired_median_pct": 4.0,
+      "heldout_seeds_won": "3/5",
+      "conclusion": "held-out 上配对中位仅 +4.0% 且只赢 3/5 seed —— **在噪声之内, 不构成支持**。论文的 +44.5% 不成立于样本外。"
+    },
+    "v9_gate_full": {
+      "in_sample_paired_median_pct": 93.4,
+      "in_sample_seeds_won": "5/5",
+      "heldout_paired_median_pct": 23.3,
+      "heldout_seeds_won": "4/5",
+      "conclusion": "完整 v9 (gate + C-2 + C-3) 的优势**部分存活**: held-out +23.3%, 4/5 seed。"
+    },
+    "honest_qualifier": "**不要把这读成'gate 无效'。** 三点必须同时说明: (1) 论文的 +44.5% 对应的是 gate-c1 臂, 该臂样本外确实塌到噪声内; (2) 完整 v9 仍保留 +23.3% 且 4/5; (3) 本 harness 的 held-out 本身很严苛 —— 连 v7 基线都从 1.096 劣化到 2.488 (2.3×), 所以绝对样本外数值对所有臂都差, 只有**同 seed 配对比较**是有效读数。",
+    "method_note": "**本代自身的一次纪律考验**: 1 seed 冒烟给出 gate-c1 held-out +42.3% (存活), 5 seed 后变成 +4.0% (不存活)。若按 v40 的教训只看冒烟就会得出相反结论 —— 这与 v40 的 dispatch-oracle 假象是同一族, 记在此处备查。"
+  },
+  "scope_caveat": "held-out 构造除了换噪声还换了随机图像 (numpy RNG 前进), 因此是比'只换噪声'更强的分布漂移。所有臂看到同一份 held-out, 故配对比较有效, 但绝对数值不可与 in-sample 比。全部在 CPU 沙箱、D_shared=256、序列长 16、合成 class-direction 目标上取得。",
+  "tooling_defects_fixed": [
+    "examples/run_v9_gate_layer.py: make_v9_layer 错从 _primitives.central_mechanism 导入 → 该 runner 一开始就 ImportError, 无法复现 v9",
+    "research/routing_evolution/v9_gate_central/layer.py: 引用了不存在的 v9_gate_central.workspace 子模块"
+  ],
+  "recompute_with": "python3 examples/run_v43_central_audit.py",
+  "raw_evidence": [
+    "research/routing_evolution/v43_central_audit/results/raw.json"
+  ]
+}

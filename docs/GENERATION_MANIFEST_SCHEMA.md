@@ -136,7 +136,7 @@ research/<line>/v<N>_<name>/
     "spec": "SPEC.md",
     "tests": "tests/test_package.py",  // 若该代无测试, 置 null 并声明 tests_status="none"
     "results": "results/metrics.json",
-    "forwarder_tests": "tests/test_v16_bert.py",   // 仓库级路径
+    "forwarder_tests": "tests/test_v16_bert_student.py",   // 仓库级路径
     "forwarder_spec": "docs/V16_0_BERT_STUDENT.md"  // 仓库级路径
   }
 }

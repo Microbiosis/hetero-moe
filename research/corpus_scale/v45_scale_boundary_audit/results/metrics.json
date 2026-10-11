@@ -1,0 +1,121 @@
+{
+  "schema_version": "1.0",
+  "version": "45.0",
+  "package": "v45_scale_boundary_audit",
+  "line": "corpus_scale",
+  "metric": "fuse_mse",
+  "direction": "lower_is_better",
+  "baseline": "同规模下的另一个中枢模式",
+  "value": 0.4472,
+  "recorded_by": "examples/run_v45_scale_boundary_audit.py (2 规模 × 2 模式 × 5 seeds = 20 run)",
+  "statistic": "中位数与配对读数**同时给出** —— 两者在本代恰好互相矛盾, 见 measurement_fragility",
+  "audit_target": {
+    "abstract_claim": "the optimal hub mode switches from gate-style to adaptive-EMA as data scale grows (gate -> adaptive-ema)",
+    "paper_main_table": "tiny/small -> adaptive-ema; medium/large -> gate  (即 adaptive-ema -> gate)",
+    "internal_contradiction": "**摘要的方向与论文自己的主表相反**; 贡献点(第93行)/讨论(225)/结论(233)三处均与主表一致, 只有摘要写反",
+    "verify": "单测 test_paper_table_direction_is_ada_to_gate / test_abstract_claim_is_contradicted_by_its_own_table 已把该矛盾锁死"
+  },
+  "rows": [
+    {
+      "scale": "small",
+      "mode": "gate",
+      "in_median": 0.3183,
+      "out_median": 0.4572,
+      "gap_pct": 43.7
+    },
+    {
+      "scale": "small",
+      "mode": "adaptive-ema",
+      "in_median": 0.3017,
+      "out_median": 0.4472,
+      "gap_pct": 48.2
+    },
+    {
+      "scale": "large",
+      "mode": "gate",
+      "in_median": 0.2729,
+      "out_median": 0.4618,
+      "gap_pct": 69.2
+    },
+    {
+      "scale": "large",
+      "mode": "adaptive-ema",
+      "in_median": 0.2985,
+      "out_median": 0.4184,
+      "gap_pct": 40.2
+    }
+  ],
+  "paired": {
+    "small": {
+      "in_sample": {
+        "median_pct": 6.6,
+        "wins_5": "5/5",
+        "per_seed": [
+          7,
+          5,
+          17,
+          6,
+          22
+        ]
+      },
+      "heldout": {
+        "median_pct": 0.5,
+        "wins_5": "3/5",
+        "per_seed": [
+          -1,
+          -9,
+          18,
+          0,
+          13
+        ]
+      }
+    },
+    "large": {
+      "in_sample": {
+        "median_pct": 1.9,
+        "wins_5": "4/5",
+        "per_seed": [
+          -26,
+          3,
+          1,
+          3,
+          2
+        ]
+      },
+      "heldout": {
+        "median_pct": -3.6,
+        "wins_5": "1/5",
+        "per_seed": [
+          10,
+          -41,
+          0,
+          -16,
+          -4
+        ]
+      }
+    }
+  },
+  "measurement_fragility": {
+    "finding": "**大规模档的 held-out 最优者, 中位数读数与配对读数互相矛盾。**",
+    "median_reading": "large 档 held-out: adaptive-ema 0.4184 < gate 0.4618 ⇒ adaptive-ema 优 ⇒ 无边界",
+    "paired_reading": "large 档 held-out: adaptive-ema 仅 1/5 胜, 配对中位 −3.6% ⇒ gate 优 ⇒ 存在边界",
+    "cause": "adaptive-ema 在 large 档有单种子重灾: seed 1 的 held-out = 0.767, 而同 seed 的 gate = 0.543。该异常值把 adaptive-ema 的**中位数**拉低, 于是中位数口径与逐 seed 配对口径给出相反的胜者。",
+    "conclusion": "按本项目自 v40 起的纪律, **两种口径必须同时报告**; 本代不宣称边界存在或不存在, 只宣称:**边界在这套读数下不稳健**。"
+  },
+  "verdict": {
+    "abstract_claim_holds": false,
+    "why": "摘要主张 gate -> adaptive-ema:(a) 与论文自己的主表方向相反;(b) 在 held-out 的两种口径下都不成立 —— 中位数口径读作 adaptive-ema -> adaptive-ema(无边界), 配对口径读作 adaptive-ema -> gate(方向与摘要相反)。",
+    "main_table_direction_survives": "否 —— in-sample 口径下成立(adaptive-ema -> gate), 但 held-out 下中位数口径不成立",
+    "honest_qualifier": "本代只测了 4 档规模里的 2 档(small / large), **medium 未测**, 而翻转点恰恰在 medium; 且小语料档 held-out 的优势仅 +0.5%(3/5), 本就在噪声内。因此本代**不足以推翻整个边界理论**, 只能说明:**该理论目前缺少稳健的样本外支撑, 且论文的摘要陈述与自己的数据矛盾, 必须先更正。**"
+  },
+  "tooling_note": "**又一次单种子陷阱**: 1 seed 冒烟给出 'in-sample 无边界 / held-out 有边界', 5 seed 后反转为 'in-sample 有边界 / held-out 无边界'。两个口径的结论都翻转了。若按冒烟汇报会得出完全相反的判断 —— 与 v40 的 dispatch-oracle、v43 的 gate-c1 同族。",
+  "not_audited": [
+    "medium 档(翻转点所在)未测",
+    "v30/v31 的 tanh 饱和修复未审"
+  ],
+  "scope_caveat": "CPU 沙箱; 全部四臂的 held-out 落差都在 +40% ~ +69%, 说明本 harness 在真实语料上泛化本就困难, 绝对值不可跨规模比较",
+  "recompute_with": "python3 examples/run_v45_scale_boundary_audit.py",
+  "raw_evidence": [
+    "research/corpus_scale/v45_scale_boundary_audit/results/raw.json"
+  ]
+}

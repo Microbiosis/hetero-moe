@@ -1,0 +1,134 @@
+{
+  "schema_version": "1.0",
+  "version": "42.0",
+  "package": "v42_leakage_audit",
+  "line": "multimodal",
+  "metric": "fuse_mse",
+  "direction": "lower_is_better",
+  "baseline": "0.3255 (v21 口径的教师 fuse MSE)",
+  "value": 0.327,
+  "recorded_by": "examples/run_v42_leakage_audit.py (11 β_h × 5 seeds = 55 学生 run + 5 教师 run)",
+  "statistic": "mean over 5 seeds; 关键判定另报中位数与逐 seed 配对",
+  "leakage_channel": {
+    "found": "v21 学生损失 = 0.7·MSE(y,teacher) + 0.3·MSE(y,target), 与 v16 结构完全相同",
+    "beta_h_of_v21": 0.3,
+    "note": "该系数正是 v32 在 v16 上判定为泄漏源并压到 0 的那一个"
+  },
+  "scan": [
+    {
+      "beta_h": 0.0,
+      "mean": 0.327,
+      "median": 0.331,
+      "sd": 0.0101,
+      "vs_teacher_pct": -0.5
+    },
+    {
+      "beta_h": 0.1,
+      "mean": 0.2692,
+      "median": 0.2715,
+      "sd": 0.0082,
+      "vs_teacher_pct": 17.3
+    },
+    {
+      "beta_h": 0.2,
+      "mean": 0.2149,
+      "median": 0.2159,
+      "sd": 0.0036,
+      "vs_teacher_pct": 34.0
+    },
+    {
+      "beta_h": 0.3,
+      "mean": 0.1635,
+      "median": 0.1639,
+      "sd": 0.0048,
+      "vs_teacher_pct": 49.8
+    },
+    {
+      "beta_h": 0.4,
+      "mean": 0.1199,
+      "median": 0.1198,
+      "sd": 0.0043,
+      "vs_teacher_pct": 63.2
+    },
+    {
+      "beta_h": 0.5,
+      "mean": 0.0826,
+      "median": 0.0813,
+      "sd": 0.0046,
+      "vs_teacher_pct": 74.6
+    },
+    {
+      "beta_h": 0.6,
+      "mean": 0.0516,
+      "median": 0.0523,
+      "sd": 0.0018,
+      "vs_teacher_pct": 84.1
+    },
+    {
+      "beta_h": 0.7,
+      "mean": 0.0287,
+      "median": 0.0289,
+      "sd": 0.0009,
+      "vs_teacher_pct": 91.2
+    },
+    {
+      "beta_h": 0.8,
+      "mean": 0.0128,
+      "median": 0.0129,
+      "sd": 0.0004,
+      "vs_teacher_pct": 96.1
+    },
+    {
+      "beta_h": 0.9,
+      "mean": 0.0032,
+      "median": 0.0031,
+      "sd": 0.0002,
+      "vs_teacher_pct": 99.0
+    },
+    {
+      "beta_h": 1.0,
+      "mean": 0.0001,
+      "median": 0.0001,
+      "sd": 0.0,
+      "vs_teacher_pct": 100.0
+    }
+  ],
+  "teacher_mean": 0.3255,
+  "verdict_margin": {
+    "v21_original_beta_0.3": {
+      "mean": 0.1635,
+      "median": 0.1639,
+      "vs_teacher_pct": 49.8
+    },
+    "beta_0.0_pure_distill": {
+      "mean": 0.327,
+      "median": 0.331,
+      "vs_teacher_pct": -0.5
+    },
+    "beta_1.0_pure_target": {
+      "mean": 0.0001
+    },
+    "conclusion": "**+50.5% 的主张全部来自直接目标项。** β_h=0.3 时学生比教师优 49.8%(复现 v21 的 +50.5%); 把泄漏通道关掉 (β_h=0) 后学生 0.3270 vs 教师 0.3255, 即 **-0.5%** —— 学生反而略差于教师。与 v32 在 v16 上的结果同构(+47.5% → −0.1%)。",
+    "seeds_student_worse_than_teacher_at_beta0": "4/5"
+  },
+  "shape_verdict": {
+    "linear": false,
+    "smooth_curvature": true,
+    "threshold": false,
+    "kink_ratio": 1.31,
+    "second_same_sign": true,
+    "second_over_noise": 2.24,
+    "max_residual_over_noise": 14.0,
+    "slope": -0.3312,
+    "intercept": 0.2814,
+    "r2": 0.9299,
+    "monotone": true,
+    "conclusion": "曲线**单调且平滑凸**衰减到 0(二阶差分全部同号, 峰值集中度 kink_ratio=1.31 ≈ 1)。裁决 **smooth_curvature**, 不是 threshold —— 曲率真实存在(second/noise=2.24)但**没有孤立折点**, 因此**不存在阈值机制**。",
+    "tooling_note": "本代裁决函数经历两次自我纠正: (1) 单 seed 时 noise=0 导致残差/噪声 = 1e10 的除零产物, 误判为 threshold —— 已加『噪声未定义即拒绝下结论』护栏; (2) 判据只看曲率幅度未看尖峰集中度, 把平滑凸衰减误判为 threshold —— 已改为四分类。"
+  },
+  "scope_caveat": "教师基线沿用 v21 的 in-sample 口径, 学生沿用 v21 的 held-out 口径(3 次 seed+1000+b 的多模态输入)。该不对称**不利于**学生, 因此本代结论是保守的。全部在 CPU 沙箱、D_shared=256、序列长 16、合成 class-direction 目标上取得。",
+  "recompute_with": "python3 examples/run_v42_leakage_audit.py",
+  "raw_evidence": [
+    "research/multimodal/v42_leakage_audit/results/raw.json"
+  ]
+}

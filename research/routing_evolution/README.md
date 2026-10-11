@@ -44,4 +44,4 @@ v6 baseline (v4.0 规范)
 
 - test_v7_attention.py (8 PASS)
 - test_v8_central.py (8 PASS)
-- test_v9_gate.py (12 PASS)
+- test_v9_gate_central.py (12 PASS)

@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "version": "44.0",
+  "package": "v44_hub_modes_audit",
+  "line": "central_stability",
+  "title": "四中枢模式审计 — 主表的 adaptive-ema 最优不成立",
+  "_note": "version 44.0 手写。forwarder_tests/forwarder_spec 刻意为 null(与 v32/v40/v41/v42/v43 同理由)。 2026-10-11: 已接入根目录转发层, artifacts.forwarder_tests 回填为实际路径(此前误留 null, 造成 12 条 NO-FORWARDER 警告)。",
+  "generation": {
+    "one_mechanism_added": "不引入新机制; 加入四模式中枢容量表 + held-out 评估 + 同 seed 配对读数",
+    "parent": "22.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "22.0",
+    "line_children": [
+      "30.0"
+    ],
+    "note": "承接 central_stability 线"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "audit.py"
+    ],
+    "note": "audit.py 只依赖 torch/statistics, 不 import 任何 research.* 子包 —— research/central_stability 在 ALLOWED_INTRA_LINE 中无条目。层与训练器从 examples/run_v22_theory_compare.py import。"
+  },
+  "claim": {
+    "asserts": "paper.tex 主表: Adaptive-EMA 在 v22 上取得最低 MSE (0.2972)",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": 0.3342,
+    "baseline": {
+      "ref": "broadcast (对照)",
+      "value": 0.3538
+    },
+    "delta_pct": 4.3,
+    "seeds": 5,
+    "outcome_label": "invalidated"
+  },
+  "protocol": {
+    "eval_set": "held-out = 同分布不同抽样(换噪声 + 换随机图像)",
+    "input": "4 模式 × 5 seeds = 20 run; 层构造/训练器/评估口径复用 examples/run_v22_theory_compare.py",
+    "caveat": "教师级不对称不存在(无教师); 但 held-out 漂移强于只换噪声, 绝对值不可与 in-sample 比"
+  },
+  "acceptance": {
+    "criterion": "若 adaptive-ema 在 held-out 上仍最优且稳定, 则主表成立",
+    "outcome": "fail",
+    "note": "adaptive-ema held-out +0.3%(3/5, 含一个 −38% 的种子), 且不是 held-out 最优; router-norm 才是 5/5 全胜"
+  },
+  "leakage_audit": {
+    "status": "invalidated",
+    "audits": [
+      "22.0"
+    ],
+    "note": "v22 的 runner 在训练同源数据上评估(line 357-365)。adaptive-ema 的 in-sample +4.0%(5/5) 在 held-out 塌到 +0.3%(3/5), 且泛化落差 25.0% 为四模式最差。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "Adaptive-EMA 在 v22 上取得最低 MSE (paper.tex 主表)",
+      "verdict": "被推翻 — held-out 最优是 router-norm(0.3342)而非 adaptive-ema(0.3573)",
+      "evidence": "results/metrics.json:headline"
+    },
+    {
+      "hypothesis": "adaptive-ema 的优势是稳定的",
+      "verdict": "被推翻 — held-out +0.3%, 3/5 胜出, 含单种子 −38%",
+      "evidence": "results/metrics.json:rows"
+    },
+    {
+      "hypothesis": "中枢容量越大样本外越好",
+      "verdict": "不成立 — gate(512 参数)样本外 +5.8% 高于 router-norm(1024)+4.3% 与 adaptive-ema(1025)+0.3%",
+      "evidence": "results/metrics.json:headline.capacity_interaction"
+    }
+  ],
+  "not_audited": [
+    "v29 语料规模边界(论文的理论主张)仍 pending",
+    "v30/v31 tanh 饱和修复未审"
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v44_hub_modes_audit.py",
+    "forwarder_spec": "docs/V44_0_HUB_MODES_AUDIT.md"
+  },
+  "consumers": [
+    "docs/research_paper/paper.tex 主表",
+    "Obsidian/中枢稳定性/中枢稳定性理论与修复.md"
+  ],
+  "tooling_defect_fixed": [
+    "examples/run_v22_theory_compare.py 第 14 行多余的三引号导致整文件 SyntaxError, v22 主表此前不可复现"
+  ]
+}

@@ -1,0 +1,379 @@
+{
+  "experiment": "v40_dispatch",
+  "seeds": 5,
+  "constants": {
+    "D_SHARED": 256,
+    "S": 16,
+    "STEPS": 100,
+    "LR": 0.01,
+    "N_EVAL": 6,
+    "EVAL_SEED": 20261010
+  },
+  "diagnostic": {
+    "pairwise_disagreement": 0.13603306437532106,
+    "teacher_target_mse": {
+      "attn": 0.3180001676082611,
+      "mixture": 0.3212131857872009,
+      "mom": 0.3261561393737793,
+      "__consensus_mean__": 0.2764454782009125
+    },
+    "teacher_names": [
+      "attn",
+      "mixture",
+      "mom"
+    ],
+    "targets_all_identical": true
+  },
+  "arms": {
+    "weighted-3-v17style": {
+      "mean": 0.3278135935465495,
+      "sd": 0.036706506171616415,
+      "n": 5,
+      "delta_pct_vs_single_mixture": -2.500720497621999,
+      "leaks": false
+    },
+    "weighted-3": {
+      "mean": 0.32805939416090646,
+      "sd": 0.03786594985195399,
+      "n": 5,
+      "delta_pct_vs_single_mixture": -2.5775774082759195,
+      "leaks": false
+    },
+    "consensus-target": {
+      "mean": 0.3280139376719793,
+      "sd": 0.036980949452951696,
+      "n": 5,
+      "delta_pct_vs_single_mixture": -2.5633640780234446,
+      "leaks": false
+    },
+    "single-mixture": {
+      "mean": 0.31981589198112487,
+      "sd": 0.0071628766938448525,
+      "n": 5,
+      "delta_pct_vs_single_mixture": 0.0,
+      "leaks": false
+    },
+    "single-mom": {
+      "mean": 0.321307243903478,
+      "sd": 0.0031915433787656207,
+      "n": 5,
+      "delta_pct_vs_single_mixture": -0.4663157647091315,
+      "leaks": false
+    },
+    "dispatch-cyclic": {
+      "mean": 0.32999499241511027,
+      "sd": 0.03723924110837448,
+      "n": 5,
+      "delta_pct_vs_single_mixture": -3.1828000700434727,
+      "leaks": false
+    },
+    "dispatch-consensus": {
+      "mean": 0.3202937364578247,
+      "sd": 0.0031483716349869264,
+      "n": 5,
+      "delta_pct_vs_single_mixture": -0.14941236151205803,
+      "leaks": false
+    },
+    "dispatch-oracle": {
+      "mean": 0.3005359902977943,
+      "sd": 0.035775171918229806,
+      "n": 5,
+      "delta_pct_vs_single_mixture": 6.028437662650117,
+      "leaks": true
+    }
+  },
+  "raw": {
+    "weighted-3-v17style": [
+      0.2654543419679006,
+      0.33078942199548084,
+      0.35845936338106793,
+      0.33382033308347064,
+      0.3505445073048274
+    ],
+    "weighted-3": [
+      0.26383457084496814,
+      0.3305754214525223,
+      0.3597469925880432,
+      0.3344264328479767,
+      0.35171355307102203
+    ],
+    "consensus-target": [
+      0.2655951529741287,
+      0.3300640285015106,
+      0.3596543073654175,
+      0.3335383137067159,
+      0.3512178858121236
+    ],
+    "single-mixture": [
+      0.31937016546726227,
+      0.3184562474489212,
+      0.3094649314880371,
+      0.3225661963224411,
+      0.3292219191789627
+    ],
+    "single-mom": [
+      0.3261212557554245,
+      0.3200549930334091,
+      0.3226042191187541,
+      0.3199992924928665,
+      0.31775645911693573
+    ],
+    "dispatch-cyclic": [
+      0.26617635786533356,
+      0.33176328241825104,
+      0.3584649662176768,
+      0.339830348889033,
+      0.35374000668525696
+    ],
+    "dispatch-consensus": [
+      0.3249776711066564,
+      0.3173290491104126,
+      0.3217956821123759,
+      0.3195423483848572,
+      0.31782393157482147
+    ],
+    "dispatch-oracle": [
+      0.23691981782515845,
+      0.3173892746369044,
+      0.309981773296992,
+      0.3203976899385452,
+      0.31799139579137164
+    ]
+  },
+  "assignments": {
+    "weighted-3-v17style": [
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "weighted-3": [
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "consensus-target": [
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "single-mixture": [
+      [
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture"
+      ],
+      [
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture"
+      ],
+      [
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture"
+      ],
+      [
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture"
+      ],
+      [
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture"
+      ]
+    ],
+    "single-mom": [
+      [
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom"
+      ],
+      [
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom"
+      ],
+      [
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom"
+      ],
+      [
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom"
+      ],
+      [
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom"
+      ]
+    ],
+    "dispatch-cyclic": [
+      [
+        "attn",
+        "mixture",
+        "mom",
+        "attn",
+        "mixture",
+        "mom"
+      ],
+      [
+        "attn",
+        "mixture",
+        "mom",
+        "attn",
+        "mixture",
+        "mom"
+      ],
+      [
+        "attn",
+        "mixture",
+        "mom",
+        "attn",
+        "mixture",
+        "mom"
+      ],
+      [
+        "attn",
+        "mixture",
+        "mom",
+        "attn",
+        "mixture",
+        "mom"
+      ],
+      [
+        "attn",
+        "mixture",
+        "mom",
+        "attn",
+        "mixture",
+        "mom"
+      ]
+    ],
+    "dispatch-consensus": [
+      [
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom"
+      ],
+      [
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture"
+      ],
+      [
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom"
+      ],
+      [
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom"
+      ],
+      [
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom"
+      ]
+    ],
+    "dispatch-oracle": [
+      [
+        "attn",
+        "attn",
+        "mixture",
+        "attn",
+        "attn",
+        "mixture"
+      ],
+      [
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture"
+      ],
+      [
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture",
+        "mixture"
+      ],
+      [
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom"
+      ],
+      [
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom",
+        "mom"
+      ]
+    ]
+  },
+  "leaking_modes": [
+    "dispatch-oracle"
+  ]
+}

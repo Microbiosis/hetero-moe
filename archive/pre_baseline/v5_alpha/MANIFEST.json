@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "version": "5.0",
+  "package": "v5_alpha",
+  "line": "archive/pre_baseline",
+  "title": "v5 (待补标题)",
+  "generation": {
+    "one_mechanism_added": null,
+    "parent": "4.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": null,
+    "line_children": [],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "embedding_fusion.py",
+      "infonce.py",
+      "rerank_fusion.py",
+      "rerank_losses.py",
+      "seq_losses.py",
+      "seq_router.py",
+      "span_router.py"
+    ]
+  },
+  "claim": {
+    "asserts": "序列级路由(SeqSparseRouterSTE)能否在路由粒度匹配前提下工作",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": null,
+    "delta_pct": null,
+    "seeds": 5,
+    "outcome_label": "pre_baseline",
+    "note": "pre-baseline 归档包, 非正式结论。其 SPEC 自带免责:『指标/协议/泄漏审计结论不应对外引用』"
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": "—(pre-baseline, 无正式验收判据)",
+    "outcome": "not_applicable",
+    "note": "归档为 pre-baseline, 不参与结论链"
+  },
+  "leakage_audit": {
+    "status": "not_applicable",
+    "audits": [],
+    "note": "2026-10-11 补录: claim 块此前**整块为 null**, 现按 SPEC 实测数字补齐。\npre-baseline 归档包, 无正式结论, 且其 SPEC 明示『不应对外引用』。标为 **not_applicable** 而非 pending —— 它不是待审计的结论, 是被有意移出结论链的前置实验。"
+  },
+  "falsified": [],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v5_alpha.py",
+    "forwarder_spec": "docs/V5_0_ALPHA.md"
+  },
+  "_note": "本代在仓库中没有对应测试文件 (tests/ 下不存在 test_<vN>_*.py, 包内也无 tests/), 故 artifacts.tests 为 null。这是派生结论, 非遗漏。 2026-10-11: 补最小自包含测试(4 项: 可 import / 形状 / STE 梯度 / 有限性)。此前本包连'包能自己 import'都没验过。本包仍标 leakage_audit=not_applicable —— 其 SPEC 明示结论不应对外引用, 是被有意移出结论链的前置实验, 不是待审计项。",
+  "_needs_human": [
+    "generation.one_mechanism_added",
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": []
+}

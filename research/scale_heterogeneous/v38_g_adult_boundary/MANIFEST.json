@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0",
+  "version": "38.0",
+  "package": "v38_g_adult_boundary",
+  "line": "scale_heterogeneous",
+  "title": "γ Adult XOR + 5 臂",
+  "generation": {
+    "one_mechanism_added": "γ Adult XOR + 5 臂",
+    "parent": "37.0",
+    "children": [
+      "39.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "6.0",
+    "line_children": [
+      "33.0",
+      "34.0",
+      "35.0",
+      "36.0",
+      "37.0",
+      "38.0",
+      "39.0"
+    ],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "paths.py"
+    ]
+  },
+  "claim": {
+    "asserts": "换真实数据(UCI Adult, XOR 标签)后能否暴露融合头的表达力边界",
+    "metric": "accuracy",
+    "direction": "higher_is_better",
+    "value": 0.755,
+    "baseline": {
+      "ref": "v36 C 臂(被动入口)",
+      "value": 0.767
+    },
+    "delta_pct": -1.6,
+    "seeds": 5,
+    "outcome_label": "boundary_found",
+    "note": "**加性融合头天花板**: 三臂打平 0.755–0.767(真实数据无区分空间), 该『打平』后被 v39 判为**伪边界** —— 加性头在 XOR 上数学不可表达"
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": "真实数据能区分各臂",
+    "outcome": "fail",
+    "note": "三臂打平; v39 进一步证明是加性头的表达力天花板, 而非任务饱和"
+  },
+  "leakage_audit": {
+    "status": "clean",
+    "audits": [
+      "38.0"
+    ],
+    "note": "**更正此前 MANIFEST 里『本包无 held-out 评估』的错误说法**。v38 原生 384/128 留出: `examples/run_v38_g_adult_boundary.py:130-133` 置换切分互不相交, 第 99 行的训练 batch 只取 `tr_idx`, 第 106 行的 `acc` 只在 `te_idx` 上量。五臂共用同一 split。\n注: TabLDM 被动表征是对**全部**样本(含测试行)跑的无监督 encoder, 不接触标签, 不构成标签泄漏。",
+    "audited_by": "47.0"
+  },
+  "falsified": [
+    {
+      "hypothesis": null,
+      "verdict": "**v38.0 γ: Adult XOR 5 臂边界结果** — 自训练/被动/先验+自训练在 0.755-0.767 打平 (β 在真实复杂数据上不成立)",
+      "evidence": "research/关键发现 README 小节"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v38_g_adult_boundary.py",
+    "forwarder_spec": "docs/V38_0_SPEC.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/scale_heterogeneous/README.md"
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "version": "36.0",
+  "package": "v36_alpha2_knn",
+  "line": "scale_heterogeneous",
+  "title": "α2 表格-语言跨模态 + kNN 评估",
+  "generation": {
+    "one_mechanism_added": "α2 表格-语言跨模态 + kNN 评估",
+    "parent": "35.0",
+    "children": [
+      "37.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "6.0",
+    "line_children": [
+      "33.0",
+      "34.0",
+      "35.0",
+      "36.0",
+      "37.0",
+      "38.0",
+      "39.0"
+    ],
+    "note": "line_* 描述研究线在全局中的位置; generation.* 描述包在代际链中的位置"
+  },
+  "implementation": {
+    "location": "lifted",
+    "lifted_to": "research._primitives.scale_hetero_loaders",
+    "modules": []
+  },
+  "claim": {
+    "asserts": "修复塌缩后的容器+入口注入能否带来增益",
+    "metric": "accuracy",
+    "direction": "higher_is_better",
+    "value": null,
+    "baseline": {
+      "ref": "v33",
+      "value": null
+    },
+    "delta_pct": null,
+    "seeds": 5,
+    "outcome_label": "confirmed",
+    "note": "修复 v35 塌缩后 **+∞/+100%**(5/5); 用逐样本表征 + concat + k-NN"
+  },
+  "protocol": {
+    "eval_set": null,
+    "input": null,
+    "caveat": null
+  },
+  "acceptance": {
+    "criterion": "修复后容器+入口注入正增益",
+    "outcome": "pass",
+    "note": "5/5 PASS"
+  },
+  "leakage_audit": {
+    "status": "clean",
+    "audits": [
+      "36.0"
+    ],
+    "note": "**更正此前 MANIFEST 里『本包无 held-out 评估』的错误说法**。v36 原生就是样本外: 评估用无参数 leave-one-out 1-NN (`research/_primitives/scale_hetero_loaders/eval.py:13-22`, 第 19 行 `dists[i] = float(\"inf\")` 把查询样本自己排除), 被审计的分类器**没有任何可训练参数**, 因此不存在目标泄漏面。\n⚠️ 但要说清另一件事: 该协议的**统计功效**很低 —— `get_tabldm_repr(seed=42)` 的 12 个 y_table 是 `rng.randint` 随机标签, 无可学结构, 所以绝对准确率接近随机; 结论靠的是『同结构同维度的随机对照』(X_ctl) 与入口臂的配对比较, 不是靠绝对准确率。",
+    "audited_by": "47.0"
+  },
+  "falsified": [
+    {
+      "hypothesis": null,
+      "verdict": "**v36.0 α2: 修复 v35 prefix 塌缩 bug** — 表格-语言中间量不再 mean 折叠成 [512]",
+      "evidence": "research/关键发现 README 小节"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v36_alpha2_knn.py",
+    "forwarder_spec": "docs/V36_0_SPEC.md"
+  },
+  "_needs_human": [
+    "generation.parent",
+    "claim.metric",
+    "claim.value",
+    "claim.baseline",
+    "claim.delta_pct",
+    "claim.seeds",
+    "protocol.eval_set",
+    "acceptance.criterion",
+    "acceptance.outcome",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/scale_heterogeneous/README.md"
+  ]
+}

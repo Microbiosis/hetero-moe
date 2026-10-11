@@ -1,0 +1,102 @@
+{
+  "experiment": "V32.4 — representation quality via transfer to new task",
+  "config": {
+    "seeds": 5,
+    "student_steps": 100,
+    "transfer_steps": 100,
+    "d_shared": 256,
+    "n_cls": 3,
+    "seq_len": 16,
+    "new_task_seed": 999,
+    "objectives": {
+      "mixed": "w_teacher=0.7 (MSE(y,y_T)*0.7 + MSE(y,t)*0.3)",
+      "pure": "w_teacher=1.0 (pure distillation, MSE(y,y_T) only)"
+    }
+  },
+  "summary": {
+    "mixed": {
+      "train_accuracy_mean": 0.7333,
+      "train_accuracy_std": 0.0648,
+      "eval_accuracy_mean": 0.7333,
+      "eval_accuracy_std": 0.0648
+    },
+    "pure": {
+      "train_accuracy_mean": 0.7667,
+      "train_accuracy_std": 0.1018,
+      "eval_accuracy_mean": 0.7667,
+      "eval_accuracy_std": 0.1018
+    }
+  },
+  "per_seed": [
+    {
+      "seed": 0,
+      "teacher_fuse_mse": 0.304177,
+      "students": {
+        "mixed": {
+          "train_accuracy": 0.7222,
+          "eval_accuracy": 0.7222
+        },
+        "pure": {
+          "train_accuracy": 0.7222,
+          "eval_accuracy": 0.7222
+        }
+      }
+    },
+    {
+      "seed": 1,
+      "teacher_fuse_mse": 0.331684,
+      "students": {
+        "mixed": {
+          "train_accuracy": 0.7778,
+          "eval_accuracy": 0.7778
+        },
+        "pure": {
+          "train_accuracy": 0.6667,
+          "eval_accuracy": 0.6667
+        }
+      }
+    },
+    {
+      "seed": 2,
+      "teacher_fuse_mse": 0.331899,
+      "students": {
+        "mixed": {
+          "train_accuracy": 0.8333,
+          "eval_accuracy": 0.8333
+        },
+        "pure": {
+          "train_accuracy": 0.8889,
+          "eval_accuracy": 0.8889
+        }
+      }
+    },
+    {
+      "seed": 3,
+      "teacher_fuse_mse": 0.309263,
+      "students": {
+        "mixed": {
+          "train_accuracy": 0.6667,
+          "eval_accuracy": 0.6667
+        },
+        "pure": {
+          "train_accuracy": 0.6667,
+          "eval_accuracy": 0.6667
+        }
+      }
+    },
+    {
+      "seed": 4,
+      "teacher_fuse_mse": 0.33184,
+      "students": {
+        "mixed": {
+          "train_accuracy": 0.6667,
+          "eval_accuracy": 0.6667
+        },
+        "pure": {
+          "train_accuracy": 0.8889,
+          "eval_accuracy": 0.8889
+        }
+      }
+    }
+  ]
+}

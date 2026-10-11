@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "version": "39.0",
+  "package": "v39_g2_interaction",
+  "line": "scale_heterogeneous",
+  "metric": null,
+  "direction": "lower_is_better",
+  "baseline": null,
+  "value": null,
+  "recorded_by": "extract_generation_manifest.py 骨架, 指标待人工填"
+}

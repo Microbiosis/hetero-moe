@@ -41,7 +41,7 @@ v15  MoM (嵌套)        fuse 0.26   (-77%)   ← 无进一步提升
 
 ## 测试
 
-- test_v10_aligner.py (8 PASS)
+- test_v10_embedding.py (8 PASS)
 - test_v13_mixture.py (8 PASS)
 - test_v15_nested.py (8 PASS)
 - test_v12_compose.py (8 PASS, archive)

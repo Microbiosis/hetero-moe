@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "version": "42.0",
+  "package": "v42_leakage_audit",
+  "line": "multimodal",
+  "title": "多模态蒸馏泄漏审计 — v21 的 +50.5% 归零",
+  "_note": "把 v32 的 β_h 连续过渡扫描移植到 v21。version 42.0 手写。forwarder_tests / forwarder_spec 刻意为 null(与 v32 / v40 / v41 同理由: 新增根目录转发层会改变 run.sh test 的套件计数)。 2026-10-11: 已接入根目录转发层, artifacts.forwarder_tests 回填为实际路径(此前误留 null, 造成 12 条 NO-FORWARDER 警告)。",
+  "generation": {
+    "one_mechanism_added": "不引入新机制; 把学生损失参数化为 (1-β_h)·MSE(y,teacher) + β_h·MSE(y,target), 并给出可区分『线性/平滑曲率/阈值/读不出』的四分类裁决",
+    "parent": "21.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "21.0",
+    "line_children": [
+      "23.0"
+    ],
+    "note": "承接 multimodal 线"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "beta_scan.py"
+    ],
+    "note": "beta_scan.py 只依赖 torch, 不 import 任何 research.* 子包 —— research/multimodal 在 ALLOWED_INTRA_LINE 中无条目。教师/学生/多模态输入全部从 examples/run_v21_multimodal_distill.py import, 保证与被审计对象同口径。"
+  },
+  "claim": {
+    "asserts": "v21『多模态学生蒸馏后比教师优 50.5%』的裕度来自泄漏, 而非蒸馏机制",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": 0.327,
+    "baseline": {
+      "ref": "v21 口径的教师 0.3255",
+      "value": 0.3255
+    },
+    "delta_pct": -0.5,
+    "seeds": 5,
+    "outcome_label": "invalidated"
+  },
+  "protocol": {
+    "eval_set": "沿用 v21 的 held-out 口径 (3 次 seed+1000+b 的多模态输入)",
+    "input": "11 个 β_h × 5 seeds = 55 个学生 run + 5 个教师 run; 教师每个 seed 只训一次并冻结",
+    "caveat": "教师基线是 v21 的 in-sample 口径, 学生是 held-out 口径 —— 该不对称不利于学生, 结论偏保守"
+  },
+  "acceptance": {
+    "criterion": "β_h=0(纯蒸馏)时学生的 held-out MSE 应回到教师水平; 若如此则 +50.5% 归因于泄漏",
+    "outcome": "fail(主张被推翻)",
+    "note": "β_h=0 学生 0.3270 vs 教师 0.3255 = -0.5%, 学生反而略差; β_h=0.3 时 +49.8%"
+  },
+  "leakage_audit": {
+    "status": "invalidated",
+    "audits": [
+      "21.0"
+    ],
+    "note": "v21 的 leakage_audit 由 pending 改判 invalidated: 其 +50.5% 主张的裕度全部来自损失中的直接目标项 (β_h=0.3), 与 v16 被 v32 推翻的情形同构。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "多模态学生蒸馏后比 v13 mixture 教师优 50.5% (0.1578 vs 0.3190)",
+      "verdict": "被推翻 — β_h=0 时学生 0.3270 vs 教师 0.3255 = -0.5%",
+      "evidence": "results/metrics.json:verdict_margin"
+    },
+    {
+      "hypothesis": "β_h → 学生 MSE 存在阈值机制(某些系数以下无效、以上才激活)",
+      "verdict": "被证伪 — 曲线单调平滑凸, kink_ratio=1.31≈1, 无孤立折点, 裁决 smooth_curvature",
+      "evidence": "results/metrics.json:shape_verdict"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v42_leakage_audit.py",
+    "forwarder_spec": "docs/V42_0_MULTIMODAL_LEAKAGE_AUDIT.md"
+  },
+  "consumers": [
+    "docs/research_paper/microfusion.tex (v21 多模态主张)",
+    "Obsidian/多模态/多模态.md",
+    "Obsidian/论文笔记/关键数字速查.md"
+  ],
+  "tooling_defect_fixed": [
+    "裁决函数在无重复样本(noise=0)时把除零产物当信号 → 已加 MIN_USABLE_NOISE 护栏",
+    "判据只看曲率幅度未看尖峰集中度 → 已加 KINK_RATIO_THRESHOLD 并改为四分类"
+  ]
+}

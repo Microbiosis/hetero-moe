@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0",
+  "version": "43.0",
+  "package": "v43_central_audit",
+  "line": "routing_evolution",
+  "title": "中枢机制审计 — 容量方向相反 / 结构成立 / +44.5% 不成立于样本外",
+  "_note": "version 43.0 手写。forwarder_tests/forwarder_spec 刻意为 null(与 v32/v40/v41/v42 同理由)。 2026-10-11: 已接入根目录转发层, artifacts.forwarder_tests 回填为实际路径(此前误留 null, 造成 12 条 NO-FORWARDER 警告)。",
+  "generation": {
+    "one_mechanism_added": "不引入新机制; 加入 (a) 中枢容量的解析式与方向判定, (b) 保序性的随机检验(含展宽对照), (c) held-out 评估口径",
+    "parent": "9.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "7.0",
+    "line_children": [
+      "19.0"
+    ],
+    "note": "承接 routing_evolution 线"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "workspace_audit.py"
+    ],
+    "note": "workspace_audit.py 只依赖 torch, 不 import 任何 research.* 子包 —— research/routing_evolution 在 ALLOWED_INTRA_LINE 中无条目(该条目只覆盖 v7→v8/v9 的方向, 不含本包)。层与训练器从 examples/run_v9_gate_layer.py import。"
+  },
+  "claim": {
+    "asserts": "v9 gate C-1 相对无中枢基线 +44.5%",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": 0.6698,
+    "baseline": {
+      "ref": "v7-baseline (无中枢) in-sample 中位数 1.0957",
+      "value": 1.0957
+    },
+    "delta_pct": 38.9,
+    "seeds": 5,
+    "outcome_label": "invalidated",
+    "note": "in-sample 配对中位 +52.2%(4/5), 但 held-out 配对中位仅 +4.0%(3/5), 在噪声之内"
+  },
+  "protocol": {
+    "eval_set": "held-out = build_data(seed + 1000), 同分布不同抽样(同时更换随机图像)",
+    "input": "3 臂 × 5 seeds = 15 run; 层构造与训练器复用 examples/run_v9_gate_layer.py",
+    "caveat": "held-out 同时更换随机图像, 是比'只换噪声'更强的漂移; 所有臂看到同一份, 故配对比较有效但绝对值不可与 in-sample 比"
+  },
+  "acceptance": {
+    "criterion": "若 gate 的优势在 held-out 上仍成立, 则 +44.5% 成立",
+    "outcome": "fail",
+    "note": "gate-c1 held-out +4.0%(3/5), 不成立; 但完整 v9 (gate-full) held-out +23.3%(4/5) 部分存活"
+  },
+  "leakage_audit": {
+    "status": "invalidated",
+    "audits": [
+      "9.0",
+      "8.0"
+    ],
+    "note": "v9 的 runner 在训练同源数据上评估。in-sample vs held-out 的配对中位增益: gate-c1 +52.2% → +4.0%; gate-full +93.4% → +23.3%。**但 v9 的两条结构性论证(完美退化 / 保序)完全成立且不依赖本条** —— 它们是构造性质, 泄漏无法伪造。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "v9 的 +44.5% 增益在样本外同样成立",
+      "verdict": "对 gate-c1 臂被推翻 — held-out +4.0%(3/5)",
+      "evidence": "results/metrics.json:verdict_headline"
+    },
+    {
+      "hypothesis": "v9 的增益来自中枢参数量更多",
+      "verdict": "被证伪 — gate 512 参数 vs broadcast 1024, 方向相反",
+      "evidence": "results/metrics.json:capacity_audit"
+    },
+    {
+      "hypothesis": "容量与机制在中枢这里可以像 v41 那样分离",
+      "verdict": "被证伪 — 展宽到 broadcast 容量需逐专家温度, 保序破坏率 0→4.9%",
+      "evidence": "results/metrics.json:capacity_audit.separability"
+    }
+  ],
+  "not_audited": [
+    "v19/v20/v22/v25-v31 的中枢变体(softplus / grad-scale / router-norm / adaptive-ema)仍 pending",
+    "v30/v31 的 tanh 饱和修复未经本代审计"
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v43_central_audit.py",
+    "forwarder_spec": "docs/V43_0_CENTRAL_AUDIT.md"
+  },
+  "consumers": [
+    "docs/research_paper/neurips_2025.tex (整篇建立在 v9 上)",
+    "Obsidian/中枢稳定性/中枢稳定性理论与修复.md",
+    "Obsidian/论文笔记/中枢机制论文.md"
+  ],
+  "tooling_defects_fixed": [
+    "examples/run_v9_gate_layer.py 的 make_v9_layer import 路径错误 → 该 runner 无法启动",
+    "research/routing_evolution/v9_gate_central/layer.py 引用不存在的 workspace 子模块"
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0",
+  "version": "47.0",
+  "package": "v47_heldout_audit",
+  "line": "central_stability",
+  "title": "「in-sample 优势能否活到样本外」批次审计 — 16 个 pending 包结清",
+  "_note": "version 47.0 手写。",
+  "generation": {
+    "one_mechanism_added": "不引入新机制; 给 9 个只有 in-sample 读数的包补 held-out 口径 (换噪声 / 换刺激两档) + 配对中位数判定算子",
+    "parent": "22.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "31.0",
+    "line_children": [],
+    "note": "承接 central_stability 线; 与 v44 (hub 模式审计) 同型"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "heldout.py"
+    ],
+    "note": "heldout.py 只依赖标准库, 不 import torch 也不 import 任何 research.* 子包。层构造/训练器/编码/数据配方全部从被审计 runner import。"
+  },
+  "claim": {
+    "asserts": "16 个 leakage-pending 包里, 9 个 in-sample-only 的包在换噪声 / 换刺激两个口径下是否仍同向",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": "同 seed 的 in-sample 读数",
+      "value": null
+    },
+    "delta_pct": null,
+    "seeds": 5,
+    "outcome_label": "mixed",
+    "note": "逐包结论见 results/metrics.json 的 per_package (聚合数字不作结论引用)。\n8 个补跑的包**三口径全部同向**: 正向的 v33 (+26.7%→+26.5%) / v34 (+6.4%→+6.5%) / v19 (+4.3%→+1.5~+2.4%) 在样本外站得住; 负向的 v8 / v12 / v20 / v30 / v31 (C-1 有害 / 无叠加增益 / 放 attn 更差 / gate 变体对融合 MSE 无差别) 也照样复现。\n⚠️ v19 方向对但**效应量只剩 34%~54%** —— 引用『长训练改善 C-1』要带上这个量级。\nv35 因第三方 tabldm 依赖缺失未能实测, 保持 pending (occams/Xiaomi-TabLDM 仓库经 HfApi.list_repo_files 核实只有 10 个文件、零个 .py)。\n另有 7 个包据实核实其**原生就有留出协议**(v36/v37/v38/v39/v23/v24/v23b), 此前 MANIFEST 里『本包无 held-out 评估』的说法是错的, 已逐条更正。"
+  },
+  "protocol": {
+    "eval_set": "三个口径: in_sample (与原 runner 同构) / heldout_noise (seed+1000, 同刺激换噪声) / heldout_stimulus (换文本, 未见刺激)",
+    "input": "5 seeds × 3 口径 × 2 臂 (treatment / baseline), 逐种子配对",
+    "caveat": "heldout_stimulus 换的是短文本/短代码, 与训练刺激的词表分布不完全相同 —— 它测的是『对未见输入的泛化』, 不是严格同分布。"
+  },
+  "acceptance": {
+    "criterion": "每个被审计包的 leakage_audit.status 都必须有实测或据实核实的依据, 不允许『没查但写成 clean』",
+    "outcome": "pass",
+    "note": "9 个包实测; 7 个包核实其原生留出协议 (此前 MANIFEST 写的『无 held-out 评估』是错的, 已更正); v35 受阻, 保持 pending 并写明还需做什么"
+  },
+  "leakage_audit": {
+    "status": "not_applicable",
+    "audits": [
+      "8.0",
+      "12.0",
+      "19.0",
+      "20.0",
+      "30.0",
+      "31.0",
+      "33.0",
+      "34.0",
+      "35.0"
+    ],
+    "note": "本包自身不做预测性评估 —— 它只提供判定算子 (纯函数, 无训练), 因此不存在目标泄漏面。被审计的是别的包。"
+  },
+  "falsified": [],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v47_heldout_audit.py",
+    "forwarder_spec": "docs/V47_0_HELDOUT_AUDIT.md"
+  },
+  "consumers": [
+    "research/scale_heterogeneous/v3{3,4,5,6,7,8,9}_*/MANIFEST.json",
+    "research/central_diagnostics/v19_c1_analysis/MANIFEST.json",
+    "research/central_diagnostics/v20_c1_position/MANIFEST.json",
+    "research/central_stability/v3{0,1}_*/MANIFEST.json",
+    "research/multimodal/v2{3,4}_*/MANIFEST.json",
+    "research/routing_evolution/v8_central/MANIFEST.json",
+    "archive/negative_findings/v12_compose/MANIFEST.json",
+    "archive/negative_findings/v23b_hard_vqa/MANIFEST.json"
+  ],
+  "runners": [
+    "examples/run_v47_central_heldout.py",
+    "examples/run_v47_scale_hetero_heldout.py"
+  ]
+}

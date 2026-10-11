@@ -8,7 +8,8 @@
     "one_mechanism_added": "BERT-text + ViT-image + 模态路由器 + LoRA (蒸馏自 v13 mixture 教师)",
     "parent": "16.0",
     "children": [
-      "23.0"
+      "23.0",
+      "42.0"
     ]
   },
   "lineage": {
@@ -24,16 +25,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "多模态学生蒸馏后超过教师 +50.5%; v42 证明该裕度全部来自 β_h=0.3 的直接目标项, 关掉后 −0.5%(5/5 不优)",
+    "metric": "fuse_mse",
     "direction": "lower_is_better",
-    "value": null,
+    "value": 0.1635,
     "baseline": {
-      "ref": null,
-      "value": null
+      "ref": "student vs teacher (β_h=0.3)",
+      "value": 0.3255
     },
     "delta_pct": null,
-    "seeds": null
+    "seeds": 5,
+    "outcome_label": "invalidated",
+    "note": "2026-10-11 补录 claim。leakage_audit.status=invalidated, 详见该字段的 note; 对应测试 tests/test_v21_multimodal.py 8/8。value 取该包 SPEC 记录的实测值。"
   },
   "protocol": {
     "eval_set": null,
@@ -41,13 +44,16 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "多模态学生蒸馏后超过教师 +50.5%; v42 证明该裕度全部来自 β_h=0.3 的直接目标项, 关掉后 −0.5%(5/5 不优)",
+    "outcome": "见 claim.outcome_label",
+    "note": "本包结论的最终裁决见 leakage_audit 与其审计包(v41–v46)。"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "invalidated",
+    "audits": [
+      "21.0"
+    ],
+    "note": "2026-10-10 由 v42_leakage_audit 改判。v21 学生损失为 0.7·MSE(y,teacher) + 0.3·MSE(y,target) ⇒ β_h = 0.3, 与 v16 结构完全相同。关掉该直接目标项(β_h=0)后学生 0.3270 vs 教师 0.3255 = -0.5%, 5/5 种子不优于教师; 『比教师优 50.5%』的裕度全部来自泄漏项。"
   },
   "falsified": [],
   "superseded_by": null,

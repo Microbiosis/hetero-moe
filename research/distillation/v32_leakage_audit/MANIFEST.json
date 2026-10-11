@@ -105,7 +105,7 @@
     "spec": "SPEC.md",
     "tests": "tests/test_package.py",
     "results": "results/metrics.json",
-    "forwarder_tests": null,
+    "forwarder_tests": "tests/test_v32_leakage_audit.py",
     "forwarder_spec": "docs/V32_0_LEAKAGE_AUDIT.md"
   },
   "evidence": {

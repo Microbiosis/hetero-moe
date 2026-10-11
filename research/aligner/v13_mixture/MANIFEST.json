@@ -9,7 +9,8 @@
     "parent": "10.0",
     "children": [
       "15.0",
-      "16.0"
+      "16.0",
+      "41.0"
     ]
   },
   "lineage": {
@@ -27,16 +28,18 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "MixtureAligner(跨底座+跨专家注意力); E2 容量混杂已由 v41 结清(等容量对 720,640 仍优 +36.5%, 5/5)",
+    "metric": "fuse_mse",
     "direction": "lower_is_better",
-    "value": null,
+    "value": 0.2575,
     "baseline": {
-      "ref": null,
-      "value": null
+      "ref": "mixture vs attn",
+      "value": 0.3448
     },
     "delta_pct": null,
-    "seeds": null
+    "seeds": 5,
+    "outcome_label": "clean",
+    "note": "2026-10-11 补录 claim。leakage_audit.status=clean, 详见该字段的 note; 对应测试 tests/test_v13_mixture.py 8/8。value 取该包 SPEC 记录的实测值。"
   },
   "protocol": {
     "eval_set": null,
@@ -44,13 +47,16 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "MixtureAligner(跨底座+跨专家注意力); E2 容量混杂已由 v41 结清(等容量对 720,640 仍优 +36.5%, 5/5)",
+    "outcome": "见 claim.outcome_label",
+    "note": "本包结论的最终裁决见 leakage_audit 与其审计包(v41–v46)。"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "clean",
+    "audits": [
+      "41.0"
+    ],
+    "note": "2026-10-10 由 v41_capacity_audit 结清。E2 容量混杂排除: mixture(n=1) 与 attn 参数量逐位相等 (720,640), 仍优 36.5%; 容量从 1× 翻到 6.09× 只换来 -5.6% 且非单调。泄漏: 阶梯主张在 held-out 上依然成立 (mixture 家族落差 ≤0.6%)。"
   },
   "falsified": [],
   "superseded_by": null,

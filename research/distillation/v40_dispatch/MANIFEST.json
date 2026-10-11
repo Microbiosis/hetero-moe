@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0",
+  "version": "40.0",
+  "package": "v40_dispatch",
+  "line": "distillation",
+  "title": "分派式多教师 — v17 root_cause 的可证伪测试; 多教师形式不变性与第三条 capacity ceiling",
+  "generation": {
+    "one_mechanism_added": "把 v17 的同时多目标加权和 sum_k w_k*MSE(y,t_k) 换成 per-sample 单教师分派 (每个样本只有一个教师说话), 并加入零信息分派基线、朝共识均值蒸馏臂, 以及无需训练的教师侧诊断 (两两分歧 / 各教师与共识对目标的 MSE)",
+    "parent": "17.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "13.0",
+    "line_children": [
+      "21.0"
+    ],
+    "note": "与 v17 同处 distillation 线; 本代是 v17 的再检验而非新机制线"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "dispatch.py"
+    ],
+    "note": "dispatch.py 只依赖 torch, 不 import 任何 research.* 子包 —— research/distillation 在 check_self_containment.py 的 ALLOWED_INTRA_LINE 中无条目, 跨线 import 在 --strict 下会报错。教师构造留在 examples/run_v40_dispatch.py (L1 不扫描 examples/)。"
+  },
+  "claim": {
+    "asserts": "v17 的失败源于『同时多目标回归』的实现形式, 而非多教师本身; 若如此, 分派式应优于加权和",
+    "metric": "fuse_mse",
+    "direction": "lower_is_better",
+    "statistic": "median over 5 seeds (多教师臂 sd 是单教师的 5-12 倍, 均值被单种子主导)",
+    "value": 0.3195,
+    "baseline": {
+      "ref": "17.0 weighted-3 (加权和)",
+      "value": 0.3344
+    },
+    "delta_pct": -4.4,
+    "seeds": 5,
+    "outcome_label": "partially_confirmed",
+    "note": "分派式确实消除了加权和的损害(0.3344 -> 0.3195)且方差从 0.037 降到 0.003, 但只回到单教师水平(0.3194), **没有超过**。归因解释了伤害, 没有解释增益为何不存在。"
+  },
+  "protocol": {
+    "reuses": "教师构造 / prepare_data / train_teacher / 评估口径 全部从 examples/run_v17_multi_teacher.py 直接 import, arm 之间以及与 v17 之间可比; 故本代的复现依赖 v17 的 runner 存在 (非完全自包含, 已在 _note 声明)",
+    "teacher_sharing": "教师按 seed 训一次并在 7 个 arm 间共享 (v17 是每个 mode 重训一遍)",
+    "deliberate_deviations": [
+      "评估输入用独立固定种子的 generator 生成, 所有 arm 面对同一批评估样本 (配对比较); v17 的评估 torch.randint 消耗全局 RNG, 不同 arm 抽到不同样本",
+      "除 weighted-3-v17style 复现锚点外, 学生前向按 6 样本批量进行"
+    ],
+    "modes": [
+      "weighted-3-v17style",
+      "weighted-3",
+      "consensus-target",
+      "single-mixture",
+      "single-mom",
+      "dispatch-cyclic",
+      "dispatch-consensus",
+      "dispatch-oracle"
+    ]
+  },
+  "acceptance": {
+    "criterion": "dispatch-consensus (无泄漏分派) 的 fuse_mse 低于 weighted-3 (加权和), 则 v17 的 root_cause 归因成立",
+    "outcome": "pass",
+    "note": "0.3195 < 0.3344, 判定成立 —— 但成立的只是『实现形式是伤害来源』这一半。同一判据下 v17 正文的『一个选得好的教师胜过教师集成』也未被推翻: 六个无泄漏臂没有一个在稳健口径上超过 single-mixture(0.3194)。dispatch-oracle 的 mean +6.0% 是 seed 0(0.2369)驱动的假象, 中位数仅 +0.6%、去最好种子 +1.1%, 不得引用为结论。"
+  },
+  "leakage_audit": {
+    "status": "clean",
+    "audits": [
+      "17.0"
+    ],
+    "notes": {
+      "dispatch-consensus": "无泄漏 — 分派信号由教师自身导出的留一共识生成, 函数签名不含 target",
+      "dispatch-cyclic": "无泄漏 — 只用样本序号",
+      "dispatch-oracle": "**有泄漏** — 按目标 MSE 最小选教师, 等价于 v32 记账法里的 β=1 上界。已隔离在单独 arm, 且在 METRIC 中单独标记 leaks=true。"
+    },
+    "note": "本代沿用 v17 的评估目标 (targets[0..5]), 不新增目标项。v17 自身的 leakage_audit.status=not_applicable; 本代的分派臂确实接触目标, 故逐臂标注。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "v17 的失败源于实现形式(同时多目标回归), 分派式应优于加权和",
+      "verdict": "部分成立 — 分派消除了损害, 但未超过单教师",
+      "evidence": "results/metrics.json"
+    },
+    {
+      "hypothesis": "多教师的增益需要更好的『融合形式』(加权 -> 分派 -> 均值)",
+      "verdict": "5/8 被证伪 — 加权/均值/轮转分派的中位数 0.3335-0.3398 彼此无差别且都劣于单教师",
+      "evidence": "results/metrics.json:arms"
+    },
+    {
+      "hypothesis": "教师侧的多教师互补 headroom 可以通过训练传递给学生",
+      "verdict": "被证伪 — 共识均值对目标 MSE 0.2764 比最优单教师 0.3180 低 13.0%, 但 consensus-target 臂中位数 0.3335 反劣于单教师 0.3194",
+      "evidence": "results/metrics.json:teacher_side_diagnostic"
+    },
+    {
+      "hypothesis": "MOPD 的 per-prompt 分派可作为 v17 的现成修复补丁",
+      "verdict": "被证伪 — v17 教师无域划分, consensus 分派退化为 1-2 个教师; 分派的前提条件是硬的",
+      "evidence": "results/metrics.json:dispatch_degeneracy"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v40_dispatch.py",
+    "forwarder_spec": "docs/V40_0_DISPATCH.md"
+  },
+  "consumers": [
+    "docs/GENERATION_PILOT_REPORT.md:130 (现有 MOPD 引用)",
+    "research/distillation/v17_multi_teacher/MANIFEST.json:117 (root_cause_identified_later)"
+  ],
+  "external_reference": {
+    "paper": "MOPD: Multi-teacher On-Policy Distillation for Capability Integration in LLM Post-Training",
+    "arxiv": "arXiv:2606.30406",
+    "relevance": "用 per-prompt 单教师分派取代加权求和; 但其教师是领域专家(math/IF/SWE, 输入域有划分), 与 v17 的对齐器阶梯三档(同数据同目标, 能力完全重叠、无域划分)前置条件不同"
+  },
+  "_note": "本代原为 v17_multi_teacher 的子版本 (目录 v17b_dispatch / version 17.1), 2026-10-10 提升为独立顶层版本包 v40_dispatch / version 40.0 —— 因为它引入的是新机制 (per-sample 分派 + 教师侧诊断) 并产出新负结果与新 capacity ceiling, 而不是 v17 的一个变体。改名同时消除了 extract_generation_manifest.py 的 17.0 撞车隐患。\n另: forwarder_tests / forwarder_spec 刻意为 null —— 新增根目录转发层会把 run.sh test 的套件计数从 327 改变, 与 v32 相同的理由(见 v32 MANIFEST._note), 故不添加。 2026-10-11: 已接入根目录转发层, artifacts.forwarder_tests 回填为实际路径(此前误留 null, 造成 12 条 NO-FORWARDER 警告)。",
+  "_renamed_from": "v17b_dispatch (version 17.1), 2026-10-10"
+}

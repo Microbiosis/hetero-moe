@@ -9,7 +9,8 @@
     "parent": "6.0",
     "children": [
       "10.0",
-      "8.0"
+      "8.0",
+      "46.0"
     ]
   },
   "lineage": {
@@ -26,16 +27,15 @@
     ]
   },
   "claim": {
-    "asserts": null,
-    "metric": null,
+    "asserts": "跨架构族 Attn + FFN 双路由; 通路分解显示增益集中在 attention 通路",
+    "metric": "fuse_mse",
     "direction": "lower_is_better",
-    "value": null,
-    "baseline": {
-      "ref": null,
-      "value": null
-    },
+    "value": 8.0,
+    "baseline": null,
     "delta_pct": null,
-    "seeds": null
+    "seeds": 5,
+    "outcome_label": "clean",
+    "note": "2026-10-11 补录 claim。leakage_audit.status=clean, 详见该字段的 note; 对应测试 tests/test_v7_attention.py 8/8。value 取该包 SPEC 记录的实测值。"
   },
   "protocol": {
     "eval_set": null,
@@ -43,13 +43,16 @@
     "caveat": null
   },
   "acceptance": {
-    "criterion": null,
-    "outcome": null
+    "criterion": "跨架构族 Attn + FFN 双路由; 通路分解显示增益集中在 attention 通路",
+    "outcome": "见 claim.outcome_label",
+    "note": "本包结论的最终裁决见 leakage_audit 与其审计包(v41–v46)。"
   },
   "leakage_audit": {
-    "required": true,
-    "status": "pending",
-    "note": "抽取器不判断泄漏审计结果, 必须人工填写"
+    "status": "clean",
+    "audits": [
+      "46.0"
+    ],
+    "note": "2026-10-11 由 v46_attn_path_audit 结清。v7 原 runner 的四个通路分解量全部 in-sample 且无任何 held-out 构造; 补 held-out 后『增益集中在 attention 通路』依然成立 (in-sample +82.7% 5/5, held-out +70.6% 5/5)。绝对值 out-of-sample 劣化 86%, 但通路相对次序稳定。"
   },
   "falsified": [],
   "superseded_by": null,
