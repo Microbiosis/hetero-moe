@@ -1,3 +1,12 @@
+% ============================================================================
+%  【已废弃 · 已合并】 DEPRECATED -- MERGED INTO reconstruct
+%  本稿已与 paper.tex（中枢协调篇）合并重构，取代稿见同目录：
+%      reconstruct.tex     (英文, 期刊长文)
+%      reconstruct_zh.tex  (中文)
+%  本文件仅作合并前的历史留档，不再维护。其中的数字口径（测试数、
+%  版本计数）、章节结构与结论表述均已被合并稿取代，请勿引用本文件。
+%  合并日期：2026-10-11
+% ============================================================================
 \documentclass[10pt,twoside]{article}
 
 % ==================== NeurIPS 官方样式 ====================
@@ -48,6 +57,12 @@
 \begin{document}
 
 \maketitle
+
+\vspace{-0.5em}
+\begin{center}
+\fbox{\parbox{0.94\textwidth}{\centering\small\textbf{DEPRECATED --- MERGED.} This draft has been merged and restructured into \texttt{reconstruct.tex} (English) and \texttt{reconstruct\_zh.tex} (Chinese), in this directory. It is kept for archival only: its numbers, section structure, and claims are superseded by the merged manuscript. Do not cite this file.}}
+\end{center}
+\vspace{0.5em}
 
 \begin{abstract}
 Combining heterogeneous pretrained models---bidirectional encoders, causal decoders, and vision transformers that differ in architecture, hidden width, and modality---usually requires joint retraining, architecture surgery, or lossy output-level ensembling. We study a bottom-level alternative that operates where such models are most exchangeable: the feed-forward sublayer. Our method, \textbf{heterogeneous micro-fusion}, routes each token to one of $M$ frozen architectural experts through a shared sparse Top-$K$ router trained with a straight-through estimator, injects INT4 pseudo-quantization noise into expert outputs, and fuses experts residually with per-expert gates, while every base model stays frozen. A cross-architecture semantic aligner maps mismatched hidden spaces into one routing space; across four aligner designs we measure a strict performance ladder (linear $<$ mean $<$ attention $<$ mixture) that saturates at the mixture aligner, and nesting it brings no further gain; at CPU scale we report this ceiling as a hypothesis rather than a law. Because fused inference still requires every base to stay alive, we add a second reconstruction step, \textbf{chimera distillation}, which collapses the ensemble into one independent base: a real TinyBERT student with $0.60\%$ trainable parameters surpasses its multi-base teacher by $50.1\%$ in reconstruction MSE under a mixed objective that includes a direct target signal, and a multimodal BERT+ViT student surpasses it by $50.0\%$; the v32 ablation shows that pure distillation---with the direct target signal removed---does not outperform the teacher, so the entire measured margin is attributable to the leaked target term rather than to concept-direction transfer. We report the negative results that bound the method---component composition, nested aligners, multi-teacher distillation, and toy multimodal benchmarks---from hundreds of seeded end-to-end runs across 25 engineering iterations.

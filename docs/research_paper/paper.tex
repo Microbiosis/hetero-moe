@@ -1,3 +1,13 @@
+% ============================================================================
+%  【已废弃 · 已合并】 DEPRECATED -- MERGED INTO reconstruct
+%  本稿已与 microfusion.tex（融合+蒸馏篇）合并重构，取代稿见同目录：
+%      reconstruct.tex     (英文, 期刊长文)
+%      reconstruct_zh.tex  (中文)
+%  本文件仅作合并前的历史留档，不再维护。特别地：本稿摘要/引言/结论中
+%  「gate-style 最优」与「语料规模边界成立」的表述已被 v44/v45 审计推翻，
+%  合并稿中已按「可容许性 vs 实证」两层结论改写。请勿引用本文件。
+%  合并日期：2026-10-11
+% ============================================================================
 \documentclass[10pt,twoside]{article}
 
 % ==================== NeurIPS 官方样式 ====================
@@ -69,6 +79,12 @@
 \begin{document}
 
 \maketitle
+
+\vspace{-0.5em}
+\begin{center}
+\fbox{\parbox{0.94\textwidth}{\centering\small\textbf{DEPRECATED --- MERGED.} This draft has been merged and restructured into \texttt{reconstruct.tex} (English) and \texttt{reconstruct\_zh.tex} (Chinese), in this directory. It is kept for archival only: its numbers, section structure, and claims are superseded by the merged manuscript---in particular, the ``gate-style is optimal'' and ``corpus-scale boundary'' statements in the abstract, introduction, and conclusion below were overturned by the later held-out audits and are rewritten in the merged paper. Do not cite this file.}}
+\end{center}
+\vspace{0.5em}
 
 \begin{abstract}
 Mixture-of-experts (MoE) routing dynamically selects specialized models, but it remains unclear whether and how a \textbf{global hub} should coordinate expert selection. We identify a fundamental limitation: adding a learnable central vector to router logits destroys the relative ordering of already-converged logits, leading to performance collapse. To address this, we introduce \textbf{Gate-Style Central Coordination}, where the hub controls the softmax temperature rather than the logits themselves. This yields a \textbf{perfect degeneration} guarantee---disabling the hub incurs zero overhead---and provably maintains logit ordering. Across 29 engineering versions and 175+ experiments, we show that gate-style uniquely satisfies five independent design constraints that other hub modes violate. We diagnose a hidden failure mode---tanh saturation in long training severs the gradient chain to the hub---and establish a \textbf{corpus-scale boundary} showing that the optimal hub mode switches from adaptive-EMA to gate-style as data scale grows.
