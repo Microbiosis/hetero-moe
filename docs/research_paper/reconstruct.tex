@@ -70,7 +70,7 @@ Sublayer Fusion, Coordinated Routing, and Chimera Distillation}
 \maketitle
 
 \begin{abstract}
-Combining heterogeneous pretrained models---bidirectional encoders, causal decoders, and vision transformers that differ in architecture, hidden width, and modality---usually requires joint retraining, architecture surgery, or lossy output-level ensembling. We study how such models can be \emph{reconstructed} while every base stays frozen, in three steps. \textbf{(i) Sublayer fusion.} A shared sparse Top-$K$ router selects one of $M$ frozen architectural experts per token; semantic aligners map mismatched hidden spaces into one shared routing space; experts are fused residually with per-expert gates. Across four aligner designs we measure a strict but \emph{saturating} ladder (linear $<$ mean $<$ cross-architecture attention $<$ mixture), and a capacity-matched control shows the ceiling is a matter of design rather than of parameter count. \textbf{(ii) Coordinated routing.} We ask how a global hub should influence the shared router, and prove that modulating the softmax temperature (gate-style) is the only one of four hub modes satisfying perfect degeneration, order preservation, boundedness, and low overhead at once; we also diagnose a hidden failure mode in which tanh saturation severs the gradient to the hub during long training. \textbf{(iii) Independent-model reconstruction.} Chimera distillation collapses the ensemble into a single-base student, and a weight scan over the loss shows that the apparent ``student beats teacher'' margin is entirely attributable to a direct-target term rather than to concept-direction transfer or variance averaging. Because fused inference keeps every base alive and distillation is a deployment device, the study is only as trustworthy as its evaluation. We therefore apply a uniform \emph{out-of-sample discipline} across the whole stack, and it overturns several of our own in-sample findings: the in-sample best hub mode is not the out-of-sample best, an advertised corpus-scale boundary is not established, and long-training and repair gains shrink to noise. What survives held-out evaluation is the alignment-ladder ceiling, the attention-path advantage, and the scale-heterogeneous fusion gain. We report the negative results that bound the method---component composition, nested aligners, multi-teacher distillation, and toy multimodal benchmarks---from hundreds of seeded end-to-end runs across 47 engineering generations and 430 unit and integration tests.
+Combining heterogeneous pretrained models---bidirectional encoders, causal decoders, and vision transformers that differ in architecture, hidden width, and modality---usually requires joint retraining, architecture surgery, or lossy output-level ensembling. We study how such models can be \emph{reconstructed} while every base stays frozen, in three steps. \textbf{(i) Sublayer fusion.} A shared sparse Top-$K$ router selects one of $M$ frozen architectural experts per token; semantic aligners map mismatched hidden spaces into one shared routing space; experts are fused residually with per-expert gates. Across four aligner designs we measure a strict but \emph{saturating} ladder (linear $<$ mean $<$ cross-architecture attention $<$ mixture), and a capacity-matched control shows the ceiling is a matter of design rather than of parameter count. \textbf{(ii) Coordinated routing.} We ask how a global hub should influence the shared router, and prove that modulating the softmax temperature (gate-style) is the only one of four hub modes satisfying perfect degeneration, order preservation, boundedness, and low overhead at once; we also diagnose a hidden failure mode in which tanh saturation severs the gradient to the hub during long training. \textbf{(iii) Independent-model reconstruction.} Chimera distillation collapses the ensemble into a single-base student, and a weight scan over the loss shows that the apparent ``student beats teacher'' margin is entirely attributable to a direct-target term rather than to concept-direction transfer or variance averaging. Because fused inference keeps every base alive and distillation is a deployment device, the study is only as trustworthy as its evaluation. We therefore apply a uniform \emph{out-of-sample discipline} across the whole stack, and it overturns several of our own in-sample findings: the in-sample best hub mode is not the out-of-sample best, an advertised corpus-scale boundary is not established, and long-training and repair gains shrink to noise. What survives held-out evaluation is the alignment-ladder ceiling, the attention-path advantage, and the scale-heterogeneous fusion gain (\S\ref{sec:scale-hetero-exp}), whose in-sample margin of $+26.7\%$ is retained out of sample. We report the negative results that bound the method---component composition, nested aligners, multi-teacher distillation, and toy multimodal benchmarks---from hundreds of seeded end-to-end runs across 47 engineering generations and 430 unit and integration tests.
 \end{abstract}
 
 \section{Introduction}
@@ -86,7 +86,7 @@ This paper studies a fourth option, one level lower, and asks how far it can be 
 
 \textbf{Stage 3 --- independent-model reconstruction.} Fusion has a deployment cost: the fused system still needs every base alive at inference. We close the loop with \textbf{chimera distillation}, in which a single-base student---a real frozen TinyBERT \citep{jiao2020} with a low-rank adapter \citep{hu2022}---is trained to reproduce the fused teacher's output from its \emph{own} modality's input alone.
 
-\textbf{The thread that holds the three stages together.} Each stage is a claim about a quantity measured at small scale, and each claim is only as good as its evaluation. We therefore adopt a single discipline throughout: every headline number is validated on inputs the model never trained on. This discipline is not cosmetic. Applying it retroactively to our own earlier results changed several of them, in both directions. On the negative side, the in-sample best hub mode is not the best out-of-sample, an advertised corpus-scale boundary does not survive, and the two gradient repairs turn out not to move fusion MSE at all. On the positive side, the alignment-ladder ceiling, the attention-path advantage, and the scale-heterogeneous fusion gain all survive held-out evaluation intact. We report both outcomes, because a mechanism-level study whose positive results are not separated from its evaluation artifacts is not evidence.
+\textbf{The thread that holds the three stages together.} Each stage is a claim about a quantity measured at small scale, and each claim is only as good as its evaluation. We therefore adopt a single discipline throughout: every headline number is validated on inputs the model never trained on. This discipline is not cosmetic. Applying it retroactively to our own earlier results changed several of them, in both directions. On the negative side, the in-sample best hub mode is not the best out-of-sample, an advertised corpus-scale boundary does not survive, and the two gradient repairs turn out not to move fusion MSE at all. On the positive side, the alignment-ladder ceiling, the attention-path advantage, and the scale-heterogeneous fusion gain (\S\ref{sec:scale-hetero-exp}) all survive held-out evaluation intact, the last retaining $99$--$100\%$ of its in-sample margin under both a re-sampled-noise and a shifted-stimulus protocol. We report both outcomes, because a mechanism-level study whose positive results are not separated from its evaluation artifacts is not evidence.
 
 We make the following contributions, ordered from mechanism to evidence.
 
@@ -354,6 +354,61 @@ Table~\ref{tab:fusion} summarizes the fusion results. With FFN-only routing (v6)
 
 The path decomposition is the interesting part, and it is one of the findings that survives held-out evaluation. In the cross-architecture setting, the attention path alone reaches MSE $1.16$---already close to the fused $1.06$---while the FFN path alone ($7.10$) is indistinguishable from averaging ($7.06$). Cross-architecture complementarity therefore surfaces almost entirely in \emph{attention patterns}: once each token can consult the architecture whose attention mode fits it, the FFN experts' remaining contribution is the residual refinement. An independent held-out audit of this claim (\texttt{run\_v46\_attn\_path\_audit}) re-measured the attention-vs-FFN path gap under both an in-sample and a held-out protocol: the gap is $+82.7\%$ in-sample and $+70.6\%$ held-out, winning on $5/5$ seeds under both, so the claim is not an artifact of in-sample evaluation. We state it narrowly---attention varies more across architectures than FFN activations do---and it does not contradict the key--value-memory view of FFNs \citep{geva2021,meng2022,dai2022}: FFN weights carry rich knowledge \emph{within} an architecture, but our result indicates that this knowledge averages well \emph{across} architectures, whereas attention patterns do not. In the same-architecture control (v7-B), where the three TinyBERTs differ only by random Q/K/V/O perturbation, the dual-path gain shrinks to $+1.0\%$: with architectural diversity removed, the router has almost nothing left to select on. Routing value tracks architectural diversity, not expert count.
 
+\subsection{Scale-heterogeneous fusion: one large base and many small}
+\label{sec:scale-hetero-exp}
+
+The experiments above compose bases that differ in \emph{architecture}. A second line of the project
+varies \emph{scale} instead, and it is the one that the present audit had to re-establish from
+scratch, because none of its runners contained any held-out evaluation at all. The setting is one
+large base (MSA-4B, $D=2560$) and two small ones (embedding-0.6b and reranker-0.6b, $D=1024$),
+each projected through its own rectangular $P_m$ into the shared space $D_{\text{shared}}{=}256$ and
+selected by the same sparse router. \textbf{Experiment v33} fuses all three and compares against the
+best single expert and against equal-weight averaging. \textbf{Experiment v34} adds a
+default-mode-network association layer on top of the fused representation. \textbf{Experiment v35}
+asks the converse question---whether a large base can serve as a \emph{container} into which several
+heterogeneous small entry models inject prefix representations---and is negative.
+
+\begin{table}[htbp]
+\centering
+\caption{Scale-heterogeneous fusion under the three-protocol audit of \S\ref{sec:oos} (5-seed paired
+medians, \texttt{run\_v47\_scale\_hetero\_heldout}). ``Noise'' re-samples the evaluation noise at the
+same stimuli; ``stimulus'' shifts the stimuli themselves. A finding is reported as clean only when the
+sign is stable across all three columns.}
+\label{tab:scale-hetero}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{p{0.34\textwidth}ccc p{0.16\textwidth}}
+\toprule
+\textbf{Finding} & \textbf{In-sample} & \textbf{Noise} & \textbf{Stimulus} & \textbf{Verdict} \\
+\midrule
+Fused beats best single expert (v33) & $+26.7\%$ \ (5/5) & $+26.7\%$ \ (5/5) & $+26.5\%$ \ (5/5) & \textbf{survives} \\
+$\quad$ retention of the in-sample effect & --- & $100\%$ & $99\%$ & --- \\
+DMN association layer, additive to v33 (v34) & $+6.4\%$ \ (5/5) & $+6.4\%$ \ (5/5) & $+6.5\%$ \ (5/5) & \textbf{survives} \\
+$\quad$ retention of the in-sample effect & --- & $100\%$ & $103\%$ & --- \\
+Entry-model injection into a container (v35) & $-11.1\%$ \ (2/5) & $-11.1\%$ \ (2/5) & $-3.3\%$ \ (2/5) & \textbf{no gain} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two results deserve to be read together with the rest of this section rather than on their own.
+First, the scale-heterogeneous gain is \emph{not} a re-scaling of the architectural one: it is the
+largest single margin in the paper, it is retained essentially exactly out of sample
+($99$--$100\%$), and it holds under both re-sampled noise and shifted stimuli. Second, the negative
+result in the same family is also robust. The container-and-entry design of v35 does not merely fail
+to beat a random prefix, it fails in all three protocols. That failure was originally attributed to
+the design; it was later traced to an implementation defect---the tabular entry representation was
+averaged over the batch before injection, collapsing a per-sample signal into a constant---so v35 is
+best read as a recorded negative alongside the corrected follow-ups, not as evidence against
+entry-based composition.
+
+We state the scope of this line precisely, because it is narrower than the label
+``scale-heterogeneous'' suggests. The large base contributes only a shallow layer, so its depth is
+not exercised; the two small bases share an architecture and differ in training objective rather than
+in form; and the synthetic targets are the same class-direction construction used throughout. The
+claim this experiment supports is therefore that \emph{routing across a large--small size gap does not
+destroy the fusion gain and retains it out of sample}---not that depth-heterogeneous composition at
+production scale has been demonstrated.
+
 \subsection{The alignment ladder and its ceiling}
 \label{sec:align-exp}
 
@@ -527,6 +582,8 @@ Hub: gate-style central gain (v43) & $+44.5\%$ & $+4.0\%$ & shrinks to noise \\
 Corpus-scale boundary (v45) & present & absent & \textbf{not established} \\
 Long-training gain (v19) & $+4.3\%$ & $+1.5\%$ & shrinks ($34\%$ retained) \\
 Gradient repairs (v30/v31) & $-0.44\%$ / $-0.11\%$ & same & no effect \\
+Scale-heterogeneous fusion (v33, \S\ref{sec:scale-hetero-exp}) & $+26.7\%$ & $+26.5\%$ (noise), $+26.5\%$ (stimulus) & \textbf{survives} \\
+Entry injection into a container (v35) & $-11.1\%$ & $-3.3\%$ (stimulus) & no gain \\
 \bottomrule
 \end{tabular}
 \end{table}
