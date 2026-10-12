@@ -12,6 +12,7 @@
 - **测试状态**: **430/430 ALL GREEN** ✓ (52 个测试文件)
 - **结构完整性**: **41/41 包零错误、零警告** ✓; **泄漏审计 41/41 全部结清** (v47 样本外审计: 9 个补跑实测 + 7 个核实原生留出协议)
 - **注**(2026-10-11 更新):`research/scale_heterogeneous/`、`results/`、`archive/`、`docs/_archive/` 原为公开排除(理由是依赖专有辅助模型)。经核实所依赖的四个模型 (EverMind-AI/MSA-4B、skillcorpus-embedding-0.6b、skillcorpus-reranker-0.6b、occams/Xiaomi-TabLDM) **全部公开可下**,排除理由已不成立,四个目录均已恢复入库。
+- **论文**(2026-10-12 更新):`microfusion` + `paper` 已合并重构为单一长稿 `docs/research_paper/reconstruct.tex` / `reconstruct_zh.tex`(23 / 24 页),旧稿三份 `.tex` 标记 DEPRECATED。v47 审计使摘要里一条无支撑的「规模异构增益存活」主张暴露出来,已补 §6.3 实验。入口见 [`docs/research_paper/PAPER_README.md`](docs/research_paper/PAPER_README.md)。
 - **注**(2026-10-11 更新):v47 样本外审计在补 held-out 时挖出**五个此前无人发现的缺陷**—— v12 / v19 / v35 的 runner **从未真正跑起来** (函数体用了未导入的裸名)、v19 声称的「容量对照臂」与基线逐位同构、attn 专家的输出投影不受种子控制 (跨进程不可复现)。均已修复并记录在案,详见 [`docs/V47_0_HELDOUT_AUDIT.md`](docs/V47_0_HELDOUT_AUDIT.md)。
 - **注**(2026-10-11 更新):`tabldm` 的权重在 HuggingFace `occams/Xiaomi-TabLDM`,但**源码在 GitHub `xiaomi-research/xiaomi-tabldm`** ——两者不是一个仓库,只看 HF 会误判成「无可安装源码」。现由 `paths.py` 自动浅克隆到 `$XDG_CACHE_HOME/hetero_fusion/`,无需手工安装。
 
@@ -42,6 +43,8 @@ archive/                                # 负面发现 + 前基线
 tests/                                  # 430 个 V&V 测试
 examples/                               # 40+ 端到端脚本
 docs/                                   # 研究规范文档
+└── research_paper/                   # 论文:reconstruct.tex(合并稿)/ 中英 PDF + 评审记录
+    └── PAPER_README.md               # ★ 论文入口(产物 / 贡献 / 编译 / 权重 / 自引)
 ```
 
 → 详见 [research/README.md](./research/README.md) 看 8 条研究线的全景

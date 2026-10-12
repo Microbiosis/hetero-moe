@@ -200,7 +200,7 @@ PYEOFCHK
 用法: bash run.sh <command>
 
   setup       一键重建环境 (幂等, rootfs 重置后执行此命令即可恢复)
-  test        全套 V&V 测试 (v4.0/v5_alpha + v7-v29 + v33-v39, 实测 327/327)
+  test        全套 V&V 测试 (v4.0/v5_alpha + v7-v47, 41 个版本包, 实测 430/430, 52 个测试文件)
   v5          v5.0-α §7 验收 (含 span + rerank)
   hprime      H' 粒度匹配原理验证 (可复现)
   rerank      Rerank span 融合端到端

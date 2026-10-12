@@ -1177,6 +1177,8 @@ v19/v20/v22 已充分实验, 下一步可写一篇正式 paper:
 > 先确认"不通"的理由本身是对的。**
 >
 > 规范见 [`research/central_stability/v47_heldout_audit/SPEC.md`](../research/central_stability/v47_heldout_audit/SPEC.md)。
+>
+> **同日 (2026-10-12) 论文侧闭环**:v47 的数字被写进合并稿 `reconstruct.tex` 新增的 **§6.3 "Scale-heterogeneous fusion: one large base and many small"** 与 `tab:scale-hetero`,并给 `tab:oos` 加了两行。起因是核查发现:摘要与引言两处都声称「scale-heterogeneous fusion gain 样本外存活」,而合并稿 v33/v34/v35 **出现 0 次**、无任何规模异构实验 —— **一条无支撑的头条主张**,恰是本文 §7 自己在反对的那类问题。已补实验而非删主张;中英文两稿 PDF 均编译通过(23 / 24 页)。详见 [`PAPER_README.md`](research_paper/PAPER_README.md)。
 
 ---
 
