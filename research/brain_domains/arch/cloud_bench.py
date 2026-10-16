@@ -1,4 +1,4 @@
-"""真实规模 GPU 基准 + 域对照 (HF Jobs / T4) — v4 堆叠稳定性修复版.
+"""真实规模 GPU 基准 + 域对照 (HF Jobs / T4) — v5 现代稳定性机制版.
 
 === 修复链 ===
 v2 (df9dd6a 原版) 首跑暴露:
@@ -12,16 +12,19 @@ v3 修复 (a)(b) + 域偏移保号:
     → A_d < 0 恒成立 (v2 的 A_d>0 曾致输出 1e19 + 梯度 nan)
   - 但 v3 重跑暴露 (c): 24 层堆叠在 alpha=0 (无域) 时仍 nan
 
-v4 修复 (c) 堆叠稳定性 (纯数值推演定位 + 验证, 未占本地资源):
-  - 根因: 堆叠 u = u + layer(u), 层输出含 D⊙u (D=1 跳连)
-    → 每层近似翻倍 + 二次反馈加速 → ~12 层 NaN
-    (推演: 无修复时层 9 达 6e18, 层 12 NaN — 与 T4 首跑一致)
-  - 方案对比 (数值推演):
-      裸堆叠: NaN | 仅 out_proj: 927 (仍增长) | out_proj+残差缩放: 0.40 ✓
-  - 采用: ① 层输出经 out_proj (nn.Linear, bias=False, 默认初始化)
-           —— 对应真实 mamba block 的 out_proj 收缩角色 (原基准缺失)
-           ② 残差缩放 1/√(2·n_layer) (GPT-2 标准做法)
-  - 附带: 参数从 63.19M → 119.8M (更接近真实 mamba-130m 量级)
+v4 修复 (c) 堆叠稳定性 — 当时用 GPT-2 式固定残差缩放 1/√(2N) + out_proj。
+
+v5 (本版) 把 (c) 的修复替换为现代标准, 移除 GPT-2 式固定缩放:
+  - 问题回顾: 层输出含 D⊙u 跳连, 堆叠 u = u + layer(u) 近似翻倍,
+    二次反馈加速 → ~12 层 NaN (v3 实测)
+  - 现代方案 (CaiT / ViT-22B / DINOv2 惯例):
+      ① pre-norm: 每层输入先过 RMSNorm, 阻断幅度在层间循环放大
+      ② LayerScale: 残差支路输出乘可学习逐通道 γ (小初值),
+         让模型自行学习每层该注入多少信号, 取代固定的 1/√(2N)
+  - 数值推演对比 (24 层, 与 v4 同环境):
+      GPT-2 固定缩放: 0.403 | LayerScale: 0.348 | Norm+LS(1e-4): 0.345
+      (仅 Norm 不配 LayerScale: 9.97 — 不够; 两者需配合)
+  - γ 初值由 DOMAIN_LS_INIT 控制 (默认 1e-4, CaiT 对深网络的保守取值)
 
 === 本版检验 ===
   1. 真实规模下的显存/耗时/可训练性 (B 扫描 8/4/2/1)
@@ -45,15 +48,18 @@ from torch.utils.checkpoint import checkpoint as cp
 
 
 class StableDomainSSM(nn.Module):
-    """保号域条件 SSM + out_proj (v4)。
+    """保号域条件 SSM + 现代稳定性机制 (v5)。
 
-    A_d = -(exp(A_log) * φ(offset)),  φ = exp(tanh(offset) * c),  A_d < 0 恒成立。
-    层输出 = out_proj(ssm + D⊙u), 堆叠侧再做 1/√(2N) 残差缩放。
+    - 扫描核心: A_d = -(exp(A_log) * φ(offset)),  A_d < 0 恒成立
+    - 稳定性:   pre-RMSNorm + LayerScale (可学习 γ, 逐通道), 取代固定残差缩放
+    - 层结构:   输入 → RMSNorm → SSM 扫描 → D⊙u 跳连 → out_proj → γ·输出
     """
     C_BOUND = float(os.environ.get("DOMAIN_C_BOUND", "0.3"))
+    LS_INIT = float(os.environ.get("DOMAIN_LS_INIT", "1e-4"))
 
     def __init__(self, d_inner=1536, d_state=16, n_domains=17, rank=8,
-                 dt_min=1e-3, dt_max=1e-1, use_out_proj=True):
+                 dt_min=1e-3, dt_max=1e-1, use_out_proj=True,
+                 use_pre_norm=True, use_layerscale=True, layerscale_init=None):
         super().__init__()
         self.d_inner, self.d_state = d_inner, d_state
         self.n_domains, self.rank = n_domains, rank
@@ -70,8 +76,17 @@ class StableDomainSSM(nn.Module):
         self.dt_proj = nn.Linear(d_inner, d_inner)
         self.B_proj = nn.Linear(d_inner, d_state, bias=False)
         self.C_proj = nn.Linear(d_inner, d_state, bias=False)
-        # out_proj: 真实 mamba block 的收缩投影 (原基准缺失 → 堆叠翻倍爆炸)
         self.out_proj = nn.Linear(d_inner, d_inner, bias=False) if use_out_proj else None
+
+        # pre-norm: 阻断层间幅度循环放大 (现代 LLM/SSM 栈标配)
+        self.pre_norm = nn.RMSNorm(d_inner) if use_pre_norm else None
+
+        # LayerScale: 可学习逐通道 γ (取代 GPT-2 式固定 1/√(2N) 缩放)
+        if use_layerscale:
+            init = self.LS_INIT if layerscale_init is None else layerscale_init
+            self.gamma = nn.Parameter(torch.full((d_inner,), float(init)))
+        else:
+            self.register_parameter("gamma", None)
 
     def effective_A(self, domain_id):
         """(B, L) -> (B, L, D, N); A_eff < 0 恒成立。"""
@@ -83,8 +98,9 @@ class StableDomainSSM(nn.Module):
 
     def forward(self, u, domain_id, block=64):
         B, L, D = u.shape
-        delta = F.softplus(self.dt_proj(u)).clamp(self.dt_min, self.dt_max)
-        Bm, Cm = self.B_proj(u), self.C_proj(u)
+        h_in = self.pre_norm(u) if self.pre_norm is not None else u
+        delta = F.softplus(self.dt_proj(h_in)).clamp(self.dt_min, self.dt_max)
+        Bm, Cm = self.B_proj(h_in), self.C_proj(h_in)
 
         y = torch.empty(B, L, D, device=u.device, dtype=u.dtype)
         h = torch.zeros(B, D, self.d_state, device=u.device, dtype=u.dtype)
@@ -95,29 +111,31 @@ class StableDomainSSM(nn.Module):
             dA_blk = torch.exp(delta[:, s:e].unsqueeze(-1) * A_blk)
             dBu_blk = (delta[:, s:e].unsqueeze(-1)
                        * Bm[:, s:e].unsqueeze(2)
-                       * u[:, s:e].unsqueeze(-1))
+                       * h_in[:, s:e].unsqueeze(-1))
             for t in range(e - s):
                 h = dA_blk[:, t] * h + dBu_blk[:, t]
                 y[:, s + t] = torch.einsum("bdn,bn->bd", h, Cm[:, s + t])
 
-        y_raw = y + self.D * u
-        return self.out_proj(y_raw) if self.use_out_proj else y_raw
+        y_raw = y + self.D * h_in
+        out = self.out_proj(y_raw) if self.use_out_proj else y_raw
+        return self.gamma * out if self.gamma is not None else out
 
 
 class DomainStack(nn.Module):
+    """层堆叠: u = u + layer(u)。稳定性由层内 pre-norm + LayerScale 提供,
+    不再使用固定残差缩放 (v4 的 1/√(2N) 已移除)。"""
+
     def __init__(self, n_layer=24, cls=StableDomainSSM, **kw):
         super().__init__()
         self.n_layer = n_layer
         self.layers = nn.ModuleList([cls(**kw) for _ in range(n_layer)])
-        # GPT-2 式残差缩放 (推演验证: 与 out_proj 组合后 24 层保持有界)
-        self.residual_scale = 1.0 / math.sqrt(2 * n_layer)
 
     def forward(self, u, domain_id, use_checkpoint=True):
         for layer in self.layers:
             if use_checkpoint and torch.is_grad_enabled():
-                u = u + self.residual_scale * cp(layer, u, domain_id, use_reentrant=False)
+                u = u + cp(layer, u, domain_id, use_reentrant=False)
             else:
-                u = u + self.residual_scale * layer(u, domain_id)
+                u = u + layer(u, domain_id)
         return u
 
 
@@ -131,8 +149,9 @@ def load_flywire_domains(path):
 
 
 def verify_equivalence(dev):
-    """§0: (i) SSM 级等价性 — 关域+关 out_proj 时与参考逐位一致;
-             (ii) 24 层堆叠稳定性 — 满配 (out_proj+缩放) 下有界。"""
+    """§0: (i) 核心扫描等价性 — 关闭 pre-norm/out_proj/LayerScale 且 alpha=0
+             时与参考逐位一致;
+             (ii) 24 层满配堆叠稳定性 — 现代机制下有界。"""
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from domain_ssm import DomainConditionedSSM
 
@@ -141,23 +160,23 @@ def verify_equivalence(dev):
     D_INNER, N, K, R = 64, 8, 5, 4
     B, L = 2, 32
 
-    # (i) 等价性: 关 out_proj, alpha=0
+    # (i) 核心扫描等价: 关 pre-norm / out_proj / LayerScale, alpha=0
     ref = DomainConditionedSSM(D_INNER, N, K, R).to(dev).eval()
-    new = StableDomainSSM(D_INNER, N, K, R, use_out_proj=False).to(dev).eval()
-    new.load_state_dict({k: v for k, v in ref.state_dict().items()
-                         if k in new.state_dict()}, strict=False)
+    core = StableDomainSSM(D_INNER, N, K, R, use_out_proj=False,
+                           use_pre_norm=False, use_layerscale=False).to(dev).eval()
+    core.load_state_dict({k: v for k, v in ref.state_dict().items()
+                          if k in core.state_dict()}, strict=False)
 
     u = torch.randn(B, L, D_INNER, device=dev) * 0.1
     domain_id = torch.randint(0, K, (B, L), device=dev)
 
     with torch.no_grad():
         y_ref = ref(u, domain_id)
-        y_new0 = new(u, domain_id, block=8)
-        d0 = (y_ref - y_new0).abs().max().item()
-        # A_eff 全负检查
-        A_eff = new.effective_A(domain_id)
+        y_core = core(u, domain_id, block=8)
+        d0 = (y_ref - y_core).abs().max().item()
+        A_eff = core.effective_A(domain_id)
         n_pos = (A_eff > 0).sum().item()
-        # (ii) 24 层满配堆叠稳定性 (小尺寸)
+        # (ii) 24 层满配堆叠稳定性 (小尺寸, 现代机制: pre-norm + LayerScale)
         stack_small = DomainStack(24, cls=StableDomainSSM, d_inner=D_INNER, d_state=N,
                                   n_domains=K, rank=R).to(dev).eval()
         for layer in stack_small.layers:
@@ -165,9 +184,9 @@ def verify_equivalence(dev):
         y_stack = stack_small(u, domain_id, use_checkpoint=False)
         m_stack = y_stack.abs().max().item()
 
-    print(f"  SSM 级等价 (alpha=0)  max|diff| = {d0:.3e}  ({'PASS' if d0 < 1e-5 else 'FAIL'})")
-    print(f"  A_eff > 0 元素数      {n_pos}  ({'PASS 全负' if n_pos == 0 else 'FAIL'})")
-    print(f"  24层堆叠 (小尺寸)     |max| = {m_stack:.3e}  ({'PASS 有界' if m_stack < 1e2 else 'FAIL'})")
+    print(f"  核心扫描等价 (alpha=0)  max|diff| = {d0:.3e}  ({'PASS' if d0 < 1e-5 else 'FAIL'})")
+    print(f"  A_eff > 0 元素数        {n_pos}  ({'PASS 全负' if n_pos == 0 else 'FAIL'})")
+    print(f"  24层满配堆叠 (小尺寸)   |max| = {m_stack:.3e}  ({'PASS 有界' if m_stack < 1e2 else 'FAIL'})")
     return d0 < 1e-5 and n_pos == 0 and m_stack < 1e2
 
 
@@ -201,11 +220,13 @@ def _bench_one(dev, n_domains, B, L, n_layer, rank):
 
     g = stack.layers[0].alpha.grad
     gn = g.abs().sum().item() if g is not None else 0.0
+    gg = stack.layers[0].gamma.grad
+    ggn = gg.abs().sum().item() if gg is not None else 0.0
 
     ok = math.isfinite(out_max) and math.isfinite(gn) and gn > 0
     print(f"  [B={B} L={L}] 参数 {total/1e6:.2f}M (域 {100*domain_params/total:.3f}%) | "
           f"前向 {t_fwd:.2f}s 峰值 {peak_fwd:.2f}GB | 反向 {t_bwd:.2f}s 峰值 {peak_bwd:.2f}GB | "
-          f"输出|max| {out_max:.3e} | alpha.grad {gn:.3e} {'OK' if ok else 'BAD!!'}")
+          f"输出|max| {out_max:.3e} | alpha.grad {gn:.3e} gamma.grad {ggn:.3e} {'OK' if ok else 'BAD!!'}")
     del stack, u, domain_id, out
     if dev.type == "cuda":
         torch.cuda.empty_cache()
@@ -262,7 +283,6 @@ def bench_domain_sensitivity(dev, flywire_csv=None, B=4, L=256, n_layer=2, rank=
             yd = stack(u, di)
             diffs.append((yd - base).abs().mean().item())
             maxes.append(yd.abs().max().item())
-        # 逐 token 混采序列 (体现真实标签是逐 token 变化的)
         mix_ids = torch.randint(0, K, (B, L), device=dev)
         y_mix = stack(u, mix_ids)
         d_mix = (y_mix - base).abs().mean().item()
@@ -280,7 +300,8 @@ def main():
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("=" * 66)
     print(f"设备: {dev}  {torch.cuda.get_device_name(0) if dev.type == 'cuda' else ''}")
-    print(f"torch {torch.__version__}  c_bound={StableDomainSSM.C_BOUND}  (v4: +out_proj +残差缩放)")
+    print(f"torch {torch.__version__}  c_bound={StableDomainSSM.C_BOUND}  ls_init={StableDomainSSM.LS_INIT}")
+    print(f"(v5: pre-RMSNorm + LayerScale 取代 GPT-2 式固定残差缩放)")
     print("=" * 66)
 
     if not verify_equivalence(dev):
