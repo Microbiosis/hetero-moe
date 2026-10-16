@@ -4,7 +4,7 @@
 > **核心原理**: 每模态独立前向 + 矩形 P_m 投影对齐 + 共享路由 = 跨架构融合
 > **实验结果**: 5/5 PASS, 均值 +20.3% vs single, +17.3% vs avg
 > **对比 v5.1 跨架构测试**: 从 +4% → +20.3% (5× 提升)
-> **复现命令**: `cd /workspace/hetero_fusion && python3 examples/run_v6_cross_modal_fusion.py`
+> **复现命令**: `cd /workspace/hetero-moe && python3 examples/run_v6_cross_modal_fusion.py`
 
 ---
 

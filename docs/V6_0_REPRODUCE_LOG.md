@@ -2,7 +2,7 @@
 
 > **复现日期**: 2026-08-26
 > **复现环境**: WSL2 (linux 6.18.33.2), CPU only, x86_64
-> **复现命令**: `bash /workspace/hetero_fusion/run.sh v6`
+> **复现命令**: `bash /workspace/hetero-moe/run.sh v6`
 > **结果**: **5/5 PASS** ✅（与 `V6_0_SPEC.md` §5 记录吻合）
 
 ---
@@ -76,7 +76,7 @@
 
 ```bash
 # 0) 进入项目
-cd /workspace/hetero_fusion
+cd /workspace/hetero-moe
 
 # 1) 复现环境（若 transformers/Pillow 未装）
 pip install --break-system-packages transformers Pillow
@@ -87,7 +87,7 @@ bash run.sh v6
 
 也可分步：
 ```bash
-bash run.sh smoke         # 验证依赖 + hetero_fusion 全局 import
+bash run.sh smoke         # 验证依赖 + hetero_moe 全局 import
 bash run.sh baseline      # 验证 §7 原型逐字节基线
 bash run.sh v6            # V6.0 跨架构融合 5 seeds
 ```

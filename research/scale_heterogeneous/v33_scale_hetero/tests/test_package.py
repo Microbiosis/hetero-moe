@@ -20,7 +20,7 @@
 """
 import sys, os, tempfile
 _ROOT = os.path.dirname(os.path.abspath(__file__))
-while _ROOT != os.path.dirname(_ROOT) and not os.path.isdir(os.path.join(_ROOT, "hetero_fusion")):
+while _ROOT != os.path.dirname(_ROOT) and not os.path.isdir(os.path.join(_ROOT, "hetero_moe")):
     _ROOT = os.path.dirname(_ROOT)
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)

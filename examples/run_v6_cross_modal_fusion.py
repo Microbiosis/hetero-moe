@@ -34,8 +34,8 @@ import torch.nn.functional as F
 from PIL import Image
 import numpy as np
 from transformers import AutoModel, ViTModel, AutoTokenizer, ViTImageProcessor
-from hetero_fusion.core.quant import FakeQuantSTE
-from hetero_fusion.core.router import SparseRouterSTE
+from hetero_moe.core.quant import FakeQuantSTE
+from hetero_moe.core.router import SparseRouterSTE
 
 D_SHARED = 256
 M, K, N_CLS = 3, 1, 3  # 3 模态, 每模态 1 类方向

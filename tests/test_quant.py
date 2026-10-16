@@ -7,7 +7,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
-from hetero_fusion.core.quant import FakeQuantSTE, fake_quant, quantization_error
+from hetero_moe.core.quant import FakeQuantSTE, fake_quant, quantization_error
 
 
 def test_per_row_matches_prototype():

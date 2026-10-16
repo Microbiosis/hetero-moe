@@ -11,9 +11,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from hetero_fusion.core.quant import FakeQuantSTE
-from hetero_fusion.core.fusion import swiglu_forward
-from hetero_fusion.core.router import SparseRouterSTE  # v4.0 token 级
+from hetero_moe.core.quant import FakeQuantSTE
+from hetero_moe.core.fusion import swiglu_forward
+from hetero_moe.core.router import SparseRouterSTE  # v4.0 token 级
 from archive.pre_baseline.v5_alpha.span_router import SpanSparseRouterSTE  # v5.1 span 级
 from .seq_router import SeqSparseRouterSTE
 

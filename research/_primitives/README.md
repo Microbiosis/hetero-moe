@@ -40,7 +40,7 @@ research/scale_heterogeneous/v37_b_selftrained_entry/{entry_encoder,arm,paths}.p
 **不依赖**:
 - `research.<line>.*` (任何研究线内代码)
 - `archive.*`
-- `hetero_fusion.*` (主包)
+- `hetero_moe.*` (主包)
 
 这意味着每个原语可以**独立测试、独立发布、独立升级**,不被研究实验污染。
 

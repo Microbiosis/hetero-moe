@@ -21,9 +21,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 import torch.nn.functional as F
-from hetero_fusion.core.fusion import swiglu_forward
-from hetero_fusion.core.quant import FakeQuantSTE
-from hetero_fusion.core.router import SparseRouterSTE
+from hetero_moe.core.fusion import swiglu_forward
+from hetero_moe.core.quant import FakeQuantSTE
+from hetero_moe.core.router import SparseRouterSTE
 from archive.pre_baseline.v5_alpha.seq_router import SeqSparseRouterSTE
 
 D, D_FF, M, K = 32, 64, 4, 1  # K=1: 硬路由, 避免 softmax scale 干扰

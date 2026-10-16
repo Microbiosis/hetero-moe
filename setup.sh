@@ -5,7 +5,7 @@
 # 设计目标: 即使 rootfs 被重置, 只要 /workspace/hetero-moe 源码在,
 #           执行本脚本即可一键重建完整可运行环境。
 # 幂等性: 每一步先检测是否已满足, 已满足则跳过, 可安全重复执行。
-# 注: 本地目录 hetero-moe; Python 包名 hetero_fusion (import 路径不变)
+# 注: 本地目录 / 发行名 / Python 包名 统一为 hetero-moe (旧名 hetero_fusion 已于 2026-10-14 移除)
 # ============================================================================
 set -euo pipefail
 
@@ -52,9 +52,9 @@ else
     $PYTHON -m pip install --break-system-packages "transformers>=4.30" "Pillow>=9.0"
 fi
 
-echo "=== [5/6] 可编辑安装 hetero_fusion 包 (全局 import 可用) ==="
-if $PYTHON -c "import hetero_fusion" 2>/dev/null; then
-    c_ok "hetero_fusion 已安装: $($PYTHON -c 'import hetero_fusion;print(hetero_fusion.__version__)')"
+echo "=== [5/6] 可编辑安装 hetero_moe 包 (全局 import 可用) ==="
+if $PYTHON -c "import hetero_moe" 2>/dev/null; then
+    c_ok "hetero_moe 已安装: $($PYTHON -c 'import hetero_moe;print(hetero_moe.__version__)')"
     # 确保指向最新源码 (reinstall 覆盖)
     $PYTHON -m pip install --break-system-packages --quiet --no-deps -e "$PROJECT_DIR" \
         >/dev/null 2>&1 && c_ok "已刷新可编辑链接"
@@ -66,7 +66,7 @@ fi
 echo "=== [6/6] 冒烟测试 (验证持久化生效) ==="
 cd "$PROJECT_DIR"
 # 全局 import (验证安装, 非 sys.path hack)
-$PYTHON -c "import hetero_fusion as hf; print('  全局 import OK:', hf.__version__)"
+$PYTHON -c "import hetero_moe as hf; print('  全局 import OK:', hf.__version__)"
 # 规范 §7 基线复现
 c_do "运行 §7 基线 + 量化测试子集 ..."
 $PYTHON examples/verify_spec_prototype.py >/dev/null 2>&1 && c_ok "§7 基线通过"

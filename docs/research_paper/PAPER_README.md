@@ -186,7 +186,7 @@ This script enforces the 29/29 cross-research-line independence rule; no researc
 ⚠️ **一个容易踩的坑**:TabLDM 的**权重**在 HuggingFace,但它的 **Python 包源码在 GitHub**
 `xiaomi-research/xiaomi-tabldm` —— **两者不是一个仓库**。只看 HF 会发现"零个 `.py`"并误判成
 "无可安装源码"。`paths.py` 已按「env → 本地候选 → 自动浅克隆」处理,克隆目标放
-`$XDG_CACHE_HOME/hetero_fusion/`(**第三方 git 仓库不要 clone 进另一个仓库里**,嵌套 `.git` 会被父仓库吞掉)。
+`$XDG_CACHE_HOME/hetero_moe/`(**第三方 git 仓库不要 clone 进另一个仓库里**,嵌套 `.git` 会被父仓库吞掉)。
 
 ---
 
@@ -260,7 +260,7 @@ docs/research_paper/
 
 ## 10. Contact and Contributions
 
-This paper documents the contributions of the **Hetero-MoE** project (GitHub repo `hetero-moe`; Python package `hetero_fusion`, kept for backward-compatible imports). The project-level structure (research lines, primitives, archive) is documented at `<repo>/README.md`.
+This paper documents the contributions of the **Hetero-MoE** project (GitHub repo `hetero-moe`; Python package `hetero_moe`, matching the repo name — the earlier `hetero_fusion` name was removed without a compatibility shim). The project-level structure (research lines, primitives, archive) is documented at `<repo>/README.md`.
 
 For questions about a specific research line, see the per-line README at `<repo>/research/{line}/README.md`.
 

@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 import torch.nn as nn
-from hetero_fusion.core.fusion import HeteroFusionLayer, swiglu_forward
+from hetero_moe.core.fusion import HeteroFusionLayer, swiglu_forward
 
 
 def _make(D=16, D_FF=32, M=4, K=2):

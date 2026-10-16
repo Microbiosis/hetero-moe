@@ -14,12 +14,12 @@
 - **注**(2026-10-11 更新):`research/scale_heterogeneous/`、`results/`、`archive/`、`docs/_archive/` 原为公开排除(理由是依赖专有辅助模型)。经核实所依赖的四个模型 (EverMind-AI/MSA-4B、skillcorpus-embedding-0.6b、skillcorpus-reranker-0.6b、occams/Xiaomi-TabLDM) **全部公开可下**,排除理由已不成立,四个目录均已恢复入库。
 - **论文**(2026-10-12 更新):`microfusion` + `paper` 已合并重构为单一长稿 `docs/research_paper/reconstruct.tex` / `reconstruct_zh.tex`(23 / 24 页),旧稿三份 `.tex` 标记 DEPRECATED。v47 审计使摘要里一条无支撑的「规模异构增益存活」主张暴露出来,已补 §6.3 实验。入口见 [`docs/research_paper/PAPER_README.md`](docs/research_paper/PAPER_README.md)。
 - **注**(2026-10-11 更新):v47 样本外审计在补 held-out 时挖出**五个此前无人发现的缺陷**—— v12 / v19 / v35 的 runner **从未真正跑起来** (函数体用了未导入的裸名)、v19 声称的「容量对照臂」与基线逐位同构、attn 专家的输出投影不受种子控制 (跨进程不可复现)。均已修复并记录在案,详见 [`docs/V47_0_HELDOUT_AUDIT.md`](docs/V47_0_HELDOUT_AUDIT.md)。
-- **注**(2026-10-11 更新):`tabldm` 的权重在 HuggingFace `occams/Xiaomi-TabLDM`,但**源码在 GitHub `xiaomi-research/xiaomi-tabldm`** ——两者不是一个仓库,只看 HF 会误判成「无可安装源码」。现由 `paths.py` 自动浅克隆到 `$XDG_CACHE_HOME/hetero_fusion/`,无需手工安装。
+- **注**(2026-10-11 更新):`tabldm` 的权重在 HuggingFace `occams/Xiaomi-TabLDM`,但**源码在 GitHub `xiaomi-research/xiaomi-tabldm`** ——两者不是一个仓库,只看 HF 会误判成「无可安装源码」。现由 `paths.py` 自动浅克隆到 `$XDG_CACHE_HOME/hetero_moe/`,无需手工安装。
 
 ## 项目结构
 
 ```
-hetero_fusion/                          # v4.0/v6 主包 — baseline + 内部分层
+hetero_moe/                          # v4.0/v6 主包 — baseline + 内部分层
 ├── core/                               # 融合核心 (fusion/router/quant/losses/parallel)
 ├── train/                              # 训练器
 └── infer/                              # 推理
@@ -54,7 +54,7 @@ docs/                                   # 研究规范文档
 旧的 `v5_alpha/`、`v7_attention/` ... `v39_g2_interaction/` 35+ 平铺兄弟包已重组成:
 - `research/<line>/v*_<name>/` — 8 条研究线
 - `archive/<reason>/v*_<name>/` — 负面发现 + 前基线
-- `hetero_fusion.{core,train,infer}` — 主包内部分层
+- `hetero_moe.{core,train,infer}` — 主包内部分层
 
 **导入示例**:
 ```python
@@ -63,8 +63,8 @@ from v9_gate_central import GateStyleWorkspace
 
 # 新
 from research.routing_evolution.v9_gate_central import GateStyleWorkspace
-from hetero_fusion.core.fusion import HeteroFusionLayer
-from hetero_fusion.train.trainer import HeteroTrainer
+from hetero_moe.core.fusion import HeteroFusionLayer
+from hetero_moe.train.trainer import HeteroTrainer
 ```
 
 ## 8 条研究线全景

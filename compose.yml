@@ -1,0 +1,53 @@
+# ============================================================================
+# hetero-fusion 开发容器编排 —— 2026-10-14 重建
+# ----------------------------------------------------------------------------
+# 原编排文件已丢失（容器元数据记录的原始路径是 E:\docker-compose.yml，
+# working_dir 为 E:\；现按项目就近原则放回本目录，与 compose.rebuild.yaml 同级）。
+# 本文件依据以下权威证据精确重建：
+#   1. E:\hf-docker-backup\containers\941507f22847...\config.v2.json
+#      （2026-10-05 备份的容器实际配置，label 与 config 逐字段核对）
+#   2. E:\hetero_fusion\compose.rebuild.yaml（当时的重建配方）
+#
+# 从容器元数据恢复的关键字段：
+#   com.docker.compose.project : hetero-fusion
+#   com.docker.compose.service : hf-runner
+#   image                      : hetero-fusion:dev
+#   working_dir                : /workspace/hetero_fusion
+#   command                    : bash -c "while true; do sleep 3600; done"
+#   ports                      : 0.0.0.0:38727->38727/tcp
+#   bind mount                 : E:\hetero_fusion -> /workspace/hetero_fusion (rw)
+#   network                    : hetero-fusion_default
+#
+# name 显式写死为 hetero-fusion：编排文件一旦移出 E:\ 根目录，compose 会改用
+# 目录名推导项目名（会变成 hetero_fusion），网络名也随之从
+# hetero-fusion_default 漂移到 hetero_fusion_default。显式声明可保持不变。
+#
+# 重建后需补一步（容器可写层已随旧容器一并丢失，需装回 Python 环境）：
+#   docker exec hf-runner bash /workspace/hetero-moe/setup.sh
+# ============================================================================
+name: hetero-moe
+
+services:
+  hf-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hetero-moe:dev
+    container_name: hf-runner
+
+    # 目录、发行名、Python 包名统一为 hetero-moe，无旧名兼容层
+    working_dir: /workspace/hetero-moe
+
+    # 与原容器一致：长跑 sleep，exec 进去跑命令
+    command: ["bash", "-c", "while true; do sleep 3600; done"]
+
+    ports:
+      - "38727:38727"
+
+    volumes:
+      # 唯一真路径：项目名 hetero-moe，也是 Dockerfile 的 WORKDIR、
+      # setup.sh 的 PROJECT_DIR 所指之处。
+      - ./:/workspace/hetero-moe:rw
+      # 旧容器的 12 GB /workspace/models 存在可写层里，已随容器删除。
+      # 这里挂回 D 盘的 SHA-256 校验副本（137 文件 / 12,077,954,422 字节）。
+      - D:\hf-models\models:/workspace/models:rw

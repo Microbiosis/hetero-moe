@@ -1,6 +1,7 @@
 # 异构 Mixture-of-Experts (Hetero-MoE) v4.0 — 包定义
-# 可编辑安装: pip install -e . (使 `import hetero_fusion` 全局可用, 源码改动即时生效)
-# 注: GitHub 仓库名 = hetero-moe; Python 包名 = hetero_fusion (保留以避免改动 327 个 import)
+# 可编辑安装: pip install -e . (使 `import hetero_moe` 全局可用, 源码改动即时生效)
+# 注: 仓库名 / 发行名 / Python 包名 / 容器路径 统一为 hetero-moe。
+#     旧的 hetero_fusion 兼容层已于 2026-10-14 移除(包目录、import、探针常量同步改名)。
 [build-system]
 requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -27,16 +28,16 @@ dependencies = [
 test = ["pytest>=7"]
 
 # 包发现:
-#   hetero_fusion      — 主包 (v4.0/v6 baseline)
-#   hetero_fusion.core — 融合核心 (fusion / router / quant / losses / parallel)
-#   hetero_fusion.train — 训练器 (trainer)
-#   hetero_fusion.infer — 推理 (inference)
+#   hetero_moe      — 主包 (v4.0/v6 baseline)
+#   hetero_moe.core — 融合核心 (fusion / router / quant / losses / parallel)
+#   hetero_moe.train — 训练器 (trainer)
+#   hetero_moe.infer — 推理 (inference)
 #   research.*         — 8 条研究线按域组织
 #   archive.*          — 负面发现 + 前基线
 [tool.setuptools.packages.find]
 where = ["."]
 include = [
-    "hetero_fusion*",
+    "hetero_moe*",
     "research*",
     "archive*",
 ]

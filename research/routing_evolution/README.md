@@ -2,7 +2,7 @@
 
 **研究问题**: 异构底座之间的路由机制如何演化?
 
-**父版本**: hetero_fusion v4.0/v6 baseline (矩形 P_m 投影)
+**父版本**: hetero_moe v4.0/v6 baseline (矩形 P_m 投影)
 **子版本**: 后续所有研究线的根
 
 ## 成员

@@ -10,10 +10,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 import torch.nn as nn
 
-from hetero_fusion.core.fusion import HeteroFusionLayer
-from hetero_fusion.train.trainer import HeteroTrainer
-from hetero_fusion.infer.inference import InferenceRunner
-from hetero_fusion.core.quant import quantization_error
+from hetero_moe.core.fusion import HeteroFusionLayer
+from hetero_moe.train.trainer import HeteroTrainer
+from hetero_moe.infer.inference import InferenceRunner
+from hetero_moe.core.quant import quantization_error
 
 
 def section(title):

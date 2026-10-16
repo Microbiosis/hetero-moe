@@ -20,8 +20,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from hetero_fusion.core.quant import FakeQuantSTE
-from hetero_fusion.core.router import SparseRouterSTE
+from hetero_moe.core.quant import FakeQuantSTE
+from hetero_moe.core.router import SparseRouterSTE
 
 from research._primitives.attention import AttnPool
 

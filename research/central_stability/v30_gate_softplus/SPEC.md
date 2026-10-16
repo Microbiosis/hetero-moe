@@ -382,8 +382,8 @@ class GateStyleCentral:
 ## 附录 B: 实验复现
 
 ```bash
-# 在 hetero_fusion 工作区中
-cd /workspace/hetero_fusion
+# 在 hetero_moe 工作区中
+cd /workspace/hetero-moe
 python3 examples/run_v9_gate_layer.py  # v9 gate 验证
 python3 examples/run_v22_theory_compare.py  # v22 四模式对比
 python3 examples/run_v29_large_corpus_v26.py  # v29 大语料验证

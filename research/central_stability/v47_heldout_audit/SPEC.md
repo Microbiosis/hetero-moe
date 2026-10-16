@@ -108,7 +108,7 @@ GitHub 那份）。
 「env 变量 → 本地候选 → 自动浅克隆」三级解析 `tabldm` 源码，拉不到就返回 None 而不是
 抛错。任何 clone 下本仓库的人都能直接跑 v35/v36/v37/v38/v39，不需要向任何人索取。
 
-克隆目标刻意放在**工作树之外**（`$XDG_CACHE_HOME/hetero_fusion/xiaomi-tabldm`）。
+克隆目标刻意放在**工作树之外**（`$XDG_CACHE_HOME/hetero_moe/xiaomi-tabldm`）。
 第一版放在仓库内的 `.cache/` 时踩了坑：嵌套 git 仓库被父仓库的 `.git` 吞掉，
 `git clone` 出来只剩一个空 `.git`，`git status` 直接落到父仓库上。第三方 git 仓库
 永远不要 clone 进另一个仓库里。

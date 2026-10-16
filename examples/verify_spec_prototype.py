@@ -4,7 +4,7 @@
 梯度流（Phase 1 / Phase 2、detach 截断、STE）在当前环境可复现。
 
 注意：本文件刻意不做任何"改进"，与规范文档 §7 代码块完全一致；任何工程增强
-应放在 hetero_fusion/ 包内，并以本文件的输出作为回归基线。
+应放在 hetero_moe/ 包内，并以本文件的输出作为回归基线。
 """
 import torch
 import torch.nn as nn

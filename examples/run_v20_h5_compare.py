@@ -84,7 +84,7 @@ class PositionLayer(nn.Module):
             # 这里简化: 把 c broadcast 到 [1, 1, D_shared] 加到 x
             x_signal = x_det + self.cb.c.unsqueeze(0).unsqueeze(0)  # [B, S, D]
             z_attn = F.linear(x_signal, self.W_router_attn)
-        from hetero_fusion.core.router import SparseRouterSTE
+        from hetero_moe.core.router import SparseRouterSTE
         alpha_attn = F.softmax(z_attn, dim=-1)
         ahat_attn = SparseRouterSTE.apply(alpha_attn, 1)
         # attn expert 池
@@ -100,7 +100,7 @@ class PositionLayer(nn.Module):
         alpha_ffn = F.softmax(z_ffn, dim=-1)
         ahat_ffn = SparseRouterSTE.apply(alpha_ffn, 1)
         ffn_sum = torch.zeros_like(x_shared)
-        from hetero_fusion.core.quant import FakeQuantSTE
+        from hetero_moe.core.quant import FakeQuantSTE
         for m in range(self.num_experts_ffn):
             h_a = x_det * self.gammas[m] + self.betas[m]
             f_m = F.linear(F.silu(F.linear(h_a, self.w_gates[m])) *

@@ -5,7 +5,7 @@
   "line": "central_stability",
   "metric": "fuse_mse",
   "direction": "lower_is_better",
-  "recorded_by": "examples/run_v47_central_heldout.py + examples/run_v47_scale_hetero_heldout.py",
+  "recorded_by": "examples/run_v47_scale_hetero_heldout.py (5 seeds × 3 口径)",
   "statistic": "配对逐种子中位数 + 逐种子胜出数 (不用均值 — v40 起的纪律)",
   "scopes": [
     "in_sample",
@@ -13,58 +13,12 @@
     "heldout_stimulus"
   ],
   "seeds": 5,
-  "scope_definitions": {
-    "in_sample": "与被审计 runner 同构 (v47 额外固定了 attn pool 与 numpy RNG 两个种子源)",
-    "heldout_noise": "seed+1000, 同刺激换噪声抽样",
-    "heldout_stimulus": "换文本/换代码的未见刺激"
-  },
   "audited": [
-    "v12",
-    "v19",
-    "v20",
-    "v30",
-    "v31",
     "v33",
     "v34",
-    "v35",
-    "v8"
+    "v35"
   ],
-  "claims": {
-    "v8": "C-1 中枢广播单独启用是否改善融合",
-    "v12": "v9 + v10 是否叠加增益",
-    "v19": "H3: 训练步数不足是否为根因",
-    "v20": "中枢 broadcast 的位置是否影响效果",
-    "v30": "softplus 能否修复梯度饱和",
-    "v31": "梯度重缩放能否修复饱和",
-    "v33": "v33 1大+N小 融合优于单一最大模型",
-    "v34": "DMN 联想层进一步降低融合损失",
-    "v35": "异质入口注入能否带来增益"
-  },
-  "operator_verdicts": {
-    "v8": {
-      "heldout_noise": "invalidated",
-      "heldout_stimulus": "invalidated"
-    },
-    "v12": {
-      "heldout_noise": "invalidated",
-      "heldout_stimulus": "invalidated"
-    },
-    "v19": {
-      "heldout_noise": "clean",
-      "heldout_stimulus": "clean"
-    },
-    "v20": {
-      "heldout_noise": "invalidated",
-      "heldout_stimulus": "invalidated"
-    },
-    "v30": {
-      "heldout_noise": "invalidated",
-      "heldout_stimulus": "invalidated"
-    },
-    "v31": {
-      "heldout_noise": "invalidated",
-      "heldout_stimulus": "invalidated"
-    },
+  "verdicts": {
     "v35": {
       "heldout_noise": "invalidated",
       "heldout_stimulus": "invalidated"
@@ -78,156 +32,52 @@
       "heldout_stimulus": "clean"
     }
   },
+  "blocked": {},
   "per_package": {
-    "v8": {
-      "in_sample_median_pct": -306.73,
-      "heldout_noise": {
-        "median_pct": -51.02,
-        "wins": "1/5",
-        "operator_verdict": "invalidated",
-        "retention": null
-      },
-      "heldout_stimulus": {
-        "median_pct": -50.6,
-        "wins": "1/5",
-        "operator_verdict": "invalidated",
-        "retention": null
-      },
-      "status": "clean"
-    },
-    "v12": {
-      "in_sample_median_pct": -43.04,
-      "heldout_noise": {
-        "median_pct": -41.38,
-        "wins": "2/5",
-        "operator_verdict": "invalidated",
-        "retention": null
-      },
-      "heldout_stimulus": {
-        "median_pct": -69.37,
-        "wins": "1/5",
-        "operator_verdict": "invalidated",
-        "retention": null
-      },
-      "status": "clean"
-    },
-    "v19": {
-      "in_sample_median_pct": 4.34,
-      "heldout_noise": {
-        "median_pct": 1.48,
-        "wins": "3/5",
-        "operator_verdict": "clean",
-        "retention": 0.341
-      },
-      "heldout_stimulus": {
-        "median_pct": 2.36,
-        "wins": "3/5",
-        "operator_verdict": "clean",
-        "retention": 0.544
-      },
-      "status": "clean"
-    },
-    "v20": {
-      "in_sample_median_pct": -117.56,
-      "heldout_noise": {
-        "median_pct": -137.38,
-        "wins": "2/5",
-        "operator_verdict": "invalidated",
-        "retention": null
-      },
-      "heldout_stimulus": {
-        "median_pct": -153.94,
-        "wins": "2/5",
-        "operator_verdict": "invalidated",
-        "retention": null
-      },
-      "status": "clean"
-    },
-    "v30": {
-      "in_sample_median_pct": -0.44,
-      "heldout_noise": {
-        "median_pct": -0.43,
-        "wins": "0/5",
-        "operator_verdict": "invalidated",
-        "retention": null
-      },
-      "heldout_stimulus": {
-        "median_pct": -0.42,
-        "wins": "0/5",
-        "operator_verdict": "invalidated",
-        "retention": null
-      },
-      "status": "clean"
-    },
-    "v31": {
-      "in_sample_median_pct": -0.11,
-      "heldout_noise": {
-        "median_pct": -0.1,
-        "wins": "0/5",
-        "operator_verdict": "invalidated",
-        "retention": null
-      },
-      "heldout_stimulus": {
-        "median_pct": -0.1,
-        "wins": "0/5",
-        "operator_verdict": "invalidated",
-        "retention": null
-      },
-      "status": "clean"
-    },
     "v35": {
-      "in_sample_median_pct": -11.1,
+      "in_sample_median_pct": -12.94,
       "heldout_noise": {
-        "median_pct": -11.1,
+        "median_pct": -12.94,
         "wins": "2/5",
-        "operator_verdict": "invalidated",
+        "verdict": "invalidated",
         "retention": null
       },
       "heldout_stimulus": {
-        "median_pct": -3.29,
+        "median_pct": -2.9,
         "wins": "2/5",
-        "operator_verdict": "invalidated",
+        "verdict": "invalidated",
         "retention": null
-      },
-      "status": "clean"
+      }
     },
     "v33": {
       "in_sample_median_pct": 26.71,
       "heldout_noise": {
         "median_pct": 26.69,
         "wins": "5/5",
-        "operator_verdict": "clean",
+        "verdict": "clean",
         "retention": 0.999
       },
       "heldout_stimulus": {
         "median_pct": 26.54,
         "wins": "5/5",
-        "operator_verdict": "clean",
+        "verdict": "clean",
         "retention": 0.994
-      },
-      "status": "clean"
+      }
     },
     "v34": {
       "in_sample_median_pct": 6.39,
       "heldout_noise": {
         "median_pct": 6.38,
         "wins": "5/5",
-        "operator_verdict": "clean",
-        "retention": 0.998
+        "verdict": "clean",
+        "retention": 0.999
       },
       "heldout_stimulus": {
         "median_pct": 6.55,
         "wins": "5/5",
-        "operator_verdict": "clean",
+        "verdict": "clean",
         "retention": 1.025
-      },
-      "status": "clean"
+      }
     }
-  },
-  "status_counts": {
-    "clean": 9,
-    "invalidated": 0,
-    "pending": 0
-  },
-  "caveat": "status 判的是『本包原结论在样本外是否仍成立』, 与算子的 operator_verdict (『treatment 的优势有没有活到样本外』) 是两个问题。负向结论 (C-1 有害 / 无叠加增益) 三个口径同为负, 记 clean。"
+  }
 }

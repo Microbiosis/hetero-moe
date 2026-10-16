@@ -140,7 +140,7 @@ class RealCorpusTheoryLayer(nn.Module):
         z_a = F.linear(x_det, self.W_router_attn)
         z_a = self.cb_attn.augment_router_logits(z_a)
         alpha_a = F.softmax(z_a, dim=-1)
-        from hetero_fusion.core.router import SparseRouterSTE
+        from hetero_moe.core.router import SparseRouterSTE
         ahat_a = SparseRouterSTE.apply(alpha_a, 1)
         attn_sum = torch.zeros_like(x_shared)
         attn_outs = []
@@ -156,7 +156,7 @@ class RealCorpusTheoryLayer(nn.Module):
         z_f = F.linear(x_det + coop_ctx, self.W_router_ffn)
         z_f = self.cb_ffn.augment_router_logits(z_f)
         alpha_f = F.softmax(z_f, dim=-1)
-        from hetero_fusion.core.router import SparseRouterSTE
+        from hetero_moe.core.router import SparseRouterSTE
         ahat_f = SparseRouterSTE.apply(alpha_f, 1)
         ffn_sum = torch.zeros_like(x_shared)
         ffn_outs = []
@@ -164,7 +164,7 @@ class RealCorpusTheoryLayer(nn.Module):
             h_a = x_det * self.gammas[m] + self.betas[m]
             f_m = F.linear(F.silu(F.linear(h_a, self.w_gates[m])) *
                            F.linear(h_a, self.w_ups[m]), self.w_downs[m])
-            from hetero_fusion.core.quant import FakeQuantSTE
+            from hetero_moe.core.quant import FakeQuantSTE
             f_q = FakeQuantSTE.apply(f_m, 4, 128)
             ffn_outs.append(f_q.detach())
             ffn_sum = ffn_sum + ahat_f[..., m:m+1] * self.alphas[m] * f_q

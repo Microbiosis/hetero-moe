@@ -20,13 +20,13 @@ from typing import Callable, Sequence
 
 __all__ = ["find_repo_root", "ensure_repo_on_path", "run_suite"]
 
-_MARKER_DIRNAME = "hetero_fusion"
+_MARKER_DIRNAME = "hetero_moe"
 
 
 def find_repo_root(start: Path | None = None) -> Path:
     """向上查找仓库根目录.
 
-    判定依据是根目录下存在 hetero_fusion/ 包 —— 比硬编码 "上溯 N 层" 稳健,
+    判定依据是根目录下存在 hetero_moe/ 包 —— 比硬编码 "上溯 N 层" 稳健,
     因为版本包的嵌套深度会随研究线组织方式变化.
     """
     cur = (start or Path(__file__).resolve()).resolve()

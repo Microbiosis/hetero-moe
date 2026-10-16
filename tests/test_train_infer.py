@@ -8,9 +8,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 import torch.nn as nn
-from hetero_fusion.core.fusion import HeteroFusionLayer
-from hetero_fusion.train.trainer import HeteroTrainer
-from hetero_fusion.infer.inference import InferenceRunner
+from hetero_moe.core.fusion import HeteroFusionLayer
+from hetero_moe.train.trainer import HeteroTrainer
+from hetero_moe.infer.inference import InferenceRunner
 
 
 def _build(D=32, D_FF=64, M=4, K=2, n_layers=2, V=100, seed=7):
@@ -96,7 +96,7 @@ def test_inference_benchmark_three_C():
 def test_renorm_avoids_magnitude_compression():
     """§8.3: 动态重归一化避免输出分布偏移 (幅值未被压缩)。
     对比: 启用重归一化 vs 禁用(直接截断不归一) 的输出范数。"""
-    from hetero_fusion.core.router import capacity_route
+    from hetero_moe.core.router import capacity_route
     torch.manual_seed(11)
     layer = HeteroFusionLayer(32, 64, 4, 2)
     x = torch.randn(2, 16, 32)
@@ -106,7 +106,7 @@ def test_renorm_avoids_magnitude_compression():
     alpha_t, _, _ = capacity_route(alpha, 2, 1.0)
     y_renorm, _, _ = layer(x, routed_weights=alpha_t)
     # 禁用 renorm: 直接用原始 sparse alpha (会压缩幅值)
-    from hetero_fusion.core.router import SparseRouterSTE
+    from hetero_moe.core.router import SparseRouterSTE
     alpha_sparse = SparseRouterSTE.apply(alpha, 2)
     y_norenorm, _, _ = layer(x, routed_weights=alpha_sparse)
     # 输出范数: renorm 应 >= norenorm (未被压缩)

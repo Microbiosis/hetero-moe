@@ -7,7 +7,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
-from hetero_fusion.core.router import SparseRouterSTE, capacity_route
+from hetero_moe.core.router import SparseRouterSTE, capacity_route
 
 
 def test_sparse_router_forward_mask():

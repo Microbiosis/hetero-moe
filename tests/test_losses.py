@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import math
 import torch
-from hetero_fusion.core.losses import lm_loss, balance_loss, z_loss, total_loss
+from hetero_moe.core.losses import lm_loss, balance_loss, z_loss, total_loss
 
 
 def test_lm_loss_correctness():
@@ -32,7 +32,7 @@ def test_balance_loss_balanced_lt_imbalanced():
     用 SparseRouterSTE 从 alpha 派生 alpha_hat, 保证二者 Top-K 选择一致,
     避免 torch.topk 在并列值上选末尾索引导致的错位。
     """
-    from hetero_fusion.core.router import SparseRouterSTE
+    from hetero_moe.core.router import SparseRouterSTE
     M, K = 4, 2
     B, S = 4, 8
 

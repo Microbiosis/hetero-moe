@@ -7,8 +7,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 import torch.nn.functional as F
-from hetero_fusion.core.fusion import swiglu_forward
-from hetero_fusion.core.quant import FakeQuantSTE
+from hetero_moe.core.fusion import swiglu_forward
+from hetero_moe.core.quant import FakeQuantSTE
 from archive.pre_baseline.v5_alpha.embedding_fusion import EmbeddingFusionLayer, realistic_ffn_init
 
 D, D_FF, M, K = 32, 64, 4, 1

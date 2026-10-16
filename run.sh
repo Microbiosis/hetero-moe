@@ -151,11 +151,11 @@ PYEOFCHK
         ;;
     smoke)
         # 最小冒烟: 验证包可全局 import + 依赖正常
-        python3 -c "import torch, numpy, hetero_fusion as hf; print('torch', torch.__version__, '| numpy', numpy.__version__, '| hetero_fusion', hf.__version__)"
+        python3 -c "import torch, numpy, hetero_moe as hf; print('torch', torch.__version__, '| numpy', numpy.__version__, '| hetero_moe', hf.__version__)"
         ;;
     importcheck)
         # 验证持久化: 从任意目录 import
-        cd /tmp && python3 -c "import hetero_fusion; print('全局 import OK from /tmp:', hetero_fusion.__version__)"
+        cd /tmp && python3 -c "import hetero_moe; print('全局 import OK from /tmp:', hetero_moe.__version__)"
         ;;
     generations)
         # L2 交付自包含: 每代自带 MANIFEST/SPEC/results/tests

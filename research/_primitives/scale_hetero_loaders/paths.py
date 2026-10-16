@@ -158,7 +158,7 @@ TABLDM_GIT = "https://github.com/xiaomi-research/xiaomi-tabldm"
 # `git status` 直接落到父仓库上。第三方 git 仓库永远不要 clone 进另一个仓库里。
 TABLDM_CACHE = os.path.join(
     os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"),
-    "hetero_fusion", "xiaomi-tabldm")
+    "hetero_moe", "xiaomi-tabldm")
 
 
 def _importable(name: str) -> bool:

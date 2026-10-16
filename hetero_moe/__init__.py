@@ -1,9 +1,9 @@
 """异构微观融合系统 (Heterogeneous Micro-Fusion) — v4.0 规范工程实现。
 
 包结构:
-    hetero_fusion.core   — 融合核心 (fusion/router/quant/losses/parallel)
-    hetero_fusion.train  — 训练器 (trainer)
-    hetero_fusion.infer  — 推理 (inference)
+    hetero_moe.core   — 融合核心 (fusion/router/quant/losses/parallel)
+    hetero_moe.train  — 训练器 (trainer)
+    hetero_moe.infer  — 推理 (inference)
 
 可追溯性矩阵（模块 → 规范条款）:
     core.fusion.HeteroFusionLayer    → §2.1-2.4 (分布对齐/截断/融合/残差)
