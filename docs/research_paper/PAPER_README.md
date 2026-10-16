@@ -153,7 +153,7 @@ bash run.sh v7a         # Cross-architecture
 bash run.sh v9_gate_layer  # Gate-style routing (C1)
 bash run.sh v33         # 4-mode alignment ladder (C2)
 bash run.sh v37         # Cross-sublayer routing (C4)
-bash run.sh test        # 273 unit and integration tests
+bash run.sh test        # 430 unit and integration tests
 ```
 
 Each `bash run.sh v{N}` command runs one v-experiment with 5 seeds.

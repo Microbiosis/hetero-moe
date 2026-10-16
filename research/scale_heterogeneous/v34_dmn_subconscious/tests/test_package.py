@@ -1,4 +1,4 @@
-"""V34.0 DMN 潜意识创造性联想层 — 单元测试 (10 项)。
+"""V34.0 DMN 潜意识创造性联想层 — 单元测试 (13 项)。
 
 不依赖 transformers: 用随机张量构造 DMNSubconscious + FusionLayer。
 每项独立 [PASS] / [FAIL] 标记, 与 v4/v5/v6/v7 测试风格一致。

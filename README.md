@@ -96,7 +96,7 @@ v21+BERT+ViT (多模态)   fuse 0.16   ← 当前最强多模态独立模型
 
 ```bash
 bash run.sh setup       # 一键重建 (幂等)
-bash run.sh test        # 全部 383 V&V 测试
+bash run.sh test        # 全部 430 V&V 测试
 bash run.sh v8          # v8.0 三中枢路线
 bash run.sh v33         # v33 规模异构
 bash run.sh v39         # v39 加性 vs 交互

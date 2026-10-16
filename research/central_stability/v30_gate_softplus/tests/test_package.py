@@ -1,4 +1,4 @@
-"""V30.0 — Softplus 门控中枢 单元测试 (8 项).
+"""V30.0 — Softplus 门控中枢 单元测试 (9 项).
 
 锁定本代的核心主张: **用 softplus 替代 tanh, 梯度链在饱和区不断**.
 同时把一个**已知的取舍**钉成事实: softplus(0)=ln2≠0, 故初始 temperature ≠ 1,

@@ -1,4 +1,4 @@
-"""V22.0 — CentralTheory (中枢理论分析) 单元测试 (12 项).
+"""V22.0 — CentralTheory (中枢理论分析) 单元测试 (14 项).
 
 v22.0 完整实现新增 4 项测试覆盖:
     9.  freeze_u 函数式 patch
