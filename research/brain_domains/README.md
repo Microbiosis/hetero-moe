@@ -10,7 +10,8 @@
 | 域条件 SSM 架构 | ✅ 已实现并通过验证 (`arch/domain_ssm.py`) |
 | 架构正确性验证 | ✅ 4 项全通过 (`arch/test_domain_ssm.py`) |
 | 域标签索引 | ✅ 已生成并入库 (`data/build_domain_index.py`) |
-| 基座接入 | ⬜ 未做 (待 GPU 环境就绪) |
+| 云端基准 (T4) | ✅ 通过 — 三轮实跑修复三个 bug (`arch/cloud_bench.py`, 2026-10-17) |
+| 基座接入 | ⬜ 未做 (GPU 环境已就绪, 待启动) |
 | 消融实验 | ⬜ 未做 |
 
 ## 设计要点
