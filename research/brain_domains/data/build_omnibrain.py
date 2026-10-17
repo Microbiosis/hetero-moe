@@ -163,7 +163,12 @@ def span_windows(n_bins: int, win: int = WIN_BINS, stride: int = STRIDE_BINS):
 
 
 def dominant_domain(z: np.ndarray, ch_dom_idx: np.ndarray, n_dom: int):
-    """窗内活动加权主导域。
+    """窗内活动加权主导域 —— **按域内通道数归一化**。
+
+    ⚠️ 必须归一化。早期版本直接对能量求和, 结果 EEG 视图 98.7% 的窗被标成
+    association —— 因为 frontal(15)+parietal(16)=31 个通道都归 association,
+    天然赢过只有 8 个通道的 occipital。求和衡量的是"这个域总共多活跃",
+    而归一化后衡量的是"这个域平均每通道多活跃", 后者才是域比较的公平口径。
 
     z: (n_ch, n_bins) 已 z-score
     ch_dom_idx: (n_ch,) 每通道的 L1 域索引
@@ -172,6 +177,8 @@ def dominant_domain(z: np.ndarray, ch_dom_idx: np.ndarray, n_dom: int):
     energy = np.abs(z).mean(axis=1)                    # (n_ch,) 每通道平均幅度
     score = np.zeros(n_dom, dtype=np.float64)
     np.add.at(score, ch_dom_idx, energy)
+    counts = np.bincount(ch_dom_idx, minlength=n_dom).astype(np.float64)
+    score = score / np.maximum(counts, 1.0)            # ← 关键: 按域内通道数归一
     tot = score.sum()
     if tot <= EPS:
         return int(np.argmax(score)), 0.0
