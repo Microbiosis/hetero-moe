@@ -45,6 +45,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint as cp
+from fast_scan import chunked_scan
 
 
 class StableDomainSSM(nn.Module):
@@ -96,25 +97,25 @@ class StableDomainSSM(nn.Module):
         phi = torch.exp(torch.tanh(offset) * self.C_BOUND)
         return a_shared.unsqueeze(0).unsqueeze(0) * phi
 
-    def forward(self, u, domain_id, block=64):
+    def forward(self, u, domain_id, block=16, scan="fast"):
+        """scan='fast': 块并行（log 域 cumsum, 默认）; scan='ref': 逐 token 参考。"""
         B, L, D = u.shape
         h_in = self.pre_norm(u) if self.pre_norm is not None else u
         delta = F.softplus(self.dt_proj(h_in)).clamp(self.dt_min, self.dt_max)
         Bm, Cm = self.B_proj(h_in), self.C_proj(h_in)
 
-        y = torch.empty(B, L, D, device=u.device, dtype=u.dtype)
-        h = torch.zeros(B, D, self.d_state, device=u.device, dtype=u.dtype)
+        A_eff = self.effective_A(domain_id)                    # (B,L,D,N) 全序列一次算
+        log_dA = delta.unsqueeze(-1) * A_eff                   # ≤ 0
+        dBu = delta.unsqueeze(-1) * Bm.unsqueeze(2) * h_in.unsqueeze(-1)
 
-        for s in range(0, L, block):
-            e = min(s + block, L)
-            A_blk = self.effective_A(domain_id[:, s:e])
-            dA_blk = torch.exp(delta[:, s:e].unsqueeze(-1) * A_blk)
-            dBu_blk = (delta[:, s:e].unsqueeze(-1)
-                       * Bm[:, s:e].unsqueeze(2)
-                       * h_in[:, s:e].unsqueeze(-1))
-            for t in range(e - s):
-                h = dA_blk[:, t] * h + dBu_blk[:, t]
-                y[:, s + t] = torch.einsum("bdn,bn->bd", h, Cm[:, s + t])
+        if scan == "fast":
+            y, _ = chunked_scan(log_dA, dBu, Cm, x0=None, block=block)
+        else:
+            y = torch.empty(B, L, D, device=u.device, dtype=u.dtype)
+            h = torch.zeros(B, D, self.d_state, device=u.device, dtype=u.dtype)
+            for t in range(L):
+                h = torch.exp(log_dA[:, t]) * h + dBu[:, t]
+                y[:, t] = torch.einsum("bdn,bn->bd", h, Cm[:, t])
 
         y_raw = y + self.D * h_in
         out = self.out_proj(y_raw) if self.use_out_proj else y_raw
