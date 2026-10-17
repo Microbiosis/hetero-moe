@@ -45,6 +45,16 @@ class OmniBrain:
         d = self.root / "eeg_view"
         return np.load(d / "windows.npz")["windows"], pd.read_parquet(d / "meta.parquet")
 
+    # -------- macaque（时序视图，域为片段级常量）
+    def load_macaque(self):
+        d = self.root / "spike_view_macaque"
+        if not (d / "meta.parquet").exists():
+            return None, None
+        return pd.read_parquet(d / "meta.parquet"), d
+
+    def load_macaque_file(self, fname, d):
+        return np.load(d / fname)["windows"]
+
     # -------- graph
     def load_graph(self):
         d = self.root / "graph_view"
@@ -93,18 +103,41 @@ def sanity(root) -> bool:
         print(f"      总窗口 {len(m):,}, 被试 {m['subject'].nunique()}, "
               f"置信度均值 {m['domain_conf'].mean():.3f}")
 
-    # ---- 3 graph
+    # ---- 3 macaque
+    mac_dir = ds.root / "spike_view_macaque"
+    if mac_dir.exists():
+        print("\n=== 3. spike_view_macaque ===")
+        m, d = ds.load_macaque()
+        if m is not None:
+            chk(len(m) > 0, f"meta {len(m):,} 行")
+            files = sorted(m["file"].unique())
+            bad = 0
+            for f in files[:6]:
+                w = np.load(d / f)["windows"]
+                sub = m[m["file"] == f]
+                if w.shape[0] != len(sub) or w.shape[1:] != (64, 8):
+                    bad += 1
+            chk(bad == 0, f"抽查 {min(6,len(files))} 个窗口文件形状一致")
+            w0 = np.load(d / files[0])["windows"]
+            chk(bool(np.isfinite(w0).all()), "数值有限")
+            areas = sorted(m["area"].unique().tolist())
+            chk(len(areas) >= 2, f"区域数 {len(areas)}: {areas}")
+            got = set(m["domain_l1"].unique())
+            chk(got <= set(L1), f"域集合 ⊆ L1 ({sorted(got)})")
+            print(f"      总窗口 {len(m):,}, 片段 {len(files)}")
+
+    # ---- 4 graph
     g_dir = ds.root / "graph_view"
     if g_dir.exists():
-        print("\n=== 3. graph_view ===")
+        print("\n=== 4. graph_view ===")
         e, m = ds.load_graph()
         chk(e.shape[0] == len(m), f"embeds {e.shape[0]} 行 == meta {len(m)} 行")
         chk(e.shape[1] == 64, f"维度 64 == {e.shape[1]}")
         chk(np.isfinite(e).all(), "嵌入数值有限")
 
-    # ---- 4 域词表
-    print("\n=== 4. L1 域词表 ===")
-    for name in ("spike_view", "eeg_view", "graph_view"):
+    # ---- 5 域词表
+    print("\n=== 5. L1 域词表 ===")
+    for name in ("spike_view", "spike_view_macaque", "eeg_view", "graph_view"):
         d = ds.root / name
         if not (d / "meta.parquet").exists():
             continue
@@ -114,14 +147,14 @@ def sanity(root) -> bool:
 
     # ---- 5 z-score 检查（spike 投影后各成分近似零均值）
     if sp_dir.exists():
-        print("\n=== 5. 归一化检查 ===")
+        print("\n=== 6. 归一化检查 ===")
         s = sess_list[0]
         w, _ = ds.load_spike_session(s)
         mu = w.astype(np.float32).mean(axis=(0, 2))
         chk(np.abs(mu).max() < 0.5, f"spike 各成分均值 |max|={np.abs(mu).max():.3f} < 0.5")
 
     # ---- 6 本体覆盖
-    print("\n=== 6. 本体覆盖 ===")
+    print("\n=== 7. 本体覆盖 ===")
     ont = ds.ontology
     for src_name, raw_col, meta_name in [
         ("steinmetz", "raw", None), ("things_eeg", "raw", None), ("flywire", "raw", None)]:

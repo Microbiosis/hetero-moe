@@ -34,11 +34,13 @@
 
 ```
 OmniBrain/
-├── eeg_view/       # 电极空间：人类 EEG
+├── eeg_view/            # 电极空间：人类 EEG
 │   └── windows (N, 64, 8)    # 64 通道 × 8 个 100ms bin
-├── spike_view/     # 神经元空间：小鼠 / 猕猴
+├── spike_view/          # 神经元空间：小鼠
 │   └── windows (N, 64, 8)    # 64 个 PCA 成分 × 8 bin
-└── graph_view/     # 图空间：果蝇连接组
+├── spike_view_macaque/  # 神经元空间：猕猴（2026-10-17 新增）
+│   └── windows (N, 64, 8)    # 同小鼠，但域是片段级
+└── graph_view/          # 图空间：果蝇连接组
     └── graphs (M, 64)        # 每神经元的图嵌入，无时间维
 ```
 
@@ -66,11 +68,23 @@ L2  anatomical   : 原始名称（VISp / ME / CA1 / frontal ...）
 |---|---|---|---|---|
 | Steinmetz | 50 ms | 2 bins 求和 | sum | ✅ |
 | THINGS-EEG | 4 ms | 25 samples 均值 | mean | ✅ |
-| NLB 猕猴 | 未标注 | — | — | ❌ 排除时序，仅作域分类 |
+| **NLB 猕猴** | **20 ms** | **5 bins 求和** | **sum** | ✅ **2026-10-17 纳入** |
 | FlyWire | 无时间 | — | — | ❌ 仅图视图 |
 
-**猕猴排除了时序接入**，因为它上游未标注 bin 宽（NLB 惯例 5 ms 但本仓库未核实）。
-宁可少一个数据集，不引入未验证的假设。
+**猕猴的 bin 宽已核实**：NLB 官方 README 明确 "spike counts in 20 ms time bins"。
+
+⚠️ **但域标签粒度不同，这是不可比的**：
+
+| | 小鼠 spike_view | 猕猴 spike_view_macaque |
+|---|---|---|
+| 域来源 | 逐 unit 的解剖区（CA1/VISp/…）| 整个片段一个区域（Area2/DMFC/M1_PMd）|
+| 域粒度 | **窗级**（随时变化）| **片段级常量**（整段不变）|
+| 域条件建模 | 有信息可学 | **必然无增量**（模型只需记住片段）|
+
+因此猕猴视图定位为**跨物种动力学对照**，不作域条件训练材料。
+
+**顺带更正**：`area2-bump` 此前被标注为 "S1_M1 混合" 是错的。
+NLB 官方文档明确它是 **Brodmann 区 2（躯体感觉皮层）**。
 
 ### 2.4 归一化分两级，都保留 A/B 开关
 

@@ -5,9 +5,10 @@ bin 宽（100 ms）与 L1 功能域本体，不假设 EEG 与 spike 同质。
 
 ## 视图
 
-eeg_view   THINGS-EEG (人类, 63 电极)  → (N, 64, 8) float16
-spike_view Steinmetz (小鼠, 变长单元)   → 逐 session (n_win, 64, 8) float16
-graph_view FlyWire (果蝇, 连接组)      → (M, 64) float32 邻接谱嵌入
+eeg_view          THINGS-EEG (人类, 63 电极)  → (N, 64, 8) float16
+spike_view        Steinmetz (小鼠, 变长单元)   → 逐 session (n_win, 64, 8)
+spike_view_macaque NLB (猕猴, 20ms bin)       → 逐片段 (n_win, 64, 8)  ← 2026-10-17 新增
+graph_view        FlyWire (果蝇, 连接组)      → (M, 64) 邻接谱嵌入
 
 ## 关键处理
 
@@ -583,7 +584,9 @@ def main():
     manifest["known_limitations"] = [
         "EEG 与 spike 分属不同视图，未假设二者同质；跨视图迁移是研究对象而非前提",
         "跨物种 L1 映射为人工标注，证据等级见 ontology.csv",
-        "NLB 猕猴数据集未纳入（上游 bin 宽未核实）",
+        ("猕猴时序视图 (spike_view_macaque) 已纳入: NLB 官方确认为 20ms bin, "
+         "但域标签是**片段级常量**(上游无逐单元标注), 与小鼠的窗级域不可比。"
+         "该视图定位为跨物种动力学对照, 不作域条件训练材料。"),
         "per-domain 去均值默认关闭；开启会削弱域可分性",
         f"窗长 {WIN_BINS} bins 是 EEG(10 bins) 与 spike(数百 bins) 的折中，非理想对齐",
     ]
