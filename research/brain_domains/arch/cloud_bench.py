@@ -89,9 +89,18 @@ class StableDomainSSM(nn.Module):
         else:
             self.register_parameter("gamma", None)
 
+    # A_shared 的模长钳制区间。见文件头「长训练 NaN」说明:
+    # A = -exp(A_log) 无下界 → 训练中 |A| 单调增长 → 块内 exp 下溢 → NaN。
+    # 这是 state-spaces/mamba#72 的已知问题 (官方 root cause 描述一致)。
+    A_MIN, A_MAX = 0.5, 16.0
+
     def effective_A(self, domain_id):
-        """(B, L) -> (B, L, D, N); A_eff < 0 恒成立。"""
-        a_shared = -torch.exp(self.A_log)
+        """(B, L) -> (B, L, D, N); A_eff < 0 恒成立, 且模长有界。
+
+        A_shared 钳制在 [A_MIN, A_MAX] 使 |A_eff| ≤ A_MAX·exp(C_BOUND),
+        与训练进程无关地恒定有界 —— block 内累积不会随训练漂移而溢出。
+        """
+        a_shared = -torch.exp(self.A_log).clamp(self.A_MIN, self.A_MAX)
         alpha = self.alpha[domain_id] * self.domain_gate
         offset = torch.einsum("blr,rdn->bldn", alpha, self.U)
         phi = torch.exp(torch.tanh(offset) * self.C_BOUND)
