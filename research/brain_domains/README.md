@@ -3,7 +3,7 @@
 > 2026-10-14 至 2026-10-18 · 42 个实验 · 17 份文档
 >
 > **一句话结论**：脑区/功能域标签在信息论意义上与活动信号**冗余**。
-> 但在这条探索路上，建立了**一个四维数据集、一套可信度量、20 条方法学教训**。
+> 但在这条探索路上，建立了**一个四维数据集、一套可信度量、23 条方法学教训**。
 
 ---
 
@@ -71,25 +71,37 @@
 
 ## 三、交付资产
 
-### 数据集：OmniBrain 4D
+### 数据：两份，命名不同，不要混
+
+**① `OmniBrain`（bucket 内，多视图）**
+
+名字是准确的：真的跨 4 个物种、3 类模态。
 
 ```
-hf://buckets/illusion-brain/brain-domains/omnibrain4d/eeg/
-├── sub-01.npz        eeg  (200, 80, 63, 250) float16  ≈445 MB
-├── sub-01_band.npz   band (200, 80, 63, 5)   float32
-├── ...               ×10 被试
-├── meta.parquet      160,000 行：subject, image_idx, rep, label, img, text
-└── axis_info.json    五轴定义 + 逐被试检验
+hf://buckets/illusion-brain/brain-domains/omnibrain/
+├── spike_view/          小鼠 Steinmetz        314,332 窗
+├── spike_view_macaque/  猕猴 NLB              187,067 窗
+├── spike_view_human/    人类侵入式            86,851 窗
+├── eeg_view/            人类头皮 EEG           32,000 窗
+└── graph_view/          果蝇 FlyWire          139,255 节点
 ```
 
-**四轴**：image(200) × repetition(80) × channel(63) × time(250 @ 250Hz)
-**派生**：frequency(5) — delta/theta/alpha/beta/gamma
+**② `things-eeg-4d`（Dataset 仓库，单一来源）**
 
-此外还有（较早构建）：
-- `spike_view/` 小鼠 Steinmetz — 314,332 窗
-- `spike_view_macaque/` 猕猴 NLB — 187,067 窗
-- `spike_view_human/` 人类侵入式 — 86,851 窗
-- `graph_view/` 果蝇 FlyWire — 139,255 节点
+**不是** OmniBrain——只含 THINGS-EEG（人类头皮 EEG，10 被试）。
+
+https://huggingface.co/datasets/illusion-brain/things-eeg-4d
+
+| split | 形状 | 试次 |
+|---|---|---:|
+| `test/` | (200, **80**, 63, 250) | 160,000 |
+| `train/` | (**16,540**, **4**, 63, 250) | 661,600 |
+
+四轴：image × repetition × channel × time（250 @ 250Hz）
+派生：frequency(5) — delta/theta/alpha/beta/gamma
+
+**命名说明**：早期版本曾叫 `omnibrain-4d`，属名不副实（只有单一数据源），
+已于 2026-10-18 重命名为 `things-eeg-4d`。旧 URL 会重定向。
 
 ### 训练空间
 
@@ -115,7 +127,7 @@ hf://buckets/illusion-brain/brain-domains/omnibrain4d/eeg/
 
 ---
 
-## 四、方法学教训（20 条）
+## 四、方法学教训（23 条）
 
 | # | 教训 | 症状 |
 |---|---|---|

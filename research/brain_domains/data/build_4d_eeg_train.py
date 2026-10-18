@@ -1,17 +1,22 @@
-"""构建 OmniBrain 4D 的 **train** 集（1654 图像 × 80 重复 × 10 被试）。
+"""构建 THINGS-EEG 4D 的 **train** 集（16540 图像 × 4 重复 × 10 被试）。
 
 ## 与 test 集的差别
 
-| | test（已做）| train（本脚本）|
+| | test | train（本脚本）|
 |---|---:|---:|
-| 图像 | 200 | **1654** |
-| 每被试试次 | 16,000 | 132,320 |
-| 每被试文件 | 445 MB | ~3.6 GB |
-| 10 被试总计 | 4.5 GB | **~37 GB** |
+| 图像 | 200 | **16,540** |
+| 重复 | 80 | **4** |
+| 每被试试次 | 16,000 | 66,160 |
+| 每被试文件 | 445 MB | ~1.94 GB |
+| 10 被试总计 | 4.5 GB | **20.2 GB** |
+| 试次间信度 | +0.072 | +0.005 |
+
+**注意**：train 是「图像多、重复少」，与 test 互补。这不是错误，
+是 THINGS-EEG 的原始设计。
 
 ## 输出布局
 
-    omnibrain4d/eeg_train/
+    数据集仓库 illusion-brain/things-eeg-4d 的 train/
     ├── README.md
     ├── axis_info.json
     ├── meta.parquet              (1,323,200 行)
@@ -60,7 +65,7 @@ BANDS = [(1, 4), (4, 8), (8, 13), (13, 30), (30, 45)]
 BAND_NAMES = ["delta", "theta", "alpha", "beta", "gamma"]
 
 SRC = Path("/training/eeg/things-eeg/Preprocessed_data_250Hz_whiten")
-OUT = Path("/domains/omnibrain4d/eeg_train")
+OUT = Path("/domains/omnibrain4d/eeg_train")   # bucket 内部路径不变
 SUBJECTS = list(range(1, 11))
 
 
@@ -90,7 +95,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
 
     print("=" * 84, flush=True)
-    print("构建 OmniBrain 4D train 集", flush=True)
+    print("构建 THINGS-EEG 4D train 集", flush=True)
     print("=" * 84, flush=True)
     print(f"  源 {SRC}", flush=True)
     print(f"  输出 {OUT}", flush=True)

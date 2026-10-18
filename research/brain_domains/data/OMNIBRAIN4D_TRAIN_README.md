@@ -1,4 +1,4 @@
-# OmniBrain 4D — THINGS-EEG 训练集
+# THINGS-EEG 4D — 按原始四轴组织的派生数据集（train split）
 
 EEG 数据的四轴完整保留版本：`image × repetition × channel × time`。
 
