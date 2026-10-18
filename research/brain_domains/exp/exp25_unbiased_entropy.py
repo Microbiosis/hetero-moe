@@ -120,7 +120,10 @@ def load_matched(root: Path, view: str, n_win=N_WIN):
     else:
         gcol = "session"
     out = []
-    for gval, _ in list(meta.groupby(gcol))[:N_PER_SPECIES]:
+    # 按分组大小降序取前 N 个（不是按文件名排序取前 N —— 那会系统性地
+    # 取到最小的分组，导致人类等数据源静默消失）
+    sizes = meta.groupby(gcol).size().sort_values(ascending=False)
+    for gval in list(sizes.index)[:N_PER_SPECIES]:
         if gcol == "session" and view == "spike_view":
             f = d / f"windows_sess{int(gval):03d}.npz"
         else:
