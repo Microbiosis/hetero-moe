@@ -12,8 +12,8 @@ size_categories:
 
 # Primate Spike 20 ms
 
-273,918 个神经活动时间窗，来自猕猴与人类皮层内记录，两种来源都在 20 ms 的
-放电计数栅格上，未做时间重采样。每个窗为 `(64, 40)` — 64 个主成分 × 40 个
+273,918 个神经活动时间窗，来自猕猴与人类皮层内记录。两个来源的上游 bin 宽
+都是 20 ms，未做时间重采样。每个窗为 `(64, 40)` — 64 个主成分 × 40 个
 20 ms bin，即 800 ms。
 
 ## 来源
@@ -106,10 +106,11 @@ W = np.load(hf_hub_download(REPO, "timeseries.npy", repo_type="dataset"),
 idx = pd.read_parquet(hf_hub_download(REPO, "index_timeseries.parquet",
                                       repo_type="dataset"))
 
-# 三物种以外的两物种：猕猴 vs 人类，同一区域
-m1 = idx.index[idx.shared_node == "M1"].to_numpy()
-x_mac = W[idx.index[(idx.shared_node == "M1") & (idx.source == "macaque_nlb")].to_numpy()]
-x_hum = W[idx.index[(idx.shared_node == "M1") & (idx.source == "human_intracortical")].to_numpy()]
+# 两个物种在同一区域上的窗口
+mac = idx.index[(idx.shared_node == "M1") & (idx.source == "macaque_nlb")].to_numpy()
+hum = idx.index[(idx.shared_node == "M1") & (idx.source == "human_intracortical")].to_numpy()
+x_mac = W[mac]          # (168048, 64, 40)
+x_hum = W[hum]          # ( 86851, 64, 40)
 ```
 
 ## 64 维不是共同坐标系
@@ -121,22 +122,22 @@ x_hum = W[idx.index[(idx.shared_node == "M1") & (idx.source == "human_intracorti
 
 跨源可比较的是无量纲量：自相关衰减、谱斜率、有效维度。
 
-## 与 100 ms 版本的关系
+## 未发布的 100 ms 版本
 
-同一批 175 个片段另有一份 100 ms 版本（`illusion-brain/omnibrain-multi` 中的
-`macaque_nlb` 与 `human_intracortical` 两部分，每窗 8 bin）。
+同一批 175 个片段也曾构建为 100 ms 版本（每窗 8 bin），与小鼠 50 ms、头皮 EEG 4 ms
+一起拼成过四源数据集。那份数据已下线，因为把 20 ms 与 4 ms 的数据压到 100 ms
+是对细粒度来源的不可逆降采样。
 
-两者不是同一数据的两种切片：
-
-| | 100 ms 版本 | 本数据集 |
+| | 100 ms 版本（已下线） | 本数据集 |
 |---|---|---|
 | bin 宽 | 100 ms | 20 ms |
 | 每窗 bin 数 | 8 | 40 |
 | PCA 输入 | 5 bin 求和后的 100 ms 序列 | 原生 20 ms 序列 |
 | 每窗时长 | 800 ms | 800 ms |
 
-时间跨度相同，但 PCA 的输入不同，因此两者的 64 维基不同，不能逐元素对照。
-本数据集保留了 5 倍的时序细节。
+时间跨度相同，PCA 输入不同，因此两者的 64 维基不同，不能逐元素对照。
+本数据集保留了 5 倍的时序细节。重建脚本在 `Microbiosis/hetero-moe` 的
+`research/brain_domains/data/` 下。
 
 ## 限制
 
