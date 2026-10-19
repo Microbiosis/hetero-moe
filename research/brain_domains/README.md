@@ -82,39 +82,25 @@ hf://buckets/illusion-brain/brain-domains/omnibrain/
 ├── spike_view/          小鼠 Steinmetz        314,332 窗
 ├── spike_view_macaque/  猕猴 NLB              187,067 窗
 ├── spike_view_human/    人类侵入式            86,851 窗
-├── eeg_view/            人类头皮 EEG           32,000 窗
+├── eeg_view/            人类头皮 EEG           32,000 窗（旧子集，供追溯）
 └── graph_view/          果蝇 FlyWire          139,255 节点
 ```
 
-**② `things-eeg-4d`（Dataset 仓库，单一来源）**
-
-**不是** OmniBrain——只含 THINGS-EEG（人类头皮 EEG，10 被试）。
-
-https://huggingface.co/datasets/illusion-brain/things-eeg-4d
-
-| split | 形状 | 试次 |
-|---|---|---:|
-| `test/` | (200, **80**, 63, 250) | 160,000 |
-| `train/` | (**16,540**, **4**, 63, 250) | 661,600 |
-
-四轴：image × repetition × channel × time（250 @ 250Hz）
-派生：frequency(5) — delta/theta/alpha/beta/gamma
-
-**命名说明**：早期版本曾叫 `omnibrain-4d`，属名不副实（只有单一数据源），
-已于 2026-10-18 重命名为 `things-eeg-4d`。旧 URL 会重定向。
-
-**③ `omnibrain-multi`（Dataset 仓库，多源融合）**
+**② `omnibrain-multi`（Dataset 仓库）**
 
 https://huggingface.co/datasets/illusion-brain/omnibrain-multi
 
-620,250 个时间窗，4 个来源、3 个物种、2 种模态，统一为 `(64, 8)`。
+1,409,850 个时间窗，4 个来源、3 个物种，统一为 `(64, 8)`。这是唯一的 Dataset 仓库。
+
+THINGS-EEG 的原生四轴数据（26.5 GB）不在仓库里，留在 bucket
+`illusion-brain/brain-domains/omnibrain4d/`（`eeg/` 4.85 GB test，`eeg_train/` 21.68 GB train）。
 
 | source | 物种 | 模态 | 窗口 |
 |---|---|---|---:|
 | `mouse_steinmetz` | Mus musculus | 胞外放电 | 314,332 |
 | `macaque_nlb` | Macaca mulatta | 胞外放电 | 187,067 |
 | `human_intracortical` | Homo sapiens | 皮层内 | 86,851 |
-| `human_eeg` | Homo sapiens | 头皮 EEG | 32,000 |
+| `human_eeg` | Homo sapiens | 头皮 EEG | 821,600 |
 | `flywire` | Drosophila | 连接组 | 139,255 节点 |
 
 **注意：标签不构成层级**（2026-10-18 集合论审计结论）：
@@ -122,13 +108,14 @@ https://huggingface.co/datasets/illusion-brain/omnibrain-multi
 - 最长细化链长度 0（`species` 与 `modality` 互不细化）
 - `domain` 与所有属性的投影算子都不可交换
 - 沿 `region ⊂ source ⊂ species` 的方差分解，各层合计只解释 **0.05%**
-- 91.4% 的标签组合为空（结构上不可能，非缺数据）
+  （在 588,250 个非 EEG 窗上算；EEG 无 region，不在这条链上）
+- 91.2% 的标签组合为空（结构上不可能，非缺数据）
 
 因此这份数据可用于分组统计与域适应实验，**不可声称是"分层数据集"**。
 
 ### 训练空间
 
-**`redmingwei/IllusionBrain`**（私有，zero-a10g，**192 核 / 96.9 GB**）
+**`redmingwei/IllusionBrain`**（私有，cpu-upgrade，**64 核 / 530 GB**）
 
 5 个标签页：
 1. 数据总览

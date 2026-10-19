@@ -9,7 +9,7 @@
 | mouse_steinmetz | `MOp`, `VISpm`, `ORB` … | Allen 小鼠 CCF 结构缩写 | 314,332 |
 | macaque_nlb | `M1_PMd`, `Area2`, `DMFC` | NLB 记录区代码，其中 `M1_PMd` 是复合 | 187,067 |
 | human_intracortical | `h1_intracortical`, `h2_intracortical` | **FALCON 任务编号**，不是解剖 | 86,851 |
-| human_eeg | 空 | 64 导头皮 EEG 无焦点位置 | 32,000 |
+| human_eeg | 空 | 63 导头皮 EEG 无焦点位置 | 821,600 |
 | flywire | `ME`, `Kenyon_Cell`, `CX` … | 神经毡名与细胞类型名混在一起 | 139,255 |
 
 `h1`/`h2` 是 FALCON 的两个任务（H1 七自由度抓取、H2 手写），两套 Utah array 都植入手部运动皮层，解剖上都是 M1。把它们当两个脑区用，等于把任务差异算成了区域差异。
@@ -32,7 +32,7 @@
 | `compound` | 168,048 | 上游标签跨两个结构，无法在行级拆分 |
 | `no_vertebrate_homolog` | 107,338 | 果蝇神经毡与细胞类型，无脊椎动物同源节点 |
 | `task_code_reinterpreted` | 86,851 | 原值是任务编号，已按解剖位置改判 |
-| `unassigned` | 63,852 | 无区域信息（头皮 EEG 32,000 + 果蝇未注释单元） |
+| `unassigned` | 853,452 | 无区域信息（头皮 EEG 821,600 + 果蝇未注释单元 31,852） |
 | `uberon_missing` | 23,823 | 在 Allen 表中有结构，但 UBERON bridge 未覆盖 |
 | `coarse` | 19,019 | 上游比节点更粗，只能归到上位 |
 | `rollup` | 16,520 | 上游比节点更细，向上归并 |
@@ -61,7 +61,7 @@
 | 前额叶 | `UBERON:0000451` | 16,520 | 13,292 | 0 | 29,812 | 2 |
 | 初级体感皮层 | `UBERON:0008933` | 6,901 | 5,727 | 0 | 12,628 | 2 |
 
-M1 占全部窗口的 42.6%，是唯一覆盖三个物种的节点。这不是构造时选出来的，是这五个来源本来的重叠处。
+M1 占全部窗口的 18.7%，是唯一覆盖三个物种的节点。这不是构造时选出来的，是这五个来源本来的重叠处。
 
 ## 5. 文件
 
@@ -70,7 +70,7 @@ M1 占全部窗口的 42.6%，是唯一覆盖三个物种的节点。这不是�
 | `region_map.csv` | 67 行，每个 `(source, region_raw)` 一行 |
 | `shared_nodes.csv` | 3 行，节点级计数 |
 | `region_groups.npz` | `M1`/`S1`/`PFC` 三个 int32 数组，值为 `index_timeseries` 的行号 |
-| `index_timeseries.parquet` | 620,250 行，16 列 |
+| `index_timeseries.parquet` | 1,409,850 行，19 列 |
 | `index_graph.parquet` | 139,255 行，16 列 |
 | `build_region_map.py` | 生成上述全部文件 |
 | `mba_struct.csv` / `mba2uberon.json` | 中间件，可重下 |

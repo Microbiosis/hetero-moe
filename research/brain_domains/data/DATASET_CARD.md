@@ -9,6 +9,12 @@ tags:
 size_categories:
   - 100K<n<1M
 ---
+> **状态**：这个 HF 仓库已删除。THINGS-EEG 的四轴原生数据并入
+> [`illusion-brain/omnibrain-multi`](https://huggingface.co/datasets/illusion-brain/omnibrain-multi)
+> 的窗口张量（每试次取 0–800 ms 的 8 个 100 ms bin，共 821,600 试次），
+> 完整 250 采样版本留在 bucket `illusion-brain/brain-domains/omnibrain4d/`。
+> 本文件保留为桶内数据的说明。
+
 
 # THINGS-EEG 4D
 
@@ -71,7 +77,7 @@ Hann 窗后取 rFFT，频带内取功率均值。绝对功率，未做 1/f 校�
 import numpy as np
 from huggingface_hub import hf_hub_download
 
-REPO = "illusion-brain/things-eeg-4d"
+REPO = "illusion-brain/brain-domains"  # bucket, 用 batch_bucket_files 取
 eeg = np.load(hf_hub_download(REPO, "test/sub-01.npz", repo_type="dataset"))["eeg"]
 ```
 

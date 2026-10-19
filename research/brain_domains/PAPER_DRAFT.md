@@ -39,8 +39,7 @@
 
 **附带交付**：
 
-- `things-eeg-4d`（24.7 GB）：10 被试，test 160,000 试次 / train 661,600 试次
-- `omnibrain-multi`（643 MB）：5 源融合，620,250 窗，带 5 个逐窗标签列
+- `omnibrain-multi`（1.49 GB）：4 源 1,409,850 窗，含 THINGS-EEG2 全部 821,600 试次
 - 一套 24 条方法学教训
 
 ---
@@ -464,13 +463,13 @@ Phase 0 实测 real 0.745 vs shuffle 0.317，说明 $H(d \mid x)$ **低但不为
 **24 条教训**可能是更持久的贡献——它们都是"看起来正确但实际错误"
 的具体实例，且每条都有可识别的症状。
 
-**三个数据集**：
+**一个数据集**：
 
 | 仓库 | 内容 | 规模 |
 |---|---|---:|
-| `things-eeg-4d` | THINGS-EEG 四轴，train/test | 24.7 GB |
-| `omnibrain-multi` | 5 源融合，620,250 窗 | 643 MB |
-| bucket 内 `omnibrain/` | 5 视图，4 物种 | 0.63 GB |
+| `omnibrain-multi` | 4 源融合，1,409,850 窗 | 1.49 GB |
+
+THINGS-EEG 的原生四轴数据（26.5 GB）留在 bucket `omnibrain4d/`，未发布为仓库。
 
 其中 `omnibrain-multi` 的标签结构在 exp47/48 后被证明**不构成层级**，
 数据集卡片已按实测结果改写。

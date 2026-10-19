@@ -8,13 +8,13 @@ tags:
   - multi-species
   - time-series
 size_categories:
-  - 100K<n<1M
+  - 1M<n<10M
 ---
 
 # OmniBrain-Multi
 
-620,250 个神经活动时间窗，来自 4 个来源、3 个物种，统一为 `(64, 8)` 张量，
-附 5 个逐窗标签列。
+1,409,850 个神经活动时间窗，来自 4 个来源、3 个物种，统一为 `(64, 8)` 张量，
+附逐窗标签列。
 
 另有 139,255 个果蝇连接组节点嵌入，单独存放。
 
@@ -27,7 +27,7 @@ size_categories:
 | `mouse_steinmetz` | *Mus musculus* | 胞外放电 | 314,332 | dandi:000017 |
 | `macaque_nlb` | *Macaca mulatta* | 胞外放电 | 187,067 | dandi:000127 / 000130 / 000070 |
 | `human_intracortical` | *Homo sapiens* | 皮层内记录 | 86,851 | FALCON H1/H2（dandi:000950 / 000954）|
-| `human_eeg` | *Homo sapiens* | 头皮 EEG | 32,000 | THINGS-EEG |
+| `human_eeg` | *Homo sapiens* | 头皮 EEG | 821,600 | THINGS-EEG2（OSF 3jk45）|
 | `flywire` | *Drosophila melanogaster* | 连接组 | 139,255 节点 | FlyWire |
 
 各来源的许可证不同，逐项见 [LICENSE.md](LICENSE.md)。
@@ -68,6 +68,9 @@ unit 数不足 64 时零填充到 64。各 session / 片段的投影矩阵互不
 `human_intracortical` 每个片段是一个 FALCON 记录块（H1 或 H2），
 投影在块内完成。
 
+头皮 EEG 的 z-score 在 (被试, split) 组内计算，覆盖该组全部试次
+（train 66,160 / test 16,000），不是在抽样子集上算的。
+
 ### 4. 切窗
 
 窗长 8 bin（0.8 s），步长 4 bin（50% 重叠）。末尾不足一窗的部分丢弃。
@@ -97,9 +100,9 @@ EEG 来自电极布置。
 
 | 文件 | 形状 | 内容 |
 |---|---|---|
-| `timeseries.npy` | (620250, 64, 8) float16 | 时间窗，0.59 GB |
+| `timeseries.npy` | (1409850, 64, 8) float16 | 时间窗，1.44 GB |
 | `graph.npy` | (139255, 64) float32 | 连接组节点嵌入，34 MB |
-| `index_timeseries.parquet` | 620,250 行 | 逐窗标签 |
+| `index_timeseries.parquet` | 1,409,850 行 | 逐窗标签 |
 | `index_graph.parquet` | 139,255 行 | 逐节点标签 |
 | `labels.json` | — | 各标签的取值与计数 |
 | `group_sizes.csv` | — | source × domain 样本数 |
@@ -168,9 +171,9 @@ EEG 来自电极布置。
 因此这些标签适合用于：分组统计、域适应实验的设计变量、数据溯源。
 不适合用于：作为模型的条件输入、当作数据的内在组织维度。
 
-### 笛卡儿积：91.4% 为空
+### 笛卡儿积：91.2% 为空
 
-理论组合 `4 × 2 × 35 × 6 = 1680`，实际存在 144 个。
+理论组合 `4 × 2 × 34 × 6 = 1632`，实际存在 143 个。
 
 空位来自结构约束，不是缺数据：`human_eeg` 无解剖区、`flywire` 无时间窗、
 小鼠数据无 `area` 列。
@@ -179,12 +182,12 @@ EEG 来自电极布置。
 
 `region_kind` 标明 `region` 属于哪类对象。
 
-`index_timeseries.parquet`（620,250 行）：
+`index_timeseries.parquet`（1,409,850 行）：
 
 | `region_kind` | 行数 | 内容 |
 |---|---:|---|
 | `anatomy` | 588,250 | 小鼠 Allen CCF 缩写、猕猴记录区、人 `M1` |
-| `none` | 32,000 | 头皮 EEG，无焦点位置 |
+| `none` | 821,600 | 头皮 EEG，无焦点位置 |
 
 `index_graph.parquet`（139,255 行）：`neuropil` 80,209、`cell_type` 27,089、`region` 105、`none` 31,852。
 
@@ -218,7 +221,7 @@ EEG 来自电极布置。
 | `species` | 学名 |
 | `modality` | 记录方式 |
 | `group_key` | 来源内的分组键（session / file / subject）|
-| `window_idx` | 组内窗口序号 |
+| `window_idx` | 来源内序号，从 0 连续到该来源行数减一 |
 | `domain_l1` | 6 类功能域之一 |
 | `region` | 区域标签：小鼠 Allen 缩写、猕猴记录区、人 `M1`；EEG 为空 |
 | `region_raw` | 上游原值，含 FALCON 任务编号 `h1_intracortical` / `h2_intracortical` |
@@ -230,6 +233,9 @@ EEG 来自电极布置。
 | `region_level` | region 的粒度来源 |
 | `area` | 上游原始区名（仅猕猴/人类）|
 | `n_units` | 记录单元数（仅猕猴/人类）|
+| `split` | `train` / `test`，仅头皮 EEG 有值 |
+| `image_idx` | 刺激图在 THINGS 中的序号，仅头皮 EEG 有值 |
+| `rep` | 该图的第几次重复，仅头皮 EEG 有值 |
 
 索引行与 `timeseries.npy` 第 0 维一一对应。
 
@@ -243,7 +249,7 @@ from huggingface_hub import hf_hub_download
 REPO = "illusion-brain/omnibrain-multi"
 
 W = np.load(hf_hub_download(REPO, "timeseries.npy", repo_type="dataset"),
-            mmap_mode="r")                          # (620250, 64, 8) float16
+            mmap_mode="r")                          # (1409850, 64, 8) float16
 idx = pd.read_parquet(hf_hub_download(REPO, "index_timeseries.parquet",
                                       repo_type="dataset"))
 
@@ -281,7 +287,7 @@ for dom, g in idx.groupby("domain_l1"):
 | `mouse_steinmetz` | +0.084 | 2.071 | 25.0 |
 | `macaque_nlb` | −0.001 | 0.895 | 8.2 |
 | `human_intracortical` | −0.006 | 1.253 | 8.4 |
-| `human_eeg` | +0.004 | 0.911 | 18.7 |
+| `human_eeg` | −0.000 | 0.991 | 59.7 |
 
 小鼠的方差最大，因为其 PCA 前 64 成分解释方差比例较低（0.24–0.43），
 残差更大。
@@ -305,9 +311,11 @@ for dom, g in idx.groupby("domain_l1"):
 - `macaque_nlb` 的 `M1_PMd` 跨 M1 与 PMd，无法在行级拆分
 - `SCig`、`APN` 两个小鼠区（23,823 行）缺 UBERON 映射
 - `human_eeg` 无解剖区
+- 头皮 EEG 由 250 Hz 降到 100 ms bin（bin 内 25 采样取均值），且只保留刺激后 0–800 ms
+- 方差分解的 0.05% 是在 588,250 个非 EEG 窗上算的：EEG 无 region，不在这条链上
 - 图视图无时间维，单独存为 `graph.npy`
 - 数据来自不同任务与实验室，未做行为对齐
-- 91.4% 的标签组合为空
+- 91.2% 的标签组合为空
 
 ## 构建
 

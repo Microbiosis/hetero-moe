@@ -9,7 +9,7 @@
 | `mouse_steinmetz` | 314,332 | CC BY 4.0 | [dandi:000017](https://dandiarchive.org/dandiset/000017) |
 | `macaque_nlb` | 187,067 | CC BY 4.0 | [dandi:000127](https://dandiarchive.org/dandiset/000127)、[000130](https://dandiarchive.org/dandiset/000130)、[000070](https://dandiarchive.org/dandiset/000070) |
 | `human_intracortical` | 86,851 | CC BY 4.0 | [dandi:000950](https://dandiarchive.org/dandiset/000950)、[000954](https://dandiarchive.org/dandiset/000954) |
-| `human_eeg` | 32,000 | CC BY 4.0 | [OSF 3jk45](https://osf.io/3jk45/) |
+| `human_eeg` | 821,600 | CC BY 4.0 | [OSF 3jk45](https://osf.io/3jk45/) |
 | `flywire` | 139,255 节点 | CC BY 4.0 | [FlyWire](https://flywire.ai/) |
 
 DANDI 的许可证字段于 2026-10-19 通过 `api.dandiarchive.org/api/dandisets/<id>/versions/draft/` 查询：
@@ -35,6 +35,9 @@ dandi:000954 → ['spdx:CC-BY-4.0']  FALCON Benchmark H1: Human 7DoF Reach and G
 
 四份时间序列数据转为 float16 后纵向拼接，`timeseries.npy` 第 0 维与
 `index_timeseries.parquet` 行序一一对应。图视图单独存为 `graph.npy`（float32）。
+
+`human_eeg` 覆盖 THINGS-EEG2 的全部 821,600 试次（10 被试 × 200 测试图 × 80 重复
++ 10 被试 × 16,540 训练图 × 4 重复），每试次取刺激后 0–800 ms 的 8 个 100 ms bin。
 
 两部分索引表另加了区域映射列（`region_raw`、`region_kind`、`structure_id`、
 `uberon_id`、`shared_node`、`mapping_status`）。映射依据为 Allen 小鼠 CCF
