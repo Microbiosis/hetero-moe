@@ -32,20 +32,20 @@
 **不做虚假的空间对齐**，而是提供三样东西：
 
     A. 统一张量        (N, 64, 8) —— 可直接送进任何序列模型训练
-    B. 分层索引        每个样本带 source → species → modality → region
+    B. 逐窗标签        每个样本带 source / species / modality / region / domain
     C. 可比统计指纹    每个 (source, region) 组一组无量纲统计量
                        （这些是真正可跨源比较的，因为它们不依赖坐标系）
 
-## 层级定义
+## 标签定义（非层级）
 
-    L0  样本          620,250 个时间窗 + 139,255 个图节点
-    L1  来源          mouse_steinmetz / macaque_nlb / human_intracortical /
+    样本          620,250 个时间窗 + 139,255 个图节点
+    来源          mouse_steinmetz / macaque_nlb / human_intracortical /
                       human_eeg / flywire
-    L2  物种          mus_musculus / macaca_mulatta / homo_sapiens /
+    物种          mus_musculus / macaca_mulatta / homo_sapiens /
                       drosophila_melanogaster
-    L3  模态          extracellular_spike / scalp_eeg / connectome
-    L4  解剖区        region（小鼠/猕猴可用，EEG 无）
-    L5  功能域        L1 domain（sensory/motor/memory/...）
+    模态          extracellular_spike / scalp_eeg / connectome
+    解剖区        region（小鼠/猕猴可用，EEG 无）
+    功能域        L1 domain（sensory/motor/memory/...）
 
 ## 输出
 
@@ -54,7 +54,7 @@
     ├── graph.npy                (N_g, 64)    float32   ≈36 MB
     ├── index_timeseries.parquet (N_t 行)
     ├── index_graph.parquet      (N_g 行)
-    ├── hierarchy.json           层级定义 + 各组样本数
+    ├── labels.json              标签取值与计数（非层级）
     ├── comparables.csv          跨源可比较统计量
     └── README.md
 """
@@ -166,13 +166,14 @@ def load_source(view: str, gcol):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     print("=" * 84, flush=True)
-    print("构建 OmniBrain-Multi：多源融合 + 分层索引", flush=True)
+    print("构建 OmniBrain-Multi：多源融合 + 逐窗标签", flush=True)
     print("=" * 84, flush=True)
 
     t0 = time.time()
     all_W = []
     all_M = []
-    hierarchy = {"schema_version": "1.0", "levels": {}, "sources": {}}
+    meta_out = {"schema_version": "1.1", "structure": "poset_not_chain",
+            "labels": {}, "sources": {}}
 
     for view, src, species, modality, gcol in SOURCES:
         print(f"\n[{src}] {view}", flush=True)
@@ -209,7 +210,7 @@ def main():
         print(f"  {n:,} 窗, {W.shape[1:]} {W.dtype} "
               f"({W.nbytes/1024**3:.2f} GB) [{time.time()-t1:.0f}s]", flush=True)
 
-        hierarchy["sources"][src] = {
+        meta_out["sources"][src] = {
             "view": view, "species": species, "modality": modality,
             "n_windows": int(n),
             "shape": list(W.shape),
@@ -260,7 +261,7 @@ def main():
                      "window_idx", "domain_l1", "region", "region_level",
                      "area", "n_units"]]
             gm.to_parquet(OUT / "index_graph.parquet", index=False)
-            hierarchy["sources"]["flywire"] = {
+            meta_out["sources"]["flywire"] = {
                 "view": "graph_view", "species": "drosophila_melanogaster",
                 "modality": "connectome",
                 "n_windows": int(len(G)), "shape": list(G.shape),
@@ -270,12 +271,12 @@ def main():
             print(f"  ✅ graph.npy {G.shape} ({G.nbytes/1024**3:.2f} GB)", flush=True)
 
     # ---------- 层级定义
-    hierarchy["levels"] = {
-        "L0_sample": {"count": int(len(M)), "desc": "一个 8-bin (800ms) 时间窗"},
-        "L1_source": {"values": sorted(M.source.unique().tolist())},
-        "L2_species": {"values": sorted(M.species.unique().tolist())},
-        "L3_modality": {"values": sorted(M.modality.unique().tolist())},
-        "L4_region": {
+    meta_out["labels"] = {
+        "sample": {"count": int(len(M)), "desc": "一个 8-bin (800ms) 时间窗"},
+        "source": {"values": sorted(M.source.unique().tolist())},
+        "species": {"values": sorted(M.species.unique().tolist())},
+        "modality": {"values": sorted(M.modality.unique().tolist())},
+        "region": {
             "n_unique": int(M.region.nunique()),
             "available_by_source": {
                 src: int(g["region"].notna().sum())
@@ -284,14 +285,14 @@ def main():
             "note": ("小鼠来自 steinmetz/units.parquet 的 session 主导区；"
                      "猕猴/人类来自上游 area 列；EEG 无解剖区"),
         },
-        "L5_domain": {"values": sorted(M.domain_l1.dropna().unique().tolist())},
+        "domain_l1": {"values": sorted(M.domain_l1.dropna().unique().tolist())},
     }
-    hierarchy["levels"]["L0_sample"]["count_by_source"] = (
+    meta_out["labels"]["sample"]["count_by_source"] = (
         M.source.value_counts().to_dict())
 
-    (OUT / "hierarchy.json").write_text(
-        json.dumps(hierarchy, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"  ✅ hierarchy.json", flush=True)
+    (OUT / "labels.json").write_text(
+        json.dumps(meta_out, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"  ✅ labels.json", flush=True)
 
     # ---------- 可比统计量
     print("\n计算跨源可比统计量…", flush=True)
@@ -307,85 +308,9 @@ def main():
         })
     pd.DataFrame(rows).to_csv(OUT / "group_sizes.csv", index=False)
 
-    # ---------- README
-    readme = f"""# OmniBrain-Multi
-
-{len(M):,} 个神经活动时间窗，来自 {len(hierarchy['sources'])} 个来源、
-{len(set(M.species))} 个物种、{len(set(M.modality))} 种记录方式。
-统一为 `(64, 8)` 张量，带五级分层索引。
-
-## 文件
-
-| 文件 | 内容 |
-|---|---|
-| `timeseries.npy` | (N, 64, 8) float16，时间窗 |
-| `graph.npy` | (M, 64) float32，连接组节点嵌入（无时间维）|
-| `index_timeseries.parquet` | N 行，逐窗分层标签 |
-| `index_graph.parquet` | M 行，逐节点标签 |
-| `hierarchy.json` | 层级定义与各组统计 |
-| `group_sizes.csv` | source × domain 的样本数 |
-
-## 来源
-
-| source | 物种 | 模态 | 窗口 | 采样 |
-|---|---|---:|---:|---|
-"""
-    for src, s in hierarchy["sources"].items():
-        readme += (f"| `{src}` | {s['species']} | {s['modality']} | "
-                   f"{s['n_windows']:,} | {'—' if 'graph' in s.get('view','') else '100 ms'} |\n")
-
-    readme += f"""
-## 分层
-
-```
-L0  样本          {len(M):,} 个时间窗
-L1  来源          {len(hierarchy['sources'])} 个
-L2  物种          {', '.join(sorted(set(M.species)))}
-L3  模态          {', '.join(sorted(set(M.modality)))}
-L4  解剖区        {int(M.region.nunique())} 个（仅小鼠/猕猴）
-L5  功能域        {', '.join(sorted(M.domain_l1.dropna().unique()))}
-```
-
-## 重要限制
-
-**64 维不是共同坐标系。** 每个来源各自做主成分分析，小鼠的第 3 成分
-与人类的第 3 成分不对应同一生物实体。
-
-因此：
-
-- ✅ 可以把全部样本送进同一个模型训练（张量形状一致）
-- ✅ 可以用 `source` 做分层分析、域适应、多任务
-- ❌ 不能声称「同一 64 维空间中的向量」
-- ❌ 不能直接比较不同来源的第 k 个成分
-
-跨源可比较的量是**无量纲统计量**（自相关衰减、谱斜率、有效维度），
-不是原始通道值。
-
-## 加载
-
-```python
-import numpy as np, pandas as pd
-
-W = np.load("timeseries.npy", mmap_mode="r")      # (N, 64, 8) float16
-idx = pd.read_parquet("index_timeseries.parquet")
-
-# 取某个来源
-sub = idx[idx.source == "mouse_steinmetz"]
-x = W[sub.index.to_numpy()]                        # (n, 64, 8)
-```
-
-## 构建
-
-```bash
-python research/brain_domains/data/build_multi.py
-```
-"""
-    (OUT / "README.md").write_text(readme, encoding="utf-8")
-    print(f"  ✅ README.md", flush=True)
-
     print("\n" + "=" * 84, flush=True)
     print("完成", flush=True)
-    for src, s in hierarchy["sources"].items():
+    for src, s in meta_out["sources"].items():
         print(f"  {src:<24} {s['n_windows']:>8,} 窗  {s['shape']}", flush=True)
     tot = sum(f.stat().st_size for f in OUT.glob("*") if f.is_file()) / 1024**3
     print(f"  输出合计 {tot:.2f} GB | 耗时 {time.time()-t0:.0f}s", flush=True)

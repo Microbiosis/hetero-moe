@@ -14,9 +14,11 @@ size_categories:
 # OmniBrain-Multi
 
 620,250 个神经活动时间窗，来自 4 个来源、3 个物种、2 种记录方式，
-统一为 `(64, 8)` 张量，带五级分层索引。
+统一为 `(64, 8)` 张量，附 5 个逐窗标签列。
 
 另有 139,255 个果蝇连接组节点嵌入，单独存放。
+
+这些标签**不构成层级结构**。详见下文「标签的实测性质」。
 
 ## 来源
 
@@ -36,24 +38,81 @@ size_categories:
 |---|---|---|
 | `timeseries.npy` | (620250, 64, 8) float16 | 时间窗，0.59 GB |
 | `graph.npy` | (139255, 64) float32 | 连接组节点嵌入，34 MB |
-| `index_timeseries.parquet` | 620,250 行 | 逐窗分层标签 |
+| `index_timeseries.parquet` | 620,250 行 | 逐窗标签 |
 | `index_graph.parquet` | 139,255 行 | 逐节点标签 |
-| `hierarchy.json` | — | 层级定义与各组统计 |
+| `labels.json` | — | 各标签的取值与计数 |
 | `group_sizes.csv` | — | source × domain 样本数 |
 
-## 分层
+## 标签的实测性质
+
+5 个标签列的实际结构**不是层级**。审计方法与结果如下。
+
+### 结构：偏序集，不是链
+
+对每对标签检验细化关系（α 的每个等价类是否完整落在 β 的某个类内）：
 
 ```
-L0  样本      620,250 个时间窗（每窗 8 个 100ms bin）
-L1  来源      4 个 + 1 个图源
-L2  物种      Mus musculus / Macaca mulatta / Homo sapiens
-              （+ Drosophila 仅图视图）
-L3  模态      extracellular_spike / scalp_eeg / connectome
-L4  解剖区    34 个（小鼠 314,332 + 猕猴 187,067 + 人类侵入式 86,851）
-L5  功能域    sensory / motor / memory / association / subcortical / other
+        modality      species
+             \        /
+              source
+                 |
+               region
+
+        domain_l1  ← 与所有属性交叉
 ```
 
-### L4 的来源不同
+覆盖关系只有三条：`region < source < modality`、`region < source < species`。
+
+`species` 与 `modality` **互不细化**——人类同时有头皮 EEG 与皮层内记录，
+所以二者不能串联成链。最长链长度为 0（按细→粗排序的严格定义）。
+
+### 投影算子：domain 与所有属性都不可交换
+
+若两个划分嵌套，其投影算子应满足 Πa Πb = Πb Πa。实测最大偏差：
+
+| 属性对 | max\|diff\| | |
+|---|---:|---|
+| source × species | 0.00e+00 | 可交换 |
+| source × modality | 0.00e+00 | 可交换 |
+| source × region | 0.00e+00 | 可交换 |
+| species × region | 0.00e+00 | 可交换 |
+| modality × region | 0.00e+00 | 可交换 |
+| source × domain | 3.07e-02 | 不可交换 |
+| species × modality | 4.11e-02 | 不可交换 |
+| species × domain | 3.40e-02 | 不可交换 |
+| modality × domain | 1.33e-02 | 不可交换 |
+| region × domain | 4.26e-02 | 不可交换 |
+
+`domain` 与全部属性都不可交换，与整个偏序集正交。
+
+### 方差分解：语义标签合计解释 0.05%
+
+沿唯一成立的链 `region ⊂ source ⊂ species`，在 120,000 个采样窗上做
+精确正交分解：
+
+| 层 | 方差占比 |
+|---|---:|
+| `Π_region` | 0.03% |
+| `Π_source − Π_region` | 0.02% |
+| `Π_species − Π_source` | 0.00% |
+| **`I − Π_species`（残差）** | **100.0%** |
+
+合计 1.0005（float32 累积误差）。
+
+**所有语义标签加起来只解释 0.05% 的方差。**
+
+因此这些标签适合用于：分组统计、域适应实验的设计变量、数据溯源。
+不适合用于：构建"层次结构"、作为模型的条件输入、声称任何标签是
+数据的内在组织维度。
+
+### 笛卡儿积：91.4% 为空
+
+理论组合 `4 × 2 × 35 × 6 = 1680`，实际存在 144 个。
+
+空位来自结构约束，不是缺数据：`human_eeg` 无解剖区、`flywire` 无时间窗、
+小鼠数据无 `area` 列。
+
+### region 的来源不同
 
 | source | region 来源 | 粒度 |
 |---|---|---|
@@ -113,9 +172,10 @@ for dom, g in idx.groupby("domain_l1"):
 因此：
 
 - 可以把全部样本送进同一模型训练（形状一致）
-- 可以用 `source` 做分层分析、域适应、多任务学习
+- 可以用 `source` 做分组统计、域适应、多任务学习
 - 不能声称这是"同一空间中的向量"
 - 不能直接比较不同来源的第 k 个成分
+- 不能把 `source` / `species` / `region` 当作数据的内在层次
 
 跨源真正可比较的是无量纲统计量（自相关衰减、谱斜率、有效维度），
 不是原始通道值。
@@ -138,6 +198,7 @@ for dom, g in idx.groupby("domain_l1"):
 
 | 结论 | 数值 | 状态 |
 |---|---|---|
+| **语义标签合计解释的方差** | **0.05%**（残差 100.0%）| 否定"分层" |
 | 功能域标签与活动信号冗余 | 域 vs 随机 −0.04% | 否定 |
 | 跨物种无守恒的动力学常数 | 峰度为 PCA 伪影 | 否定 |
 | 超额曲线的深度依赖形状跨物种一致 | r = 0.75–0.99（6/8 配置）| 部分成立 |
@@ -146,11 +207,13 @@ for dom, g in idx.groupby("domain_l1"):
 ## 限制
 
 - 各来源的 64 维成分语义不同，不构成共同坐标系
+- 标签不构成层级，且只解释 0.05% 的方差
 - 采样率与空间规模差异大（小鼠 205–1240 units，人类 63 电极）
 - 小鼠的 region 是 session 级，不是逐窗标注
 - `human_eeg` 无解剖区
 - 图视图无时间维，单独存为 `graph.npy`
 - 数据来自不同任务与实验室，未做行为对齐
+- 91.4% 的标签组合为空
 
 ## 构建
 
