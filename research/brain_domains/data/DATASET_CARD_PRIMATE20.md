@@ -16,14 +16,32 @@ size_categories:
 
 | 文件 | 形状 | 内容 |
 |---|---|---|
-| `counts.npy` | (5483479, 192) uint8 | 原始放电计数，1.05 GB |
-| `counts_index.parquet` | 175 行 | 每个片段的边界、单元数、区域 |
+| `counts_ragged.npy` | (998102320,) uint8 | 原始放电计数，首尾相接，998 MB |
+| `counts_index.parquet` | 175 行 | 每个成员的元素偏移、形状、bin 宽、区域 |
+| `layout.json` | — | 集合结构说明 |
+| `READER.md` | — | 读取方式与不能做的事 |
 | `timeseries.npy` | (273918, 64, 40) float16 | 派生窗口，1.40 GB |
 | `index_timeseries.parquet` | 273,918 行 | 派生窗口的标签 |
 
-`counts.npy` 是未压缩的原始计数：没有 PCA、没有切窗、没有重叠。
-片段在行方向首尾相接，边界由 `counts_index.parquet` 的 `bin_start`/`bin_end` 给出。
-超出 `n_units` 的列恒为 0。
+**这是索引族，不是矩阵。**
+
+```
+D = ⊔_{i=1..175} X_i,     X_i ∈ R^{n_bins_i × n_units_i}
+```
+
+每个 `X_i` 有自己的形状（6 种不同宽度，40–192 个单元）。
+不存在跨片段的共同单元维度：`X_1` 的第 7 列与 `X_2` 的第 7 列是两个不同神经元。
+
+把每个片段补零到 192 列是最初的做法，会制造一个不存在的共同维度，
+并浪费 5.2% 的空间。现在按原生长度存。
+
+读取：
+
+```python
+r = idx.iloc[0]
+x = C[r.offset : r.offset + r.n_elements].reshape(int(r.n_bins_20ms),
+                                                  int(r.n_units))
+```
 
 `timeseries.npy` 是从它派生的一个视图（逐片段 PCA 到 64 维、800 ms 窗、50% 重叠），
 方便直接训练。**建议优先用 `counts.npy`**：窗长、步长、PCA 秩都变成参数，
@@ -67,10 +85,13 @@ size_categories:
 | `modality` | 均为 `extracellular_spike` |
 | `group_key` | 记录 session 标识 |
 | `file` | 上游文件名 |
-| `bin_start` | 该片段在 `counts.npy` 中的起始行 |
-| `bin_end` | 结束行（不含） |
-| `n_bins_20ms` | 该片段总 bin 数 |
-| `n_units` | 有效单元数（其余列为补零） |
+| `offset` | 该成员在 `counts_ragged.npy` 中的起始元素位置 |
+| `n_elements` | 该成员的元素数 = `n_bins_20ms × n_units` |
+| `bin_start` | 在旧的补齐布局中的起始行（仅为兼容保留）|
+| `bin_end` | 同上，结束行 |
+| `n_bins_20ms` | 该成员总 bin 数 |
+| `n_units` | 该成员的单元数 |
+| `bin_ms` | 该成员的时间分辨率（全部为 20.0）|
 | `region_raw` | 上游记录区代码 |
 | `region` | 统一后的区名 |
 | `region_kind` | 均为 `anatomy` |
@@ -109,13 +130,14 @@ from huggingface_hub import hf_hub_download
 
 REPO = "illusion-brain/primate-spike-20ms"
 
-C = np.load(hf_hub_download(REPO, "counts.npy", repo_type="dataset"),
-            mmap_mode="r")                       # (5483479, 192) uint8
+C = np.load(hf_hub_download(REPO, "counts_ragged.npy", repo_type="dataset"),
+            mmap_mode="r")                       # (998102320,) uint8
 ci = pd.read_parquet(hf_hub_download(REPO, "counts_index.parquet",
                                      repo_type="dataset"))
 
 seg = ci[ci.segment_idx == 0].iloc[0]
-x = C[seg.bin_start:seg.bin_end, :seg.n_units]   # (n_bins, n_units)
+x = C[seg.offset:seg.offset + seg.n_elements].reshape(
+        int(seg.n_bins_20ms), int(seg.n_units))  # (3425, 49)
 
 # 同一片段在窗口版中的行号
 idx = pd.read_parquet(hf_hub_download(REPO, "index_timeseries.parquet",
@@ -196,6 +218,36 @@ w = idx[idx.segment_idx == 0]
 SNR 低于 3，中位数仅 0.1。该子集在 20 ms 上测不到群体结构。
 全部 103 个人类片段中 30 个因此被排除，猕猴 72 个全部保留。
 
+## 一个外部检验：小鼠 50 ms 上也有同一个尺度
+
+本数据集只有两个成员。第三个成员（小鼠 Steinmetz，39 个 session，
+205–1240 units）不在仓库里，但用同一套流程在**它自己的 50 ms 栅格**上算过：
+
+| | bin 宽 | τ | 平台 c | shared_frac | 单元数 | 放电率 |
+|---|---:|---:|---:|---:|---:|---:|
+| 小鼠 | **50 ms** | **497 ms** | 0.11 | 0.85 | 595 | 4.9 Hz |
+| 猕猴 | 20 ms | 446 ms | 0.19 | 0.98 | 192 | 22.8 Hz |
+| 人类 | 20 ms | 183 ms | 0.037 | 0.43 | 181 | 10.4 Hz |
+
+小鼠与猕猴的放电率差 4.6 倍、bin 宽差 2.5 倍，τ 却落在同一个范围（450–500 ms）。
+人类是离群者，比两者都快 2.5–2.7 倍。
+
+这说明 **450–500 ms 这个尺度不是 bin 宽的产物**，也不是某一种记录技术特有的。
+人类那 183 ms 因此更值得追问——但它仍然与记录技术（Utah array vs Neuropixels）
+完全混淆。
+
+形状上并不统一：对同一批曲线做三模型 AIC 比较，
+
+| | 平台模型 | 幂律 | 拉伸指数 |
+|---|---:|---:|---:|
+| 小鼠 | 19 | **13** | 4 |
+| 猕猴 + 人类 | 46 | 0 | 0 |
+
+小鼠有 13/36 的 session 更适合幂律。所以「快速衰减 + 平台」不是普适形状，
+τ 只是这条曲线上的一个特征点。跨物种比较 τ 时，必须先确认形状同类。
+
+小鼠的原始文件是 float32，但取值全部是 1/8 的整数倍（27–29 个不同值），
+即存储时做过一次除以 8 的缩放。乘回 8 得到整数计数，无损。
 ## 可跨片段比较的量
 
 每个片段有自己的 PCA 基，片段之间没有对应关系。因此逐成分统计
@@ -245,7 +297,8 @@ cross-ACF 更进一步，去掉了单单元的不应期。
 - 任务不同：猕猴为中心外伸手与计时，人类为抓取与手写
 - 逐片段 z-score 假设一个片段是一个平稳态；伸手任务有基线/准备/运动/奖励多个阶段
 - 人类片段中位 2 min，猕猴中位 16 min，可估计的时间尺度上限不同
-- 计数已二值化到 uint8，但全库最大值为 20，无截断
+- 计数已存为 uint8，全库最大值为 20，无截断
+- 175 个成员的宽度有 6 种（40 / 49 / 54 / 65 / 176 / 192），不能当作同一矩阵
 
 ## 引用
 
