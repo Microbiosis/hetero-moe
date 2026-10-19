@@ -51,7 +51,7 @@
 
 ## 4. 并起来之后
 
-33 个原始标签 → 25 个 UBERON 节点（小鼠 29 个缩写里 `ORB`/`ORBm` 同为 `UBERON:0004167`，`LS`/`LSr` 同为 `UBERON:0002667`；`SCig`、`APN` 无 bridge）。
+65 个原始标签 → 27 个 UBERON 标识（小鼠 29 个缩写里 `ORB`/`ORBm` 同为 `UBERON:0004167`，`LS`/`LSr` 同为 `UBERON:0002667`；`SCig`、`APN` 无 bridge，故小鼠贡献 25 个；猕猴的 `PMd` 与 `PFC` 再加 2 个）。
 
 跨物种共享的只有三个：
 

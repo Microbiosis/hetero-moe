@@ -13,24 +13,85 @@ size_categories:
 
 # OmniBrain-Multi
 
-620,250 个神经活动时间窗，来自 4 个来源、3 个物种、2 种记录方式，
-统一为 `(64, 8)` 张量，附 5 个逐窗标签列。
+620,250 个神经活动时间窗，来自 4 个来源、3 个物种，统一为 `(64, 8)` 张量，
+附 5 个逐窗标签列。
 
 另有 139,255 个果蝇连接组节点嵌入，单独存放。
 
-这些标签**不构成层级结构**。详见下文「标签的实测性质」。
+这些标签**不构成层级结构**。实测见下文「标签的实测性质」。
 
 ## 来源
 
 | source | 物种 | 模态 | 窗口数 | 原始数据 |
 |---|---|---:|---:|---|
-| `mouse_steinmetz` | *Mus musculus* | 胞外放电 | 314,332 | dandi:000070 |
+| `mouse_steinmetz` | *Mus musculus* | 胞外放电 | 314,332 | dandi:000017 |
 | `macaque_nlb` | *Macaca mulatta* | 胞外放电 | 187,067 | dandi:000127 / 000130 / 000070 |
 | `human_intracortical` | *Homo sapiens* | 皮层内记录 | 86,851 | FALCON H1/H2（dandi:000950 / 000954）|
 | `human_eeg` | *Homo sapiens* | 头皮 EEG | 32,000 | THINGS-EEG |
 | `flywire` | *Drosophila melanogaster* | 连接组 | 139,255 节点 | FlyWire |
 
 各来源的许可证不同，逐项见 [LICENSE.md](LICENSE.md)。
+
+## 处理
+
+四份时间序列数据走同一套流程；果蝇不同。
+
+### 1. 时间重采样到 100 ms
+
+| 来源 | 上游 bin | 操作 |
+|---|---|---|
+| `mouse_steinmetz` | 50 ms | 相邻 2 bin 求和 |
+| `macaque_nlb` | 20 ms | 相邻 5 bin 求和 |
+| `human_intracortical` | 20 ms | 相邻 5 bin 求和 |
+| `human_eeg` | 4 ms（250 Hz） | 25 个采样取均值 |
+
+放电计数可加，故求和；电位不可加，故取均值。
+
+### 2. 归一化
+
+逐 unit（或逐电极）沿时间轴 z-score，`μ` 与 `σ` 由该 unit 全部时间点算出。
+EEG 按电极在 trial × 时间上合并计算。
+
+### 3. 投影到 64 维
+
+| 来源 | 方法 | 可逆 |
+|---|---|---|
+| `mouse_steinmetz` | 逐 session PCA（对 z-score 后的 unit×bin 矩阵做 SVD），取前 64 个时间主成分 | 否 |
+| `macaque_nlb` | 逐记录片段 PCA，同上 | 否 |
+| `human_intracortical` | 逐记录片段 PCA，同上 | 否 |
+| `human_eeg` | 63 电极补一个零通道 | 是（去掉末通道） |
+| `flywire` | 对称归一化邻接矩阵上做图信号传播，α=0.85，迭代 8 次，64 个随机初始信号 | 否 |
+
+unit 数不足 64 时零填充到 64。各 session / 片段的投影矩阵互不相同，
+因此第 k 个成分在不同来源之间没有对应关系。
+
+`human_intracortical` 每个片段是一个 FALCON 记录块（H1 或 H2），
+投影在块内完成。
+
+### 4. 切窗
+
+窗长 8 bin（0.8 s），步长 4 bin（50% 重叠）。末尾不足一窗的部分丢弃。
+
+### 5. 存储
+
+窗口转为 float16，按来源顺序纵向拼接。索引表行序与 `timeseries.npy`
+第 0 维一致。图视图单独存为 `graph.npy`（float32）。
+
+### 6. 标签生成
+
+`domain_l1` 由窗内活动算出，不是上游标注：对窗内每个通道取 `|z|` 的均值，
+按预定义的通道 → 功能域映射累加，除以该域的通道数，取最大者为该窗的域。
+
+小鼠的通道 → 域映射来自 Allen CCF 区名前缀；猕猴与人类侵入式来自记录区；
+EEG 来自电极布置。
+
+`region` 与 `region_raw`：小鼠取 session 内 unit 数最多的区（session 级），
+猕猴与人类取上游 `area` 列（窗级）。
+
+### 7. 不可还原
+
+经 PCA 与时间聚合后，窗口无法反推回原始放电序列或电压。
+`human_eeg` 的补零通道可直接去掉；其余来源的投影不可逆。
 
 ## 文件
 
@@ -105,8 +166,7 @@ size_categories:
 **所有语义标签加起来只解释 0.05% 的方差。**
 
 因此这些标签适合用于：分组统计、域适应实验的设计变量、数据溯源。
-不适合用于：构建"层次结构"、作为模型的条件输入、声称任何标签是
-数据的内在组织维度。
+不适合用于：作为模型的条件输入、当作数据的内在组织维度。
 
 ### 笛卡儿积：91.4% 为空
 
@@ -142,8 +202,11 @@ size_categories:
 | 前额叶 | `UBERON:0000451` | 16,520 | 13,292 | — | 29,812 |
 | 初级体感皮层 | `UBERON:0008933` | 6,901 | 5,727 | — | 12,628 |
 
-其余 22 个 UBERON 节点各含单一物种。果蝇的 FBbt 条目与脊椎动物无同源节点，
-`uberon_id` 为空。
+27 个 UBERON 标识里，25 个只出现在单一物种的样本里。果蝇的 FBbt 条目与脊椎动物
+无同源节点，`uberon_id` 为空。
+
+复合标签（`M1_PMd`）的 `uberon_id` 写成 `UBERON:0001384|UBERON:0016634`，
+两段都属于 `shared_node = M1`。
 
 `region_groups.npz` 存这三个节点的行号（int32，对应 `index_timeseries` 行号）。
 
@@ -248,9 +311,26 @@ for dom, g in idx.groupby("domain_l1"):
 
 ## 构建
 
+从上游原始数据到本数据集共四步，均在 HF Space 内运行：
+
+| 步骤 | 脚本 | 输入 | 输出 |
+|---|---|---|---|
+| 1 | `build_omnibrain.py` | Steinmetz、THINGS-EEG、FlyWire 原始文件 | `steinmetz/`、`graph_view/`、`eeg_view/` |
+| 2 | `build_macaque_view.py` | NLB 的 `spikes_*.npz`（20 ms） | `spike_view_macaque/` |
+| 3 | `build_human_invasive_view.py` | FALCON 的 `spike_counts` | `spike_view_human/` |
+| 4 | `build_multi.py` | 上述四个视图 | 本数据集的主体文件 |
+| 5 | `build_region_map.py` | 本数据集索引表 + Allen CCF + UBERON bridge | 区域映射列与三个附加文件 |
+
 ```bash
+python research/brain_domains/data/build_omnibrain.py /domains /domains/omnibrain
+python research/brain_domains/data/build_macaque_view.py
+python research/brain_domains/data/build_human_invasive_view.py
 python research/brain_domains/data/build_multi.py
+python research/brain_domains/data/build_region_map.py
 ```
+
+中间产物（各视图的 `windows_*.npz`、`meta.parquet`、PCA 编码器）保存在
+bucket `illusion-brain/brain-domains`，未随本数据集发布。
 
 代码仓库：`Microbiosis/hetero-moe`
 

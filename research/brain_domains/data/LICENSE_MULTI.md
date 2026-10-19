@@ -1,56 +1,49 @@
 # 许可证与署名
 
-本数据集的 5 个来源全部为 **CC BY 4.0**，无混入其他条款的数据。
+本数据集及其全部 5 个来源均为 CC BY 4.0。
 
-## 逐来源
+## 各来源
 
-| source | 窗口数 | 许可证 | 原始来源 | 核实方式 |
-|---|---:|---|---|---|
-| `mouse_steinmetz` | 314,332 | CC BY 4.0 | [dandi:000070](https://dandiarchive.org/dandiset/000070) | DANDI API，2026-10-18 |
-| `macaque_nlb` | 187,067 | CC BY 4.0 | [dandi:000127](https://dandiarchive.org/dandiset/000127) + [000130](https://dandiarchive.org/dandiset/000130) + [000070](https://dandiarchive.org/dandiset/000070) | 同上 |
-| `human_intracortical` | 86,851 | CC BY 4.0 | [dandi:000950](https://dandiarchive.org/dandiset/000950)（FALCON H2）+ [000954](https://dandiarchive.org/dandiset/000954)（FALCON H1） | 同上 |
-| `human_eeg` | 32,000 | CC BY 4.0 | [OSF 3jk45](https://osf.io/3jk45/) | OSF 项目页 |
-| `flywire` | 139,255 | CC BY 4.0 | [FlyWire](https://flywire.ai/) | 上游说明 |
+| source | 窗口数 | 许可证 | 原始数据 |
+|---|---:|---|---|
+| `mouse_steinmetz` | 314,332 | CC BY 4.0 | [dandi:000017](https://dandiarchive.org/dandiset/000017) |
+| `macaque_nlb` | 187,067 | CC BY 4.0 | [dandi:000127](https://dandiarchive.org/dandiset/000127)、[000130](https://dandiarchive.org/dandiset/000130)、[000070](https://dandiarchive.org/dandiset/000070) |
+| `human_intracortical` | 86,851 | CC BY 4.0 | [dandi:000950](https://dandiarchive.org/dandiset/000950)、[000954](https://dandiarchive.org/dandiset/000954) |
+| `human_eeg` | 32,000 | CC BY 4.0 | [OSF 3jk45](https://osf.io/3jk45/) |
+| `flywire` | 139,255 节点 | CC BY 4.0 | [FlyWire](https://flywire.ai/) |
 
-### 核实记录
-
-2026-10-18 通过 DANDI API 查询 `versions/draft` 的 `license` 字段：
+DANDI 的许可证字段于 2026-10-19 通过 `api.dandiarchive.org/api/dandisets/<id>/versions/draft/` 查询：
 
 ```
-dandi:000070 → ['spdx:CC-BY-4.0']  Neural population dynamics during reaching
-dandi:000127 → ['spdx:CC-BY-4.0']  Area2_Bump: macaque somatosensory area 2 spiking activity
-dandi:000130 → ['spdx:CC-BY-4.0']  DMFC_RSG: macaque dorsomedial frontal cortex spiking activity
-dandi:000950 → ['spdx:CC-BY-4.0']  FALCON Benchmark H2: Human Handwriting iBCI
-dandi:000954 → ['spdx:CC-BY-4.0']  FALCON Benchmark H1: Human 7DoF Reach and Grasp
+dandi:000017 → ['spdx:CC-BY-4.0']  Distributed coding of choice, action and engagement across the mouse brain  (House mouse)
+dandi:000070 → ['spdx:CC-BY-4.0']  Neural population dynamics during reaching                                (Rhesus monkey)
+dandi:000127 → ['spdx:CC-BY-4.0']  Area2_Bump: macaque somatosensory area 2 spiking activity               (Rhesus monkey)
+dandi:000130 → ['spdx:CC-BY-4.0']  DMFC_RSG: macaque dorsomedial frontal cortex spiking activity           (Rhesus monkey)
+dandi:000950 → ['spdx:CC-BY-4.0']  FALCON Benchmark H2: Human Handwriting iBCI                              (Homo sapiens)
+dandi:000954 → ['spdx:CC-BY-4.0']  FALCON Benchmark H1: Human 7DoF Reach and Grasp Motor BCI               (Homo sapiens)
 ```
 
-## 各来源的改动
+## 上游数据的改动
 
-| source | 上游格式 | 本数据集的改动 |
+| source | 上游形式 | 本数据集所做处理 |
 |---|---|---|
-| `mouse_steinmetz` | 50 ms 分箱的 spike 计数 | 50→100 ms 求和；逐 session z-score + PCA 到 64 维；切 8-bin 零重叠窗 |
-| `macaque_nlb` | 20 ms 分箱的 spike 计数 | 20→100 ms 求和；逐片段 z-score + PCA；切窗 |
-| `human_intracortical` | 20 ms 分箱的 spike 计数 | 同上 |
-| `human_eeg` | 250 Hz 电位，已白化 | 4→100 ms 均值；63 通道零填充至 64；切窗 |
-| `flywire` | 连接组邻接 | 图信号传播得节点嵌入（64 维），无时间维 |
+| `mouse_steinmetz` | 50 ms 分箱的放电计数 | 2 bin 求和至 100 ms；逐 unit z-score；逐 session PCA 至 64 维；切 8-bin 窗，步长 4 bin |
+| `macaque_nlb` | 20 ms 分箱的放电计数 | 5 bin 求和至 100 ms；逐 unit z-score；逐记录片段 PCA 至 64 维；切 8-bin 窗，步长 4 bin |
+| `human_intracortical` | 20 ms 分箱的放电计数 | 同上 |
+| `human_eeg` | 250 Hz 电位 | 25 采样均值至 100 ms；逐电极 z-score；63 通道补零至 64；切 8-bin 窗，步长 4 bin |
+| `flywire` | 神经元间连接 | 对称归一化邻接上的图信号传播（α=0.85，8 次迭代，64 个随机初始信号）；无时间维 |
 
-**窗口内的活动经过 PCA 与时间聚合，不能反推回原始电压或放电序列。**
+四份时间序列数据转为 float16 后纵向拼接，`timeseries.npy` 第 0 维与
+`index_timeseries.parquet` 行序一一对应。图视图单独存为 `graph.npy`（float32）。
 
-## 本数据集的聚合
+两部分索引表另加了区域映射列（`region_raw`、`region_kind`、`structure_id`、
+`uberon_id`、`shared_node`、`mapping_status`）。映射依据为 Allen 小鼠 CCF
+结构表（`api.brain-map.org`）与 UBERON 的 MBA、FBbt bridge 文件，
+`human_intracortical` 的两个 FALCON 任务编号按植入位置记为 M1。
+`region_map.csv` 列出每一行的对应关系。
 
-拼接与索引构建不改变各来源数值，只做两件事：
-
-1. 4 个 `(n, 64, 8)` 数组纵向拼接为 `(620250, 64, 8)`
-2. 生成统一的标签索引表（各标签不构成层级，见 README）
-
-## 使用要求
-
-按 CC BY 4.0：
-
-- 保留署名（引用所使用来源的原始文献）
-- 注明修改（投影到 64 维并切窗，而非原始信号）
-- 标明许可证
-- 不附加额外限制
+窗口内的活动经过 PCA 与时间聚合，**无法反推回原始放电序列或电压**。
+`human_eeg` 的补零通道可直接去除；其余来源的投影不可逆。
 
 ## 引用
 
@@ -58,7 +51,8 @@ dandi:000954 → ['spdx:CC-BY-4.0']  FALCON Benchmark H1: Human 7DoF Reach and G
 @article{steinmetz2019distributed,
   title={Distributed coding of choice, action and engagement across the mouse brain},
   author={Steinmetz, Nicholas A and Zatka-Haas, Peter and Carandini, Matteo and Harris, Kenneth D},
-  journal={Nature}, volume={576}, pages={266--273}, year={2019}
+  journal={Nature}, volume={576}, pages={266--273}, year={2019},
+  doi={10.1038/s41586-019-1787-x}
 }
 
 @inproceedings{pei2021neural,
@@ -67,17 +61,25 @@ dandi:000954 → ['spdx:CC-BY-4.0']  FALCON Benchmark H1: Human 7DoF Reach and G
   booktitle={NeurIPS Datasets and Benchmarks}, year={2021}
 }
 
+@article{karpowicz2024fewshot,
+  title={Few-shot Algorithms for Consistent Neural Decoding (FALCON) Benchmark},
+  author={Karpowicz, Brianna M and Ye, Joel and others},
+  journal={NeurIPS Datasets and Benchmarks}, year={2024}
+}
+
 @article{gifford2022large,
   title={A large and rich EEG dataset for modeling human visual object recognition},
   author={Gifford, Alessandro T and Dwivedi, Kartik and Roig, Gemma and Cichy, Radoslaw M},
-  journal={NeuroImage}, volume={264}, pages={119754}, year={2022}
+  journal={NeuroImage}, volume={264}, pages={119754}, year={2022},
+  doi={10.1016/j.neuroimage.2022.119754}
 }
 
 @article{dorkenwald2023flywire,
   title={Neuronal wiring diagram of an adult brain},
   author={Dorkenwald, Sven and others},
-  journal={Nature}, year={2023}
+  journal={Nature}, volume={634}, pages={124--138}, year={2024},
+  doi={10.1038/s41586-024-07558-y}
 }
 ```
 
-`human_intracortical` 的原始文献见 FALCON Benchmark 论文（dandi:000950 / 000954 页面）。
+`macaque_nlb` 的三份记录见上表所列 DANDI 条目。
