@@ -35,6 +35,16 @@ n=10 时，Spearman |ρ| > 0.65 才 p<0.05。
     runs/tau-vs-decode/
     ├── results.csv      逐被试：τ、acc、SNR代理、有效维度
     └── report.json      相关分析 + 控制分析 + LOO
+
+> ## ⚠️ 估计量已弃用（2026-10-19）
+>
+> 本脚本用 `np.median(acf_fft(P), axis=1)` 估 τ，这是**基依赖**的：
+> 换一组正交基 τ 就变。实测 20 ms spike 上旋转 5 次变化 1.65 倍。
+>
+> 正交不变的替代是 `tr C(τ) / tr C(0)`，见 `lib/tau.py` 与
+> `FINDINGS_TAU_GAUGE.md`。用不变量重跑的结果：`exp51_fix.py`、`exp52_fix43.py`。
+>
+> 本文件保留以记录原始流程，结论以 FINDINGS_TAU_GAUGE.md 为准。
 """
 
 from __future__ import annotations

@@ -52,6 +52,16 @@ ready-set-go 的关键是 **set→go 的等待期**（被试必须在这段时�
 1. **试次级打乱**：把 τ 与行为随机配对，看 ρ 的零分布
 2. **控制反应时**：t2 本身与 τ 可能都受"唤醒度"影响
 3. **控制 unit 数变异**：某些试次 spike 计数少，τ 估不准
+
+> ## ⚠️ 估计量已弃用（2026-10-19）
+>
+> 本脚本用 `np.median(acf_fft(P), axis=1)` 估 τ，这是**基依赖**的：
+> 换一组正交基 τ 就变。实测 20 ms spike 上旋转 5 次变化 1.65 倍。
+>
+> 正交不变的替代是 `tr C(τ) / tr C(0)`，见 `lib/tau.py` 与
+> `FINDINGS_TAU_GAUGE.md`。用不变量重跑的结果：`exp51_fix.py`、`exp52_fix43.py`。
+>
+> 本文件保留以记录原始流程，结论以 FINDINGS_TAU_GAUGE.md 为准。
 """
 
 from __future__ import annotations

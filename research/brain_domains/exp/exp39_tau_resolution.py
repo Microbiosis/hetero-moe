@@ -22,6 +22,16 @@ exp19 当时发现 τ 固定在 3.5 bins（随 bin 宽度缩放），
 ## 同时测多个被试
 
   sub-01 ~ sub-05，各 3 种采样率
+
+> ## ⚠️ 估计量已弃用（2026-10-19）
+>
+> 本脚本用 `np.median(acf_fft(P), axis=1)` 估 τ，这是**基依赖**的：
+> 换一组正交基 τ 就变。实测 20 ms spike 上旋转 5 次变化 1.65 倍。
+>
+> 正交不变的替代是 `tr C(τ) / tr C(0)`，见 `lib/tau.py` 与
+> `FINDINGS_TAU_GAUGE.md`。用不变量重跑的结果：`exp51_fix.py`、`exp52_fix43.py`。
+>
+> 本文件保留以记录原始流程，结论以 FINDINGS_TAU_GAUGE.md 为准。
 """
 
 from __future__ import annotations
