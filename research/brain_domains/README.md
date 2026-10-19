@@ -3,7 +3,7 @@
 > 2026-10-14 至 2026-10-18 · 48 个实验 · 23 份文档
 >
 > **一句话结论**：脑区/功能域标签在信息论意义上与活动信号**冗余**。
-> 但在这条探索路上，建立了**三个数据集、一套可信度量、24 条方法学教训**。
+> 但在这条探索路上，建立了**一个数据集、一套可信度量、24 条方法学教训**。
 
 ---
 
@@ -86,32 +86,38 @@ hf://buckets/illusion-brain/brain-domains/omnibrain/
 └── graph_view/          果蝇 FlyWire          139,255 节点
 ```
 
-**② `omnibrain-multi`（Dataset 仓库）**
+**② `primate-spike-20ms`（Dataset 仓库）**
 
-https://huggingface.co/datasets/illusion-brain/omnibrain-multi
+https://huggingface.co/datasets/illusion-brain/primate-spike-20ms
 
-1,409,850 个时间窗，4 个来源、3 个物种，统一为 `(64, 8)`。这是唯一的 Dataset 仓库。
+273,918 个时间窗，猕猴与人类皮层内记录，均在 20 ms 放电计数栅格上，未做时间重采样。
 
-THINGS-EEG 的原生四轴数据（26.5 GB）不在仓库里，留在 bucket
-`illusion-brain/brain-domains/omnibrain4d/`（`eeg/` 4.85 GB test，`eeg_train/` 21.68 GB train）。
+| source | 物种 | 片段 | 窗口 | 区域 |
+|---|---|---:|---:|---|
+| `macaque_nlb` | *Macaca mulatta* | 72 | 187,067 | M1 / PFC / S1 |
+| `human_intracortical` | Homo sapiens | 103 | 86,851 | M1 |
 
-| source | 物种 | 模态 | 窗口 |
-|---|---|---|---:|
-| `mouse_steinmetz` | Mus musculus | 胞外放电 | 314,332 |
-| `macaque_nlb` | Macaca mulatta | 胞外放电 | 187,067 |
-| `human_intracortical` | Homo sapiens | 皮层内 | 86,851 |
-| `human_eeg` | Homo sapiens | 头皮 EEG | 821,600 |
-| `flywire` | Drosophila | 连接组 | 139,255 节点 |
+每窗 `(64, 40)` float16 = 64 个主成分 × 40 个 20 ms bin（800 ms），1.40 GB。
 
-**注意：标签不构成层级**（2026-10-18 集合论审计结论）：
+只有 `M1` 覆盖两个物种（254,899 窗）。
 
-- 最长细化链长度 0（`species` 与 `modality` 互不细化）
-- `domain` 与所有属性的投影算子都不可交换
-- 沿 `region ⊂ source ⊂ species` 的方差分解，各层合计只解释 **0.05%**
-  （在 588,250 个非 EEG 窗上算；EEG 无 region，不在这条链上）
-- 91.2% 的标签组合为空（结构上不可能，非缺数据）
+**②b bucket 内的其它视图**（不在 Dataset 仓库里）
 
-因此这份数据可用于分组统计与域适应实验，**不可声称是"分层数据集"**。
+```
+hf://buckets/illusion-brain/brain-domains/
+├── omnibrain/spike_view/        小鼠 Steinmetz     314,332 窗（50 ms）
+├── omnibrain/eeg_view/          人类头皮 EEG       32,000 窗（旧子集，供追溯）
+├── omnibrain/graph_view/        果蝇 FlyWire      139,255 节点
+└── omnibrain4d/                 THINGS-EEG 四轴    26.53 GB（250 采样原生）
+```
+
+100 ms 版本的多源融合（1,409,850 窗）曾作为 `omnibrain-multi` 发布，已删除。
+重建脚本 `build_omnibrain.py`、`build_macaque_view.py`、`build_human_invasive_view.py`、
+`build_multi.py` 均在 `data/` 下。
+
+**为什么只发布 20 ms 这一对**：五个来源的 bin 宽分别是 50 / 20 / 20 / 4 ms，
+只有猕猴与人类皮层内这一对相同。想要「同一张量」就必须向最粗看齐，
+而向最粗看齐等于对细的来源做不可逆的降采样。20 ms 这一对不需要任何重采样。
 
 ### 训练空间
 
