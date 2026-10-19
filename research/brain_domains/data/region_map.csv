@@ -1,0 +1,68 @@
+source,region_raw,n_rows,region_kind,structure_id,uberon_id,shared_node,mapping_status,note
+flywire,ME,58586,neuropil,FBbt:00003748,,,no_vertebrate_homolog,FBbt: medulla
+flywire,,31852,none,,,,unassigned,cell without a FlyWire region annotation
+flywire,visual,11391,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,LA,8348,neuropil,FBbt:00003708,,,no_vertebrate_homolog,FBbt: lamina
+flywire,LO,7829,neuropil,FBbt:00003852,,,no_vertebrate_homolog,FBbt: lobula
+flywire,Kenyon_Cell,5177,cell_type,FBbt:00003686,,,no_vertebrate_homolog,FBbt: Kenyon cell
+flywire,CX,2869,neuropil,FBbt:00003632,,,no_vertebrate_homolog,FBbt: adult central complex
+flywire,mechanosensory,2648,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,LOP,2577,neuropil,FBbt:00003885,,,no_vertebrate_homolog,FBbt: lobula plate
+flywire,AN,2362,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,olfactory,2281,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,ALPN,685,cell_type,FBbt:00007422,,,no_vertebrate_homolog,FBbt: antennal lobe projection neuron
+flywire,LHLN,514,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,ALLN,427,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,gustatory,343,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,DAN,331,cell_type,FBbt:00005131,,,no_vertebrate_homolog,FBbt: dopaminergic neuron
+flywire,bilateral,220,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,TuBu,150,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,unknown_sensory,135,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,MBON,96,cell_type,FBbt:00047953,,,no_vertebrate_homolog,FBbt: mushroom body output neuron
+flywire,mAL,77,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,hygrosensory,74,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,ocellar,63,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,LHCENT,42,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,pars_intercerebralis,40,region,FBbt:00005802,,,no_vertebrate_homolog,FBbt: pars intercerebralis
+flywire,optic_lobes,39,region,,,,fbbt_unresolved,FBbt: optic lobes
+flywire,thermosensory,29,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,pars_lateralis,26,region,,,,fbbt_unresolved,FBbt: pars lateralis
+flywire,ALIN,24,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,ALON,14,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,MBIN,4,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+flywire,TPN,2,cell_type,,,,no_vertebrate_homolog,"FlyWire cell class / superclass label, not a vertebrate-homologous region"
+human_eeg,,32000,none,,,,unassigned,upstream index carries no region; scalp EEG has no focal site
+human_intracortical,h2_intracortical,77341,anatomy,,UBERON:0001384,M1,task_code_reinterpreted,"upstream value h2_intracortical is a FALCON task code (H1 7DoF reach/grasp, H2 handwriting); both are hand-area M1 Utah arrays"
+human_intracortical,h1_intracortical,9510,anatomy,,UBERON:0001384,M1,task_code_reinterpreted,"upstream value h1_intracortical is a FALCON task code (H1 7DoF reach/grasp, H2 handwriting); both are hand-area M1 Utah arrays"
+macaque_nlb,M1_PMd,168048,anatomy,,UBERON:0001384|UBERON:0016634,M1,compound,recordings span primary motor and dorsal premotor cortex; not separable in upstream index
+macaque_nlb,DMFC,13292,anatomy,,UBERON:0000451,PFC,coarse,"dorsomedial frontal cortex, resolved to prefrontal cortex"
+macaque_nlb,Area2,5727,anatomy,,UBERON:0008933,S1,coarse,"Brodmann area 2, a subarea of primary somatosensory cortex"
+mouse_steinmetz,ORB,22902,anatomy,MBA:714,UBERON:0004167,,exact_single_species,Orbital area
+mouse_steinmetz,MRN,17763,anatomy,MBA:128,UBERON:0007415,,exact_single_species,Midbrain reticular nucleus
+mouse_steinmetz,MB,17287,anatomy,MBA:313,UBERON:0001891,,exact_single_species,Midbrain
+mouse_steinmetz,MG,17175,anatomy,MBA:475,UBERON:0001927,,exact_single_species,Medial geniculate complex
+mouse_steinmetz,PL,16520,anatomy,MBA:972,UBERON:8440032,PFC,rollup,Prelimbic area
+mouse_steinmetz,SCig,15751,anatomy,MBA:10,,,uberon_missing,"Superior colliculus, motor related, intermediate gray layer"
+mouse_steinmetz,LS,15334,anatomy,MBA:242,UBERON:0002667,,exact_single_species,Lateral septal nucleus
+mouse_steinmetz,PO,15198,anatomy,MBA:1020,UBERON:0002709,,exact_single_species,Posterior complex of the thalamus
+mouse_steinmetz,CP,14789,anatomy,MBA:672,UBERON:0005383,,exact_single_species,Caudoputamen
+mouse_steinmetz,ORBm,9785,anatomy,MBA:731,UBERON:0004167,,exact_single_species,"Orbital area, medial part"
+mouse_steinmetz,MOp,9298,anatomy,MBA:985,UBERON:0001384,M1,exact,Primary motor area
+mouse_steinmetz,ACB,9141,anatomy,MBA:56,UBERON:0001882,,exact_single_species,Nucleus accumbens
+mouse_steinmetz,GPe,8953,anatomy,MBA:1022,UBERON:0002476,,exact_single_species,"Globus pallidus, external segment"
+mouse_steinmetz,TH,8742,anatomy,MBA:549,UBERON:0001897,,exact_single_species,Thalamus
+mouse_steinmetz,AUD,8678,anatomy,MBA:247,UBERON:0001393,,exact_single_species,Auditory areas
+mouse_steinmetz,MD,8614,anatomy,MBA:362,UBERON:0002739,,exact_single_species,Mediodorsal nucleus of thalamus
+mouse_steinmetz,COA,8105,anatomy,MBA:631,UBERON:0002891,,exact_single_species,Cortical amygdalar area
+mouse_steinmetz,APN,8072,anatomy,MBA:215,,,uberon_missing,Anterior pretectal nucleus
+mouse_steinmetz,CA,8005,anatomy,MBA:375,UBERON:0001954,,exact_single_species,Ammon's horn
+mouse_steinmetz,VISpm,7867,anatomy,MBA:533,UBERON:0035900,,exact_single_species,posteromedial visual area
+mouse_steinmetz,SSs,7819,anatomy,MBA:378,UBERON:0008934,,exact_single_species,Supplemental somatosensory area
+mouse_steinmetz,VPL,7806,anatomy,MBA:718,UBERON:0002942,,exact_single_species,Ventral posterolateral nucleus of the thalamus
+mouse_steinmetz,LSr,7786,anatomy,MBA:258,UBERON:0002667,,exact_single_species,"Lateral septal nucleus, rostral (rostroventral) part"
+mouse_steinmetz,OLF,7609,anatomy,MBA:698,UBERON:0002894,,exact_single_species,Olfactory areas
+mouse_steinmetz,BLA,7465,anatomy,MBA:295,UBERON:0002887,,exact_single_species,Basolateral amygdalar nucleus
+mouse_steinmetz,VPM,7234,anatomy,MBA:733,UBERON:0002945,,exact_single_species,Ventral posteromedial nucleus of the thalamus
+mouse_steinmetz,RSP,7115,anatomy,MBA:254,UBERON:0013531,,exact_single_species,Retrosplenial area
+mouse_steinmetz,SSp,6901,anatomy,MBA:322,UBERON:0008933,S1,exact,Primary somatosensory area
+mouse_steinmetz,LP,6618,anatomy,MBA:218,UBERON:0002983,,exact_single_species,Lateral posterior nucleus of the thalamus

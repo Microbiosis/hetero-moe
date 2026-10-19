@@ -42,6 +42,9 @@ size_categories:
 | `index_graph.parquet` | 139,255 行 | 逐节点标签 |
 | `labels.json` | — | 各标签的取值与计数 |
 | `group_sizes.csv` | — | source × domain 样本数 |
+| `region_map.csv` | — | 每个区域原值到 UBERON 的映射 |
+| `shared_nodes.csv` | — | 三个跨物种节点的窗口数 |
+| `region_groups.npz` | — | 三个节点的行号数组 |
 
 ## 标签的实测性质
 
@@ -112,17 +115,37 @@ size_categories:
 空位来自结构约束，不是缺数据：`human_eeg` 无解剖区、`flywire` 无时间窗、
 小鼠数据无 `area` 列。
 
-### region 的来源不同
+### 区域
 
-| source | region 来源 | 粒度 |
-|---|---|---|
-| `mouse_steinmetz` | `steinmetz/units.parquet` 按 session 取主导区 | session 级 |
-| `macaque_nlb` | 上游 `area` 列 | 窗级 |
-| `human_intracortical` | 上游 `area` 列 | 窗级 |
-| `human_eeg` | 无 | — |
+`region_kind` 标明 `region` 属于哪类对象。
 
-`index_timeseries.parquet` 的 `region_level` 列标明是哪种：
-`session_majority`（314,332）或 `window_area`（273,918）。
+`index_timeseries.parquet`（620,250 行）：
+
+| `region_kind` | 行数 | 内容 |
+|---|---:|---|
+| `anatomy` | 588,250 | 小鼠 Allen CCF 缩写、猕猴记录区、人 `M1` |
+| `none` | 32,000 | 头皮 EEG，无焦点位置 |
+
+`index_graph.parquet`（139,255 行）：`neuropil` 80,209、`cell_type` 27,089、`region` 105、`none` 31,852。
+
+小鼠取 session 主导区（`region_level = session_majority`，314,332 行），
+猕猴与人类逐窗（`window_area`，273,918 行）。
+
+`human_intracortical` 的原值是 FALCON 任务编号（H1 抓取、H2 手写），
+两套 Utah array 均位于手部运动皮层，统一记为 `M1`。
+
+跨物种同源节点：
+
+| 节点 | UBERON | 小鼠 | 猕猴 | 人 | 合计 |
+|---|---|---:|---:|---:|---:|
+| 初级运动皮层 | `UBERON:0001384` | 9,298 | 168,048 | 86,851 | 264,197 |
+| 前额叶 | `UBERON:0000451` | 16,520 | 13,292 | — | 29,812 |
+| 初级体感皮层 | `UBERON:0008933` | 6,901 | 5,727 | — | 12,628 |
+
+其余 22 个 UBERON 节点各含单一物种。果蝇的 FBbt 条目与脊椎动物无同源节点，
+`uberon_id` 为空。
+
+`region_groups.npz` 存这三个节点的行号（int32，对应 `index_timeseries` 行号）。
 
 ## 索引列
 
@@ -134,7 +157,13 @@ size_categories:
 | `group_key` | 来源内的分组键（session / file / subject）|
 | `window_idx` | 组内窗口序号 |
 | `domain_l1` | 6 类功能域之一 |
-| `region` | 解剖区（EEG 为空）|
+| `region` | 区域标签：小鼠 Allen 缩写、猕猴记录区、人 `M1`；EEG 为空 |
+| `region_raw` | 上游原值，含 FALCON 任务编号 `h1_intracortical` / `h2_intracortical` |
+| `region_kind` | `anatomy` / `neuropil` / `cell_type` / `region` / `none` |
+| `structure_id` | Allen `MBA:` 或 FlyBase `FBbt:` 标识 |
+| `uberon_id` | UBERON 标识，复合标签以 `\|` 并列 |
+| `shared_node` | `M1` / `S1` / `PFC`，其余为空 |
+| `mapping_status` | `exact` / `exact_single_species` / `rollup` / `coarse` / `compound` / `task_code_reinterpreted` / `uberon_missing` / `no_vertebrate_homolog` / `fbbt_unresolved` / `unassigned` |
 | `region_level` | region 的粒度来源 |
 | `area` | 上游原始区名（仅猕猴/人类）|
 | `n_units` | 记录单元数（仅猕猴/人类）|
@@ -210,6 +239,8 @@ for dom, g in idx.groupby("domain_l1"):
 - 标签不构成层级，且只解释 0.05% 的方差
 - 采样率与空间规模差异大（小鼠 205–1240 units，人类 63 电极）
 - 小鼠的 region 是 session 级，不是逐窗标注
+- `macaque_nlb` 的 `M1_PMd` 跨 M1 与 PMd，无法在行级拆分
+- `SCig`、`APN` 两个小鼠区（23,823 行）缺 UBERON 映射
 - `human_eeg` 无解剖区
 - 图视图无时间维，单独存为 `graph.npy`
 - 数据来自不同任务与实验室，未做行为对齐

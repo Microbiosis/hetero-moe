@@ -1,0 +1,4 @@
+node,uberon_id,label,mouse_steinmetz,macaque_nlb,human_intracortical,human_eeg,total,n_species
+M1,UBERON:0001384,primary motor cortex,9298,168048,86851,0,264197,3
+S1,UBERON:0008933,primary somatosensory cortex,6901,5727,0,0,12628,2
+PFC,UBERON:0000451,prefrontal cortex,16520,13292,0,0,29812,2
