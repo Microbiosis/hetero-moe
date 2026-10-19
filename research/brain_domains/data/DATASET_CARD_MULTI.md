@@ -10,6 +10,11 @@ tags:
 size_categories:
   - 1M<n<10M
 ---
+> **状态**：这份四源 100 ms 数据集已下线。五个来源的 bin 宽为 50 / 20 / 20 / 4 ms，
+> 拼成同一张量需要向最粗看齐，等于对细粒度来源做不可逆降采样。现只发布
+> [`illusion-brain/primate-spike-20ms`](https://huggingface.co/datasets/illusion-brain/primate-spike-20ms)
+> （猕猴与人类皮层内，均为 20 ms，无需重采样）。本文件保留为构建记录。
+
 
 # OmniBrain-Multi
 

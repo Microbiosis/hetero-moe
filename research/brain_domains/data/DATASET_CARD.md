@@ -9,11 +9,9 @@ tags:
 size_categories:
   - 100K<n<1M
 ---
-> **状态**：这个 HF 仓库已删除。THINGS-EEG 的四轴原生数据并入
-> [`illusion-brain/omnibrain-multi`](https://huggingface.co/datasets/illusion-brain/omnibrain-multi)
-> 的窗口张量（每试次取 0–800 ms 的 8 个 100 ms bin，共 821,600 试次），
-> 完整 250 采样版本留在 bucket `illusion-brain/brain-domains/omnibrain4d/`。
-> 本文件保留为桶内数据的说明。
+> **状态**：这个 HF 仓库已删除，数据不再以仓库形式发布。250 采样原生四轴版本
+> 留在 bucket `illusion-brain/brain-domains/omnibrain4d/`（`eeg/` 4.85 GB test、
+> `eeg_train/` 21.68 GB train）。本文件保留为桶内数据的说明。
 
 
 # THINGS-EEG 4D
