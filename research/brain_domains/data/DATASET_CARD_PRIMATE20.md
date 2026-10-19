@@ -300,6 +300,28 @@ cross-ACF 更进一步，去掉了单单元的不应期。
 - 计数已存为 uint8，全库最大值为 20，无截断
 - 175 个成员的宽度有 6 种（40 / 49 / 54 / 65 / 176 / 192），不能当作同一矩阵
 
+## 实验结果
+
+`results/` 下有 32 个目录、62 个文件，是全部实验的原始输出（CSV / JSON）。
+`RESULTS_INDEX.json` 列出每个目录的文件清单。
+
+| 目录 | 内容 |
+|---|---|
+| `mouse/` | 小鼠 50 ms 的 τ、零模型、三模型比较（本文档「外部检验」一节）|
+| `models/` | 四模型 AIC 比较（145 个片段）|
+| `plateau/` | 平台模型重拟合 |
+| `trunc/` | 时长截断检验 |
+| `twoscale/` | 双指数的两个尺度 |
+| `ratematch/` | 放电率匹配检验 |
+| `beta/`、`beta2/` | β 稳定性与零模型（`beta/` 的归一化有缺陷，保留作记录）|
+| `tau-gauge/`、`tau-fixed/`、`tau-long/` | τ 的规范依赖性与长片段收敛 |
+| `tau-amplitude/`、`tau-cross/` | 幅度分离、去对角项的 cross-ACF |
+| `tau-vs-decode/`、`tau-behavior/` | τ 的构念效度检验（均为负结果）|
+| `set-theory/`、`chain-decomp/` | 标签集合论审计与方差分解 |
+| `robustness/`、`controlled-vs/`、`image-vs-concept/` | 其它已记录的实验 |
+
+这些文件是用 `counts_ragged.npy` 算出来的，可直接对照复算。
+
 ## 引用
 
 各来源的原始文献见 [LICENSE.md](LICENSE.md)。
