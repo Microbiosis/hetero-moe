@@ -1,9 +1,9 @@
 # 脑域研究线（brain_domains）
 
-> 2026-10-14 至 2026-10-18 · 42 个实验 · 17 份文档
+> 2026-10-14 至 2026-10-18 · 48 个实验 · 23 份文档
 >
 > **一句话结论**：脑区/功能域标签在信息论意义上与活动信号**冗余**。
-> 但在这条探索路上，建立了**一个四维数据集、一套可信度量、23 条方法学教训**。
+> 但在这条探索路上，建立了**三个数据集、一套可信度量、24 条方法学教训**。
 
 ---
 
@@ -103,6 +103,29 @@ https://huggingface.co/datasets/illusion-brain/things-eeg-4d
 **命名说明**：早期版本曾叫 `omnibrain-4d`，属名不副实（只有单一数据源），
 已于 2026-10-18 重命名为 `things-eeg-4d`。旧 URL 会重定向。
 
+**③ `omnibrain-multi`（Dataset 仓库，多源融合）**
+
+https://huggingface.co/datasets/illusion-brain/omnibrain-multi
+
+620,250 个时间窗，4 个来源、3 个物种、2 种模态，统一为 `(64, 8)`。
+
+| source | 物种 | 模态 | 窗口 |
+|---|---|---|---:|
+| `mouse_steinmetz` | Mus musculus | 胞外放电 | 314,332 |
+| `macaque_nlb` | Macaca mulatta | 胞外放电 | 187,067 |
+| `human_intracortical` | Homo sapiens | 皮层内 | 86,851 |
+| `human_eeg` | Homo sapiens | 头皮 EEG | 32,000 |
+| `flywire` | Drosophila | 连接组 | 139,255 节点 |
+
+**注意：标签不构成层级**（2026-10-18 集合论审计结论）：
+
+- 最长细化链长度 0（`species` 与 `modality` 互不细化）
+- `domain` 与所有属性的投影算子都不可交换
+- 沿 `region ⊂ source ⊂ species` 的方差分解，各层合计只解释 **0.05%**
+- 91.4% 的标签组合为空（结构上不可能，非缺数据）
+
+因此这份数据可用于分组统计与域适应实验，**不可声称是"分层数据集"**。
+
 ### 训练空间
 
 **`redmingwei/IllusionBrain`**（私有，zero-a10g，**192 核 / 96.9 GB**）
@@ -127,7 +150,7 @@ https://huggingface.co/datasets/illusion-brain/things-eeg-4d
 
 ---
 
-## 四、方法学教训（23 条）
+## 四、方法学教训（24 条）
 
 | # | 教训 | 症状 |
 |---|---|---|
@@ -151,25 +174,41 @@ https://huggingface.co/datasets/illusion-brain/things-eeg-4d
 | 18 | 模型参数 ≠ 数据属性 | τ = 真实动力学 + 模型阶数 + 采样率 的混合 |
 | 19 | 用多少点拟合决定稳健性 | AR(1) 用 1 点（1.71 漂移）/ ACF 用 250 点（1.000）|
 | 20 | 信度 ≠ 效度 | τ 通过 5/5 分辨率检验，但不预测解码 |
+| 21 | 用最有利的场景检验假设 | ready-set-go 三条件叠加仍失败，否定才有分量 |
+| 22 | 排除配置需独立于结论的理由 | 否则是挑数据 |
+| 23 | 对比必须控制样本量 | exp45 的 A 每类 1 样本、B 每类 8 个 |
+| 24 | 先验证结构是否存在，再构建结构 | 细化矩阵/可交换性/方差分解三项全不过，仍建了 24 个实验 |
 
 ---
 
 ## 五、文档索引
 
-### 核心结论
+### 总览
 | 文件 | 内容 |
 |---|---|
-| `FINDINGS.md` | 域条件建模 6 实验（全否定）|
-| `FINDINGS_CROSS_SPECIES_FINAL.md` | 跨物种 4 轮（无守恒量）|
-| `FINDINGS_DENSE_K.md` | **超额曲线跨物种一致**（唯一正结果）|
-| `FINDINGS_TAU_SUCCESS.md` | **τ 通过分辨率检验**（ACF 全曲线）|
-| `FINDINGS_TAU_NO_FUNCTION.md` | **τ 不预测解码**（构念效度失败）|
+| `PAPER_DRAFT.md` | **论文草稿**（摘要 + 10 节 + 附录，整合全部结论）|
+| `FINDINGS_SET_THEORY.md` | **集合论审计：标签只解释 0.05% 方差**（统一解释）|
+
+### 三个方向
+| 文件 | 内容 |
+|---|---|
+| `FINDINGS.md` | 方向 A：域条件建模 6 实验（全否定）|
+| `FINDINGS_CROSS_SPECIES_FINAL.md` | 方向 B：跨物种 4 轮（无守恒量）|
+| `FINDINGS_DENSE_K.md` | 方向 B：**超额曲线跨物种一致**（唯一正结果）|
+| `FINDINGS_TAU_SUCCESS.md` | 方向 C：**τ 通过分辨率检验**（ACF 全曲线）|
+| `FINDINGS_TAU_FAILS.md` | 方向 C：VAR 极点，0/5 通过 |
+| `FINDINGS_TAU_NO_FUNCTION.md` | 方向 C：**τ 不预测解码**（n=10）|
+| `FINDINGS_TAU_BEHAVIOR.md` | 方向 C：**τ 不预测真实计时行为**（n=502）|
+| `FINDINGS_FINAL_TAU.md` | 方向 C：固定窗口下的 τ（阶段性小结）|
 
 ### 数据与平台
 | 文件 | 内容 |
 |---|---|
-| `FINDINGS_4D.md` | 四维数据集构建 + 轴信息量 |
+| `FINDINGS_4D.md` | 四维数据集构建 + 轴信息量 + 轴消融 |
+| `FINDINGS_IMAGE_VS_CONCEPT.md` | 同图像 vs 新图像解码（4.1× vs 2.4×）|
+| `FINDINGS_ROBUSTNESS.md` | 超额曲线的 8 配置稳健性（6/8 支持）|
 | `FINDINGS_SPACE_COMPUTE.md` | Space 192 核 vs Job 8 核，快 91× |
+| `FINDINGS_SET_THEORY.md` | **集合论审计：标签只解释 0.05% 方差** |
 
 ### 失败记录（同样的价值）
 | 文件 | 内容 |
@@ -235,5 +274,5 @@ research/brain_domains/
 │   ├── fast_scan.py             块并行扫描
 │   ├── domain_control.py        三臂对照
 │   └── trace_nan.py             NaN 诊断
-└── exp/                         42 个实验脚本（exp0–exp42）
+└── exp/                         58 个实验脚本（exp0–exp48）
 ```
