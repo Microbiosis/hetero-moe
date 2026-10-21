@@ -111,7 +111,8 @@ hierarchy/  结构层级
   author       = {{Illusion Brain} and Xie, JinHao},
   year         = {2026},
   howpublished = {Hugging Face Datasets},
-  url          = {https://huggingface.co/datasets/illusion-brain/brain-domains},
+  doi          = {10.57967/hf/11187},
+  url          = {https://doi.org/10.57967/hf/11187},
   note         = {CC-BY-4.0; 14 members from 4 upstream datasets}
 }
 ```
