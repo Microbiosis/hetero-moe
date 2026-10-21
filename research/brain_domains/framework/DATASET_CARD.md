@@ -103,11 +103,17 @@ hierarchy/  结构层级
 
 ## 引用
 
+本数据集：
+
 ```bibtex
-@dataset{illusion_brain_domains_2026,
-  title  = {Brain Domains: a domain-annotated neural dataset with an L0--L4 processing ladder},
-  author = {illusion-brain},
-  year   = {2026},
-  note   = {14 members from 4 upstream datasets; CC-BY-4.0}
+@misc{microbiosis2026braindomains,
+  title        = {Brain Domains: a domain-annotated neural dataset},
+  author       = {Microbiosis},
+  year         = {2026},
+  howpublished = {Hugging Face Datasets},
+  url          = {https://huggingface.co/datasets/illusion-brain/brain-domains},
+  note         = {CC-BY-4.0; 14 members from 4 upstream datasets}
 }
 ```
+
+同时须引用上游：7 篇论文 + 3 个本体/图集，见上方「许可与署名」表。
