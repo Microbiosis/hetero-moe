@@ -106,9 +106,9 @@ hierarchy/  结构层级
 本数据集：
 
 ```bibtex
-@misc{microbiosis2026braindomains,
+@misc{illusionbrain2026braindomains,
   title        = {Brain Domains: a domain-annotated neural dataset},
-  author       = {Microbiosis},
+  author       = {{illusion-brain}},
   year         = {2026},
   howpublished = {Hugging Face Datasets},
   url          = {https://huggingface.co/datasets/illusion-brain/brain-domains},
