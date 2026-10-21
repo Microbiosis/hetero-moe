@@ -108,7 +108,7 @@ hierarchy/  结构层级
 ```bibtex
 @misc{illusionbrain2026braindomains,
   title        = {Brain Domains: a domain-annotated neural dataset},
-  author       = {{illusion-brain} and Xie, JinHao},
+  author       = {{Illusion Brain} and Xie, JinHao},
   year         = {2026},
   howpublished = {Hugging Face Datasets},
   url          = {https://huggingface.co/datasets/illusion-brain/brain-domains},
