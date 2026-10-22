@@ -240,6 +240,7 @@ hf://buckets/illusion-brain/brain-domains/
 |---|---|
 | `LITERATURE_ON_TIMESCALES.md` | iSTTC 论文等，解释 τ 为何脆弱 |
 | `ENGRAM_VS_BRAIN.md`（docs/）| DeepSeek Engram 与海马体对照 |
+| `MEMT_VS_HIPPOCAMPUS.md`（docs/）| MemT-1.0 记忆基础模型与海马体对照（可写 + 遗忘 + 读-写隔离）|
 
 ---
 
