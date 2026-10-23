@@ -247,7 +247,7 @@ hf://buckets/illusion-brain/brain-domains/
 | `LITERATURE_ON_TIMESCALES.md` | iSTTC 论文等，解释 τ 为何脆弱 |
 | `ENGRAM_VS_BRAIN.md`（docs/）| DeepSeek Engram 与海马体对照 |
 | `MEMT_VS_HIPPOCAMPUS.md`（docs/）| MemT-1.0 记忆基础模型与海马体对照（可写 + 遗忘 + 读-写隔离）|
-| `FINDINGS_TIER0_RSA.md`（本目录）| **Tier 0 编码对齐全记录**：RSA 审计 → 编码 → 标度律 → 单试次 → 200 选 1 解码（含 10 条方法学失误）|
+| `FINDINGS_TIER0_RSA.md`（本目录）| **Tier 0 编码对齐全记录**：RSA 审计 → 7 基模脑对齐表 → 跨模型重组（零件资格赛）→ **自训 EEG 离散 tokenizer（S1a/S1b，§二十三：组件级组装，S1b 达成）**（含 23 节方法学失误与自我纠错留痕）|
 
 ---
 
