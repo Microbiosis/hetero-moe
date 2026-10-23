@@ -114,6 +114,8 @@ def main():
     ap.add_argument("--model", default="signal-jepa")
     ap.add_argument("--n-img", type=int, default=4)
     ap.add_argument("--n-rep", type=int, default=4)
+    ap.add_argument("--eval-mode", action="store_true",
+                    help="抽取前 model.eval()（排除 Dropout 随机）")
     args = ap.parse_args()
 
     import torch
@@ -126,9 +128,12 @@ def main():
     eeg = np.load(TEST_4D / "sub-01.npz")["eeg"][:args.n_img, :args.n_rep]
 
     def load():
-        return REG.load_base_model(args.model, models_dir=MODELS_DIR,
-                                   braindecode_models=bdmodels, spec=spec,
-                                   verbose=False)
+        h = REG.load_base_model(args.model, models_dir=MODELS_DIR,
+                                braindecode_models=bdmodels, spec=spec,
+                                verbose=False)
+        if args.eval_mode and h.ok:
+            h.model.eval()
+        return h
 
     hA = load()
     hB = load()
@@ -138,7 +143,7 @@ def main():
     #    ⇒ 用 handle.spec（registry 已按实测规格建好）
     adapted, _ = DA.adapt(eeg.reshape(-1, eeg.shape[2], eeg.shape[3]), hA.spec,
                           BS.THINGS_EEG_CHANS)
-    log(f"模型 {args.model} | 输入 {adapted.shape}")
+    log(f"模型 {args.model} | 输入 {adapted.shape} | eval_mode={args.eval_mode}")
 
     # A：同一 handle，两次（供体路径）
     a1 = extract_layer(hA, adapted, DONOR_LAYER)
@@ -165,9 +170,19 @@ def main():
     log(f"D 两个 handle（最终输出路径）：{msg4}")
 
     # 额外：把适配后的输入也比一遍（排除适配层的不确定性）
-    log(f"\n⇒ 若 A/C 不同 ⇒ 前向不确定；"
-        f"若 A/C 相同而 B/D 不同 ⇒ **模型加载/插值不确定**；"
-        f"若全都相同 ⇒ 差异来自别处（评测顺序 / rng）")
+    adapted2, _ = DA.adapt(eeg.reshape(-1, eeg.shape[2], eeg.shape[3]), hA.spec,
+                           BS.THINGS_EEG_CHANS)
+    de, msge = cmp(adapted, adapted2)
+    log(f"E 输入适配两次：{msge}")
+
+    log("\n" + "=" * 70)
+    if args.eval_mode:
+        log("（已 eval() ⇒ 若 A/C 仍不同 ⇒ 差异**不是** Dropout，而是模型内部"
+            "（如 Interpolated* 包装的 MNE 插值）")
+    else:
+        log("⇒ 若 A/C 不同 ⇒ 前向随机（train 模式 ⇒ Dropout）；"
+            "若 A/C 相同而 B/D 不同 ⇒ **模型加载/插值不确定**；"
+            "若全都相同 ⇒ 差异来自别处（评测顺序 / rng）")
     return 0
 
 
