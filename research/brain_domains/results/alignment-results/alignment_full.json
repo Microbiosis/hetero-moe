@@ -1,14 +1,15 @@
 {
   "schema_version": "1.0",
   "script": "merge_alignment",
-  "n_subjects": 4,
+  "n_subjects": 5,
   "summary": {
     "630-d 原始特征": {
       "name": "630-d 原始特征",
       "kind": "baseline_eeg",
-      "n_subjects": 4,
-      "n_ok": 4,
+      "n_subjects": 5,
+      "n_ok": 5,
       "A_r": [
+        0.04827292666974062,
         0.061177068146396445,
         0.04182314402652394,
         0.06727332823440696,
@@ -18,33 +19,39 @@
         0.004975124378109453,
         0.004975124378109453,
         0.004975124378109453,
+        0.004975124378109453,
         0.004975124378109453
       ],
       "B_acc1": [
+        0.008625,
         0.0100625,
         0.018875,
         0.0235625,
         0.0090625
       ],
       "B_null": [
+        0.00475,
         0.0050625,
         0.0048125,
         0.004875,
         0.00490625
       ],
       "B_acc5": [
+        0.045,
         0.0445625,
         0.0774375,
         0.0954375,
         0.040375
       ],
       "B_featavg": [
+        0.035,
         0.03,
         0.06,
         0.075,
         0.045
       ],
       "B_predavg": [
+        0.035,
         0.03,
         0.06,
         0.075,
@@ -52,19 +59,131 @@
       ],
       "n_params": 0,
       "errors": [],
-      "A_r_median": 0.05150010608646019,
+      "A_r_median": 0.04827292666974062,
       "A_p_median": 0.004975124378109453,
       "A_p_min": 0.004975124378109453,
-      "A_n_significant": 4,
-      "B_acc1_median": 0.014468749999999999,
-      "B_acc1_min": 0.0090625,
+      "A_n_significant": 5,
+      "B_acc1_median": 0.0100625,
+      "B_acc1_min": 0.008625,
       "B_acc1_max": 0.0235625,
-      "B_acc5_median": 0.061,
-      "B_null_median": 0.004890625,
-      "B_featavg_median": 0.0525,
-      "B_predavg_median": 0.0525,
-      "B_ratio_vs_random": 2.89375,
-      "B_n_above_null": 4
+      "B_acc5_median": 0.045,
+      "B_null_median": 0.004875,
+      "B_featavg_median": 0.045,
+      "B_predavg_median": 0.045,
+      "B_ratio_vs_random": 2.0125,
+      "B_n_above_null": 5
+    },
+    "mirepnet": {
+      "name": "mirepnet",
+      "kind": "base_model",
+      "n_subjects": 3,
+      "n_ok": 3,
+      "A_r": [
+        -0.0036203655798303243,
+        0.012395407629631785,
+        0.0011934481645049593
+      ],
+      "A_p": [
+        0.43781094527363185,
+        0.01990049751243781,
+        0.7661691542288557
+      ],
+      "B_acc1": [
+        0.00525,
+        0.004875,
+        0.004625
+      ],
+      "B_null": [
+        0.00509375,
+        0.00490625,
+        0.0052812499999999995
+      ],
+      "B_acc5": [
+        0.02525,
+        0.0243125,
+        0.0240625
+      ],
+      "B_featavg": [
+        0.0,
+        0.01,
+        0.005
+      ],
+      "B_predavg": [
+        0.0,
+        0.01,
+        0.005
+      ],
+      "n_params": 5142786,
+      "errors": [],
+      "A_r_median": 0.0011934481645049593,
+      "A_p_median": 0.43781094527363185,
+      "A_p_min": 0.01990049751243781,
+      "A_n_significant": 1,
+      "B_acc1_median": 0.004875,
+      "B_acc1_min": 0.004625,
+      "B_acc1_max": 0.00525,
+      "B_acc5_median": 0.0243125,
+      "B_null_median": 0.00509375,
+      "B_featavg_median": 0.005,
+      "B_predavg_median": 0.005,
+      "B_ratio_vs_random": 0.975,
+      "B_n_above_null": 1
+    },
+    "braintokenizer": {
+      "name": "braintokenizer",
+      "kind": "base_model",
+      "n_subjects": 3,
+      "n_ok": 3,
+      "A_r": [
+        0.007640880711739492,
+        0.021211608385874096,
+        0.020275408186037715
+      ],
+      "A_p": [
+        0.08955223880597014,
+        0.009950248756218905,
+        0.004975124378109453
+      ],
+      "B_acc1": [
+        0.0051875,
+        0.0065,
+        0.0059375
+      ],
+      "B_null": [
+        0.005625,
+        0.0052499999999999995,
+        0.0050625
+      ],
+      "B_acc5": [
+        0.027,
+        0.03175,
+        0.031625
+      ],
+      "B_featavg": [
+        0.015,
+        0.01,
+        0.025
+      ],
+      "B_predavg": [
+        0.015,
+        0.01,
+        0.025
+      ],
+      "n_params": 5050338,
+      "errors": [],
+      "A_r_median": 0.020275408186037715,
+      "A_p_median": 0.009950248756218905,
+      "A_p_min": 0.004975124378109453,
+      "A_n_significant": 2,
+      "B_acc1_median": 0.0059375,
+      "B_acc1_min": 0.0051875,
+      "B_acc1_max": 0.0065,
+      "B_acc5_median": 0.031625,
+      "B_null_median": 0.0052499999999999995,
+      "B_featavg_median": 0.015,
+      "B_predavg_median": 0.015,
+      "B_ratio_vs_random": 1.1875,
+      "B_n_above_null": 2
     },
     "cbramod": {
       "name": "cbramod",
@@ -317,107 +436,235 @@
       "B_predavg_median": 0.01,
       "B_ratio_vs_random": 1.19375,
       "B_n_above_null": 4
-    },
-    "mirepnet": {
-      "name": "mirepnet",
-      "kind": "base_model",
-      "n_subjects": 2,
-      "n_ok": 2,
-      "A_r": [
-        0.012395407629631785,
-        0.0011934481645049593
-      ],
-      "A_p": [
-        0.01990049751243781,
-        0.7661691542288557
-      ],
-      "B_acc1": [
-        0.004875,
-        0.004625
-      ],
-      "B_null": [
-        0.00490625,
-        0.0052812499999999995
-      ],
-      "B_acc5": [
-        0.0243125,
-        0.0240625
-      ],
-      "B_featavg": [
-        0.01,
-        0.005
-      ],
-      "B_predavg": [
-        0.01,
-        0.005
-      ],
-      "n_params": 5142786,
-      "errors": [],
-      "A_r_median": 0.006794427897068372,
-      "A_p_median": 0.39303482587064675,
-      "A_p_min": 0.01990049751243781,
-      "A_n_significant": 1,
-      "B_acc1_median": 0.00475,
-      "B_acc1_min": 0.004625,
-      "B_acc1_max": 0.004875,
-      "B_acc5_median": 0.0241875,
-      "B_null_median": 0.005093749999999999,
-      "B_featavg_median": 0.0075,
-      "B_predavg_median": 0.0075,
-      "B_ratio_vs_random": 0.95,
-      "B_n_above_null": 0
-    },
-    "braintokenizer": {
-      "name": "braintokenizer",
-      "kind": "base_model",
-      "n_subjects": 2,
-      "n_ok": 2,
-      "A_r": [
-        0.021211608385874096,
-        0.020275408186037715
-      ],
-      "A_p": [
-        0.009950248756218905,
-        0.004975124378109453
-      ],
-      "B_acc1": [
-        0.0065,
-        0.0059375
-      ],
-      "B_null": [
-        0.0052499999999999995,
-        0.0050625
-      ],
-      "B_acc5": [
-        0.03175,
-        0.031625
-      ],
-      "B_featavg": [
-        0.01,
-        0.025
-      ],
-      "B_predavg": [
-        0.01,
-        0.025
-      ],
-      "n_params": 5050338,
-      "errors": [],
-      "A_r_median": 0.020743508285955906,
-      "A_p_median": 0.007462686567164179,
-      "A_p_min": 0.004975124378109453,
-      "A_n_significant": 2,
-      "B_acc1_median": 0.00621875,
-      "B_acc1_min": 0.0059375,
-      "B_acc1_max": 0.0065,
-      "B_acc5_median": 0.0316875,
-      "B_null_median": 0.005156249999999999,
-      "B_featavg_median": 0.0175,
-      "B_predavg_median": 0.0175,
-      "B_ratio_vs_random": 1.2437500000000001,
-      "B_n_above_null": 2
     }
   },
   "per_subject": [
+    {
+      "subject": "sub-05",
+      "rows": [
+        {
+          "name": "630-d 原始特征",
+          "kind": "baseline_eeg",
+          "n_params": 0,
+          "features": null,
+          "metric_b": {
+            "acc1_cos": 0.008625,
+            "acc5_cos": 0.045,
+            "acc1_dot": 0.008625,
+            "acc5_dot": 0.0446875,
+            "acc1_predavg_cos": 0.035,
+            "acc1_predavg_dot": 0.045,
+            "acc1_featavg_cos": 0.035,
+            "acc1_featavg_dot": 0.045,
+            "null_acc1_cos": [
+              0.0060625,
+              0.0045625,
+              0.004625,
+              0.0045,
+              0.0056875,
+              0.005125,
+              0.0039375,
+              0.004875
+            ],
+            "alpha": 10.0,
+            "cv_r2_curve": {
+              "0.001": -0.08528417529337737,
+              "0.01": -0.06373226262910854,
+              "0.1": -0.021500452228365764,
+              "1.0": -6.039916063960149e-06,
+              "10.0": 0.0013772437998843534,
+              "100.0": 0.0003776857037002701,
+              "1000.0": 4.4307272334376256e-05
+            },
+            "n_train_images": 2000,
+            "n_excluded_images": 0
+          },
+          "metric_a": {
+            "r_img": 0.04827292666974062,
+            "p_img": 0.004975124378109453,
+            "null_mean": -0.0004992682357870816,
+            "null_sd": 0.004391321954432938,
+            "null_p95": 0.008372974865618995,
+            "percentile": 1.0,
+            "n_perm": 200,
+            "n_img": 200
+          }
+        },
+        {
+          "name": "mirepnet",
+          "kind": "base_model",
+          "ok": true,
+          "n_params": 5142786,
+          "load_path": "from_pretrained(n_chans,n_outputs,n_times,return_features,sfreq)",
+          "license": "MIT — https://opensource.org/licenses/MIT",
+          "info": {
+            "pool": "mean_all",
+            "device": "cpu",
+            "n_trials": 16000,
+            "layout": [
+              1,
+              1
+            ],
+            "layout_confidence": "guessed",
+            "n_global": 0,
+            "token_how": "dict[features]",
+            "layout_reason": "按 1 因数分解猜 1×1（**不得用于二维 mixer**）",
+            "n_features": 256,
+            "adapt": {
+              "model": "mirepnet",
+              "src_shape": [
+                16000,
+                63,
+                250
+              ],
+              "dst_shape": [
+                16000,
+                45,
+                1000
+              ],
+              "src_sfreq": 250.0,
+              "dst_sfreq": 250.0,
+              "n_chans_in": 250,
+              "n_chans_out": 45,
+              "n_chans_selected": 45,
+              "chans_missing": [],
+              "resample": "none",
+              "window": "pad_zeros(250→1000)",
+              "note": "45 通道全在 THINGS 里（大小写不敏感）；模型要 4 s，我们只有 1 s ⇒ 补零 3 s | IDW插值(1: ['FZ'])"
+            }
+          },
+          "metric_a": {
+            "r_img": -0.0036203655798303243,
+            "p_img": 0.43781094527363185,
+            "null_mean": 0.00023394721345871671,
+            "null_sd": 0.004510486620906932,
+            "null_p95": 0.00825847366830156,
+            "percentile": 0.205,
+            "n_perm": 200,
+            "n_img": 200
+          },
+          "metric_b": {
+            "acc1_cos": 0.00525,
+            "acc5_cos": 0.02525,
+            "acc1_dot": 0.0051875,
+            "acc5_dot": 0.0250625,
+            "acc1_predavg_cos": 0.0,
+            "acc1_predavg_dot": 0.0,
+            "acc1_featavg_cos": 0.0,
+            "acc1_featavg_dot": 0.0,
+            "null_acc1_cos": [
+              0.0044375,
+              0.00525,
+              0.004875,
+              0.0055625,
+              0.0049375,
+              0.00525,
+              0.005375,
+              0.0048125
+            ],
+            "alpha": 100.0,
+            "cv_r2_curve": {
+              "0.001": -0.026409311497400712,
+              "0.01": -0.014138032342904294,
+              "0.1": -0.006617887858776905,
+              "1.0": -0.002849464470991414,
+              "10.0": -0.0005840030028322118,
+              "100.0": 8.258468149469067e-06,
+              "1000.0": 5.314697661917833e-06
+            },
+            "n_train_images": 2000,
+            "n_excluded_images": 0
+          }
+        },
+        {
+          "name": "braintokenizer",
+          "kind": "base_model",
+          "ok": true,
+          "n_params": 5050338,
+          "load_path": "manual",
+          "license": "MIT — https://opensource.org/licenses/MIT",
+          "info": {
+            "pool": "mean_all",
+            "device": "cpu",
+            "n_trials": 16000,
+            "layout": [
+              1,
+              19
+            ],
+            "layout_confidence": "guessed",
+            "n_global": 0,
+            "token_how": "tensor3d",
+            "layout_reason": "按 19 因数分解猜 1×19（**不得用于二维 mixer**）",
+            "n_features": 512,
+            "adapt": {
+              "model": "braintokenizer",
+              "src_shape": [
+                16000,
+                63,
+                250
+              ],
+              "dst_shape": [
+                16000,
+                19,
+                512
+              ],
+              "src_sfreq": 250.0,
+              "dst_sfreq": 256.0,
+              "n_chans_in": 250,
+              "n_chans_out": 19,
+              "n_chans_selected": 19,
+              "chans_missing": [],
+              "resample": "resample_poly(128/125)",
+              "window": "pad_zeros(256→512)",
+              "note": "19 通道全在 THINGS 里；256 Hz 预训练 ⇒ 重采样；补零到 2 s。输出是**离散 token 码**（B,19,512）⇒ 池化后是每维的期望码值 | IDW插值(1: ['Fz'])"
+            }
+          },
+          "metric_a": {
+            "r_img": 0.007640880711739492,
+            "p_img": 0.08955223880597014,
+            "null_mean": -0.00013415028772426952,
+            "null_sd": 0.004456897270900801,
+            "null_p95": 0.008520399186249158,
+            "percentile": 0.935,
+            "n_perm": 200,
+            "n_img": 200
+          },
+          "metric_b": {
+            "acc1_cos": 0.0051875,
+            "acc5_cos": 0.027,
+            "acc1_dot": 0.005625,
+            "acc5_dot": 0.027125,
+            "acc1_predavg_cos": 0.015,
+            "acc1_predavg_dot": 0.01,
+            "acc1_featavg_cos": 0.015,
+            "acc1_featavg_dot": 0.01,
+            "null_acc1_cos": [
+              0.005875,
+              0.00475,
+              0.0055,
+              0.0053125,
+              0.006,
+              0.00525,
+              0.0060625,
+              0.00575
+            ],
+            "alpha": 1000.0,
+            "cv_r2_curve": {
+              "0.001": -0.013819777243670783,
+              "0.01": -0.010561211056354703,
+              "0.1": -0.007061459285262783,
+              "1.0": -0.002666737526105578,
+              "10.0": -0.00035844213157711915,
+              "100.0": -1.0344484469904103e-05,
+              "1000.0": 8.898298336434961e-06
+            },
+            "n_train_images": 2000,
+            "n_excluded_images": 0
+          }
+        }
+      ],
+      "n_train_images": 2000
+    },
     {
       "subject": "sub-06",
       "rows": [
