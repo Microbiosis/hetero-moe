@@ -13,7 +13,8 @@ GPU 利用率天然低，**加 CPU 核数往往比加 GPU 更划算**。
 
 ## 本脚本做什么
 
-1. 内置 `hf spaces hardware` 的**完整档位与单价表**（2026-10-23 实测）；
+1. 内置 `hf jobs hardware` 的**完整档位与单价表**（28 档，2026-10-23 实测）；
+   ⚠️ 是 **Jobs** 的价（cpu-basic $0.01/h），不是 Spaces 的（Spaces 的免费）。
 2. 读入**实测吞吐**（ms/试次，按 档位 × 基模 记录）——由 `probe_base_models.py`
    在各档位上实测得到，不靠理论峰值外推；
 3. 按 worklist（被试数 × 基模数 × 每单元试次数）算出各档位的
@@ -38,12 +39,19 @@ import json
 from dataclasses import dataclass
 
 # ---------------------------------------------------------------------------
-# 档位表：`hf spaces hardware`（2026-10-23 实测）
+# 档位表：`hf jobs hardware`（2026-10-23 实测，**Jobs 的价，不是 Spaces 的**）
 #   cost_per_hour：单价；accelerators：GPU 数量与型号；vcpu：CPU 核数
+#
+# ⚠️ 之前这张表取自 `hf spaces hardware`，有两个错：
+#    ① Spaces 的 cpu-basic 免费，**Jobs 的 cpu-basic 是 $0.01/h**；
+#    ② 漏了 4 个纯 CPU 档（cpu-performance / cpu-xl / h200 系列）。
+#    跑 Job 用 Jobs 的价 —— 算错价，档位结论就是错的。
 # ---------------------------------------------------------------------------
 FLAVORS = {
-    "cpu-basic":     {"$/h": 0.00, "vcpu": 2,   "ram": 16,   "gpu": "-"},
+    "cpu-basic":     {"$/h": 0.01, "vcpu": 2,   "ram": 16,   "gpu": "-"},
     "cpu-upgrade":   {"$/h": 0.03, "vcpu": 8,   "ram": 32,   "gpu": "-"},
+    "cpu-xl":        {"$/h": 1.00, "vcpu": 16,  "ram": 124,  "gpu": "-"},
+    "cpu-performance": {"$/h": 1.90, "vcpu": 32, "ram": 256, "gpu": "-"},
     "t4-small":      {"$/h": 0.40, "vcpu": 4,   "ram": 15,   "gpu": "1x T4 16G"},
     "t4-medium":     {"$/h": 0.60, "vcpu": 8,   "ram": 30,   "gpu": "1x T4 16G"},
     "a10g-small":    {"$/h": 1.00, "vcpu": 4,   "ram": 15,   "gpu": "1x A10G 24G"},
@@ -52,16 +60,20 @@ FLAVORS = {
     "a10g-largex4":  {"$/h": 5.00, "vcpu": 48,  "ram": 184,  "gpu": "4x A10G 96G"},
     "l4x1":          {"$/h": 0.80, "vcpu": 8,   "ram": 30,   "gpu": "1x L4 24G"},
     "l4x4":          {"$/h": 3.80, "vcpu": 48,  "ram": 186,  "gpu": "4x L4 96G"},
-    "l40sx1":        {"$/h": 1.80, "vcpu": 8,   "ram": 62,   "gpu": "1x L4 48G"},
-    "l40sx4":        {"$/h": 8.30, "vcpu": 48,  "ram": 382,  "gpu": "4x L4 192G"},
-    "l40sx8":        {"$/h": 23.50,"vcpu": 192, "ram": 1534, "gpu": "8x L4 384G"},
+    "l40sx1":        {"$/h": 1.80, "vcpu": 8,   "ram": 62,   "gpu": "1x L40S 48G"},
+    "l40sx4":        {"$/h": 8.30, "vcpu": 48,  "ram": 382,  "gpu": "4x L40S 192G"},
+    "l40sx8":        {"$/h": 23.50,"vcpu": 192, "ram": 1534, "gpu": "8x L40S 384G"},
     "a100-large":    {"$/h": 2.50, "vcpu": 12,  "ram": 142,  "gpu": "1x A100 80G"},
     "a100x4":        {"$/h": 10.00,"vcpu": 48,  "ram": 568,  "gpu": "4x A100 320G"},
     "a100x8":        {"$/h": 20.00,"vcpu": 96,  "ram": 1136, "gpu": "8x A100 640G"},
-    "rtx-pro-6000":  {"$/h": 2.75, "vcpu": 23,  "ram": 256,  "gpu": "1x RTX PRO 6000"},
-    "rtx-pro-6000x2":{"$/h": 5.50, "vcpu": 46,  "ram": 512,  "gpu": "2x RTX PRO 6000"},
-    "rtx-pro-6000x4":{"$/h": 11.00,"vcpu": 92,  "ram": 1024, "gpu": "4x RTX PRO 6000"},
-    "rtx-pro-6000x8":{"$/h": 22.00,"vcpu": 184, "ram": 2048, "gpu": "8x RTX PRO 6000"},
+    "h200":          {"$/h": 5.00, "vcpu": 23,  "ram": 256,  "gpu": "1x H200 141G"},
+    "h200x2":        {"$/h": 10.00,"vcpu": 46,  "ram": 512,  "gpu": "2x H200 282G"},
+    "h200x4":        {"$/h": 20.00,"vcpu": 92,  "ram": 1024, "gpu": "4x H200 564G"},
+    "h200x8":        {"$/h": 40.00,"vcpu": 184, "ram": 2048, "gpu": "8x H200 1128G"},
+    "rtx-pro-6000":  {"$/h": 2.75, "vcpu": 23,  "ram": 256,  "gpu": "1x RTX PRO 6000 96G"},
+    "rtx-pro-6000x2":{"$/h": 5.50, "vcpu": 46,  "ram": 512,  "gpu": "2x RTX PRO 6000 192G"},
+    "rtx-pro-6000x4":{"$/h": 11.00,"vcpu": 92,  "ram": 1024, "gpu": "4x RTX PRO 6000 384G"},
+    "rtx-pro-6000x8":{"$/h": 22.00,"vcpu": 184, "ram": 2048, "gpu": "8x RTX PRO 6000 768G"},
 }
 
 # ---------------------------------------------------------------------------
