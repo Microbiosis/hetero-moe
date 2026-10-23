@@ -187,9 +187,93 @@ def load_train_split(subject, n_images):
     return np.asarray(eeg[:n_images], dtype=np.float32)
 
 
+def eval_subject(model, rnd_cb, eeg_te, eeg_tr, IMG_test, IMG_train, args, rng):
+    """一个被试的完整评测。
+
+    `eeg_tr is None` ⇒ 只算指标 A（省掉 train split 的抽取与 ridge）。
+    返回 {"rows": {...}, "codebook": {...}}。
+    """
+    rec = {"rows": {}}
+    F_te, hist = extract(model, eeg_te, rnd_cb, args.batch_size, args.device)
+    F_tr = None
+    if eeg_tr is not None:
+        F_tr, _h2 = extract(model, eeg_tr, rnd_cb, args.batch_size, args.device)
+    for k in READOUTS:
+        Xte = F_te[k]
+        # ⚠️ `F_tr` 在只算指标 A 时是 **None** ⇒ 不能无条件索引
+        #    （上一版这么写 ⇒ 10 个被试全废在 TypeError 上）
+        Xtr = F_tr[k] if F_tr is not None else None
+        a = EVAL.metric_a_rsa(Xte, IMG_test, args.n_perm, rng)
+        entry = {"dim": int(Xte.shape[-1]),
+                 "r_img": a["r_img"], "p_img": a["p_img"]}
+        if Xtr is not None and IMG_train is not None:
+            mu, sd = EVAL.zscore_fit(Xtr)
+            rb = EVAL.metric_b_decode(
+                EVAL.zscore_apply(Xtr, mu, sd), EVAL.zscore_apply(Xte, mu, sd),
+                IMG_train[:args.train_images], IMG_test, rng,
+                n_null=args.n_null)
+            entry["acc1"] = rb["acc1_cos"]
+            entry["null_acc1"] = float(np.median(rb["null_acc1_cos"]))
+        rec["rows"][k] = entry
+        btxt = (f"| B acc1={entry['acc1']:.4f} "
+                f"(零中位 {entry['null_acc1']:.4f})"
+                if "acc1" in entry else "| B 跳过")
+        log(f"  {k:<18} dim={Xte.shape[-1]:<5} A r={a['r_img']:+.4f} "
+            f"p={a['p_img']:.3f} {btxt}")
+    rec["codebook"] = usage_from_hist(hist)
+    u = rec["codebook"]
+    log(f"  码本利用率：{u['used']}/{u['total']} = {u['utilization']:.1%} "
+        f"| 熵 {u['entropy_nats']:.2f} nats")
+    return rec
+
+
+def self_test():
+    """用**合成数据**把两条分支（算 B / 不算 B）都跑通。
+
+    为什么必须本地自测：上一版改了 `--no-metric-b` 分支后**没本地跑**就发到云端
+    ⇒ 10 个被试全废在 TypeError 上（`F_tr` 为 None 仍被索引）。
+    """
+    import torch
+    from exp80_eeg_tokenizer_train import EEGTokenizer
+
+    log("=== 自测：S1 评测链路（合成数据）===")
+    rng = np.random.default_rng(5)
+    n_img_te, n_img_tr, n_rep, d_img = 30, 40, 2, 32
+    IMG_te = rng.normal(size=(n_img_te, d_img))
+    IMG_tr = rng.normal(size=(n_img_tr, d_img))
+    W = rng.normal(size=(d_img, 63 * 250)) * 0.05
+
+    def make(IMG, n_rep):
+        e = (IMG @ W + 0.25 * rng.normal(size=(IMG.shape[0], 63 * 250)))
+        e = e.reshape(IMG.shape[0], 63, 250)
+        return np.repeat(e[:, None], n_rep, axis=1).astype(np.float32)
+
+    eeg_te, eeg_tr = make(IMG_te, n_rep), make(IMG_tr, n_rep)
+    model = EEGTokenizer(n_codes=64)
+    rnd_cb = torch.randn(64, model.vq.dim) * 0.5
+
+    for no_b in (True, False):
+        args = argparse.Namespace(train_images=n_img_tr, n_perm=20, n_null=1,
+                                 batch_size=8, device="cpu", no_metric_b=no_b)
+        rec = eval_subject(model, rnd_cb, eeg_te,
+                            None if no_b else eeg_tr,
+                            IMG_te, None if no_b else IMG_tr,
+                            args, np.random.default_rng(1))
+        assert set(rec["rows"]) == set(READOUTS), rec["rows"].keys()
+        assert all(v["r_img"] == v["r_img"] for v in rec["rows"].values())
+        if no_b:
+            assert all("acc1" not in v for v in rec["rows"].values())
+        else:
+            assert all("acc1" in v for v in rec["rows"].values())
+        log(f"  ✓ no_metric_b={no_b} 分支通过（{len(rec['rows'])} 个读出）")
+    log("=== 自测通过 ===")
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--ckpt", required=True)
+    ap.add_argument("--ckpt", default="",
+                    help="自训 tokenizer 的 checkpoint（桶内路径）；"
+                         "--self-test 时不需要")
     ap.add_argument("--subjects", default="1,2,3,4,5,6,7,8,9,10")
     ap.add_argument("--train-images", type=int, default=2000,
                     help="指标 B 的拟合集用多少张 train split 的图")
@@ -202,7 +286,16 @@ def main():
                          "8000² × 每读出 1+N 次拟合）而它对所有读出都在随机水平 "
                          "⇒ 主轮只跑 A，B 单独一轮补")
     ap.add_argument("--out-dir", default=str(OUT_DIR))
+    ap.add_argument("--self-test", action="store_true",
+                    help="合成数据把评测链路跑通（含 --no-metric-b 两条分支）")
     args = ap.parse_args()
+
+    if args.self_test:
+        self_test()
+        return
+    if not args.ckpt:
+        log("✗ 需要 --ckpt（或用 --self-test）")
+        raise SystemExit(1)
 
     import torch
 
@@ -229,38 +322,12 @@ def main():
         rec = {"subject": f"sub-{sid:02d}", "rows": {}}
         try:
             eeg_te = np.load(TEST_4D / f"sub-{sid:02d}.npz")["eeg"]
-            F_te, hist = extract(model, eeg_te, rnd_cb, args.batch_size, args.device)
-            if args.no_metric_b:
-                F_tr = None
-            else:
+            eeg_tr = None
+            if not args.no_metric_b:
                 eeg_tr = load_train_split(sid, args.train_images)
-                F_tr, _h2 = extract(model, eeg_tr, rnd_cb, args.batch_size,
-                                    args.device)
-            for k in READOUTS:
-                Xte, Xtr = F_te[k], F_tr[k]
-                a = EVAL.metric_a_rsa(Xte, IMG_test, args.n_perm, rng)
-                entry = {"dim": int(Xte.shape[-1]),
-                         "r_img": a["r_img"], "p_img": a["p_img"]}
-                if not args.no_metric_b:
-                    mu, sd = EVAL.zscore_fit(Xtr)
-                    rb = EVAL.metric_b_decode(
-                        EVAL.zscore_apply(Xtr, mu, sd), EVAL.zscore_apply(Xte, mu, sd),
-                        IMG_train[:args.train_images], IMG_test, rng,
-                        n_null=args.n_null)
-                    entry["acc1"] = rb["acc1_cos"]
-                    entry["null_acc1"] = float(np.median(rb["null_acc1_cos"]))
-                rec["rows"][k] = entry
-                btxt = (f"| B acc1={entry['acc1']:.4f} "
-                        f"(零中位 {entry['null_acc1']:.4f})"
-                        if "acc1" in entry else "| B 跳过")
-                log(f"  {k:<18} dim={Xte.shape[-1]:<5} A r={a['r_img']:+.4f} "
-                    f"p={a['p_img']:.3f} {btxt}")
-            # 码本利用率（**整个 test 集**的码号分布）
-            rec["codebook"] = usage_from_hist(hist)
-            u = rec["codebook"]
-            log(f"  码本利用率：{u['used']}/{u['total']} = {u['utilization']:.1%} "
-                f"| 熵 {u['entropy_nats']:.2f} nats")
-            del eeg_te, F_te
+            rec.update(eval_subject(model, rnd_cb, eeg_te, eeg_tr,
+                                    IMG_test, IMG_train, args, rng))
+            del eeg_te
         except Exception as e:
             rec["error"] = f"{type(e).__name__}: {e}"[:300]
             rec["trace"] = traceback.format_exc()[-600:]
