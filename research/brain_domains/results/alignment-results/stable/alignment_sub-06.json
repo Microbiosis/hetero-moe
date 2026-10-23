@@ -1,0 +1,403 @@
+{
+  "per_subject": [
+    {
+      "subject": "sub-06",
+      "rows": [
+        {
+          "name": "630-d 原始特征",
+          "kind": "baseline_eeg",
+          "n_params": 0,
+          "features": null,
+          "metric_b": {
+            "acc1_cos": 0.0100625,
+            "acc5_cos": 0.0445625,
+            "acc1_dot": 0.0090625,
+            "acc5_dot": 0.044875,
+            "acc1_predavg_cos": 0.03,
+            "acc1_predavg_dot": 0.03,
+            "acc1_featavg_cos": 0.03,
+            "acc1_featavg_dot": 0.03,
+            "null_acc1_cos": [
+              0.004,
+              0.004875,
+              0.00525,
+              0.0055,
+              0.00525,
+              0.0048125,
+              0.005625,
+              0.0048125
+            ],
+            "alpha": 10.0,
+            "cv_r2_curve": {
+              "0.001": -0.07988958548104019,
+              "0.01": -0.05353317146303116,
+              "0.1": -0.01579338152049914,
+              "1.0": -3.271057232265839e-05,
+              "10.0": 0.0006077208410848689,
+              "100.0": 0.0002506731927727879,
+              "1000.0": 3.0944952575873155e-05
+            },
+            "n_train_images": 2000,
+            "n_excluded_images": 0
+          },
+          "metric_a": {
+            "r_img": 0.061177068146396445,
+            "p_img": 0.004975124378109453,
+            "null_mean": -0.00020255925566202884,
+            "null_sd": 0.004399350185868329,
+            "null_p95": 0.007688086775230273,
+            "percentile": 1.0,
+            "n_perm": 200,
+            "n_img": 200
+          }
+        },
+        {
+          "name": "cbramod",
+          "kind": "base_model",
+          "ok": true,
+          "n_params": 4924000,
+          "load_path": "from_pretrained(n_chans,n_outputs,n_times,return_encoder_output,sfreq)",
+          "license": "BSD-3-Clause — https://opensource.org/licenses/BSD-3-Clause",
+          "info": {
+            "pool": "mean_all",
+            "device": "cpu",
+            "n_trials": 16000,
+            "layout": [
+              10,
+              20
+            ],
+            "layout_confidence": "guessed",
+            "n_global": 0,
+            "token_how": "tensor4d",
+            "layout_reason": "按 200 因数分解猜 10×20（**不得用于二维 mixer**）",
+            "n_features": 63,
+            "adapt": {
+              "model": "cbramod",
+              "src_shape": [
+                16000,
+                63,
+                250
+              ],
+              "dst_shape": [
+                16000,
+                63,
+                200
+              ],
+              "src_sfreq": 250.0,
+              "dst_sfreq": 200.0,
+              "n_chans_in": 250,
+              "n_chans_out": 63,
+              "n_chans_selected": 63,
+              "chans_missing": [],
+              "resample": "resample_poly(4/5)",
+              "window": "none",
+              "note": "63 通道 = THINGS 原生，零损失；**200 Hz + 200 样本 = 正好 1 个 patch**（patch_size=200；用 250 Hz 的 250 样本会触发 einops 'can't divide axis of length 250 in chunks of 200'）"
+            }
+          },
+          "metric_a": {
+            "r_img": 0.010456932087027008,
+            "p_img": 0.04477611940298507,
+            "null_mean": 1.4661129448631585e-05,
+            "null_sd": 0.004696302649940437,
+            "null_p95": 0.009610295062754093,
+            "percentile": 0.98,
+            "n_perm": 200,
+            "n_img": 200
+          },
+          "metric_b": {
+            "acc1_cos": 0.00525,
+            "acc5_cos": 0.0241875,
+            "acc1_dot": 0.0055,
+            "acc5_dot": 0.0244375,
+            "acc1_predavg_cos": 0.005,
+            "acc1_predavg_dot": 0.005,
+            "acc1_featavg_cos": 0.005,
+            "acc1_featavg_dot": 0.005,
+            "null_acc1_cos": [
+              0.004875,
+              0.00525,
+              0.0050625,
+              0.0053125,
+              0.005,
+              0.0039375,
+              0.0041875,
+              0.0058125
+            ],
+            "alpha": 100.0,
+            "cv_r2_curve": {
+              "0.001": -0.00948726325177085,
+              "0.01": -0.009293699257901532,
+              "0.1": -0.007661484398452734,
+              "1.0": -0.0021407266497399657,
+              "10.0": -2.9536259691598232e-05,
+              "100.0": 5.39276773625641e-06,
+              "1000.0": 6.430299474446954e-07
+            },
+            "n_train_images": 2000,
+            "n_excluded_images": 0
+          }
+        },
+        {
+          "name": "eegdino-small",
+          "kind": "base_model",
+          "ok": true,
+          "n_params": 4433944,
+          "load_path": "from_pretrained(n_chans,n_outputs,n_times,return_encoder_output,sfreq)",
+          "license": "BSD-3-Clause — https://opensource.org/licenses/BSD-3-Clause",
+          "info": {
+            "pool": "mean_all",
+            "device": "cpu",
+            "n_trials": 16000,
+            "layout": [
+              1,
+              1
+            ],
+            "layout_confidence": "guessed",
+            "n_global": 0,
+            "token_how": "tensor2d",
+            "layout_reason": "按 1 因数分解猜 1×1（**不得用于二维 mixer**）",
+            "n_features": 200,
+            "adapt": {
+              "model": "eegdino-small",
+              "src_shape": [
+                16000,
+                63,
+                250
+              ],
+              "dst_shape": [
+                16000,
+                19,
+                1000
+              ],
+              "src_sfreq": 250.0,
+              "dst_sfreq": 200.0,
+              "n_chans_in": 250,
+              "n_chans_out": 19,
+              "n_chans_selected": 19,
+              "chans_missing": [],
+              "resample": "resample_poly(4/5)",
+              "window": "pad_zeros(200→1000)",
+              "note": "预训练在 200 Hz ⇒ 必须重采样；模型要 5 s，我们只有 1 s ⇒ 补零 4 s | IDW插值(1: ['Fz'])"
+            }
+          },
+          "metric_a": {
+            "r_img": 0.006166628160462917,
+            "p_img": 0.23383084577114427,
+            "null_mean": 0.00035809059580953206,
+            "null_sd": 0.0051961559001866145,
+            "null_p95": 0.011464233231247803,
+            "percentile": 0.865,
+            "n_perm": 200,
+            "n_img": 200
+          },
+          "metric_b": {
+            "acc1_cos": 0.004,
+            "acc5_cos": 0.0265,
+            "acc1_dot": 0.004375,
+            "acc5_dot": 0.0264375,
+            "acc1_predavg_cos": 0.005,
+            "acc1_predavg_dot": 0.005,
+            "acc1_featavg_cos": 0.005,
+            "acc1_featavg_dot": 0.005,
+            "null_acc1_cos": [
+              0.0044375,
+              0.0056875,
+              0.005125,
+              0.0058125,
+              0.0050625,
+              0.00525,
+              0.0048125,
+              0.0049375
+            ],
+            "alpha": 100.0,
+            "cv_r2_curve": {
+              "0.001": -0.02637696054365164,
+              "0.01": -0.016776572051905213,
+              "0.1": -0.007791816963772869,
+              "1.0": -0.002083598192201652,
+              "10.0": -0.00014372975908787388,
+              "100.0": 3.118645404911469e-05,
+              "1000.0": 5.836652779400709e-06
+            },
+            "n_train_images": 2000,
+            "n_excluded_images": 0
+          }
+        },
+        {
+          "name": "biot",
+          "kind": "base_model",
+          "ok": true,
+          "n_params": 3187202,
+          "load_path": "from_pretrained(n_chans,n_outputs,n_times,return_feature,sfreq)",
+          "license": "BSD-3-Clause — https://opensource.org/licenses/BSD-3-Clause",
+          "info": {
+            "pool": "mean_all",
+            "device": "cpu",
+            "n_trials": 16000,
+            "layout": [
+              1,
+              1
+            ],
+            "layout_confidence": "guessed",
+            "n_global": 0,
+            "token_how": "tuple[1]2d",
+            "layout_reason": "按 1 因数分解猜 1×1（**不得用于二维 mixer**）",
+            "n_features": 256,
+            "adapt": {
+              "model": "biot",
+              "src_shape": [
+                16000,
+                63,
+                250
+              ],
+              "dst_shape": [
+                16000,
+                18,
+                1000
+              ],
+              "src_sfreq": 250.0,
+              "dst_sfreq": 200.0,
+              "n_chans_in": 250,
+              "n_chans_out": 18,
+              "n_chans_selected": 18,
+              "chans_missing": [],
+              "resample": "resample_poly(4/5)",
+              "window": "pad_zeros(200→1000)",
+              "note": "18 个通道是 TCP 双极导联（不是 18 个电极）⇒ 自己算差分；C3-A2 / C4-A1 要的 A1/A2 在 THINGS 里没有 ⇒ 用平均参考代替；200 Hz 预训练 ⇒ 重采样；补零到 5 s | 双极差分（含平均参考替代）"
+            }
+          },
+          "metric_a": {
+            "r_img": -0.0022560231100319733,
+            "p_img": 0.6318407960199005,
+            "null_mean": 7.125788583812364e-05,
+            "null_sd": 0.0045588941335056804,
+            "null_p95": 0.008768069959286669,
+            "percentile": 0.305,
+            "n_perm": 200,
+            "n_img": 200
+          },
+          "metric_b": {
+            "acc1_cos": 0.005375,
+            "acc5_cos": 0.02575,
+            "acc1_dot": 0.0050625,
+            "acc5_dot": 0.026,
+            "acc1_predavg_cos": 0.005,
+            "acc1_predavg_dot": 0.005,
+            "acc1_featavg_cos": 0.005,
+            "acc1_featavg_dot": 0.005,
+            "null_acc1_cos": [
+              0.0053125,
+              0.0049375,
+              0.0056875,
+              0.0040625,
+              0.004625,
+              0.00425,
+              0.004625,
+              0.0039375
+            ],
+            "alpha": 1000.0,
+            "cv_r2_curve": {
+              "0.001": -0.025188031661944166,
+              "0.01": -0.011474319563668622,
+              "0.1": -0.003932834423309428,
+              "1.0": -0.0015196930268102538,
+              "10.0": -0.00044574338259804056,
+              "100.0": -1.064053325805503e-06,
+              "1000.0": 9.300621207675163e-06
+            },
+            "n_train_images": 2000,
+            "n_excluded_images": 0
+          }
+        },
+        {
+          "name": "signal-jepa",
+          "kind": "base_model",
+          "ok": true,
+          "n_params": 3456852,
+          "load_path": "manual",
+          "license": "MIT — https://opensource.org/licenses/MIT",
+          "info": {
+            "pool": "mean_all",
+            "device": "cpu",
+            "n_trials": 16000,
+            "layout": [
+              2,
+              31
+            ],
+            "layout_confidence": "guessed",
+            "n_global": 0,
+            "token_how": "tensor3d",
+            "layout_reason": "按 62 因数分解猜 2×31（**不得用于二维 mixer**）",
+            "n_features": 64,
+            "adapt": {
+              "model": "signal-jepa",
+              "src_shape": [
+                16000,
+                63,
+                250
+              ],
+              "dst_shape": [
+                16000,
+                63,
+                250
+              ],
+              "src_sfreq": 250.0,
+              "dst_sfreq": 128.0,
+              "n_chans_in": 250,
+              "n_chans_out": 63,
+              "n_chans_selected": 63,
+              "chans_missing": [],
+              "resample": "resample_poly(64/125)",
+              "window": "pad_zeros(128→250)",
+              "note": "要 62 个通道（THINGS 缺 10 个）⇒ InterpolatedSignalJEPA 插值；128 Hz 预训练 ⇒ 重采样"
+            }
+          },
+          "metric_a": {
+            "r_img": 0.047212125751293944,
+            "p_img": 0.004975124378109453,
+            "null_mean": -0.00024118161962047738,
+            "null_sd": 0.005401653751486436,
+            "null_p95": 0.010786990008660647,
+            "percentile": 1.0,
+            "n_perm": 200,
+            "n_img": 200
+          },
+          "metric_b": {
+            "acc1_cos": 0.0055,
+            "acc5_cos": 0.02925,
+            "acc1_dot": 0.00475,
+            "acc5_dot": 0.02975,
+            "acc1_predavg_cos": 0.0,
+            "acc1_predavg_dot": 0.01,
+            "acc1_featavg_cos": 0.0,
+            "acc1_featavg_dot": 0.01,
+            "null_acc1_cos": [
+              0.005,
+              0.00525,
+              0.004375,
+              0.0058125,
+              0.0048125,
+              0.0048125,
+              0.0059375,
+              0.00375
+            ],
+            "alpha": 100.0,
+            "cv_r2_curve": {
+              "0.001": -0.006642975599947443,
+              "0.01": -0.004259494963004373,
+              "0.1": -0.0019519601438471757,
+              "1.0": -0.00045464151060685686,
+              "10.0": 1.3350505251774613e-05,
+              "100.0": 1.8408311684292576e-05,
+              "1000.0": 2.324334261594174e-06
+            },
+            "n_train_images": 2000,
+            "n_excluded_images": 0
+          }
+        }
+      ],
+      "n_train_images": 2000,
+      "elapsed_s": 804.4
+    }
+  ]
+}

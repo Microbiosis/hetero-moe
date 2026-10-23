@@ -1,0 +1,231 @@
+{
+  "per_subject": [
+    {
+      "subject": "sub-08",
+      "rows": [
+        {
+          "name": "630-d 原始特征",
+          "kind": "baseline_eeg",
+          "n_params": 0,
+          "features": null,
+          "metric_b": {
+            "acc1_cos": 0.0235625,
+            "acc5_cos": 0.0954375,
+            "acc1_dot": 0.0236875,
+            "acc5_dot": 0.09375,
+            "acc1_predavg_cos": 0.075,
+            "acc1_predavg_dot": 0.085,
+            "acc1_featavg_cos": 0.075,
+            "acc1_featavg_dot": 0.085,
+            "null_acc1_cos": [
+              0.006,
+              0.0045,
+              0.0048125,
+              0.0060625,
+              0.0044375,
+              0.005875,
+              0.0049375,
+              0.0044375
+            ],
+            "alpha": 1.0,
+            "cv_r2_curve": {
+              "0.001": -0.07456729608540744,
+              "0.01": -0.056684515435146965,
+              "0.1": -0.013075912256162558,
+              "1.0": 0.008282650009343561,
+              "10.0": 0.0033603852433478965,
+              "100.0": 0.0005706726142487017,
+              "1000.0": 6.388522812530439e-05
+            },
+            "n_train_images": 2000,
+            "n_excluded_images": 0
+          },
+          "metric_a": {
+            "r_img": 0.06727332823440696,
+            "p_img": 0.004975124378109453,
+            "null_mean": -0.0003114376396562759,
+            "null_sd": 0.004529513827661914,
+            "null_p95": 0.008633997197372501,
+            "percentile": 1.0,
+            "n_perm": 200,
+            "n_img": 200
+          }
+        },
+        {
+          "name": "mirepnet",
+          "kind": "base_model",
+          "ok": true,
+          "n_params": 5142786,
+          "load_path": "from_pretrained(n_chans,n_outputs,n_times,return_features,sfreq)",
+          "license": "MIT — https://opensource.org/licenses/MIT",
+          "info": {
+            "pool": "mean_all",
+            "device": "cpu",
+            "n_trials": 16000,
+            "layout": [
+              1,
+              1
+            ],
+            "layout_confidence": "guessed",
+            "n_global": 0,
+            "token_how": "dict[features]",
+            "layout_reason": "按 1 因数分解猜 1×1（**不得用于二维 mixer**）",
+            "n_features": 256,
+            "adapt": {
+              "model": "mirepnet",
+              "src_shape": [
+                16000,
+                63,
+                250
+              ],
+              "dst_shape": [
+                16000,
+                45,
+                1000
+              ],
+              "src_sfreq": 250.0,
+              "dst_sfreq": 250.0,
+              "n_chans_in": 250,
+              "n_chans_out": 45,
+              "n_chans_selected": 45,
+              "chans_missing": [],
+              "resample": "none",
+              "window": "pad_zeros(250→1000)",
+              "note": "45 通道全在 THINGS 里（大小写不敏感）；模型要 4 s，我们只有 1 s ⇒ 补零 3 s | IDW插值(1: ['FZ'])"
+            }
+          },
+          "metric_a": {
+            "r_img": 0.0011934481645049593,
+            "p_img": 0.7661691542288557,
+            "null_mean": 0.0001302375889030425,
+            "null_sd": 0.004658598223718034,
+            "null_p95": 0.009555072539732819,
+            "percentile": 0.61,
+            "n_perm": 200,
+            "n_img": 200
+          },
+          "metric_b": {
+            "acc1_cos": 0.004625,
+            "acc5_cos": 0.0240625,
+            "acc1_dot": 0.0045625,
+            "acc5_dot": 0.025,
+            "acc1_predavg_cos": 0.005,
+            "acc1_predavg_dot": 0.005,
+            "acc1_featavg_cos": 0.005,
+            "acc1_featavg_dot": 0.005,
+            "null_acc1_cos": [
+              0.005375,
+              0.00575,
+              0.0041875,
+              0.005875,
+              0.00575,
+              0.0051875,
+              0.0050625,
+              0.0051875
+            ],
+            "alpha": 1000.0,
+            "cv_r2_curve": {
+              "0.001": -0.029135864709989613,
+              "0.01": -0.015843875385205618,
+              "0.1": -0.00728347968985541,
+              "1.0": -0.0029753081641188395,
+              "10.0": -0.0006222455069667898,
+              "100.0": -9.454838846822966e-06,
+              "1000.0": 3.1346597185510915e-06
+            },
+            "n_train_images": 2000,
+            "n_excluded_images": 0
+          }
+        },
+        {
+          "name": "braintokenizer",
+          "kind": "base_model",
+          "ok": true,
+          "n_params": 5050338,
+          "load_path": "manual",
+          "license": "MIT — https://opensource.org/licenses/MIT",
+          "info": {
+            "pool": "mean_all",
+            "device": "cpu",
+            "n_trials": 16000,
+            "layout": [
+              1,
+              19
+            ],
+            "layout_confidence": "guessed",
+            "n_global": 0,
+            "token_how": "tensor3d",
+            "layout_reason": "按 19 因数分解猜 1×19（**不得用于二维 mixer**）",
+            "n_features": 512,
+            "adapt": {
+              "model": "braintokenizer",
+              "src_shape": [
+                16000,
+                63,
+                250
+              ],
+              "dst_shape": [
+                16000,
+                19,
+                512
+              ],
+              "src_sfreq": 250.0,
+              "dst_sfreq": 256.0,
+              "n_chans_in": 250,
+              "n_chans_out": 19,
+              "n_chans_selected": 19,
+              "chans_missing": [],
+              "resample": "resample_poly(128/125)",
+              "window": "pad_zeros(256→512)",
+              "note": "19 通道全在 THINGS 里；256 Hz 预训练 ⇒ 重采样；补零到 2 s。输出是**离散 token 码**（B,19,512）⇒ 池化后是每维的期望码值 | IDW插值(1: ['Fz'])"
+            }
+          },
+          "metric_a": {
+            "r_img": 0.020275408186037715,
+            "p_img": 0.004975124378109453,
+            "null_mean": 1.3314478146262462e-05,
+            "null_sd": 0.004202599027998607,
+            "null_p95": 0.008257243372809494,
+            "percentile": 1.0,
+            "n_perm": 200,
+            "n_img": 200
+          },
+          "metric_b": {
+            "acc1_cos": 0.0059375,
+            "acc5_cos": 0.031625,
+            "acc1_dot": 0.0051875,
+            "acc5_dot": 0.03025,
+            "acc1_predavg_cos": 0.025,
+            "acc1_predavg_dot": 0.03,
+            "acc1_featavg_cos": 0.025,
+            "acc1_featavg_dot": 0.03,
+            "null_acc1_cos": [
+              0.005,
+              0.005125,
+              0.0049375,
+              0.0065,
+              0.0043125,
+              0.005875,
+              0.005,
+              0.005375
+            ],
+            "alpha": 100.0,
+            "cv_r2_curve": {
+              "0.001": -0.01477435554045221,
+              "0.01": -0.011302341498312884,
+              "0.1": -0.007584936563539424,
+              "1.0": -0.003134317710655354,
+              "10.0": -0.00031273852597419883,
+              "100.0": 3.4950148540180416e-05,
+              "1000.0": 1.143017467419849e-05
+            },
+            "n_train_images": 2000,
+            "n_excluded_images": 0
+          }
+        }
+      ],
+      "n_train_images": 2000,
+      "elapsed_s": 917.4
+    }
+  ]
+}
