@@ -89,11 +89,32 @@ def log(*a):
 
 
 def load_model(ckpt_path, seed=SEED):
-    """加载自训 tokenizer + 造一个随机码本（对照 B）。"""
+    """加载自训 tokenizer + 造一个随机码本（对照 B）。
+
+    ⚠️ **按 checkpoint 里的元信息自动选架构**：
+      - `arch == "base"`      ⇒ exp80 的 EEGTokenizer（S1a）
+      - `arch == "assembled"` ⇒ exp86 的组装模型（组件级组装的产物）
+    ⇒ 两种产物共用同一个评测脚本、同一套读出口径、同一份判据。
+    """
     import torch
-    from exp80_eeg_tokenizer_train import EEGTokenizer
     ck = torch.load(ckpt_path, map_location="cpu", weights_only=False)
-    model = EEGTokenizer(n_codes=int(ck["n_codes"]))
+    arch = ck.get("arch", "base")
+    if arch == "assembled":
+        from exp86_assembled_train import (build_assembled, extract_attn_state,
+                                           extract_ffn_donor)
+        a = ck.get("args", {})
+        attn = extract_attn_state(a.get("attn_donor", "signal-jepa"))
+        ffn = None
+        if ck.get("donor_ffn", "none") != "none":
+            ffn = extract_ffn_donor(ck["donor_ffn"])
+        model = build_assembled(n_codes=int(ck["n_codes"]), attn_state=attn,
+                                ffn_donor=ffn)
+        log(f"  架构：assembled（注意力 {a.get('attn_donor')} / "
+            f"FFN {ck.get('donor_ffn')}）")
+    else:
+        from exp80_eeg_tokenizer_train import EEGTokenizer
+        model = EEGTokenizer(n_codes=int(ck["n_codes"]))
+        log("  架构：base")
     model.load_state_dict(ck["state_dict"])
     model.eval()
     g = torch.Generator().manual_seed(seed)
