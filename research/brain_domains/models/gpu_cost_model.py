@@ -128,30 +128,47 @@ def estimate_ms(meas, tier, model):
 
 def compute(meas, wl_name, n_subjects=N_SUBJECTS, n_models=N_MODELS,
             n_variants=N_VARIANTS):
+    """算出每个档位的总小时数与总费用。
+
+    ⚠️ **不能对各模型速度取平均**：实测各基模的 ms/试次差 47 倍
+    （mirepnet 9.5 ms vs labram 450 ms —— labram 的窗口是 3000 点而不是 250）。
+    取平均会把 labram 的开销摊薄掉，得出偏乐观的结论。
+    正确做法：**逐模型算时间再求和**。
+    """
     w = WORKLOADS[wl_name]
     trials = per_unit_trials(w)
     rows = []
     for tier, spec in FLAVORS.items():
-        # 变体：每个变体按其宿主的模型算（这里保守按最慢的模型算）
-        ms_list = []
-        for model in meas.get(tier, {}):
-            ms, _ = estimate_ms(meas, tier, model)
-            ms_list.append(ms)
-        if not ms_list:
-            ms_list = [estimate_ms(meas, tier, m)[0]
-                       for m in ("cbramod",) if estimate_ms(meas, tier, m)[0]]
-        if not ms_list:
+        mm = meas.get(tier) or {}
+        if not mm:
             continue
-        ms_per_trial = sum(ms_list) / len(ms_list)
-        # 总量：基模（n_models）+ 变体（n_variants，各按同量级算）
-        total_trials = trials * n_subjects * (n_models + n_variants)
-        hours = total_trials * ms_per_trial / 1000.0 / 3600.0
+        detail = []
+        total_s_per_subject = 0.0
+        for model in mm:
+            ms, how = estimate_ms(meas, tier, model)
+            if ms is None:
+                continue
+            t_s = trials * ms / 1000.0
+            total_s_per_subject += t_s
+            detail.append({"model": model, "ms": round(ms, 3), "how": how,
+                           "hours_1_subject": round(t_s / 3600.0, 3)})
+        if not detail:
+            continue
+        # 变体：按同档位基模的中位速度算（它们的宿主就在基模里）
+        med_ms = sorted(d["ms"] for d in detail)[len(detail) // 2]
+        var_s = n_variants * trials * med_ms / 1000.0
+        total_s = (total_s_per_subject + var_s) * n_subjects
+        hours = total_s / 3600.0
         cost = hours * spec["$/h"]
         rows.append({
             "tier": tier, "$/h": spec["$/h"], "gpu": spec["gpu"],
-            "vcpu": spec["vcpu"], "ms/试次": round(ms_per_trial, 3),
-            "小时": round(hours, 2), "总费用$": round(cost, 3),
+            "vcpu": spec["vcpu"],
+            "n_models_measured": len(detail),
+            "ms_sum_per_trial": round(sum(d["ms"] for d in detail), 3),
+            "hours": round(hours, 2), "总费用$": round(cost, 3),
             "来源": "实测" if (tier in meas and meas[tier]) else "外推",
+            "per_model": detail,
+            "variant_hours_1_subject": round(var_s / 3600.0, 3),
         })
     rows.sort(key=lambda r: r["总费用$"])
     return rows, w, trials
@@ -180,18 +197,25 @@ def main():
           f"({args.models} 基模 + {args.variants} 变体)")
     print("=" * 92)
     print(f"{'档位':<18}{'单价$/h':>8}{'GPU':>22}{'vCPU':>6}"
-          f"{'ms/试次':>10}{'小时':>9}{'总费用$':>10}  来源")
+          f"{'Σms/试次':>10}{'小时':>9}{'总费用$':>10}  来源")
     for r in rows:
         print(f"{r['tier']:<18}{r['$/h']:>8.2f}{r['gpu']:>22}{r['vcpu']:>6}"
-              f"{r['ms/试次']:>10.3f}{r['小时']:>9.2f}{r['总费用$']:>10.3f}  {r['来源']}")
+              f"{r['ms_sum_per_trial']:>10.3f}{r['hours']:>9.2f}"
+              f"{r['总费用$']:>10.3f}  {r['来源']}")
     if rows:
         best = rows[0]
         print("\n" + "=" * 92)
         print(f"★ 总费用最低：{best['tier']}  ${best['总费用$']:.3f}  "
-              f"（{best['小时']:.2f} 小时 @ ${best['$/h']:.2f}/h）")
-        fastest = min(rows, key=lambda r: r["小时"])
-        print(f"  最快：{fastest['tier']}  {fastest['小时']:.2f} 小时  "
+              f"（{best['hours']:.2f} 小时 @ ${best['$/h']:.2f}/h）")
+        fastest = min(rows, key=lambda r: r["hours"])
+        print(f"  最快：{fastest['tier']}  {fastest['hours']:.2f} 小时  "
               f"${fastest['总费用$']:.3f}")
+        print("  ── 最优档逐模型明细（每被试）──")
+        for d in sorted(best["per_model"], key=lambda x: -x["ms"]):
+            print(f"     {d['model']:<18} {d['ms']:>8.3f} ms/试次  "
+                  f"{d['hours_1_subject']:>7.3f} 小时  ({d['how']})")
+        print(f"     {'变体×' + str(args.variants):<18} {'(按中位速度)':>10}  "
+              f"{'':>7}  {best['variant_hours_1_subject']:>7.3f} 小时")
         print("=" * 92)
 
 

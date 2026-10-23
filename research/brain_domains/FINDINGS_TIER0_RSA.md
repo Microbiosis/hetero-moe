@@ -1311,78 +1311,150 @@ RSA 显著性回答的是「它与外部 RDM 的对应是不是随机的」。�
 
 ---
 
-## 十六、阶段 B′/C/D：7 基模脑对齐表 + 逐 block 重组（工具链已就绪，数字待云端）
+## 十六、阶段 B′/C/D：7 基模脑对齐表 + 逐 block 重组
 
-> **本节不含任何实验数字** —— 网络拦截期间一切外网连接都过不去，
-> 探针 v3 送不进去、表跑不了。**没有数字就不写数字**，
-> 这一节只记录「表是怎么定义的」与「代码已自测到哪一步」。
+> 本节记录**已实测**的硬事实（探针 v10、5 档位吞吐、链路验证），
+> 以及「表是怎么定义的」。**表的两个指标数字尚未跑完**（跑表在跑），
+> 没有数字的地方一律留空，不写"预计""应该"。
 
 ### 十六·一、这张表的定义
 
-把 7 个 EEG 基模的**冻结表征**放进 THINGS-EEG 输入域（63 ch / 250 Hz / 1000 ms），
-用**两个口径不同的指标**同表并列（不给主次）：
+把 7 个 EEG 基模的**冻结表征**放进 THINGS-EEG 输入域，用**两个口径不同的指标**同表并列（不给主次）：
 
 | 指标 | 口径 | 复用 | 回答的问题 |
 |---|---|---|---|
 | **A：RSA** | 冻结表征 ↔ ViT-H-14 图像表征的 RDM 秩相关 | `exp65.rdm_full / spearman / rsa_with_null / p_from_null` | 表征里有没有**图像语义结构** |
 | **B：ridge 200 选 1** | 冻结表征上闭式 ridge → test split 200 选 1 | `exp73.per_rep_targets / fit_and_decode` | 表征里的信息**能不能读出**图像 |
 
-两条必须写死的口径纪律：
+两条口径纪律：
 
 1. **基线行同协议** —— 表里「630-d 原始特征」那行用**同一个 train 图像数**重算，
-   不是抄 exp73 的 0.0309。否则基线与模型行不可比。
-2. **指标 B 必须用试次级 Gram**（`A0 = G_full/n_rep`）。
-   exp73a 的方向审计已经证死：**图级降维在解码方向不成立**
-   （图级 Gram 漏掉图内散布 Δ），照抄 exp73 的实现即可，无需重写。
+   不是抄 exp73 的 0.0309。
+2. **指标 B 必须用试次级 Gram**（`A0 = G_full/n_rep`）：exp73a 的方向审计已证死
+   「图级 Gram 在解码方向不成立」。
 
-### 十六·二、工具链（`research/brain_domains/models/`）
+### 十六·二、THINGS-EEG 的 63 个通道（实测，此前一直未知）
+
+云端从原始 `test.pt` 读出（桶内没有蒙太奇文件）：
 
 ```
-domain_adapters.py  THINGS-EEG → 各基模期望域（通道子集 / resample_poly 重采样 / 窗口裁剪或补零）
-registry.py         装载 → token 抽取 → 布局推断 → 池化（7 个基模的统一口径）
-interfaces.py       mixer 家族（identity / attn1d / crisscross2d / linear_ssm / timefreq）+ FFN + 投影 + pre-LN block
-provenance.py       重组变体的诚实归因（**逐组件**权重状态 + 许可取最严）
-assembler.py        逐 block 拆 + 组装器 + **权重搬运核实** + 声明式变体清单
-gpu_cost_model.py   20 档位单价表 + 三种 workload 的总费用最优档
-probe_base_models.py braindecode 装载探针（逐基模前向 + 吞吐 + THINGS 通道名）
-exp/eval_brain_alignment.py  表评测本体（指标 A + 指标 B + 630-d 基线行）
+Fp1 Fp2 AF7 AF3 AFz AF4 AF8 | F7 F5 F3 F1 F2 F4 F6 F8 | FT9 FT7
+FC5 FC3 FC1 FCz FC2 FC4 FC6 FT8 FT10 | T7 C5 C3 C1 Cz C2 C4 C6 T8
+TP9 TP7 CP5 CP3 CP1 CPz CP2 CP4 CP6 TP8 TP10 | P7 P5 P3 P1 Pz P2 P4 P6 P8
+PO7 PO3 POz PO4 PO8 | O1 Oz O2
 ```
 
-### 十六·三、这一轮真正定下来的三条技术决定
+⚠️ **关键事实：这套蒙太奇里没有 Fz**（前额用 F1/F2 的密集网格），
+但 eegdino / braintokenizer / mirepnet 都要 Fz（或 FZ）⇒
+直接按名选会少一个通道，模型直接报
+`expected input to have 45 channels, but got 44`。
+⇒ 这 3 个模型必须用 **MNE 插值**补出 Fz（`standard_1020` 里有位置）。
 
-1. **token 维度不一致时，投影是「两侧」而不是「一侧」**。
-   源权重期待的输入维度是 `src_dim`，所以入口投影是 宿主→源、出口投影是 源→宿主。
-   只在入口插一个「源→宿主」的投影，源权重形状立刻对不上 —— 等于白搬。
-   修正后 modelC（d=32）的块装进宿主（d=64）时，**源权重逐键原样搬用**，
-   provenance 记 `{mixer: reuse, ffn: reuse, proj: projected}`。
-2. **CBraMod 的 Criss-Cross 权重搬不动，就标 `arch-only`**。
-   它是卷积实现，我们的 `CrissCross2D` 是注意力实现 —— 结构不同、权重不可搬。
-   拿随机初始化的权重冒充「从 CBraMod 搬来的」，会让「重组带来的提升」无法归因。
-   ⇒ 每块记**逐组件**状态，而不是一个总标签。
-3. **`linear_ssm` 是结构占位，不是 Mamba**。环境里没有 `mamba_ssm`/`fla`，
-   它必须标 `fresh` 并注明「占位」。**占位不许冒充真身。**
+### 十六·三、7 个基模的实测输入规格（探针 v10，判据 = 装载 + 前向都成功）
 
-### 十六·四、本地已经自测到的程度（合成数据，未碰网络）
+| 基模 | 输入 | 采样率 | 参数量 | 通道策略 | 信号占窗口 |
+|---|---|---|---|---|---|
+| cbramod | (63, 200) | 200 Hz | 4,974,402 | 原生 63 通道 | 100% |
+| mirepnet | (45, 1000) | 250 Hz | 5,142,786 | 取 45（Fz 需插值） | 25% |
+| eegdino-small | (19, 1000) | 200 Hz | 4,539,596 | 取 19（Fz 需插值） | 20% |
+| biot | (18, 1000) | 200 Hz | 3,187,202 | **自己算 18 路双极差分** | 20% |
+| labram | (128, 3000) | 250 Hz | 5,820,338 | 128 路 10-10 ⇒ **本轮不纳入** | 8% |
+| signal-jepa | (62, 250) | 128 Hz | 3,456,852 | `InterpolatedSignalJEPA` 插值 | 51% |
+| braintokenizer | (19, 512) | 256 Hz | 5,050,338 | 取 19（Fz 需插值） | 50% |
 
-| 自测 | 覆盖 | 结果 |
-|---|---|---|
-| `eval_brain_alignment.py --self-test` | 装载 → 布局 → 前向 → 池化 → 指标 A → 指标 B → 630-d 基线行 → 出表 | ✅ 全绿（有信号合成数据上 A r=+0.30 p=0.010、B acc1=0.90 vs 零中位 0.00）|
-| `assembler.py` 自测 | 权重真搬（A）、搬不动要标 arch-only（B）、两侧投影、占位标注、许可取最严、缺失源要报出来、「all 层」展开、干跑可行性报告 | ✅ 全绿 |
-| `train_illusionbrain_eeg.py --self-test` | per_rep_targets 与 exp73 逐位一致、safetensors 往返、合成训练 + **负对照**、eval_200way 自比对 | ✅ 全绿（修了一个真 bug：numpy 数组喂给了 torch 的 `normalize`）|
+三个必须记住的坑：
 
-### 十六·五、还欠什么
+1. **BIOT 的 18 个"通道"不是 18 个电极**，而是 **TCP 双极导联**
+   （braindecode 源码 `BIOT_CHANNEL_ORDER`：FP1-F7、F7-T7、…）⇒ 必须自己算差分；
+   其中 C3-A2 / C4-A1 要的 A1/A2（耳垂参考）THINGS 里没有 ⇒ 用**平均参考**代替
+   （明确标注为替代方案）。
+2. **CBraMod 的 patch_size = 200** ⇒ 喂 250 样本会炸
+   （`can't divide axis of length 250 in chunks of 200`）⇒ 必须用 200 Hz / 200 样本
+   （正好 1 个 patch）。
+3. **窗口一律补零**：THINGS 只有 1 s，而多数模型要 4–12 s ⇒ 尾部补零。
+   ⚠️ 这是**已知偏差**：带位置编码的模型只在前 1/4～1/12 窗口看到信号。
+   零是常数、LayerNorm 会压掉大部分，但**不能当噪声吞掉**。
 
-1. **探针 v3 送不进云端**（`Server disconnected without sending a response`）——
-   `hf buckets cp` 12 KB 能过、再大就挂 ⇒ 需要分块投递（`tools/hf_job_deliver.py`
-   已写好：每片 1.6 KB 一 Job，收尾 Job 拼接落桶并执行）。
-2. **`mirepnet` 不在 braindecode 1.8.1** ⇒ 要么自带实现，要么走它原仓库。
-3. **THINGS-EEG 那 63 个通道名**仍未知（桶内没有蒙太奇文件）⇒ 探针 v3 里已含
-   从原始 `test.pt` 读的逻辑，等网络恢复跑一次。
-4. **GPU 档位的总费用最优解**需要各档实测 ms/试次（`probe_ms.json`），
-   框架已就绪；`gpu_cost_model.py` 用合成吞吐跑通过（真数据到位后重跑）。
-   ⚠️ **费用最优 ≠ 最快档**：小模型 GPU 利用率低，`cpu-upgrade`（$0.03/h）
-   在「CPU 受限」区间很可能比 T4 便宜数倍。
+### 十六·四、braindecode 必须分两版（这是本轮最大的坑）
 
----
+| 版本 | 类数 | 有 `MIRepNet` / `BrainTokenizer`？ | 有 `Interpolated*`（通道插值包装）？ |
+|---|---|---|---|
+| 稳定版 `1.8.1` | 137 | ❌ | ✅（InterpolatedBIOT / LaBraM / SignalJEPA / Model …） |
+| dev 版 `1.8.1.dev184031250` | 176 | ✅ | ❌ **一个都没有** |
 
-*本文所有数字均来自云端 Job 的实际运行日志，原始 JSON 见上方桶路径。*
+⇒ **必须分两趟跑**：
+
+- **stable 趟**：cbramod、eegdino-small、biot、signal-jepa
+- **dev 趟**：mirepnet、braintokenizer
+
+配套的三个技术事实：
+
+1. `pip install --pre --upgrade` **不会**升到 dev 版（实测装完仍是 1.8.1）⇒ 必须点名版本号。
+2. 装完 dev 版**必须重入脚本**（`os.execv`）：pip 换的是磁盘文件，而当前进程里
+   `braindecode` 早已 import 过 ⇒ 内存里还是旧版（实测仍报"没有候选类 MIRepNet"）；
+   `importlib.reload` 更糟（实测把 7 个类全弄丢）。
+3. 装 dev 版要用 `--no-deps`：依赖在装稳定版时已就位，
+   不加 `--no-deps` 的 `--force-reinstall` 会把 torch（~2 GB）重下一遍。
+
+### 十六·五、GPU 档位的总费用最优解（5 档位实测吞吐）
+
+实测吞吐（探针 v10，预热 1 次 + 计时 3 次取中位，bs=32）：
+
+| 档位 | 单价 $/h | Σms/试次（7 模型） | 小时 | **总费用 $** |
+|---|---:|---:|---:|---:|
+| **cpu-upgrade** | 0.03 | 576.8 | 43.5 | **1.30** ← 最省 |
+| t4-small | 0.40 | 794.4 | 55.7 | 22.28 |
+| l4x1 | 0.80 | 442.8 | 31.4 | 25.12 |
+| a10g-small | 1.00 | 1013.6 | 71.3 | 71.34 |
+| a100-large | 2.50 | 397.4 | **30.7（最快）** | 76.71 |
+
+**结论：费用最优是 `cpu-upgrade`（$1.30），比最快的 a100-large 便宜 59 倍。**
+
+两条反直觉的事实：
+
+1. **A100 反而比 L4 慢**（397 vs 443 ms 之和在 7 模型上）——这些是 3–6M 参数的
+   小模型，GPU 利用率极低，**启动/搬运开销主导** ⇒ 越贵的卡越不划算。
+2. **labram 一家占 69% 的时间**（452.7 ms/试次，是次慢的 9 倍）⇒
+   它的 12 秒窗口（3000 点）才是瓶颈。它同时也是"信号只占 8%"的那个
+   ⇒ 本轮不纳入表，顺带省掉大头。
+
+（workload = 指标 A + 指标 B，train 用 2000 张图；10 被试 × (7 基模 + 4 变体)；
+变体按同档中位速度估算。**不含 labram 的实际跑表费用约 $0.25**。）
+
+### 十六·六、工具链与自测
+
+```
+research/brain_domains/models/
+  base_specs.py       7 基模的实测规格 + 通道策略 + 所需 braindecode 版本（表）
+  registry.py         装载 → token 抽取 → 布局推断 → 池化（统一口径）
+  domain_adapters.py  选通道 / MNE 插值 / 双极差分 / 重采样 / 补零
+  interfaces.py       mixer 家族（identity / attn1d / crisscross2d / linear_ssm / timefreq）+ FFN + 投影 + pre-LN block
+  provenance.py       重组变体的诚实归因（**逐组件**权重状态 + 许可取最严）
+  assembler.py        逐 block 拆 + 组装器 + **权重搬运逐键核实**
+  gpu_cost_model.py   28 档 Jobs 价目表 + 逐模型求和的总费用最优档
+  probe_base_models.py braindecode 装载探针（逐基模前向 + 吞吐 + 通道名）
+research/brain_domains/exp/
+  eval_brain_alignment.py  表评测本体（指标 A + 指标 B + 630-d 基线行 + --link-check）
+  merge_alignment.py       合并各被试的 per-subject 结果出最终表
+```
+
+本地自测全绿：表评测合成数据走完整链路（装载→布局→前向→池化→指标 A→指标 B→出表）；
+组装器验了权重真搬 / 搬不动标 arch-only / 两侧学习投影 / 占位标注 / 许可取最严 /
+缺失源要报出来 / 「all 层」展开 / 干跑可行性报告。
+
+### 十六·七、「先验证链路再花算力」抓到的东西
+
+正式跑表要十几小时（10 被试 × 7 模型 × 2.4 万试次），所以先加了
+`--link-check`：用**真实 THINGS 数据**把每个基模的
+装载 → 域适配 → 前向 → 指标 各走一遍。**它抓出的 8 个 bug 全部是
+"跑十几小时才发现"级别**的：
+
+1. `models` 包在云端的路径与本地不同（`/domains/scripts/models` vs 父目录）⇒ ModuleNotFound；
+2. dev 版装完当前进程仍是旧模块 ⇒ 必须重入；
+3. THINGS 没有 Fz ⇒ 4 个模型各少一个通道；
+4. MNE RawArray 只收 2 维 ⇒ 插值直接抛异常；
+5. CBraMod 的 patch_size=200 ⇒ 250 样本直接崩；
+6. BIOT 的通道是双极差分，不是电极；
+7. 表评测要的是**表征**而不是 logits ⇒ 抽到 (B,2)；
+8. `hf` CLI 自己的 `--flavor` / `--dry-run` 全局参数会吃掉脚本的同名参数。
+

@@ -54,7 +54,12 @@ for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_v, "8")
 
 EXP_DIR = Path(__file__).resolve().parent
-PKG_DIR = EXP_DIR.parent / "models"
+# models 包的��置：**本地**是 `brain_domains/models`（= EXP_DIR.parent/models），
+# **云端**是 `/domains/scripts/models`（= EXP_DIR/models，脚本和数据在同一桶目录下）。
+# ⇒ 按 registry.py 是否存在来探测，别写死。
+_PKG_CANDIDATES = [EXP_DIR / "models", EXP_DIR.parent / "models", EXP_DIR]
+PKG_DIR = next((c for c in _PKG_CANDIDATES if (c / "registry.py").exists()),
+               _PKG_CANDIDATES[0])
 for _p in (str(EXP_DIR), str(PKG_DIR)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
@@ -62,6 +67,7 @@ for _p in (str(EXP_DIR), str(PKG_DIR)):
 # ---- 复用既有实现（口径必须逐字一致，不重写）----
 import exp65_tier0_rsa_fix as E65          # noqa: E402
 import exp73_decode200 as E73              # noqa: E402
+import base_specs as BS                    # noqa: E402
 import domain_adapters as DA               # noqa: E402
 
 # ---- 桶内路径 ----
@@ -77,6 +83,13 @@ N_NULL = 8
 N_PERM_RSA = 200
 SEED = 0
 BASELINE_ROW = "630-d 原始特征"
+
+
+
+def _ver_tag(v):
+    """把版本参数归一成 "stable" / "dev"（规格表里用的是这两个标签）。"""
+    v = (v or "stable").strip()
+    return "stable" if v == "stable" else "dev"
 
 
 def log(*a):
@@ -192,7 +205,7 @@ def run_subject(sid, IMG_train, IMG_test, handles, args, rng):
     # --- 测试集（指标 A + 指标 B 都要）---
     eeg_te = np.load(te_fp)["eeg"]
     log(f"  sub-{sid:02d} test {eeg_te.shape}")
-    have_chans = args.have_chans or None
+    have_chans = (args.have_chans.split(",") if args.have_chans else None)
 
     out = {"subject": f"sub-{sid:02d}", "rows": [], "n_train_images": n_train_images}
 
@@ -536,6 +549,65 @@ def self_test():
     log("=== 自测通过 ===")
 
 
+def dry_run(args):
+    """**只验证链路，不算指标**：7 个基模装载 + 域适配 + 前向 + 两个指标各跑一次。
+
+    为什么要单独做这一步：整表要跑十几小时（10 个被试 × 7 模型 × 2.4 万试次），
+    在真正开跑之前必须确认
+      ① 每个基模都能按 base_specs 装上；
+      ② 域适配（选通道 / 双极差分 / 重采样 / 补零）出来的形状与模型期望一致；
+      ③ 前向能跑通、token 能抽出来；
+      ④ 两个指标在这批数据上都能算完。
+    否则十几小时算力会砸在一个跑不通的链路上。
+    """
+    import torch
+    import registry as REG
+
+    REG.ensure_braindecode_version(getattr(args, "bd_version", "stable"))
+    import braindecode.models as bdmodels
+    fte = torch.load(FEAT_TEST, map_location="cpu", weights_only=False)
+    IMG_test = fte["img_features"].numpy().astype(np.float64)
+
+    n_img, n_rep = 4, 4
+    eeg = np.load(TEST_4D / "sub-01.npz")["eeg"][:n_img, :n_rep]
+    print(f"真实 THINGS 数据：{eeg.shape}")
+    have = BS.THINGS_EEG_CHANS
+    rng = np.random.default_rng(SEED)
+
+    ok_n = 0
+    todo = BS.models_for_version(_ver_tag(getattr(args, "bd_version", "stable")))
+    print(f"本趟模型：{todo}")
+    for nm in todo:
+        sp = BS.BASE_SPECS.get(nm)
+        h = REG.load_base_model(nm, models_dir=MODELS_DIR, braindecode_models=bdmodels,
+                                spec=sp, verbose=False)
+        if not h.ok:
+            print(f"✗ {nm:<16} 装载失败：{h.error[:200]}")
+            continue
+        try:
+            r = model_trial_features(h, eeg, have, args.batch_size, args.device,
+                                     args.pool)
+        except Exception as e:
+            print(f"✗ {nm:<16} 适配/前向异常：{type(e).__name__}: {e}"[:250])
+            continue
+        if not r["ok"]:
+            print(f"✗ {nm:<16} {r['info'].get('error')}"[:250])
+            continue
+        X = r["features"]
+        ad = r["info"].get("adapt", {})
+        try:
+            a = metric_a_rsa(X, IMG_test[:n_img], 20, rng)
+            am = f"A r={a['r_img']:+.4f} p={a['p_img']:.3f}"
+        except Exception as e:
+            am = f"A 失败 {type(e).__name__}"
+        print(f"✓ {nm:<16} 特征 {X.shape} | 输入 {ad.get('dst_shape')} "
+              f"| 通道 {ad.get('n_chans_out')}(缺 {len(ad.get('chans_missing', []))}) "
+              f"| {ad.get('resample')} | {ad.get('window')} | {am}")
+        ok_n += 1
+    print(f"\n链路可用：{ok_n}/{len(BS.ORDER)} 个基模")
+    return 0 if ok_n == len(BS.ORDER) else 1
+
+
 # ---------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
@@ -552,11 +624,22 @@ def main():
     ap.add_argument("--no-baseline", dest="baseline", action="store_false")
     ap.add_argument("--out-dir", default=str(OUT_DIR))
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--have-chans", default="",
+                    help="逗号分隔的输入通道名（默认用 THINGS 的 63 个）")
+    ap.add_argument("--bd-version", default="stable",
+                    help="stable | 1.8.1.dev184031250 —— "
+                         "MIRepNet/BrainTokenizer 只在 dev 版；"
+                         "Interpolated* 只在 stable 版 ⇒ 分两趟跑")
+    ap.add_argument("--link-check", action="store_true",
+                    help="只验证链路（装载+域适配+前向+指标），不算正式结果。"
+                         "⚠️ 不能叫 --dry-run：那是 hf CLI 自己的全局参数，会被它吃掉")
     args = ap.parse_args()
 
     if args.self_test:
         self_test()
         return
+    if args.link_check:
+        raise SystemExit(dry_run(args))
 
     args.train_images = args.train_images or None
     out_dir = Path(args.out_dir)
@@ -566,14 +649,23 @@ def main():
     import torch
     import registry as REG
 
+    # braindecode：MIRepNet / BrainTokenizer 只在 dev 版里有
+    REG.ensure_braindecode_version(getattr(args, "bd_version", "stable"))
+
     ftr = torch.load(FEAT_TRAIN, map_location="cpu", weights_only=False)
     IMG_train = ftr["img_features"].numpy().astype(np.float64)
     fte = torch.load(FEAT_TEST, map_location="cpu", weights_only=False)
     IMG_test = fte["img_features"].numpy().astype(np.float64)
     log(f"ViT-H-14 特征：train {IMG_train.shape} / test {IMG_test.shape}")
 
-    names = (REG.ORDER if args.models == "all"
-             else [s.strip() for s in args.models.split(",") if s.strip()])
+    if args.models in ("all", "auto"):
+        names = BS.models_for_version(_ver_tag(args.bd_version))
+    else:
+        names = [s.strip() for s in args.models.split(",") if s.strip()]
+    log(f"本趟（braindecode {args.bd_version}）模型：{names}")
+    exc = BS.excluded_models()
+    if exc:
+        log(f"本轮不纳入：{ {k: v[:60] for k, v in exc.items()} }")
     handles = {}
     try:
         import braindecode.models as bdmodels
@@ -582,8 +674,12 @@ def main():
         bdmodels = None
     for nm in names:
         handles[nm] = REG.load_base_model(nm, models_dir=MODELS_DIR,
-                                          braindecode_models=bdmodels)
+                                          braindecode_models=bdmodels,
+                                          spec=BS.BASE_SPECS.get(nm))
     log(f"装载成功：{[n for n, h in handles.items() if h.ok]}")
+    # THINGS 的 63 个通道名（domain adapter 选通道时用）
+    if not args.have_chans:
+        args.have_chans = ",".join(BS.THINGS_EEG_CHANS)
 
     sids = ([int(s) for s in args.only_subjects.split(",") if s.strip()]
             if args.only_subjects else list(range(1, 11)))

@@ -146,8 +146,11 @@ def ensure_braindecode():
     candidates = [f"braindecode[hub]=={v}" for v in BD_DEV_VERSIONS]
     candidates.append("braindecode[hub] @ git+https://github.com/braindecode/braindecode.git")
     for spec in candidates:
+        # ⚠️ `--no-deps`：依赖（torch/mne/…）在装稳定版时已经就位了。
+        #    加 `--force-reinstall` 而不加 `--no-deps` ⇒ 每次都把 torch（~2 GB）
+        #    重下一遍，一个 dev 版要好几分钟。
         rc, out = sh(f'{sys.executable} -m pip install --quiet --upgrade '
-                     f'--force-reinstall "{spec}"', timeout=1200)
+                     f'--no-deps --force-reinstall "{spec}"', timeout=900)
         p2 = probe_classes_subprocess()
         have2 = {n: v for n, v in (p2.get("have") or {}).items() if v}
         m2 = [n for n in ORDER if not have2.get(n)]
@@ -254,6 +257,18 @@ def model_meta(model):
         v = _safe_getattr(model, attr)
         if v is not None:
             out[attr] = list(v) if isinstance(v, (list, tuple)) else v
+    # braindecode 模型对象上的 chs_info（mne 风格 dict 列表）——**期望通道名**的权威来源
+    ci = _safe_getattr(model, "chs_info")
+    if isinstance(ci, (list, tuple)) and ci:
+        names = []
+        for c in ci:
+            if isinstance(c, dict):
+                names.append(c.get("ch_name") or c.get("name"))
+            else:
+                names.append(str(c))
+        names = [n for n in names if n]
+        if names:
+            out["chs_info_names"] = names
     return out
 
 
@@ -272,6 +287,74 @@ def _count_params(model):
         except Exception:
             lazy += 1
     return n, lazy
+
+
+def forward_test(model, n_ch, n_t, bs=8):
+    """跑一次前向。返回 (ok, out_shape 或错误)。
+
+    ⚠️ **判据是「前向成功」，不是「装载成功」**：
+    signal-jepa 的 `from_pretrained` 会成功（打印 "Loading weights from local
+    directory"），但用错的时间轴一前向就炸 ⇒ 只看装载会把坏模型当成好的。
+    """
+    import torch
+    try:
+        model.eval()
+        x = torch.zeros(int(bs), int(n_ch), int(n_t))
+        with torch.no_grad():
+            y = model(x)
+        shape = list(y.shape) if hasattr(y, "shape") else str(type(y))
+        return True, shape
+    except Exception as e:
+        return False, f"{type(e).__name__}: {e}"[:220]
+
+
+# 各基模的**预训练采样率**（来自模型卡 / braindecode 自己的警告）。
+# ⚠️ eegdino 在 200 Hz 预训练，传 250 会触发 braindecode 的警告
+#    "EEG-DINO was pretrained at 200 Hz" ⇒ 候选里必须把 200 排在前面。
+MODEL_SFREQ_HINT = {
+    "eegdino-small": 200.0,
+    "biot": 200.0,
+    "signal-jepa": 128.0,
+    "braintokenizer": 256.0,
+    "labram": 250.0,
+    "mirepnet": 250.0,
+    "cbramod": 250.0,
+}
+SFREQ_CANDIDATES = [250.0, 200.0, 128.0, 256.0, 1000.0]
+
+
+def spec_candidates(cfg, name):
+    """(n_chans, n_times, sfreq) 候选序列（先 config/提示，再常见值）。"""
+    out = []
+
+    def add(c, t, s):
+        if (isinstance(c, int) and c > 0 and isinstance(t, int) and t > 0
+                and s):
+            if (c, t, s) not in out:
+                out.append((c, t, s))
+
+    nci = len(cfg["chs_info"]) if cfg.get("chs_info") else None
+    hint = MODEL_SFREQ_HINT.get(name)
+    sfs = []
+    for s in ([cfg.get("sfreq")] + ([hint] if hint else []) + SFREQ_CANDIDATES):
+        if isinstance(s, (int, float)) and s not in sfs:
+            sfs.append(float(s))
+    chans = []
+    for c in [cfg.get("n_chans"), nci] + SPEC_FALLBACK_CHANS:
+        if isinstance(c, int) and c > 0 and c not in chans:
+            chans.append(c)
+    times = []
+    for t in [cfg.get("n_times")] + SPEC_FALLBACK_TIMES + [4352, 272, 1280]:
+        if isinstance(t, int) and t > 0 and t not in times:
+            times.append(t)
+    # config 自己的组合最先试（它最可能是对的）
+    add(cfg.get("n_chans"), cfg.get("n_times"), cfg.get("sfreq"))
+    add(nci, cfg.get("n_times"), hint)
+    for s in sfs:
+        for c in chans:
+            for t in times:
+                add(c, t, s)
+    return out
 
 
 def probe_one(name, M):
@@ -293,126 +376,63 @@ def probe_one(name, M):
         rec["error"] = f"braindecode 里没有候选类 {CLASS_CANDIDATES.get(name)}"
         return rec
 
-    # --- 路径 A：from_pretrained(本地目录) ---
-    # n_outputs 在 config 里常为 null ⇒ 补占位头（只要 token 表征，头无所谓）。
-    # 有些模型还要求 n_times/sfreq 显式给出（否则 "n_times could not be inferred"），
-    # 于是按「逐步加参数」的方式重试。
     cfg = rec["config"]
-    attempts = [
-        ("from_pretrained+n_outputs", {"n_outputs": 2}),
-    ]
-    nt = cfg.get("n_times")
-    sf = cfg.get("sfreq")
-    nc = cfg.get("n_chans")
-    if nt:
-        attempts.append(("from_pretrained+n_outputs+n_times", {"n_outputs": 2, "n_times": nt}))
-    if nt and sf:
-        attempts.append(("from_pretrained+n_outputs+n_times+sfreq",
-                         {"n_outputs": 2, "n_times": nt, "sfreq": sf}))
-    # config 是 null 时也要试显式规格（THINGS 原生域是最自然的起点）
-    if not nc or not nt:
-        for c, t, s in ((63, 250, 250.0), (63, 1000, 250.0), (62, 1000, 128.0)):
-            attempts.append((f"from_pretrained+spec({c},{t},{s})",
-                             {"n_outputs": 2, "n_chans": c, "n_times": t, "sfreq": s}))
-    attempts.append(("from_pretrained", {}))
+    cands = spec_candidates(cfg, name)
+    rec["spec_candidates_tried"] = []
+    chs_info = cfg.get("chs_info")
 
-    errs = []
-    model = None
-    for label, kw in attempts:
+    # --- 逐个规格试：**装载 + 前向都成功**才算数 ---
+    model, chosen, errs = None, None, []
+    for (nc, nt, sf) in cands:
+        kw = {"n_outputs": 2, "n_chans": nc, "n_times": nt, "sfreq": sf}
+        # 有些模型要的是 chs_info 而不是 n_chans（braintokenizer: "chs_info not specified"）
+        if chs_info and nc == len(chs_info):
+            kw["chs_info"] = chs_info
         try:
-            t0 = time.time()
-            model = cls.from_pretrained(str(d), **kw)
-            rec["load_path"] = label
-            rec["load_s"] = round(time.time() - t0, 1)
-            rec["ok"] = True
-            break
+            m = cls.from_pretrained(str(d), **kw)
+        except TypeError:
+            try:
+                m = cls.from_pretrained(str(d), n_outputs=2)
+            except Exception as e:
+                errs.append(f"({nc},{nt},{sf}) from_pretrained: {type(e).__name__}: {e}"[:190])
+                continue
         except Exception as e:
-            errs.append(f"{label}: {type(e).__name__}: {e}"[:200])
-    if not rec["ok"]:
-        # --- 规格搜索：config 里 n_chans/n_times 是 null ⇒ 只能从权重反推 ---
-        # 做法：手工 ctor + load_state_dict（strict=False 仍会对形状不符报错）
-        #       逐个试 (n_chans, n_times)，第一个**形状全部对得上**的就是它。
-        rec["spec_search"] = {}
-        try:
-            import inspect
-            sig = inspect.signature(cls.__init__)
-            avail = set(sig.parameters) - {"self"}
-            rec["ctor_params"] = {k: (str(v.default) if v.default is not inspect.Parameter.empty
-                                       else "REQUIRED")
-                                  for k, v in sig.parameters.items() if k != "self"}
-            sd = load_state_dict_of(d)
-            rec["weight_shapes"] = shape_summary(sd, 40)
-            if sd is None:
-                raise RuntimeError("桶内没有可读的权重文件")
-            base = {k: v for k, v in cfg.items() if k in avail}
-            if "n_outputs" in avail and base.get("n_outputs") is None:
-                base["n_outputs"] = 2
-            sf = cfg.get("sfreq") or 250.0
-            chans, times = [], []
-            for c in ([cfg.get("n_chans")] + ([len(cfg["chs_info"])] if cfg.get("chs_info") else [])
-                      + SPEC_FALLBACK_CHANS):
-                if isinstance(c, int) and c > 0 and c not in chans:
-                    chans.append(c)
-            for t in ([cfg.get("n_times")] + SPEC_FALLBACK_TIMES):
-                if isinstance(t, int) and t > 0 and t not in times:
-                    times.append(t)
-            tried = []
-            for nc in chans:
-                for nt in times:
-                    kw = dict(base)
-                    if "n_chans" in avail:
-                        kw["n_chans"] = nc
-                    if "n_times" in avail:
-                        kw["n_times"] = nt
-                    if "sfreq" in avail:
-                        kw["sfreq"] = sf
-                    try:
-                        m = cls(**kw)
-                        m.load_state_dict(sd, strict=False)
-                        model = m
-                        rec["load_path"] = f"manual+spec(n_chans={nc},n_times={nt},sfreq={sf})"
-                        rec["spec_search"] = {"n_chans": nc, "n_times": nt, "sfreq": sf,
-                                              "tried": len(tried) + 1}
-                        tried.append((nc, nt))
-                        break
-                    except Exception as e:
-                        tried.append((nc, nt, f"{type(e).__name__}: {e}"[:160]))
-                if model is not None:
-                    break
-            if model is None:
-                rec["spec_search"]["tried"] = tried[:12]
-                raise RuntimeError(f"规格搜索全部失败（试了 {len(tried)} 组）")
-            rec["ok"] = True
-        except Exception as e2:
-            rec["error"] = (f"from_pretrained 失败：{errs[-1] if errs else '?'}；"
-                            f"规格搜索也失败：{type(e2).__name__}: {e2}")[:600]
-            rec["trace"] = traceback.format_exc()[-1200:]
-            return rec
+            errs.append(f"({nc},{nt},{sf}) from_pretrained: {type(e).__name__}: {e}"[:190])
+            continue
+        ok, info = forward_test(m, nc, nt)
+        rec["spec_candidates_tried"].append({"n_chans": nc, "n_times": nt, "sfreq": sf,
+                                             "forward_ok": ok, "info": str(info)[:120]})
+        if ok:
+            model, chosen = m, (nc, nt, sf)
+            rec["load_path"] = (f"from_pretrained(n_chans={nc},n_times={nt},sfreq={sf})")
+            rec["spec_search"] = {"n_chans": nc, "n_times": nt, "sfreq": sf}
+            break
+        errs.append(f"({nc},{nt},{sf}) 前向失败: {info}")
+    if model is None:
+        rec["error"] = ("所有规格都失败：" + " | ".join(errs[:6]))[:700]
+        rec["trace"] = traceback.format_exc()[-1000:]
+        return rec
 
+    nc, nt, sf = chosen
+    rec["ok"] = True
     rec["meta"] = model_meta(model)
+    # 模型**期望的通道名**（表评测的 domain adapter 要用）
+    exp_ch = (rec["meta"].get("chs_info_names")
+              or rec["meta"].get("ch_names")
+              or (rec["meta"].get("model_info") or {}).get("ch_names"))
+    if not exp_ch and chs_info:
+        exp_ch = [c.get("ch_name") for c in chs_info if isinstance(c, dict)]
+    rec["expected_chans"] = list(exp_ch) if exp_ch else None
+    rec["expected_domain"] = {"n_chans": nc, "n_times": nt, "sfreq": sf,
+                              "n_expected_chans": len(exp_ch) if exp_ch else None}
 
     # --- 前向 + 吞吐 ---
     try:
         import torch
-        cfg = rec["config"]
-        spec = rec.get("spec_search") or {}
-        n_ch = (spec.get("n_chans") or cfg.get("n_chans")
-                or (rec["meta"].get("n_chans") or None))
-        n_t = (spec.get("n_times") or cfg.get("n_times")
-               or (rec["meta"].get("n_times") or None))
-        sf = spec.get("sfreq") or cfg.get("sfreq") or rec["meta"].get("sfreq")
-        # 配置没给就用模型的期望
-        if not n_ch:
-            ch = rec["meta"].get("ch_names")
-            n_ch = len(ch) if ch else 32
-        if not n_t:
-            n_t = 1000
-        model.eval()
-        # 稳态吞吐：预热 1 次 + 计时 3 次取中位（单次计时会被首次分配/CUDA 初始化污染）
-        fwd = {"input_ch": int(n_ch), "input_times": int(n_t), "sfreq": sf,
+        fwd = {"input_ch": int(nc), "input_times": int(nt), "sfreq": sf,
                "batches": {}}
         for bs in (8, 32):
-            x = torch.zeros(bs, int(n_ch), int(n_t))
+            x = torch.zeros(bs, int(nc), int(nt))
             try:
                 with torch.no_grad():
                     model(x)                       # 预热（同时初始化 LazyModule）
@@ -450,9 +470,9 @@ def probe_one(name, M):
     rec["ms_per_trial"] = ms32 or ms8
     log(f"  ✓ {name}: 参数 {rec['n_params']:,}"
         + (f"（未初始化 {n_lazy}）" if n_lazy else "")
+        + f" | 输入 ({nc},{nt})@{sf}"
         + f" | 前向 {(rec.get('forward') or {}).get('out_shape')}"
-        + f" | bs8 {ms8} ms/试次 | bs32 {ms32} ms/试次 | 载入 {rec['load_path']}"
-        + (f" | 前向失败：{rec['forward_error'][:80]}" if rec.get("forward_error") else ""))
+        + f" | bs8 {ms8} ms/试次 | bs32 {ms32} ms/试次 | {rec['load_path']}")
     return rec
 
 
