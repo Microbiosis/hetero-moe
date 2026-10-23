@@ -1,22 +1,31 @@
 #!/usr/bin/env python3
 """exp81_tokenizer_eval.py — S1：自训 EEG 离散 tokenizer 的评测（**干净协议**）。
 
-## 口径纪律（这一版和基线表不同，差别是必须的）
+## 口径纪律（这一版和基线表的关系，已按 §十九 的结论更正）
 
-基线表（§十六·六）与阶段 D 变体表的**指标 B** 用
-`/domains/omnibrain4d/eeg_train/sub-XX.npz` 当训练集 —— 但那个目录装的是
-**THINGS-EEG 的 test split**（实测 2,084,040,260 ÷ (63×250×2) = 132,320 = 1654×80），
-而测试集 `/domains/omnibrain4d/eeg/sub-XX.npz`（200 图）是**同一批图**的子集
-⇒ **训练/测试图像重叠 ⇒ 指标 B 泄漏**。
+⚠️ **这里曾写错过，保留说明以免再犯**：本节原来断言
+「`/domains/omnibrain4d/eeg_train/` 装的是 test split ⇒ 指标 B 泄漏」——
+那是**一次除法算错**造成的（把 66,160 写成 132,320，少除了 float16 的 2）。
+exp85 用**数值级溯源**（不靠算术）复核后的结论是：
 
-本脚本用**干净协议**：
+| 目录 | 实际内容 | 证据 |
+|---|---|---|
+| `/domains/omnibrain4d/eeg_train/sub-XX.npz` | **train split (16540, 4)** | 2,084,040,260 ÷ (63×250×2) = 66,160 = 16540×4 |
+| `/domains/omnibrain4d/eeg/sub-XX.npz` | **test split (200, 80)** | 200 张**不在** train split 里 |
+
+⇒ 拟合集（train split）与解码集（test split）**本就不重叠 ⇒ 指标 B 从来没有泄漏**
+⇒ **基线表与阶段 D 变体表的指标 B 不需要重做**，
+⇒ 本脚本的指标 B 数字**可以**和基线表直接比（口径相同）。
+
+本脚本仍然用**直接的 train split**（`train.pt`）当拟合集，而不是 npz：
+少一层目录名的坑（`eeg_train/` 这个名字本身就是误导源）。
+旁证（exp84）：用真正 train split 重算 630-d 那一行得 **acc1 = 0.0111（2.3× 随机）**，
+与基线表原协议的 **0.0111（2.2×）** 几乎一样 ⇒ 两个协议本来就都是干净的。
 
 | | 拟合 | 解码 |
 |---|---|---|
 | 指标 A（RSA） | —（不训练） | test split 200 图 × 80 试次（与基线表同口径） |
 | 指标 B（ridge 200 选 1） | **train split**（`train.pt` 前 N 图 × 4 试次，16540 张里取） | test split 200 图 |
-
-⇒ 指标 B 的数字**不能**和基线表直接比（那边是泄漏的）；指标 A 可以。
 
 ## 评测对象与读出
 
@@ -99,7 +108,7 @@ def load_model(ckpt_path, seed=SEED):
     import torch
     ck = torch.load(ckpt_path, map_location="cpu", weights_only=False)
     arch = ck.get("arch", "base")
-    if arch == "assembled":
+    if arch.startswith("assembled"):
         from exp86_assembled_train import (build_assembled, extract_attn_state,
                                            extract_ffn_donor)
         a = ck.get("args", {})
@@ -107,9 +116,10 @@ def load_model(ckpt_path, seed=SEED):
         ffn = None
         if ck.get("donor_ffn", "none") != "none":
             ffn = extract_ffn_donor(ck["donor_ffn"])
+        heads = "v2" if arch == "assembled_v2" else "v1"
         model = build_assembled(n_codes=int(ck["n_codes"]), attn_state=attn,
-                                ffn_donor=ffn)
-        log(f"  架构：assembled（注意力 {a.get('attn_donor')} / "
+                                ffn_donor=ffn, heads=heads)
+        log(f"  架构：{arch}（注意力 {a.get('attn_donor')} / "
             f"FFN {ck.get('donor_ffn')}）")
     else:
         from exp80_eeg_tokenizer_train import EEGTokenizer
