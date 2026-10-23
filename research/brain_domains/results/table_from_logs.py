@@ -47,7 +47,7 @@ def main():
     by_key = {}
     for j in jobs:
         nm = (j.get("name") or "")
-        m = re.match(r"t[23]-s(\d\d)-(stable|dev)$", nm)
+        m = re.match(r"t\d+-s(\d\d)-(stable|dev)$", nm)
         st = j.get("status")
         stage = st.get("stage") if isinstance(st, dict) else st
         if m and stage == "COMPLETED":
