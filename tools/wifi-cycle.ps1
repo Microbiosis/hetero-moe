@@ -38,6 +38,16 @@
       while the adapter is re-associating. A blocking probe is not a
       negative answer, so the probe is run in a child job with a timeout and
       a timeout is treated as "still transitioning", never as "disconnected".
+    * The two sources can DISAGREE right after a re-association (observed
+      2026-10-22 22:11): `Get-NetAdapter` said MediaConnectionState=Disconnected
+      while `netsh wlan show interfaces` said "connected" with 98% signal and
+      the traffic actually worked. The old code trusted only the CIM state and
+      therefore reported a FAILED cycle for a successful one.
+      => `netsh` (the WLAN service's own view) is authoritative for association;
+         ANY source saying Connected wins, and only when BOTH say Disconnected
+         do we report a negative. The FINAL authoritative check decides the
+         exit code, so a false negative on a per-attempt probe cannot turn a
+         successful cycle into a reported failure.
 
 .PARAMETER DelaySeconds
     Seconds to stay disconnected. Default 30.
@@ -126,6 +136,33 @@ function Get-WifiBssid {
     return ($m.Groups[1].Value -replace '[\s:]', '')
 }
 
+function Get-NetshStateFast {
+    # `netsh wlan show interfaces` is the WLAN service's OWN view of association
+    # and is the authoritative source for "is this interface associated right now".
+    # It can block while re-associating, so it also runs under a hard timeout.
+    # Returns the raw State string (e.g. 'connected' / '已连接'), or $null.
+    param([int]$TimeoutSec = 8)
+    $job = Start-Job -ScriptBlock {
+        $raw = netsh wlan show interfaces 2>$null | Out-String
+        if ([string]::IsNullOrWhiteSpace($raw)) { return $null }
+        $m = [regex]::Match($raw, '(?im)^\s*State\s*:\s*(.+?)\s*$')
+        if (-not $m.Success) {
+            $m = [regex]::Match($raw, '(?im)^\s*状态\s*:\s*(.+?)\s*$')
+        }
+        if (-not $m.Success) { return $null }
+        return $m.Groups[1].Value.Trim()
+    }
+    try {
+        if (Wait-Job $job -Timeout $TimeoutSec) {
+            $v = Receive-Job $job -ErrorAction SilentlyContinue
+            if ($null -ne $v) { return ("$v").Trim() }
+        }
+        return $null
+    } finally {
+        Remove-Job $job -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Get-MediaConnectionStateFast {
     # Runs the CIM query in a child job with a hard timeout. The driver can
     # block for 40s+ while re-associating; a timeout means "transitioning",
@@ -164,9 +201,23 @@ function Test-WifiAssociated {
     # $true  = associated
     # $false = definitively not associated
     # $null  = still transitioning / unknown (NOT a negative answer)
-    $st = Get-MediaConnectionStateFast -Name $script:WifiName -TimeoutSec $ProbeTimeoutSec
-    if ($st -eq 'Connected') { return $true }
-    if ($st -eq 'Disconnected') { return $false }
+    #
+    # TWO independent sources, because they can disagree right after a
+    # re-association (observed 2026-10-22 22:11: Get-NetAdapter reported
+    # MediaConnectionState=Disconnected while `netsh wlan show interfaces`
+    # reported "connected" with 98% signal, and the traffic worked).
+    #   - netsh  = the WLAN service's own view -> authoritative for association
+    #   - CIM    = the adapter object, can lag / report a stale state
+    # => ANY source saying Connected wins; only when BOTH say Disconnected
+    #    do we treat it as a negative answer.
+    $net = Get-MediaConnectionStateFast -Name $script:WifiName -TimeoutSec $ProbeTimeoutSec
+    $sh = Get-NetshStateFast -TimeoutSec $ProbeTimeoutSec
+    $netConnected = ($net -eq 'Connected')
+    $shConnected = ($sh -match '^(connected|已连接|已連接)$')
+    $netDisc = ($net -eq 'Disconnected')
+    $shDisc = ($sh -match '^(disconnected|已断开|未连接|已斷開)$')
+    if ($netConnected -or $shConnected) { return $true }
+    if ($netDisc -and $shDisc) { return $false }
     return $null
 }
 
@@ -267,18 +318,26 @@ for ($i = 1; $i -le $RetryTimes; $i++) {
 }
 
 $finalState = Get-MediaConnectionStateFast -Name $script:WifiName -TimeoutSec $ProbeTimeoutSec
+$finalNetsh = Get-NetshStateFast -TimeoutSec $ProbeTimeoutSec
 $bssid = Get-WifiBssid
 $newSsid = Get-CurrentSsid
 
-if ($ok) {
-    Write-Step "reconnected: SSID='$newSsid' state=$finalState BSSID=$bssid" "OK"
+# The FINAL authoritative check decides the outcome. A per-attempt probe that
+# returned a false negative (see Test-WifiAssociated) must not turn a
+# successful cycle into a reported failure.
+$actuallyUp = (($finalState -eq 'Connected') -or
+    ($finalNetsh -match '^(connected|已连接|已連接)$') -or
+    ([bool]$bssid))
+
+if ($ok -or $actuallyUp) {
+    Write-Step "reconnected: SSID='$newSsid' state=$finalState netsh='$finalNetsh' BSSID=$bssid" "OK"
+    if (-not $ok) {
+        Write-Step "note: the per-attempt probe gave a false negative; the final authoritative check says we ARE associated." "WARN"
+    }
     Write-Step "cycle complete"
     exit 0
 }
 
-Write-Step "verification did not confirm association (state=$finalState BSSID=$bssid)." "ERROR"
-if ($finalState -eq 'Connected' -or $bssid) {
-    Write-Step "note: the adapter IS actually up -- only the probe failed." "WARN"
-}
+Write-Step "verification did not confirm association (state=$finalState netsh='$finalNetsh' BSSID=$bssid)." "ERROR"
 Write-Step 'manual recovery: netsh wlan show profiles / netsh wlan connect name="<profile>"' "ERROR"
 exit 1
