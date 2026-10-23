@@ -257,7 +257,7 @@ def main():
               f"{da} | {d['d_acc_n_pos']}/{d['n']} | {p2} | {dh} | "
               f"{d.get('d_r_vs_host_n_pos', '—')}/{d['n']} | {p3} |")
 
-    outdir = Path("variant-results")
+    outdir = Path(__file__).resolve().parent / "variant-results"
     outdir.mkdir(exist_ok=True)
     (outdir / "variant_table_from_logs.md").write_text(
         "# 阶段 D 变体表（由 Job 日志重建）\n\n"
