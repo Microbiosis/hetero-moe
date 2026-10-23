@@ -60,6 +60,10 @@ ARMS = [
     ("v2-none-nosem", "v2-ffn-none-nosem"),
     ("v2-plain", "v2-ffn-plain"),
     ("v2-plain-nosem", "v2-ffn-plain-nosem"),
+    # --- S1b-v3「共享词典」三臂（码本机制 × CE 的码本路径）---
+    ("v3-grad-pos", "v3-grad-pos"),
+    ("v3-grad-full", "v3-grad-full"),
+    ("v3-grad-none", "v3-grad-none"),
 ]
 READOUTS = ["recon", "emb_mean", "onehot_mean", "code_ids", "continuous",
             "random_codebook"]
@@ -285,7 +289,7 @@ def main():
     print(f"  {'臂':<20}{'emb_mean':>12}{'random_cb':>12}{'Δr(学-随机)':>14}"
           f"{'正向':>8}{'p':>9}")
     for label, d in arms.items():
-        if not label.startswith("v2-"):
+        if not (label.startswith("v2-") or label.startswith("v3-")):
             continue
         a = per_subject_r(d, "emb_mean")
         b = per_subject_r(d, "random_codebook")

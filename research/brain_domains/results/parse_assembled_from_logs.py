@@ -38,6 +38,10 @@ EVAL_JOBS = {
     "t81-eval-v2-none-nosem": ("v2", "none-nosem"),
     "t81-eval-v2-plain": ("v2", "plain"),
     "t81-eval-v2-plain-nosem": ("v2", "plain-nosem"),
+    # --- S1b-v3「共享词典」三臂 ---
+    "t81-eval-v3-grad-pos": ("v3", "grad-pos"),
+    "t81-eval-v3-grad-full": ("v3", "grad-full"),
+    "t81-eval-v3-grad-none": ("v3", "grad-none"),
     "t81-eval-v1-none": ("v1", "none"),
     "t81-eval-v1-mirepnet": ("v1", "mirepnet"),
     "t81-eval-v1-biot": ("v1", "biot"),
@@ -52,6 +56,10 @@ TRAIN_JOBS = {
     "t86v2-assembled-none-nosem": ("v2", "none-nosem"),
     "t86v2-assembled-plain": ("v2", "plain"),
     "t86v2-assembled-plain-nosem": ("v2", "plain-nosem"),
+    # --- S1b-v3「共享词典」三臂（训练日志的字段名与 v2 不同 ⇒ 单独解析）---
+    "t87-sharedvocab-grad-pos": ("v3", "grad-pos"),
+    "t87-sharedvocab-grad-full": ("v3", "grad-full"),
+    "t87-sharedvocab-grad-none": ("v3", "grad-none"),
     "t86-assembled-none": ("v1", "none"),
     "t86-assembled-mirepnet": ("v1", "mirepnet"),
     "t86-assembled-biot": ("v1", "biot"),
@@ -82,6 +90,13 @@ STEP_V1 = re.compile(
     r"\s*nce_z (?P<nce_z>[\d.]+)\s+nce_q (?P<nce_q>[\d.]+)\s*\|"
     rf"\s*检索准确率 (?P<acc_q>{NUM})\s*\|"
     r"\s*码利用率 (?P<util>[\d.]+)%\s*熵 (?P<ent>[\d.]+)")
+# v3（共享词典）：`... | nce_r X | 语义CE Y（随机 Z）| 码本 cos(活跃) A 有效秩 B/D | 活跃码 N`
+STEP_V3 = re.compile(
+    r"step\s+(?P<step>\d+)\s*\| loss (?P<loss>[\d.]+)\s*\| 重建 (?P<rec>[\d.]+)\s*\|"
+    r"\s*nce_r (?P<nce_r>[\d.]+)\s*\|"
+    r"\s*语义CE (?P<sem_ce>[\d.]+)（随机 (?P<sem_ce_rand>[\d.]+)）\s*\|"
+    r"\s*码本 cos\(活跃\) (?P<cos>[+-][\d.]+)\s*有效秩 (?P<effrank>[\d.]+)/(?P<dim>\d+)\s*\|"
+    r"\s*活跃码 (?P<active>\d+)")
 
 
 def all_jobs():
@@ -161,8 +176,8 @@ def parse_eval(text):
     return per_subject, summary
 
 
-def parse_train(text, v2):
-    pat = STEP_V2 if v2 else STEP_V1
+def parse_train(text, v2=True, recipe="v2"):
+    pat = {"v2": STEP_V2, "v1": STEP_V1, "v3": STEP_V3}.get(recipe, STEP_V2)
     hist = []
     for line in text.splitlines():
         m = pat.search(line)
@@ -179,7 +194,13 @@ def parse_train(text, v2):
             d["entropy"] = d.pop("ent")
         if "rec" in d:
             d["rec_mse"] = d.pop("rec")
-        if v2:
+        if recipe == "v3":
+            d["cos_mean_active"] = d.pop("cos")
+            d["eff_rank_active"] = d.pop("effrank")
+            d.pop("dim", None)
+            d["active_codes"] = int(d.pop("active"))
+            d.pop("sem_ce_rand", None)
+        elif recipe == "v2":
             d["retrieval_acc"] = d.pop("acc_r")
             d["retrieval_acc_q"] = d.pop("acc_q")
         else:
@@ -218,7 +239,7 @@ def main():
             print(f"  缺 Job {name}")
             continue
         text = logs_of(jid)
-        hist = parse_train(text, v2=(recipe == "v2"))
+        hist = parse_train(text, recipe=recipe)
         if not hist:
             print(f"  {name}: 日志里没解析出训练行")
             continue

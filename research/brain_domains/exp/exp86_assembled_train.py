@@ -130,7 +130,7 @@ def log(*a):
 # 组装模型
 # ---------------------------------------------------------------------------
 def build_assembled(n_ch=63, n_times=250, n_codes=K_CODES, dim=D_MODEL,
-                    attn_state=None, ffn_donor=None, heads="v2"):
+                    attn_state=None, ffn_donor=None, heads="v2", vq_factory=None):
     """组装模型工厂（返回 nn.Module 实例）。
 
     骨架与我们自研 tokenizer 一致（CNN 编码 → 时间片 token → VQ → 解码），
@@ -144,6 +144,11 @@ def build_assembled(n_ch=63, n_times=250, n_codes=K_CODES, dim=D_MODEL,
       - `"v2"`：head_r / head_z / head_q / head_img 四个独立头
         （语义损失挂在**重建信号**上）
     ⇒ 两版的 checkpoint 能被同一个评测脚本按元信息加载。
+
+    `vq_factory`：可选的量化器工厂 `(n_codes, dim) -> nn.Module`。
+      默认用 exp80 的 `VQ`（EMA 码本）；
+      **S1b-v3（共享词典）**用它换掉 EMA 码本 ⇒ 码本吃语义梯度。
+      ⚠️ 默认行为不变 ⇒ 已跑完的 v1/v2 臂不受影响。
     """
     import torch
     import torch.nn.functional as F
@@ -184,7 +189,7 @@ def build_assembled(n_ch=63, n_times=250, n_codes=K_CODES, dim=D_MODEL,
                     self.ffn_w2.weight.copy_(ffn_donor["w2"])
                     self.ffn_w2.bias.copy_(ffn_donor["b2"])
             # --- VQ（同 exp80：直线估计 + EMA + 死码重启）---
-            self.vq = VQ(n_codes, dim)
+            self.vq = vq_factory(n_codes, dim) if vq_factory else VQ(n_codes, dim)
             # --- decoder ---
             self.dec_up = nn.ConvTranspose1d(dim, dim, T_STRIDE, stride=T_STRIDE)
             self.dec_out = nn.Conv1d(dim, n_ch, 1)

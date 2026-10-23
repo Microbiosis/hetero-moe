@@ -119,11 +119,18 @@ def load_model(ckpt_path, seed=SEED):
         ffn = None
         if ck.get("donor_ffn", "none") != "none":
             ffn = extract_ffn_donor(ck["donor_ffn"])
-        heads = "v2" if arch == "assembled_v2" else "v1"
+        heads = "v2" if arch in ("assembled_v2", "assembled_v3") else "v1"
+        # ⚠️ `assembled_v3`（S1b-v3 共享词典）用的是**梯度版码本** `VQShared`
+        #    ⇒ 评测时必须用同一个类重建，否则 state_dict 键位/结构对不上。
+        #    （键名与 exp80 的 VQ 一致，但类不同 ⇒ 不能只靠键名自动兼容）
+        vq_factory = None
+        if arch == "assembled_v3" and ck.get("vq") == "grad":
+            from exp87_shared_vocab import build_vqshared
+            vq_factory = build_vqshared()
         model = build_assembled(n_codes=int(ck["n_codes"]), attn_state=attn,
-                                ffn_donor=ffn, heads=heads)
-        log(f"  架构：{arch}（注意力 {a.get('attn_donor')} / "
-            f"FFN {ck.get('donor_ffn')}）")
+                                ffn_donor=ffn, heads=heads, vq_factory=vq_factory)
+        log(f"  架构：{arch}（注意力 {attn_name} / "
+            f"FFN {ck.get('donor_ffn')} / 码本 {ck.get('vq', 'ema')}）")
     else:
         from exp80_eeg_tokenizer_train import EEGTokenizer
         model = EEGTokenizer(n_codes=int(ck["n_codes"]))
