@@ -92,6 +92,13 @@ DONORS = [
         layer="__final__", kind="final",
         note="braintokenizer 的量化码（最终输出，+0.0155，8/10 显著）",
     ),
+    DonorSpec(
+        vid="v4_s1a_recon", donor="s1a-recon", layer="recon",
+        kind="s1a_recon",
+        note="**自训** tokenizer（S1a, K=1024）的**重建输出**"
+             "（指标 A +0.0372、10/10 显著 ⇒ 本轮最强脑信号表征，"
+             "比 braintokenizer 的重建输出 +0.0155 强 2.4×）",
+    ),
 ]
 
 

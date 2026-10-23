@@ -124,7 +124,11 @@ def extract_module_features(handle, eeg, module_path, have_chans, args):
     """
     import torch
     import registry as REG
-
+    # ⚠️⚠️ **必须 eval()**：模型默认是 **train 模式 ⇒ Dropout 随机丢弃**
+    #    ⇒ 同一份数据抽两次的特征不同（exp83 实测：供体路径 max|Δ| ≈ 5e-2、
+    #    最终输出路径 1.3）⇒ 供体行带 ±0.003 量级抖动、两轮不可复现。
+    #    （基线表与宿主行走 `REG.encode_trials`，那里有 eval() ⇒ 不受影响。）
+    handle.model.eval()
     n_img, n_rep = eeg.shape[0], eeg.shape[1]
     flat = eeg.reshape(n_img * n_rep, eeg.shape[2], eeg.shape[3])
     try:
@@ -167,12 +171,48 @@ def extract_module_features(handle, eeg, module_path, have_chans, args):
     return X.reshape(n_img, n_rep, -1)
 
 
+def s1a_recon_features(ckpt_path, eeg, batch_size=64, device="cpu"):
+    """自训 tokenizer（S1a）的**重建输出**特征：(n_img, n_rep, 250)。
+
+    为什么单独一条路径：它**不是 braindecode 模型**，是我们自己训的
+    （`exp80_eeg_tokenizer_train.py`）⇒ 没有 handle、没有域适配
+    （它的输入域就是 THINGS 原生 63ch/250Hz/250 样本）。
+
+    读出与 braintokenizer 那一行**同口径**：解码后的重建信号，沿通道轴池化
+    ⇒ 每时间点一个数（braintokenizer 是 (B,19,512) → (B,512)）。
+    """
+    import torch
+    from exp80_eeg_tokenizer_train import EEGTokenizer
+    n_img, n_rep = eeg.shape[0], eeg.shape[1]
+    flat = eeg.reshape(n_img * n_rep, eeg.shape[2], eeg.shape[3])
+    ck = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    model = EEGTokenizer(n_codes=int(ck["n_codes"]))
+    model.load_state_dict(ck["state_dict"])
+    model.eval()
+    outs = []
+    with torch.no_grad():
+        for s in range(0, flat.shape[0], batch_size):
+            sub = flat[s:s + batch_size]
+            x = torch.from_numpy(np.ascontiguousarray(sub)).float().to(device)
+            z = model.encode(x)
+            zq, _loss, _idx = model.vq(z)
+            rec = model.decode(zq, x.shape[-1])        # (B, C, T)
+            outs.append(rec.mean(dim=1).cpu().numpy())  # 沿通道轴池化 ⇒ (B, T)
+    X = np.concatenate(outs, axis=0)
+    return X.reshape(n_img, n_rep, -1)
+
+
 def donor_features(spec, handle, eeg, have_chans, args):
     """供体的 (n_img, n_rep, D) 特征。
 
     kind="final" ⇒ 用模型的**最终输出**（与基线表那一行同口径）；
-    kind="layer" ⇒ 抓指定中间模块。
+    kind="layer" ⇒ 抓指定中间模块；
+    kind="s1a_recon" ⇒ 自训 tokenizer 的重建输出（不是 braindecode 模型）。
     """
+    if spec.kind == "s1a_recon":
+        if not args.s1a_ckpt:
+            raise RuntimeError("供体 s1a-recon 需要 --s1a-ckpt")
+        return s1a_recon_features(args.s1a_ckpt, eeg, args.batch_size, args.device)
     if spec.kind == "final":
         r = EVAL.model_trial_features(handle, eeg, have_chans, args.batch_size,
                                       args.device, args.pool)
@@ -256,7 +296,8 @@ def run_subject(sid, IMG_train, IMG_test, handles, host_name, donors, args, rng)
     # --- 各供体 ---
     for spec in donors:
         dh = handles.get(spec.donor)
-        if dh is None or not dh.ok:
+        # ⚠️ 自训 tokenizer（s1a-recon）**不是 braindecode 模型** ⇒ 没有 handle
+        if spec.kind != "s1a_recon" and (dh is None or not dh.ok):
             for nm in (spec.vid, spec.vid + "_shuf"):
                 out["rows"].append({"name": nm, "kind": "variant", "ok": False,
                                      "error": (dh.error if dh else "供体未装载"),
@@ -273,7 +314,7 @@ def run_subject(sid, IMG_train, IMG_test, handles, host_name, donors, args, rng)
             log(f"    [{spec.vid}] ✗ 供体抽取失败：{type(e).__name__}: {e}"[:200])
             continue
 
-        n_par = h.n_params + dh.n_params
+        n_par = h.n_params + (dh.n_params if dh is not None else 0)
         for suffix, Dte, Dtr in (
                 ("", D_te, D_tr),
                 ("_shuf", V.shuffle_images(D_te, rng),
@@ -309,6 +350,35 @@ def run_subject(sid, IMG_train, IMG_test, handles, host_name, donors, args, rng)
 # ---------------------------------------------------------------------------
 # 自测（合成数据，走真实代码路径）
 # ---------------------------------------------------------------------------
+def self_test_s1a():
+    """自训 tokenizer 供体路径的本地自测（合成 checkpoint + 合成 EEG）。
+
+    为什么必须测：上一轮我改了一个分支没本地跑就发云端 ⇒ 10 个被试全废。
+    """
+    import tempfile
+    import torch
+    from exp80_eeg_tokenizer_train import EEGTokenizer
+
+    log("  --- 自训 tokenizer 供体路径 ---")
+    model = EEGTokenizer(n_codes=32)
+    with tempfile.TemporaryDirectory() as td:
+        ckpt_path = Path(td) / "ck.pt"
+        # ⚠️ `torch.save` 返回 None ⇒ 不能拿它的返回值当路径
+        torch.save({"state_dict": model.state_dict(), "n_codes": 32,
+                    "d_model": model.vq.dim, "args": {}}, ckpt_path)
+        rng = np.random.default_rng(0)
+        eeg = rng.normal(size=(5, 3, 63, 250)).astype(np.float32)
+        X = s1a_recon_features(str(ckpt_path), eeg, batch_size=4)
+        # 确定性检查：同一份数据抽两次必须**逐位相同**
+        # （模型默认 train 模式 ⇒ Dropout 随机 ⇒ 这里能抓到 eval() 漏掉的问题）
+        X2 = s1a_recon_features(str(ckpt_path), eeg, batch_size=4)
+        dmax = float(np.abs(X - X2).max())
+        assert X.shape == (5, 3, 250), X.shape
+        assert dmax == 0.0, f"抽取不确定：max|Δ| = {dmax:.3e}（缺 eval()？）"
+    log(f"  ✓ s1a_recon_features → {X.shape}（重建信号沿通道轴池化）"
+        f"，两次抽取逐位相同")
+
+
 def self_test():
     import torch
     from torch import nn
@@ -455,6 +525,7 @@ def self_test():
         assert all(x["r_img"] == x["r_img"] for x in (a_h, a_v, a_s))   # 非 NaN
 
     log("=== 自测通过 ===")
+    self_test_s1a()
 
 
 # ---------------------------------------------------------------------------
@@ -476,6 +547,9 @@ def main():
     ap.add_argument("--chunk", type=int, default=CHUNK)
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--out-dir", default=str(OUT_DIR))
+    ap.add_argument("--s1a-ckpt", default="",
+                    help="自训 tokenizer 的 checkpoint（桶内路径）；"
+                         "给了才会启用 s1a-recon 供体")
     ap.add_argument("--bd-version", default="stable")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
@@ -513,7 +587,8 @@ def main():
     if args.models:
         names = [s.strip() for s in args.models.split(",") if s.strip()]
     else:
-        names = [args.host] + [d.donor for d in donors]
+        # ⚠️ 自训 tokenizer（s1a-recon）不是 braindecode 模型 ⇒ 不能进装载列表
+        names = [args.host] + [d.donor for d in donors if d.kind != "s1a_recon"]
     names = list(dict.fromkeys(names))
     log(f"本趟（braindecode {args.bd_version}）模型：{names}")
     log(f"供体：{[d.vid + '←' + d.donor + '/' + d.layer for d in donors]}")
