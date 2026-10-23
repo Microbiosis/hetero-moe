@@ -74,6 +74,10 @@
 | **exp53–55** | **ACF 的形状** | ❌ 非指数：R(2)>R(1)，无单一 τ |
 | **exp56–61** | **两个时间尺度** | ✅ `A·exp(−τ/t)+c`，τ≈390 ms；物种比 2.5×，对截断稳健 |
 | **exp62** | **小鼠 50 ms 外部检验** | ✅ **τ=497 ms 与猕猴 446 ms 同量级；bin 宽不是原因** |
+| **exp64–66** | **Tier 0 审计：RSA 缺陷定位与顺序对齐** | ✅ 三处实现缺陷结案；去 ERP 后 r=+0.0798 p=0.005，跨被试 10/10 |
+| **exp67–72** | **Tier 0 编码：ViT-H-14 → EEG** | ✅ R² +0.0196（img/BBB=1.03）；标度律；单试次 R² 10/10 显著 |
+| **exp73** | **Tier 0 解码：单试次 200 选 1** | ✅ **top-1 中位 0.0309 = 6.2× 随机，10/10 显著**；概念不相交协议 |
+| **exp74** | **多模型特征对比** | ✅ ViT-H-14 vs ViT-B-32 **打平**（144× 计算量换不来更好的脑解码）|
 
 ---
 
@@ -241,6 +245,7 @@ hf://buckets/illusion-brain/brain-domains/
 | `LITERATURE_ON_TIMESCALES.md` | iSTTC 论文等，解释 τ 为何脆弱 |
 | `ENGRAM_VS_BRAIN.md`（docs/）| DeepSeek Engram 与海马体对照 |
 | `MEMT_VS_HIPPOCAMPUS.md`（docs/）| MemT-1.0 记忆基础模型与海马体对照（可写 + 遗忘 + 读-写隔离）|
+| `FINDINGS_TIER0_RSA.md`（本目录）| **Tier 0 编码对齐全记录**：RSA 审计 → 编码 → 标度律 → 单试次 → 200 选 1 解码（含 10 条方法学失误）|
 
 ---
 
@@ -288,5 +293,5 @@ research/brain_domains/
 │   ├── fast_scan.py             块并行扫描
 │   ├── domain_control.py        三臂对照
 │   └── trace_nan.py             NaN 诊断
-└── exp/                         65 个实验脚本（exp0–exp61）
+└── exp/                         87 个实验脚本（exp0–exp74）
 ```
