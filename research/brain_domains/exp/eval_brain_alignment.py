@@ -597,7 +597,15 @@ def main():
             log(f"  sub-{sid:02d}: 数据缺失，跳过")
             continue
         per_subject.append(rec)
-        per_subject = merge_write(per_subject, out_dir / "alignment_per_subject.json")
+        # ⚠️ **每个被试单独落一个文件**。
+        # cpu-upgrade 上跑整表要十几小时 ⇒ 实际是「10 个被试 = 10 个并行 Job」，
+        # 多个 Job 同时读写同一个合并文件会互相覆盖 ⇒ 必须按被试分文件，
+        # 最后再本地合并。
+        (out_dir / f"alignment_sub-{sid:02d}.json").write_text(
+            json.dumps({"per_subject": [rec]}, indent=2, ensure_ascii=False,
+                       default=str), encoding="utf-8")
+        if len(sids) > 1:
+            per_subject = merge_write(per_subject, out_dir / "alignment_per_subject.json")
 
     agg = summarize(per_subject)
     order = ([BASELINE_ROW] if args.baseline else []) + \

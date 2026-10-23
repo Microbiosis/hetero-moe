@@ -115,16 +115,36 @@ def select_channels(eeg, want, have):
 
     `have` 是 THINGS 的通道名列表（顺序必须与 eeg 的通道轴一致）。
     找不到的通道**不静默丢弃**：返回 missing 列表，由调用方决定用插值还是弃用该基模。
+
+    ⚠️ **大小写不敏感**：不同来源的通道名大小写不一致
+    （THINGS 用 "Fz/Cz/Pz/FCz"，mirepnet 的通道表用 "FZ/CZ/PZ/FCZ"）。
+    严格匹配会把 45 个通道全判成 missing。
+    先按原名精确匹配，剩下的大小写不敏感匹配。
     """
     if want is None:
         return eeg, list(have) if have else [], []
     idx_map = {c: i for i, c in enumerate(have or [])}
-    sel, missing = [], []
+    lower_map = {}
+    for i, c in enumerate(have or []):
+        lower_map.setdefault(c.lower(), i)
+    sel, missing, used = [], [], set()
+    # 第一轮：精确匹配
     for c in want:
-        if c in idx_map:
+        if c in idx_map and idx_map[c] not in used:
             sel.append(idx_map[c])
+            used.add(idx_map[c])
         else:
             missing.append(c)
+    # 第二轮：大小写不敏感
+    still = []
+    for c in missing:
+        i = lower_map.get(c.lower())
+        if i is not None and i not in used:
+            sel.append(i)
+            used.add(i)
+        else:
+            still.append(c)
+    missing = still
     if not sel:
         raise ValueError(f"目标通道一个都取不到（want={want[:6]}…）")
     return eeg[..., sel, :], [have[i] for i in sel], missing
