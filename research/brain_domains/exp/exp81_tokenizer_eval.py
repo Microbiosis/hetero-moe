@@ -258,6 +258,75 @@ def eval_subject(model, rnd_cb, eeg_te, eeg_tr, IMG_test, IMG_train, args, rng):
     return rec
 
 
+def self_test_assembled():
+    """**组装架构**（v1 / v2 两种头）的加载与读出链路。
+
+    为什么必须测：这一轮要跑 **9 个评测 Job**（v1 四臂 + v2 四臂 + 对照臂），
+    而 `load_model` 对组装架构走的是**另一条分支**（`arch="assembled*"`）——
+    供体组件读取、头的数量（v1 两个 / v2 四个）、checkpoint 键位、读出维度
+    全都在这条分支上。
+    ⇒ 一条没本地跑过的分支 = 9 个 Job 一起报废（真发生过：10 个被试全废在
+    `--no-metric-b` 的 TypeError 上）。
+
+    做法：造**合成供体**（MHA 64 的注意力 + 64→128→64 的 FFN），
+    分别按 `assembled` / `assembled_v2` 存两个 checkpoint，
+    再走**真实的 `load_model` 路径**加载 + 跑全部读出。
+    """
+    import tempfile
+
+    import torch
+    from torch import nn
+
+    import exp86_assembled_train as E86
+
+    log("--- 自测：组装架构（assembled / assembled_v2）---")
+    with tempfile.TemporaryDirectory(prefix="exp81-assembled-") as td:
+        tmp = Path(td)
+        mha = nn.MultiheadAttention(64, 4, batch_first=True)
+        torch.save({"attn": {"state": mha.state_dict(), "src": "synthetic"}},
+                   tmp / "signal-jepa.pt")
+        torch.save({"ffn": {"h": 128, "d": 64,
+                            "w1": torch.randn(128, 64) * 0.05,
+                            "b1": torch.zeros(128),
+                            "w2": torch.randn(64, 128) * 0.05,
+                            "b2": torch.zeros(64),
+                            "src": "synthetic"}},
+                   tmp / "mirepnet.pt")
+        old_dir = E86.DONOR_DIR
+        E86.DONOR_DIR = tmp
+        try:
+            for arch in ("assembled", "assembled_v2"):
+                heads = "v2" if arch == "assembled_v2" else "v1"
+                model = E86.build_assembled(
+                    n_codes=64,
+                    attn_state=E86.extract_attn_state("signal-jepa"),
+                    ffn_donor=E86.extract_ffn_donor("mirepnet"),
+                    heads=heads)
+                ck = {"state_dict": model.state_dict(),
+                      "args": {"attn_donor": "signal-jepa", "steps": 1},
+                      "n_codes": 64, "d_model": 64, "arch": arch,
+                      "donor_ffn": "mirepnet", "hist": []}
+                fp = tmp / f"ck_{arch}.pt"
+                torch.save(ck, fp)
+                # ↓ 走**真实**的加载路径（不是手工搭模型）
+                m2, ck2, rnd = load_model(fp)
+                assert m2.vq.n_codes == 64, m2.vq.n_codes
+                x = torch.randn(6, 63, 250)
+                out = readouts_for(m2, x, rnd)
+                for k in READOUTS:
+                    assert k in out, f"{arch} 缺读出 {k}"
+                    assert torch.isfinite(out[k]).all(), f"{arch} 的 {k} 有非有限值"
+                assert out["onehot_mean"].shape[-1] == 64
+                assert out["emb_mean"].shape[-1] == 64
+                assert out["continuous"].shape[-1] == 64
+                assert out["recon"].shape[-1] == 250
+                log(f"  ✓ {arch}：加载 + {len(READOUTS)} 个读出全部通过"
+                    f"（头 {heads}）")
+        finally:
+            E86.DONOR_DIR = old_dir
+    log("--- 组装架构自测通过 ---")
+
+
 def self_test():
     """用**合成数据**把两条分支（算 B / 不算 B）都跑通。
 
@@ -297,6 +366,7 @@ def self_test():
         else:
             assert all("acc1" in v for v in rec["rows"].values())
         log(f"  ✓ no_metric_b={no_b} 分支通过（{len(rec['rows'])} 个读出）")
+    self_test_assembled()
     log("=== 自测通过 ===")
 
 

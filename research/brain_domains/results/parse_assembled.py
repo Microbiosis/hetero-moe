@@ -161,6 +161,10 @@ def main():
         print(f"  {label:<16} {used:>5.0f}/{cbs[0]['total']:<5} = {u:>6.1%} | 熵 {e:.2f} nats")
 
     # --- 训练曲线：语义分支到底学没学 ---
+    # ⚠️ **v1 与 v2 的 `retrieval_acc` 记的不是同一条分支**：
+    #    v1 只有两个 NCE（z / 码本），`retrieval_acc` 记的是**码本分支**；
+    #    v2 有三个 NCE，`retrieval_acc`=**重建分支**、`retrieval_acc_q`=码本分支。
+    #    ⇒ 按各配方实际的键位映射，否则 v1 行会被标错。
     print("\n训练曲线终点（语义分支是否真的在学）：")
     print(f"  {'配方-臂':<26}{'nce_r':>9}{'nce_z':>9}{'nce_q':>9}"
           f"{'检索(重建)':>12}{'检索(码本)':>12}")
@@ -175,12 +179,21 @@ def main():
         if not h:
             continue
         last = h[-1]
-        def g(k, fmt="{:.3f}"):
+        is_v2 = "nce_r" in last
+        recon_acc = last.get("retrieval_acc") if is_v2 else None
+        code_acc = last.get("retrieval_acc_q") if is_v2 else last.get("retrieval_acc")
+
+        def g(k):
             v = last.get(k)
-            return "—" if v is None else fmt.format(v)
+            return "—" if v is None else f"{v:.3f}"
+
+        def a(v):
+            return "—" if v is None else f"{v:.3f}"
+
         print(f"  {label:<26}{g('nce_r'):>9}{g('nce_z'):>9}{g('nce_q'):>9}"
-              f"{g('retrieval_acc'):>12}{g('retrieval_acc_q'):>12}")
+              f"{a(recon_acc):>12}{a(code_acc):>12}")
     print("  （随机水平：NCE = ln64 = 4.159；检索准确率 = 1/64 = 0.016）")
+    print("  （v1 的「检索准确率」记的是**码本分支**；v2 才是重建/码本两条）")
 
     # --- 配对差：语义监督的效应（v2 vs 无语义监督对照臂）---
     ctrl = arms.get("v2-none-nosem")
