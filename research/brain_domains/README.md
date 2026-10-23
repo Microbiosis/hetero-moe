@@ -78,7 +78,7 @@
 | **exp67–72** | **Tier 0 编码：ViT-H-14 → EEG** | ✅ R² +0.0196（img/BBB=1.03）；标度律；单试次 R² 10/10 显著 |
 | **exp73** | **Tier 0 解码：单试次 200 选 1** | ✅ **top-1 中位 0.0309 = 6.2× 随机，10/10 显著**；概念不相交协议 |
 | **exp74** | **多模型特征对比** | ✅ ViT-H-14 vs ViT-B-32 **打平**（144× 计算量换不来更好的脑解码）|
-| **B′/C/D** | **7 基模脑对齐表 + 逐 block 重组** | 🔧 工具链已就绪并本地自测通过；**数字待云端跑**（网络拦截期间不编数）|
+| **B′/C/D** | **7 基模脑对齐表 + 逐 block 重组** | ✅ 脑对齐表 10/10 被试跑完（20 Job 全绿）；**阶段 D 完成**：① 零训练权重级嫁接被判死（648 个可比组合 compatible=0 ⇒ 跨模型重组**必须训练**）；② 表征级拼接下 **braintokenizer 的量化码通过资格赛**（Δr vs 对照 +0.0123，9/10，p=0.011），mirepnet 的 FFN 不通过（接入后拉低宿主）；③ 顺带测出 cbramod 的语义在**空间模式**里而非特征均值里 |
 
 ---
 
@@ -303,6 +303,12 @@ research/brain_domains/
 │   ├── interfaces.py            统一组件接口（mixer 家族 / FFN / 投影 / block）
 │   ├── provenance.py            重组变体的诚实归因（逐组件权重状态 + 许可）
 │   ├── assembler.py             逐 block 拆 + 组装器 + 权重搬运核实
+│   ├── variants.py              阶段 D 变体：嫁接可行性判定 + 表征级拼接 + shuffle 对照
 │   └── gpu_cost_model.py        20 档位单价表 + 总费用最优档计算
-└── exp/                         89 个实验脚本（exp0–exp74 + eval_brain_alignment 等）
+├── exp/                         89 个实验脚本（exp0–exp74 + eval_brain_alignment 等）
+│   ├── exp76_variant_structure.py  阶段 D 前置：6 基模结构勘查（block/token/权重形状）
+│   ├── exp77_variant_eval.py        阶段 D 变体评测（宿主 + 供体层拼接 + 对照）
+│   ├── exp78_pooling_axis.py        cbramod 池化轴的量化（as_is vs layout_aware）
+│   └── eval_brain_alignment.py      表评测本体（指标 A/B + 630-d 基线 + --link-check）
+└── results/                     结果与解析（基线表 / 逐层 / 结构 / 变体表）
 ```

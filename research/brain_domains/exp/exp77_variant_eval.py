@@ -207,7 +207,10 @@ def run_subject(sid, IMG_train, IMG_test, handles, host_name, donors, args, rng)
     eeg_te = np.load(te_fp)["eeg"]
     eeg_tr = np.load(tr_fp)["eeg"]
     if n_train_images:
-        eeg_tr = eeg_tr[:n_train_images]
+        # ⚠️ **必须 copy**：切片是**视图**，会一直吊着整个 (16540,4,63,250) 数组
+        #    （float32 ≈ 4.2 GB/Job）⇒ 10 个并发就是 42 GB ⇒ 抢内存把 Job 一起拖死
+        #    （上一轮基线表就踩过这个坑）。copy 之后只剩 2000 张的 ≈ 500 MB。
+        eeg_tr = eeg_tr[:n_train_images].copy()
     log(f"  sub-{sid:02d} test {eeg_te.shape} train {eeg_tr.shape}")
 
     out = {"subject": f"sub-{sid:02d}", "rows": [], "n_train_images": n_train_images}
@@ -233,7 +236,8 @@ def run_subject(sid, IMG_train, IMG_test, handles, host_name, donors, args, rng)
                              "error": f"train 抽取失败：{ftr['info'].get('error')}"})
         return out
     H_tr = ftr["features"]
-    del eeg_tr
+    # ⚠️ eeg_tr **不能在这里删**：供体还要用它抽 train 特征
+    #    （上一版在这里 del 了，供体行直接 UnboundLocalError ⇒ 10 个 Job 全废）
 
     row = {"name": host_name, "kind": "host", "ok": True, "n_params": h.n_params,
            "dim": int(H_te.shape[-1])}
@@ -297,7 +301,7 @@ def run_subject(sid, IMG_train, IMG_test, handles, host_name, donors, args, rng)
             out["rows"].append(r)
         del D_te, D_tr
 
-    del eeg_te, H_te, H_tr
+    del eeg_te, eeg_tr, H_te, H_tr
     out["elapsed_s"] = round(time.time() - t0, 1)
     return out
 
