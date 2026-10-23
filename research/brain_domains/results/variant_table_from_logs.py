@@ -23,9 +23,10 @@ LINE = re.compile(
     r"\[(?P<name>[^\]]+)\]\s*A r=(?P<r>[+-][\d.]+)\s+p=(?P<p>[\d.]+)\s*\|"
     r"\s*B acc1=(?P<acc>[\d.]+)\s*\(零中位 (?P<null>[\d.]+)\)")
 
-# ⚠️ 名字里允许 "t77b"：修 bug 那一轮发过一个 t77b-s01-stable（Job 侧 sed 补丁版），
-#    它是 sub-01 stable 的**唯一有效**结果（重发时用了同名但带 bug 的版本）。
-JOB_RE = re.compile(r"^t77b?-s(\d\d)-(stable|dev)$")
+# ⚠️ 名字里允许任意后缀（t77 / t77b / t77e / t77f …）：
+#    同一被试-趟被重跑过多次（修 bug、加供体），每次换名字；
+#    正则太窄会**只吃到旧的那批**（实测：只认 t77/t77b ⇒ 拿到的是第一轮的抖动数据）。
+JOB_RE = re.compile(r"^t77[a-z]?-s(\d\d)-(stable|dev)$")
 
 
 def all_jobs():
