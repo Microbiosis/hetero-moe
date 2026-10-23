@@ -121,7 +121,9 @@ def readouts_for(model, x, rnd_codebook):
         onehot = F.one_hot(codes, K).float()                 # (B,T',K)
         # 重建层：解码器重建的 EEG（**与 braintokenizer 那一行同口径**：
         #          它的最终输出就是重建信号 (B,19,512)，沿通道轴池化 ⇒ (B,512)）
-        rec = model.decode(zq.transpose(1, 2), x.shape[-1])  # (B, C, T)
+        # ⚠️ `model.decode` 内部**已经**做了一次 transpose ⇒ 这里不能再转
+        #    （转两次会得到 (B,T',D) ⇒ ConvTranspose1d 报「31 channels instead of 64」）
+        rec = model.decode(zq, x.shape[-1])                   # (B, C, T)
         out = {
             "emb_mean": emb.mean(dim=1),                     # (B, D)
             "onehot_mean": onehot.mean(dim=1),               # (B, K)
@@ -195,6 +197,10 @@ def main():
     ap.add_argument("--n-null", type=int, default=8)
     ap.add_argument("--batch-size", type=int, default=64)
     ap.add_argument("--device", default="cpu")
+    ap.add_argument("--no-metric-b", action="store_true",
+                    help="只算指标 A（RSA）。指标 B 的 ridge 很贵（试次级 Gram "
+                         "8000² × 每读出 1+N 次拟合）而它对所有读出都在随机水平 "
+                         "⇒ 主轮只跑 A，B 单独一轮补")
     ap.add_argument("--out-dir", default=str(OUT_DIR))
     args = ap.parse_args()
 
@@ -223,30 +229,38 @@ def main():
         rec = {"subject": f"sub-{sid:02d}", "rows": {}}
         try:
             eeg_te = np.load(TEST_4D / f"sub-{sid:02d}.npz")["eeg"]
-            eeg_tr = load_train_split(sid, args.train_images)
             F_te, hist = extract(model, eeg_te, rnd_cb, args.batch_size, args.device)
-            F_tr, _h2 = extract(model, eeg_tr, rnd_cb, args.batch_size, args.device)
+            if args.no_metric_b:
+                F_tr = None
+            else:
+                eeg_tr = load_train_split(sid, args.train_images)
+                F_tr, _h2 = extract(model, eeg_tr, rnd_cb, args.batch_size,
+                                    args.device)
             for k in READOUTS:
                 Xte, Xtr = F_te[k], F_tr[k]
                 a = EVAL.metric_a_rsa(Xte, IMG_test, args.n_perm, rng)
-                mu, sd = EVAL.zscore_fit(Xtr)
-                rb = EVAL.metric_b_decode(
-                    EVAL.zscore_apply(Xtr, mu, sd), EVAL.zscore_apply(Xte, mu, sd),
-                    IMG_train[:args.train_images], IMG_test, rng,
-                    n_null=args.n_null)
-                rec["rows"][k] = {"dim": int(Xte.shape[-1]),
-                                  "r_img": a["r_img"], "p_img": a["p_img"],
-                                  "acc1": rb["acc1_cos"],
-                                  "null_acc1": float(np.median(rb["null_acc1_cos"]))}
+                entry = {"dim": int(Xte.shape[-1]),
+                         "r_img": a["r_img"], "p_img": a["p_img"]}
+                if not args.no_metric_b:
+                    mu, sd = EVAL.zscore_fit(Xtr)
+                    rb = EVAL.metric_b_decode(
+                        EVAL.zscore_apply(Xtr, mu, sd), EVAL.zscore_apply(Xte, mu, sd),
+                        IMG_train[:args.train_images], IMG_test, rng,
+                        n_null=args.n_null)
+                    entry["acc1"] = rb["acc1_cos"]
+                    entry["null_acc1"] = float(np.median(rb["null_acc1_cos"]))
+                rec["rows"][k] = entry
+                btxt = (f"| B acc1={entry['acc1']:.4f} "
+                        f"(零中位 {entry['null_acc1']:.4f})"
+                        if "acc1" in entry else "| B 跳过")
                 log(f"  {k:<18} dim={Xte.shape[-1]:<5} A r={a['r_img']:+.4f} "
-                    f"p={a['p_img']:.3f} | B acc1={rb['acc1_cos']:.4f} "
-                    f"(零中位 {np.median(rb['null_acc1_cos']):.4f})")
+                    f"p={a['p_img']:.3f} {btxt}")
             # 码本利用率（**整个 test 集**的码号分布）
             rec["codebook"] = usage_from_hist(hist)
             u = rec["codebook"]
             log(f"  码本利用率：{u['used']}/{u['total']} = {u['utilization']:.1%} "
                 f"| 熵 {u['entropy_nats']:.2f} nats")
-            del eeg_te, eeg_tr, F_te, F_tr
+            del eeg_te, F_te
         except Exception as e:
             rec["error"] = f"{type(e).__name__}: {e}"[:300]
             rec["trace"] = traceback.format_exc()[-600:]
@@ -259,22 +273,26 @@ def main():
     for k in READOUTS:
         rs = [r["rows"][k]["r_img"] for r in per_subject if k in r.get("rows", {})]
         ps = [r["rows"][k]["p_img"] for r in per_subject if k in r.get("rows", {})]
-        ac = [r["rows"][k]["acc1"] for r in per_subject if k in r.get("rows", {})]
-        nu = [r["rows"][k]["null_acc1"] for r in per_subject if k in r.get("rows", {})]
+        ac = [r["rows"][k].get("acc1") for r in per_subject if k in r.get("rows", {})]
+        nu = [r["rows"][k].get("null_acc1") for r in per_subject
+              if k in r.get("rows", {})]
+        ac = [x for x in ac if x is not None]
+        nu = [x for x in nu if x is not None]
         if not rs:
             continue
         rs_s = sorted(rs)
-        summary[k] = {
-            "n": len(rs), "r_median": rs_s[len(rs_s) // 2],
-            "p_median": sorted(ps)[len(ps) // 2],
-            "n_sig": sum(1 for p in ps if p < 0.05),
-            "acc1_median": sorted(ac)[len(ac) // 2],
-            "null_median": sorted(nu)[len(nu) // 2],
-        }
-        log(f"  {k:<18} 中位 A r={summary[k]['r_median']:+.4f} "
-            f"({summary[k]['n_sig']}/{summary[k]['n']} 显著) | "
-            f"B acc1={summary[k]['acc1_median']:.4f} "
-            f"(零中位 {summary[k]['null_median']:.4f})")
+        entry = {"n": len(rs), "r_median": rs_s[len(rs_s) // 2],
+                 "p_median": sorted(ps)[len(ps) // 2],
+                 "n_sig": sum(1 for p in ps if p < 0.05)}
+        if ac:
+            entry["acc1_median"] = sorted(ac)[len(ac) // 2]
+            entry["null_median"] = sorted(nu)[len(nu) // 2]
+        summary[k] = entry
+        log(f"  {k:<18} 中位 A r={entry['r_median']:+.4f} "
+            f"({entry['n_sig']}/{entry['n']} 显著)")
+        if ac:
+            log(f"  {'':<18}   B acc1={entry['acc1_median']:.4f} "
+                f"(零中位 {entry['null_median']:.4f})")
 
     (out_dir / "tokenizer_eval.json").write_text(
         json.dumps({"ckpt": args.ckpt, "config": vars(args),
