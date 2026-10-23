@@ -1292,7 +1292,10 @@ RSA 显著性回答的是「它与外部 RDM 的对应是不是随机的」。�
 | 运行报告（桶） | `hf://buckets/illusion-brain/brain-domains/runs/tier0-diag/` 与 `runs/tier0-encoding/` | `exp64_tier0_diag.json` / `exp65_tier0_rsa_fix.json` / `exp65_cross_subject.json` / `exp66_align_text_check.json` / `exp67_encoding.json` / `exp69_train_encoding.json` / `exp70_scaling.json` / `exp71_train_prior_window.json` / `exp72_singletrial.json` / **`exp73_decode200.json` + `exp73_decode200_full.json`** / **`exp74_model_compare.json` + `exp74_model_compare_full.json`** | ✅ |
 | 运行日志（本地） | `research/brain_domains/results/tier0/` | `exp64_job_log.txt` / `exp65_main_job_log.txt` / `exp65_subjects_job_log.txt` / `exp67_encoding_job_log.txt` / `exp69_train_job_log.txt` / `exp70_scaling_job_log.txt` / `exp72_job_log.txt` / **`exp73_job_log.txt`** / **`exp74_job_log.txt`** | ✅ |
 | 云端跑法 | `hf jobs run hf.co/spaces/redmingwei/IllusionBrain python -u /domains/scripts/<x>.py -v hf://buckets/illusion-brain/training-data:/training:ro -v hf://buckets/illusion-brain/brain-domains:/domains --flavor cpu-upgrade` | 桶内 `scripts/` 放脚本 → Job 跑 → 结果写回 `/domains/runs/` | ✅ 验证可用 |
-| WiFi 循环工具 | `tools/wifi-cycle.ps1` | 断 WiFi → 30 s 后自动重连（看门狗双保险）。换出口 IP 用 | ✅ 端到端跑通 |
+| **基模装配层** | `research/brain_domains/models/` | 7 个模块：装载探针 / 统一 registry / 域适配 / 组件接口 / 归因 / 组装器 / 费用模型 | ✅ 本地自测通过 |
+| **脑对齐表评测** | `research/brain_domains/exp/eval_brain_alignment.py` | 指标 A(RSA) + 指标 B(ridge 200 选 1) **同表并列**；630-d 基线行同协议重算；`--self-test` 合成数据走完整链路 | ✅ 本地自测通过（云端未跑）|
+| **分块投递工具** | `tools/hf_job_deliver.py` | gzip+base64 切片 → 每片一 Job → 收尾 Job 拼接落桶并执行（绕开大载荷拦截）| 🔧 待网络恢复后 e2e |
+| WiFi 循环工具 | `tools/wifi-cycle.ps1` | 断 WiFi → 30 s 后自动重连（看门狗双保险）。换出口 IP 用 | ✅ 端到端跑通（⚠️ 仅用户明确要求时才用）|
 
 > ⚠️ 校园网会拦截外网大体积写请求（bucket 上传 / git push / 大 base64 的
 > `hf jobs run` 全部 `Server disconnected without sending a response`）。
@@ -1300,6 +1303,85 @@ RSA 显著性回答的是「它与外部 RDM 的对应是不是随机的」。�
 > 别把大载荷塞进 `hf jobs run` 的命令行。
 > 解法：`tools/wifi-cycle.ps1` 断一次 WiFi 换出口 IP，校园网拦截即消失
 > （桶上传从「卡 440 s」变成「11 s」）。
+>
+> ⚠️ **使用前提（2026-10-23 用户明确要求）**：`tools/wifi-cycle.ps1` 会断开
+> 用户机器的网络 30+ 秒并更换出口 IP，**只有用户明确说了要用才能用**。
+> 遇到上传/连接被拦截时，先走别的路（重试 / 换小载荷 / 分块投递），
+> 把「需要断网才能过」作为选项报给用户，由用户决定。
+
+---
+
+## 十六、阶段 B′/C/D：7 基模脑对齐表 + 逐 block 重组（工具链已就绪，数字待云端）
+
+> **本节不含任何实验数字** —— 网络拦截期间一切外网连接都过不去，
+> 探针 v3 送不进去、表跑不了。**没有数字就不写数字**，
+> 这一节只记录「表是怎么定义的」与「代码已自测到哪一步」。
+
+### 十六·一、这张表的定义
+
+把 7 个 EEG 基模的**冻结表征**放进 THINGS-EEG 输入域（63 ch / 250 Hz / 1000 ms），
+用**两个口径不同的指标**同表并列（不给主次）：
+
+| 指标 | 口径 | 复用 | 回答的问题 |
+|---|---|---|---|
+| **A：RSA** | 冻结表征 ↔ ViT-H-14 图像表征的 RDM 秩相关 | `exp65.rdm_full / spearman / rsa_with_null / p_from_null` | 表征里有没有**图像语义结构** |
+| **B：ridge 200 选 1** | 冻结表征上闭式 ridge → test split 200 选 1 | `exp73.per_rep_targets / fit_and_decode` | 表征里的信息**能不能读出**图像 |
+
+两条必须写死的口径纪律：
+
+1. **基线行同协议** —— 表里「630-d 原始特征」那行用**同一个 train 图像数**重算，
+   不是抄 exp73 的 0.0309。否则基线与模型行不可比。
+2. **指标 B 必须用试次级 Gram**（`A0 = G_full/n_rep`）。
+   exp73a 的方向审计已经证死：**图级降维在解码方向不成立**
+   （图级 Gram 漏掉图内散布 Δ），照抄 exp73 的实现即可，无需重写。
+
+### 十六·二、工具链（`research/brain_domains/models/`）
+
+```
+domain_adapters.py  THINGS-EEG → 各基模期望域（通道子集 / resample_poly 重采样 / 窗口裁剪或补零）
+registry.py         装载 → token 抽取 → 布局推断 → 池化（7 个基模的统一口径）
+interfaces.py       mixer 家族（identity / attn1d / crisscross2d / linear_ssm / timefreq）+ FFN + 投影 + pre-LN block
+provenance.py       重组变体的诚实归因（**逐组件**权重状态 + 许可取最严）
+assembler.py        逐 block 拆 + 组装器 + **权重搬运核实** + 声明式变体清单
+gpu_cost_model.py   20 档位单价表 + 三种 workload 的总费用最优档
+probe_base_models.py braindecode 装载探针（逐基模前向 + 吞吐 + THINGS 通道名）
+exp/eval_brain_alignment.py  表评测本体（指标 A + 指标 B + 630-d 基线行）
+```
+
+### 十六·三、这一轮真正定下来的三条技术决定
+
+1. **token 维度不一致时，投影是「两侧」而不是「一侧」**。
+   源权重期待的输入维度是 `src_dim`，所以入口投影是 宿主→源、出口投影是 源→宿主。
+   只在入口插一个「源→宿主」的投影，源权重形状立刻对不上 —— 等于白搬。
+   修正后 modelC（d=32）的块装进宿主（d=64）时，**源权重逐键原样搬用**，
+   provenance 记 `{mixer: reuse, ffn: reuse, proj: projected}`。
+2. **CBraMod 的 Criss-Cross 权重搬不动，就标 `arch-only`**。
+   它是卷积实现，我们的 `CrissCross2D` 是注意力实现 —— 结构不同、权重不可搬。
+   拿随机初始化的权重冒充「从 CBraMod 搬来的」，会让「重组带来的提升」无法归因。
+   ⇒ 每块记**逐组件**状态，而不是一个总标签。
+3. **`linear_ssm` 是结构占位，不是 Mamba**。环境里没有 `mamba_ssm`/`fla`，
+   它必须标 `fresh` 并注明「占位」。**占位不许冒充真身。**
+
+### 十六·四、本地已经自测到的程度（合成数据，未碰网络）
+
+| 自测 | 覆盖 | 结果 |
+|---|---|---|
+| `eval_brain_alignment.py --self-test` | 装载 → 布局 → 前向 → 池化 → 指标 A → 指标 B → 630-d 基线行 → 出表 | ✅ 全绿（有信号合成数据上 A r=+0.30 p=0.010、B acc1=0.90 vs 零中位 0.00）|
+| `assembler.py` 自测 | 权重真搬（A）、搬不动要标 arch-only（B）、两侧投影、占位标注、许可取最严、缺失源要报出来、「all 层」展开、干跑可行性报告 | ✅ 全绿 |
+| `train_illusionbrain_eeg.py --self-test` | per_rep_targets 与 exp73 逐位一致、safetensors 往返、合成训练 + **负对照**、eval_200way 自比对 | ✅ 全绿（修了一个真 bug：numpy 数组喂给了 torch 的 `normalize`）|
+
+### 十六·五、还欠什么
+
+1. **探针 v3 送不进云端**（`Server disconnected without sending a response`）——
+   `hf buckets cp` 12 KB 能过、再大就挂 ⇒ 需要分块投递（`tools/hf_job_deliver.py`
+   已写好：每片 1.6 KB 一 Job，收尾 Job 拼接落桶并执行）。
+2. **`mirepnet` 不在 braindecode 1.8.1** ⇒ 要么自带实现，要么走它原仓库。
+3. **THINGS-EEG 那 63 个通道名**仍未知（桶内没有蒙太奇文件）⇒ 探针 v3 里已含
+   从原始 `test.pt` 读的逻辑，等网络恢复跑一次。
+4. **GPU 档位的总费用最优解**需要各档实测 ms/试次（`probe_ms.json`），
+   框架已就绪；`gpu_cost_model.py` 用合成吞吐跑通过（真数据到位后重跑）。
+   ⚠️ **费用最优 ≠ 最快档**：小模型 GPU 利用率低，`cpu-upgrade`（$0.03/h）
+   在「CPU 受限」区间很可能比 T4 便宜数倍。
 
 ---
 
