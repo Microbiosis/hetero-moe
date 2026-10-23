@@ -165,23 +165,36 @@ def zscore_apply(X, mu, sd):
 # 特征抽取：基模 → 逐试次特征
 # ---------------------------------------------------------------------------
 def model_trial_features(handle, eeg, have_chans=None, batch_size=32,
-                         device="cpu", pool="mean_all", log_every=None):
+                         device="cpu", pool="mean_all", log_every=None,
+                         chunk=2000):
     """把 (n_img, n_rep, C, T) 的 EEG 适配到基模域并跑前向。
+
+    ⚠️ **必须分块**（chunk）：一次适配 24000 试次 × 63 通道时，
+    `resample_poly` 会产出 float64 数组 ≈ **3 GB/Job**；
+    十几个 Job 并发就把宿主机内存吃光 ⇒ 全部卡死
+    （实测：14 个 Job 跑了 55 分钟只完成 1 个模型）。
+    分块后每块 ≈ 250 MB。
 
     返回 {"ok", "features": (n_img, n_rep, D) | None, "info"}
     """
     import registry as REG
     n_img, n_rep = eeg.shape[0], eeg.shape[1]
     flat = eeg.reshape(n_img * n_rep, eeg.shape[2], eeg.shape[3])
-    adapted, info = DA.adapt(flat, handle.spec, have_chans)
-    res = REG.encode_trials(handle, adapted, batch_size=batch_size,
-                             device=device, pool=pool)
-    if not res["ok"]:
-        return {"ok": False, "features": None, "info": {**res["info"],
-                                                        "adapt": info.to_dict()}}
-    X = res["features"].reshape(n_img, n_rep, -1)
-    return {"ok": True, "features": X,
-            "info": {**res["info"], "adapt": info.to_dict()}}
+    outs, info0 = [], None
+    for s in range(0, flat.shape[0], chunk):
+        sub = flat[s:s + chunk]
+        adapted, info = DA.adapt(sub, handle.spec, have_chans)
+        res = REG.encode_trials(handle, adapted, batch_size=batch_size,
+                                device=device, pool=pool)
+        if not res["ok"]:
+            return {"ok": False, "features": None,
+                    "info": {**res["info"], "adapt": info.to_dict(),
+                             "chunk": [s, s + len(sub)]}}
+        if info0 is None:
+            info0 = {**res["info"], "adapt": info.to_dict()}
+        outs.append(res["features"])
+    X = np.concatenate(outs, axis=0).reshape(n_img, n_rep, -1)
+    return {"ok": True, "features": X, "info": info0}
 
 
 def baseline_630_features(eeg):
