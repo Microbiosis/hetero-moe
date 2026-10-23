@@ -204,9 +204,9 @@ def idw_interpolate(eeg, have, want, k=6, power=3.0):
         d = d[:k]
         w = np.array([1.0 / (dist ** power) for dist, _ in d])
         w = w / w.sum()
-        acc = np.zeros((n, eeg.shape[-1]), dtype=np.float64)
+        acc = np.zeros((n, eeg.shape[-1]), dtype=eeg.dtype)   # 保持输入 dtype
         for (dist, name), wi in zip(d, w):
-            acc += wi * eeg[:, lower[name.lower()], :]
+            acc += np.float32(wi) * eeg[:, lower[name.lower()], :].astype(eeg.dtype)
         out_cols.append(acc)
         out_names.append(c)
     return np.stack(out_cols, axis=1), out_names, [

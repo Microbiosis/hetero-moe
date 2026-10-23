@@ -1,0 +1,4355 @@
+{
+  "cbramod": {
+    "rows": [
+      {
+        "order": 0,
+        "module": "encoder.layers.0",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.001,
+        "p": 0.821
+      },
+      {
+        "order": 1,
+        "module": "encoder.layers.0.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0043,
+        "p": 0.383
+      },
+      {
+        "order": 2,
+        "module": "encoder.layers.0.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0043,
+        "p": 0.388
+      },
+      {
+        "order": 3,
+        "module": "encoder.layers.0.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0036,
+        "p": 0.418
+      },
+      {
+        "order": 4,
+        "module": "encoder.layers.0.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.008,
+        "p": 0.1
+      },
+      {
+        "order": 5,
+        "module": "encoder.layers.0.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0049,
+        "p": 0.378
+      },
+      {
+        "order": 6,
+        "module": "encoder.layers.0.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.008,
+        "p": 0.07
+      },
+      {
+        "order": 7,
+        "module": "encoder.layers.0.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0011,
+        "p": 0.816
+      },
+      {
+        "order": 8,
+        "module": "encoder.layers.0.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0106,
+        "p": 0.02
+      },
+      {
+        "order": 9,
+        "module": "encoder.layers.0.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": 0.0035,
+        "p": 0.443
+      },
+      {
+        "order": 10,
+        "module": "encoder.layers.1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0129,
+        "p": 0.01
+      },
+      {
+        "order": 11,
+        "module": "encoder.layers.1.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0068,
+        "p": 0.139
+      },
+      {
+        "order": 12,
+        "module": "encoder.layers.1.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0068,
+        "p": 0.109
+      },
+      {
+        "order": 13,
+        "module": "encoder.layers.1.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0027,
+        "p": 0.627
+      },
+      {
+        "order": 14,
+        "module": "encoder.layers.1.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0157,
+        "p": 0.005
+      },
+      {
+        "order": 15,
+        "module": "encoder.layers.1.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0051,
+        "p": 0.284
+      },
+      {
+        "order": 16,
+        "module": "encoder.layers.1.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0157,
+        "p": 0.005
+      },
+      {
+        "order": 17,
+        "module": "encoder.layers.1.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0188,
+        "p": 0.005
+      },
+      {
+        "order": 18,
+        "module": "encoder.layers.1.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0135,
+        "p": 0.01
+      },
+      {
+        "order": 19,
+        "module": "encoder.layers.1.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": 0.0053,
+        "p": 0.418
+      },
+      {
+        "order": 20,
+        "module": "encoder.layers.10",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.009,
+        "p": 0.065
+      },
+      {
+        "order": 21,
+        "module": "encoder.layers.10.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0045,
+        "p": 0.328
+      },
+      {
+        "order": 22,
+        "module": "encoder.layers.10.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0045,
+        "p": 0.338
+      },
+      {
+        "order": 23,
+        "module": "encoder.layers.10.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0002,
+        "p": 0.965
+      },
+      {
+        "order": 24,
+        "module": "encoder.layers.10.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0089,
+        "p": 0.035
+      },
+      {
+        "order": 25,
+        "module": "encoder.layers.10.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0054,
+        "p": 0.284
+      },
+      {
+        "order": 26,
+        "module": "encoder.layers.10.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0089,
+        "p": 0.055
+      },
+      {
+        "order": 27,
+        "module": "encoder.layers.10.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0026,
+        "p": 0.517
+      },
+      {
+        "order": 28,
+        "module": "encoder.layers.10.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0024,
+        "p": 0.602
+      },
+      {
+        "order": 29,
+        "module": "encoder.layers.10.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": -0.0006,
+        "p": 0.9
+      },
+      {
+        "order": 30,
+        "module": "encoder.layers.11",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0099,
+        "p": 0.025
+      },
+      {
+        "order": 31,
+        "module": "encoder.layers.11.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0018,
+        "p": 0.692
+      },
+      {
+        "order": 32,
+        "module": "encoder.layers.11.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0018,
+        "p": 0.726
+      },
+      {
+        "order": 33,
+        "module": "encoder.layers.11.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0035,
+        "p": 0.373
+      },
+      {
+        "order": 34,
+        "module": "encoder.layers.11.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0002,
+        "p": 0.955
+      },
+      {
+        "order": 35,
+        "module": "encoder.layers.11.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0001,
+        "p": 0.985
+      },
+      {
+        "order": 36,
+        "module": "encoder.layers.11.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0002,
+        "p": 0.96
+      },
+      {
+        "order": 37,
+        "module": "encoder.layers.11.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0018,
+        "p": 0.667
+      },
+      {
+        "order": 38,
+        "module": "encoder.layers.11.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0042,
+        "p": 0.313
+      },
+      {
+        "order": 39,
+        "module": "encoder.layers.11.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": -0.0047,
+        "p": 0.368
+      },
+      {
+        "order": 40,
+        "module": "encoder.layers.2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0099,
+        "p": 0.035
+      },
+      {
+        "order": 41,
+        "module": "encoder.layers.2.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0014,
+        "p": 0.736
+      },
+      {
+        "order": 42,
+        "module": "encoder.layers.2.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0014,
+        "p": 0.771
+      },
+      {
+        "order": 43,
+        "module": "encoder.layers.2.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0034,
+        "p": 0.458
+      },
+      {
+        "order": 44,
+        "module": "encoder.layers.2.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0077,
+        "p": 0.134
+      },
+      {
+        "order": 45,
+        "module": "encoder.layers.2.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0052,
+        "p": 0.289
+      },
+      {
+        "order": 46,
+        "module": "encoder.layers.2.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0077,
+        "p": 0.114
+      },
+      {
+        "order": 47,
+        "module": "encoder.layers.2.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0086,
+        "p": 0.065
+      },
+      {
+        "order": 48,
+        "module": "encoder.layers.2.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0018,
+        "p": 0.731
+      },
+      {
+        "order": 49,
+        "module": "encoder.layers.2.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": 0.0036,
+        "p": 0.498
+      },
+      {
+        "order": 50,
+        "module": "encoder.layers.3",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0099,
+        "p": 0.03
+      },
+      {
+        "order": 51,
+        "module": "encoder.layers.3.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0086,
+        "p": 0.045
+      },
+      {
+        "order": 52,
+        "module": "encoder.layers.3.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0086,
+        "p": 0.07
+      },
+      {
+        "order": 53,
+        "module": "encoder.layers.3.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0051,
+        "p": 0.318
+      },
+      {
+        "order": 54,
+        "module": "encoder.layers.3.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0056,
+        "p": 0.209
+      },
+      {
+        "order": 55,
+        "module": "encoder.layers.3.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0049,
+        "p": 0.313
+      },
+      {
+        "order": 56,
+        "module": "encoder.layers.3.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0056,
+        "p": 0.159
+      },
+      {
+        "order": 57,
+        "module": "encoder.layers.3.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0174,
+        "p": 0.01
+      },
+      {
+        "order": 58,
+        "module": "encoder.layers.3.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0101,
+        "p": 0.04
+      },
+      {
+        "order": 59,
+        "module": "encoder.layers.3.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": 0.0013,
+        "p": 0.746
+      },
+      {
+        "order": 60,
+        "module": "encoder.layers.4",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0105,
+        "p": 0.025
+      },
+      {
+        "order": 61,
+        "module": "encoder.layers.4.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0051,
+        "p": 0.244
+      },
+      {
+        "order": 62,
+        "module": "encoder.layers.4.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0051,
+        "p": 0.279
+      },
+      {
+        "order": 63,
+        "module": "encoder.layers.4.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0006,
+        "p": 0.905
+      },
+      {
+        "order": 64,
+        "module": "encoder.layers.4.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0078,
+        "p": 0.09
+      },
+      {
+        "order": 65,
+        "module": "encoder.layers.4.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0058,
+        "p": 0.234
+      },
+      {
+        "order": 66,
+        "module": "encoder.layers.4.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0078,
+        "p": 0.109
+      },
+      {
+        "order": 67,
+        "module": "encoder.layers.4.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0074,
+        "p": 0.134
+      },
+      {
+        "order": 68,
+        "module": "encoder.layers.4.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0067,
+        "p": 0.179
+      },
+      {
+        "order": 69,
+        "module": "encoder.layers.4.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": 0.0017,
+        "p": 0.667
+      },
+      {
+        "order": 70,
+        "module": "encoder.layers.5",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0094,
+        "p": 0.045
+      },
+      {
+        "order": 71,
+        "module": "encoder.layers.5.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0037,
+        "p": 0.423
+      },
+      {
+        "order": 72,
+        "module": "encoder.layers.5.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0037,
+        "p": 0.423
+      },
+      {
+        "order": 73,
+        "module": "encoder.layers.5.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0069,
+        "p": 0.134
+      },
+      {
+        "order": 74,
+        "module": "encoder.layers.5.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0089,
+        "p": 0.07
+      },
+      {
+        "order": 75,
+        "module": "encoder.layers.5.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.007,
+        "p": 0.124
+      },
+      {
+        "order": 76,
+        "module": "encoder.layers.5.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0089,
+        "p": 0.055
+      },
+      {
+        "order": 77,
+        "module": "encoder.layers.5.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.011,
+        "p": 0.01
+      },
+      {
+        "order": 78,
+        "module": "encoder.layers.5.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0146,
+        "p": 0.005
+      },
+      {
+        "order": 79,
+        "module": "encoder.layers.5.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": -0.001,
+        "p": 0.821
+      },
+      {
+        "order": 80,
+        "module": "encoder.layers.6",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0068,
+        "p": 0.154
+      },
+      {
+        "order": 81,
+        "module": "encoder.layers.6.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.004,
+        "p": 0.398
+      },
+      {
+        "order": 82,
+        "module": "encoder.layers.6.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.004,
+        "p": 0.348
+      },
+      {
+        "order": 83,
+        "module": "encoder.layers.6.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0046,
+        "p": 0.303
+      },
+      {
+        "order": 84,
+        "module": "encoder.layers.6.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0105,
+        "p": 0.02
+      },
+      {
+        "order": 85,
+        "module": "encoder.layers.6.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0038,
+        "p": 0.388
+      },
+      {
+        "order": 86,
+        "module": "encoder.layers.6.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0105,
+        "p": 0.015
+      },
+      {
+        "order": 87,
+        "module": "encoder.layers.6.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0162,
+        "p": 0.005
+      },
+      {
+        "order": 88,
+        "module": "encoder.layers.6.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0163,
+        "p": 0.005
+      },
+      {
+        "order": 89,
+        "module": "encoder.layers.6.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": 0.0014,
+        "p": 0.741
+      },
+      {
+        "order": 90,
+        "module": "encoder.layers.7",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0106,
+        "p": 0.015
+      },
+      {
+        "order": 91,
+        "module": "encoder.layers.7.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0002,
+        "p": 0.9
+      },
+      {
+        "order": 92,
+        "module": "encoder.layers.7.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": -0.0002,
+        "p": 0.93
+      },
+      {
+        "order": 93,
+        "module": "encoder.layers.7.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0029,
+        "p": 0.557
+      },
+      {
+        "order": 94,
+        "module": "encoder.layers.7.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0011,
+        "p": 0.816
+      },
+      {
+        "order": 95,
+        "module": "encoder.layers.7.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0001,
+        "p": 0.99
+      },
+      {
+        "order": 96,
+        "module": "encoder.layers.7.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0011,
+        "p": 0.736
+      },
+      {
+        "order": 97,
+        "module": "encoder.layers.7.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.01,
+        "p": 0.035
+      },
+      {
+        "order": 98,
+        "module": "encoder.layers.7.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0138,
+        "p": 0.005
+      },
+      {
+        "order": 99,
+        "module": "encoder.layers.7.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": -0.0013,
+        "p": 0.791
+      },
+      {
+        "order": 100,
+        "module": "encoder.layers.8",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0056,
+        "p": 0.264
+      },
+      {
+        "order": 101,
+        "module": "encoder.layers.8.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0066,
+        "p": 0.149
+      },
+      {
+        "order": 102,
+        "module": "encoder.layers.8.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0066,
+        "p": 0.209
+      },
+      {
+        "order": 103,
+        "module": "encoder.layers.8.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0033,
+        "p": 0.438
+      },
+      {
+        "order": 104,
+        "module": "encoder.layers.8.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0107,
+        "p": 0.035
+      },
+      {
+        "order": 105,
+        "module": "encoder.layers.8.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0043,
+        "p": 0.393
+      },
+      {
+        "order": 106,
+        "module": "encoder.layers.8.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0107,
+        "p": 0.03
+      },
+      {
+        "order": 107,
+        "module": "encoder.layers.8.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0118,
+        "p": 0.01
+      },
+      {
+        "order": 108,
+        "module": "encoder.layers.8.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0093,
+        "p": 0.035
+      },
+      {
+        "order": 109,
+        "module": "encoder.layers.8.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": -0.0035,
+        "p": 0.373
+      },
+      {
+        "order": 110,
+        "module": "encoder.layers.9",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0122,
+        "p": 0.01
+      },
+      {
+        "order": 111,
+        "module": "encoder.layers.9.activation",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0064,
+        "p": 0.149
+      },
+      {
+        "order": 112,
+        "module": "encoder.layers.9.dropout",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0064,
+        "p": 0.164
+      },
+      {
+        "order": 113,
+        "module": "encoder.layers.9.dropout1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0153,
+        "p": 0.005
+      },
+      {
+        "order": 114,
+        "module": "encoder.layers.9.dropout2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0024,
+        "p": 0.652
+      },
+      {
+        "order": 115,
+        "module": "encoder.layers.9.linear1",
+        "n_tokens": 800,
+        "dim": 63,
+        "r": 0.0026,
+        "p": 0.582
+      },
+      {
+        "order": 116,
+        "module": "encoder.layers.9.linear2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": -0.0024,
+        "p": 0.622
+      },
+      {
+        "order": 117,
+        "module": "encoder.layers.9.norm1",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0178,
+        "p": 0.005
+      },
+      {
+        "order": 118,
+        "module": "encoder.layers.9.norm2",
+        "n_tokens": 200,
+        "dim": 63,
+        "r": 0.0042,
+        "p": 0.318
+      },
+      {
+        "order": 119,
+        "module": "encoder.layers.9.self_attn_s",
+        "n_tokens": 63,
+        "dim": 100,
+        "r": -0.0033,
+        "p": 0.428
+      }
+    ],
+    "summary": "最强 encoder.layers.1.norm1 r=+0.0188 p=0.005"
+  },
+  "eegdino-small": {
+    "rows": [
+      {
+        "order": 0,
+        "module": "encoder_layers.0",
+        "n_tokens": 95,
+        "dim": 200,
+        "r": 0.0014,
+        "p": 0.781
+      },
+      {
+        "order": 1,
+        "module": "encoder_layers.0.attn",
+        "n_tokens": 95,
+        "dim": 200,
+        "r": 0.0026,
+        "p": 0.582
+      },
+      {
+        "order": 2,
+        "module": "encoder_layers.0.attn.attn_drop",
+        "n_tokens": 9025,
+        "dim": 8,
+        "r": -0.0143,
+        "p": 0.821
+      },
+      {
+        "order": 3,
+        "module": "encoder_layers.0.attn.proj",
+        "n_tokens": 95,
+        "dim": 200,
+        "r": 0.0026,
+        "p": 0.582
+      },
+      {
+        "order": 4,
+        "module": "encoder_layers.0.attn.proj_drop",
+        "n_tokens": 95,
+        "dim": 200,
+        "r": 0.0026,
+        "p": 0.572
+      },
+      {
+        "order": 5,
+        "module": "encoder_layers.0.drop_path",
+        "n_tokens": 95,
+        "dim": 200,
+        "r": 0.0005,
+        "p": 0.896
+      },
+      {
+        "order": 6,
+        "module": "encoder_layers.0.mlp",
+        "n_tokens": 95,
+        "dim": 200,
+        "r": 0.0005,
+        "p": 0.925
+      },
+      {
+        "order": 7,
+        "module": "encoder_layers.0.mlp.act",
+        "n_tokens": 95,
+        "dim": 512,
+        "r": 0.0017,
+        "p": 0.697
+      },
+      {
+        "order": 8,
+        "module": "encoder_layers.0.mlp.drop",
+        "n_tokens": 95,
+        "dim": 200,
+        "r": 0.0005,
+        "p": 0.915
+      },
+      {
+        "order": 9,
+        "module": "encoder_layers.0.mlp.fc1",
+        "n_tokens": 95,
+        "dim": 512,
+        "r": 0.0013,
+        "p": 0.756
+      },
+      {
+        "order": 10,
+        "module": "encoder_layers.0.mlp.fc2",
+        "n_tokens": 95,
+        "dim": 200,
+        "r": 0.0005,
+        "p": 0.93
+      },
+      {
+        "order": 11,
+        "module": "encoder_layers.0.norm1",
+        "n_tokens": 95,
+        "dim": 200,
+        "r": 0.0027,
+        "p": 0.652
+      },
+      {
+        "order": 12,
+        "module": "encoder_layers.0.norm2",
+        "n_tokens": 95,
+        "dim": 200,
+        "r": 0.0029,
+        "p": 0.522
+      },
+      {
+        "order": 13,
+        "module": "encoder_layers.1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0002,
+        "p": 0.96
+      },
+      {
+        "order": 14,
+        "module": "encoder_layers.1.attn",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0013,
+        "p": 0.751
+      },
+      {
+        "order": 15,
+        "module": "encoder_layers.1.attn.attn_drop",
+        "n_tokens": 9216,
+        "dim": 8,
+        "r": 0.0084,
+        "p": 0.806
+      },
+      {
+        "order": 16,
+        "module": "encoder_layers.1.attn.proj",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0013,
+        "p": 0.771
+      },
+      {
+        "order": 17,
+        "module": "encoder_layers.1.attn.proj_drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0013,
+        "p": 0.716
+      },
+      {
+        "order": 18,
+        "module": "encoder_layers.1.drop_path",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0015,
+        "p": 0.771
+      },
+      {
+        "order": 19,
+        "module": "encoder_layers.1.mlp",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0015,
+        "p": 0.776
+      },
+      {
+        "order": 20,
+        "module": "encoder_layers.1.mlp.act",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": 0.0012,
+        "p": 0.761
+      },
+      {
+        "order": 21,
+        "module": "encoder_layers.1.mlp.drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0015,
+        "p": 0.761
+      },
+      {
+        "order": 22,
+        "module": "encoder_layers.1.mlp.fc1",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": 0.0009,
+        "p": 0.856
+      },
+      {
+        "order": 23,
+        "module": "encoder_layers.1.mlp.fc2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0015,
+        "p": 0.751
+      },
+      {
+        "order": 24,
+        "module": "encoder_layers.1.norm1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0015,
+        "p": 0.701
+      },
+      {
+        "order": 25,
+        "module": "encoder_layers.1.norm2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0014,
+        "p": 0.751
+      },
+      {
+        "order": 26,
+        "module": "encoder_layers.10",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0005,
+        "p": 0.925
+      },
+      {
+        "order": 27,
+        "module": "encoder_layers.10.attn",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0017,
+        "p": 0.736
+      },
+      {
+        "order": 28,
+        "module": "encoder_layers.10.attn.attn_drop",
+        "n_tokens": 9216,
+        "dim": 8,
+        "r": -0.0367,
+        "p": 0.428
+      },
+      {
+        "order": 29,
+        "module": "encoder_layers.10.attn.proj",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0017,
+        "p": 0.637
+      },
+      {
+        "order": 30,
+        "module": "encoder_layers.10.attn.proj_drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0017,
+        "p": 0.672
+      },
+      {
+        "order": 31,
+        "module": "encoder_layers.10.drop_path",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0026,
+        "p": 0.602
+      },
+      {
+        "order": 32,
+        "module": "encoder_layers.10.mlp",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0026,
+        "p": 0.597
+      },
+      {
+        "order": 33,
+        "module": "encoder_layers.10.mlp.act",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0012,
+        "p": 0.751
+      },
+      {
+        "order": 34,
+        "module": "encoder_layers.10.mlp.drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0026,
+        "p": 0.552
+      },
+      {
+        "order": 35,
+        "module": "encoder_layers.10.mlp.fc1",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0015,
+        "p": 0.721
+      },
+      {
+        "order": 36,
+        "module": "encoder_layers.10.mlp.fc2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0026,
+        "p": 0.602
+      },
+      {
+        "order": 37,
+        "module": "encoder_layers.10.norm1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0018,
+        "p": 0.687
+      },
+      {
+        "order": 38,
+        "module": "encoder_layers.10.norm2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0006,
+        "p": 0.935
+      },
+      {
+        "order": 39,
+        "module": "encoder_layers.11",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0003,
+        "p": 0.96
+      },
+      {
+        "order": 40,
+        "module": "encoder_layers.11.attn",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0016,
+        "p": 0.692
+      },
+      {
+        "order": 41,
+        "module": "encoder_layers.11.attn.attn_drop",
+        "n_tokens": 9216,
+        "dim": 8,
+        "r": -0.0548,
+        "p": 0.289
+      },
+      {
+        "order": 42,
+        "module": "encoder_layers.11.attn.proj",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0016,
+        "p": 0.771
+      },
+      {
+        "order": 43,
+        "module": "encoder_layers.11.attn.proj_drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0016,
+        "p": 0.726
+      },
+      {
+        "order": 44,
+        "module": "encoder_layers.11.drop_path",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0011,
+        "p": 0.826
+      },
+      {
+        "order": 45,
+        "module": "encoder_layers.11.mlp",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0011,
+        "p": 0.816
+      },
+      {
+        "order": 46,
+        "module": "encoder_layers.11.mlp.act",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": 0.0004,
+        "p": 0.94
+      },
+      {
+        "order": 47,
+        "module": "encoder_layers.11.mlp.drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0011,
+        "p": 0.831
+      },
+      {
+        "order": 48,
+        "module": "encoder_layers.11.mlp.fc1",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": 0.0012,
+        "p": 0.816
+      },
+      {
+        "order": 49,
+        "module": "encoder_layers.11.mlp.fc2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0011,
+        "p": 0.846
+      },
+      {
+        "order": 50,
+        "module": "encoder_layers.11.norm1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0001,
+        "p": 0.98
+      },
+      {
+        "order": 51,
+        "module": "encoder_layers.11.norm2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0004,
+        "p": 0.94
+      },
+      {
+        "order": 52,
+        "module": "encoder_layers.2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0012,
+        "p": 0.776
+      },
+      {
+        "order": 53,
+        "module": "encoder_layers.2.attn",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0001,
+        "p": 0.975
+      },
+      {
+        "order": 54,
+        "module": "encoder_layers.2.attn.attn_drop",
+        "n_tokens": 9216,
+        "dim": 8,
+        "r": -0.0394,
+        "p": 0.358
+      },
+      {
+        "order": 55,
+        "module": "encoder_layers.2.attn.proj",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0001,
+        "p": 0.98
+      },
+      {
+        "order": 56,
+        "module": "encoder_layers.2.attn.proj_drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0001,
+        "p": 0.99
+      },
+      {
+        "order": 57,
+        "module": "encoder_layers.2.drop_path",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.001,
+        "p": 0.786
+      },
+      {
+        "order": 58,
+        "module": "encoder_layers.2.mlp",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.001,
+        "p": 0.811
+      },
+      {
+        "order": 59,
+        "module": "encoder_layers.2.mlp.act",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": 0.0021,
+        "p": 0.622
+      },
+      {
+        "order": 60,
+        "module": "encoder_layers.2.mlp.drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.001,
+        "p": 0.826
+      },
+      {
+        "order": 61,
+        "module": "encoder_layers.2.mlp.fc1",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": 0.002,
+        "p": 0.647
+      },
+      {
+        "order": 62,
+        "module": "encoder_layers.2.mlp.fc2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.001,
+        "p": 0.826
+      },
+      {
+        "order": 63,
+        "module": "encoder_layers.2.norm1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0002,
+        "p": 0.97
+      },
+      {
+        "order": 64,
+        "module": "encoder_layers.2.norm2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0011,
+        "p": 0.816
+      },
+      {
+        "order": 65,
+        "module": "encoder_layers.3",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.001,
+        "p": 0.851
+      },
+      {
+        "order": 66,
+        "module": "encoder_layers.3.attn",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0046,
+        "p": 0.333
+      },
+      {
+        "order": 67,
+        "module": "encoder_layers.3.attn.attn_drop",
+        "n_tokens": 9216,
+        "dim": 8,
+        "r": -0.0446,
+        "p": 0.378
+      },
+      {
+        "order": 68,
+        "module": "encoder_layers.3.attn.proj",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0046,
+        "p": 0.308
+      },
+      {
+        "order": 69,
+        "module": "encoder_layers.3.attn.proj_drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0046,
+        "p": 0.313
+      },
+      {
+        "order": 70,
+        "module": "encoder_layers.3.drop_path",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0013,
+        "p": 0.746
+      },
+      {
+        "order": 71,
+        "module": "encoder_layers.3.mlp",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0013,
+        "p": 0.781
+      },
+      {
+        "order": 72,
+        "module": "encoder_layers.3.mlp.act",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": 0.0005,
+        "p": 0.94
+      },
+      {
+        "order": 73,
+        "module": "encoder_layers.3.mlp.drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0013,
+        "p": 0.781
+      },
+      {
+        "order": 74,
+        "module": "encoder_layers.3.mlp.fc1",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": 0.0002,
+        "p": 0.955
+      },
+      {
+        "order": 75,
+        "module": "encoder_layers.3.mlp.fc2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0013,
+        "p": 0.736
+      },
+      {
+        "order": 76,
+        "module": "encoder_layers.3.norm1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0014,
+        "p": 0.736
+      },
+      {
+        "order": 77,
+        "module": "encoder_layers.3.norm2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0007,
+        "p": 0.876
+      },
+      {
+        "order": 78,
+        "module": "encoder_layers.4",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0039,
+        "p": 0.408
+      },
+      {
+        "order": 79,
+        "module": "encoder_layers.4.attn",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0044,
+        "p": 0.328
+      },
+      {
+        "order": 80,
+        "module": "encoder_layers.4.attn.attn_drop",
+        "n_tokens": 9216,
+        "dim": 8,
+        "r": -0.0477,
+        "p": 0.284
+      },
+      {
+        "order": 81,
+        "module": "encoder_layers.4.attn.proj",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0044,
+        "p": 0.313
+      },
+      {
+        "order": 82,
+        "module": "encoder_layers.4.attn.proj_drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0044,
+        "p": 0.328
+      },
+      {
+        "order": 83,
+        "module": "encoder_layers.4.drop_path",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0008,
+        "p": 0.846
+      },
+      {
+        "order": 84,
+        "module": "encoder_layers.4.mlp",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0008,
+        "p": 0.891
+      },
+      {
+        "order": 85,
+        "module": "encoder_layers.4.mlp.act",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0021,
+        "p": 0.587
+      },
+      {
+        "order": 86,
+        "module": "encoder_layers.4.mlp.drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0008,
+        "p": 0.896
+      },
+      {
+        "order": 87,
+        "module": "encoder_layers.4.mlp.fc1",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0027,
+        "p": 0.572
+      },
+      {
+        "order": 88,
+        "module": "encoder_layers.4.mlp.fc2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0008,
+        "p": 0.92
+      },
+      {
+        "order": 89,
+        "module": "encoder_layers.4.norm1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0006,
+        "p": 0.886
+      },
+      {
+        "order": 90,
+        "module": "encoder_layers.4.norm2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0012,
+        "p": 0.776
+      },
+      {
+        "order": 91,
+        "module": "encoder_layers.5",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0045,
+        "p": 0.318
+      },
+      {
+        "order": 92,
+        "module": "encoder_layers.5.attn",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0019,
+        "p": 0.726
+      },
+      {
+        "order": 93,
+        "module": "encoder_layers.5.attn.attn_drop",
+        "n_tokens": 9216,
+        "dim": 8,
+        "r": -0.0188,
+        "p": 0.642
+      },
+      {
+        "order": 94,
+        "module": "encoder_layers.5.attn.proj",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0019,
+        "p": 0.677
+      },
+      {
+        "order": 95,
+        "module": "encoder_layers.5.attn.proj_drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0019,
+        "p": 0.672
+      },
+      {
+        "order": 96,
+        "module": "encoder_layers.5.drop_path",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0033,
+        "p": 0.547
+      },
+      {
+        "order": 97,
+        "module": "encoder_layers.5.mlp",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0033,
+        "p": 0.468
+      },
+      {
+        "order": 98,
+        "module": "encoder_layers.5.mlp.act",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0039,
+        "p": 0.383
+      },
+      {
+        "order": 99,
+        "module": "encoder_layers.5.mlp.drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0033,
+        "p": 0.493
+      },
+      {
+        "order": 100,
+        "module": "encoder_layers.5.mlp.fc1",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0053,
+        "p": 0.259
+      },
+      {
+        "order": 101,
+        "module": "encoder_layers.5.mlp.fc2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0033,
+        "p": 0.488
+      },
+      {
+        "order": 102,
+        "module": "encoder_layers.5.norm1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0033,
+        "p": 0.483
+      },
+      {
+        "order": 103,
+        "module": "encoder_layers.5.norm2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0041,
+        "p": 0.398
+      },
+      {
+        "order": 104,
+        "module": "encoder_layers.6",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0042,
+        "p": 0.353
+      },
+      {
+        "order": 105,
+        "module": "encoder_layers.6.attn",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0008,
+        "p": 0.881
+      },
+      {
+        "order": 106,
+        "module": "encoder_layers.6.attn.attn_drop",
+        "n_tokens": 9216,
+        "dim": 8,
+        "r": 0.005,
+        "p": 0.935
+      },
+      {
+        "order": 107,
+        "module": "encoder_layers.6.attn.proj",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0008,
+        "p": 0.826
+      },
+      {
+        "order": 108,
+        "module": "encoder_layers.6.attn.proj_drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0008,
+        "p": 0.826
+      },
+      {
+        "order": 109,
+        "module": "encoder_layers.6.drop_path",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0033,
+        "p": 0.458
+      },
+      {
+        "order": 110,
+        "module": "encoder_layers.6.mlp",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0033,
+        "p": 0.428
+      },
+      {
+        "order": 111,
+        "module": "encoder_layers.6.mlp.act",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0024,
+        "p": 0.617
+      },
+      {
+        "order": 112,
+        "module": "encoder_layers.6.mlp.drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0033,
+        "p": 0.443
+      },
+      {
+        "order": 113,
+        "module": "encoder_layers.6.mlp.fc1",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0041,
+        "p": 0.378
+      },
+      {
+        "order": 114,
+        "module": "encoder_layers.6.mlp.fc2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0033,
+        "p": 0.473
+      },
+      {
+        "order": 115,
+        "module": "encoder_layers.6.norm1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0042,
+        "p": 0.363
+      },
+      {
+        "order": 116,
+        "module": "encoder_layers.6.norm2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0033,
+        "p": 0.453
+      },
+      {
+        "order": 117,
+        "module": "encoder_layers.7",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0037,
+        "p": 0.403
+      },
+      {
+        "order": 118,
+        "module": "encoder_layers.7.attn",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0022,
+        "p": 0.582
+      },
+      {
+        "order": 119,
+        "module": "encoder_layers.7.attn.attn_drop",
+        "n_tokens": 9216,
+        "dim": 8,
+        "r": -0.0455,
+        "p": 0.353
+      },
+      {
+        "order": 120,
+        "module": "encoder_layers.7.attn.proj",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0022,
+        "p": 0.592
+      },
+      {
+        "order": 121,
+        "module": "encoder_layers.7.attn.proj_drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": 0.0022,
+        "p": 0.587
+      },
+      {
+        "order": 122,
+        "module": "encoder_layers.7.drop_path",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.004,
+        "p": 0.413
+      },
+      {
+        "order": 123,
+        "module": "encoder_layers.7.mlp",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.004,
+        "p": 0.368
+      },
+      {
+        "order": 124,
+        "module": "encoder_layers.7.mlp.act",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0019,
+        "p": 0.677
+      },
+      {
+        "order": 125,
+        "module": "encoder_layers.7.mlp.drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.004,
+        "p": 0.408
+      },
+      {
+        "order": 126,
+        "module": "encoder_layers.7.mlp.fc1",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0037,
+        "p": 0.443
+      },
+      {
+        "order": 127,
+        "module": "encoder_layers.7.mlp.fc2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.004,
+        "p": 0.308
+      },
+      {
+        "order": 128,
+        "module": "encoder_layers.7.norm1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0039,
+        "p": 0.393
+      },
+      {
+        "order": 129,
+        "module": "encoder_layers.7.norm2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0034,
+        "p": 0.443
+      },
+      {
+        "order": 130,
+        "module": "encoder_layers.8",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0032,
+        "p": 0.443
+      },
+      {
+        "order": 131,
+        "module": "encoder_layers.8.attn",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.002,
+        "p": 0.632
+      },
+      {
+        "order": 132,
+        "module": "encoder_layers.8.attn.attn_drop",
+        "n_tokens": 9216,
+        "dim": 8,
+        "r": 0.0547,
+        "p": 0.234
+      },
+      {
+        "order": 133,
+        "module": "encoder_layers.8.attn.proj",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.002,
+        "p": 0.741
+      },
+      {
+        "order": 134,
+        "module": "encoder_layers.8.attn.proj_drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.002,
+        "p": 0.706
+      },
+      {
+        "order": 135,
+        "module": "encoder_layers.8.drop_path",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0025,
+        "p": 0.577
+      },
+      {
+        "order": 136,
+        "module": "encoder_layers.8.mlp",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0025,
+        "p": 0.627
+      },
+      {
+        "order": 137,
+        "module": "encoder_layers.8.mlp.act",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0017,
+        "p": 0.682
+      },
+      {
+        "order": 138,
+        "module": "encoder_layers.8.mlp.drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0025,
+        "p": 0.567
+      },
+      {
+        "order": 139,
+        "module": "encoder_layers.8.mlp.fc1",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0034,
+        "p": 0.448
+      },
+      {
+        "order": 140,
+        "module": "encoder_layers.8.mlp.fc2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0025,
+        "p": 0.572
+      },
+      {
+        "order": 141,
+        "module": "encoder_layers.8.norm1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0039,
+        "p": 0.353
+      },
+      {
+        "order": 142,
+        "module": "encoder_layers.8.norm2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0034,
+        "p": 0.433
+      },
+      {
+        "order": 143,
+        "module": "encoder_layers.9",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0015,
+        "p": 0.776
+      },
+      {
+        "order": 144,
+        "module": "encoder_layers.9.attn",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0022,
+        "p": 0.602
+      },
+      {
+        "order": 145,
+        "module": "encoder_layers.9.attn.attn_drop",
+        "n_tokens": 9216,
+        "dim": 8,
+        "r": -0.0113,
+        "p": 0.851
+      },
+      {
+        "order": 146,
+        "module": "encoder_layers.9.attn.proj",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0022,
+        "p": 0.667
+      },
+      {
+        "order": 147,
+        "module": "encoder_layers.9.attn.proj_drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0022,
+        "p": 0.622
+      },
+      {
+        "order": 148,
+        "module": "encoder_layers.9.drop_path",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.002,
+        "p": 0.667
+      },
+      {
+        "order": 149,
+        "module": "encoder_layers.9.mlp",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.002,
+        "p": 0.652
+      },
+      {
+        "order": 150,
+        "module": "encoder_layers.9.mlp.act",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0011,
+        "p": 0.846
+      },
+      {
+        "order": 151,
+        "module": "encoder_layers.9.mlp.drop",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.002,
+        "p": 0.701
+      },
+      {
+        "order": 152,
+        "module": "encoder_layers.9.mlp.fc1",
+        "n_tokens": 96,
+        "dim": 512,
+        "r": -0.0028,
+        "p": 0.517
+      },
+      {
+        "order": 153,
+        "module": "encoder_layers.9.mlp.fc2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.002,
+        "p": 0.637
+      },
+      {
+        "order": 154,
+        "module": "encoder_layers.9.norm1",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0036,
+        "p": 0.458
+      },
+      {
+        "order": 155,
+        "module": "encoder_layers.9.norm2",
+        "n_tokens": 96,
+        "dim": 200,
+        "r": -0.0032,
+        "p": 0.458
+      }
+    ],
+    "summary": "最强 encoder_layers.8.attn.attn_drop r=+0.0547 p=0.234"
+  },
+  "biot": {
+    "rows": [
+      {
+        "order": 0,
+        "module": "encoder.transformer.layers",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0071,
+        "p": 0.134
+      },
+      {
+        "order": 1,
+        "module": "encoder.transformer.layers.layers.0.0",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0008,
+        "p": 0.851
+      },
+      {
+        "order": 2,
+        "module": "encoder.transformer.layers.layers.0.0.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0008,
+        "p": 0.846
+      },
+      {
+        "order": 3,
+        "module": "encoder.transformer.layers.layers.0.0.fn.dropout",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0008,
+        "p": 0.831
+      },
+      {
+        "order": 4,
+        "module": "encoder.transformer.layers.layers.0.0.fn.to_k",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0031,
+        "p": 0.552
+      },
+      {
+        "order": 5,
+        "module": "encoder.transformer.layers.layers.0.0.fn.to_out",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0008,
+        "p": 0.915
+      },
+      {
+        "order": 6,
+        "module": "encoder.transformer.layers.layers.0.0.fn.to_q",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.001,
+        "p": 0.776
+      },
+      {
+        "order": 7,
+        "module": "encoder.transformer.layers.layers.0.0.fn.to_v",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0037,
+        "p": 0.408
+      },
+      {
+        "order": 8,
+        "module": "encoder.transformer.layers.layers.0.0.norm",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0066,
+        "p": 0.164
+      },
+      {
+        "order": 9,
+        "module": "encoder.transformer.layers.layers.0.1",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.002,
+        "p": 0.667
+      },
+      {
+        "order": 10,
+        "module": "encoder.transformer.layers.layers.0.1.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.002,
+        "p": 0.677
+      },
+      {
+        "order": 11,
+        "module": "encoder.transformer.layers.layers.0.1.fn.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.002,
+        "p": 0.642
+      },
+      {
+        "order": 12,
+        "module": "encoder.transformer.layers.layers.0.1.fn.fn.act",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": 0.0033,
+        "p": 0.488
+      },
+      {
+        "order": 13,
+        "module": "encoder.transformer.layers.layers.0.1.fn.fn.dropout",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": 0.0033,
+        "p": 0.458
+      },
+      {
+        "order": 14,
+        "module": "encoder.transformer.layers.layers.0.1.fn.fn.w1",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": 0.0033,
+        "p": 0.478
+      },
+      {
+        "order": 15,
+        "module": "encoder.transformer.layers.layers.0.1.fn.fn.w2",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.002,
+        "p": 0.637
+      },
+      {
+        "order": 16,
+        "module": "encoder.transformer.layers.layers.0.1.norm",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0033,
+        "p": 0.512
+      },
+      {
+        "order": 17,
+        "module": "encoder.transformer.layers.layers.1.0",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0013,
+        "p": 0.846
+      },
+      {
+        "order": 18,
+        "module": "encoder.transformer.layers.layers.1.0.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0013,
+        "p": 0.831
+      },
+      {
+        "order": 19,
+        "module": "encoder.transformer.layers.layers.1.0.fn.dropout",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0013,
+        "p": 0.746
+      },
+      {
+        "order": 20,
+        "module": "encoder.transformer.layers.layers.1.0.fn.to_k",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0029,
+        "p": 0.532
+      },
+      {
+        "order": 21,
+        "module": "encoder.transformer.layers.layers.1.0.fn.to_out",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0013,
+        "p": 0.791
+      },
+      {
+        "order": 22,
+        "module": "encoder.transformer.layers.layers.1.0.fn.to_q",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0008,
+        "p": 0.886
+      },
+      {
+        "order": 23,
+        "module": "encoder.transformer.layers.layers.1.0.fn.to_v",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0001,
+        "p": 0.995
+      },
+      {
+        "order": 24,
+        "module": "encoder.transformer.layers.layers.1.0.norm",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0027,
+        "p": 0.507
+      },
+      {
+        "order": 25,
+        "module": "encoder.transformer.layers.layers.1.1",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0021,
+        "p": 0.617
+      },
+      {
+        "order": 26,
+        "module": "encoder.transformer.layers.layers.1.1.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0021,
+        "p": 0.597
+      },
+      {
+        "order": 27,
+        "module": "encoder.transformer.layers.layers.1.1.fn.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0021,
+        "p": 0.662
+      },
+      {
+        "order": 28,
+        "module": "encoder.transformer.layers.layers.1.1.fn.fn.act",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": 0.0,
+        "p": 0.995
+      },
+      {
+        "order": 29,
+        "module": "encoder.transformer.layers.layers.1.1.fn.fn.dropout",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": 0.0,
+        "p": 1.0
+      },
+      {
+        "order": 30,
+        "module": "encoder.transformer.layers.layers.1.1.fn.fn.w1",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": -0.0008,
+        "p": 0.871
+      },
+      {
+        "order": 31,
+        "module": "encoder.transformer.layers.layers.1.1.fn.fn.w2",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0021,
+        "p": 0.627
+      },
+      {
+        "order": 32,
+        "module": "encoder.transformer.layers.layers.1.1.norm",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0005,
+        "p": 0.955
+      },
+      {
+        "order": 33,
+        "module": "encoder.transformer.layers.layers.2.0",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0038,
+        "p": 0.478
+      },
+      {
+        "order": 34,
+        "module": "encoder.transformer.layers.layers.2.0.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0038,
+        "p": 0.448
+      },
+      {
+        "order": 35,
+        "module": "encoder.transformer.layers.layers.2.0.fn.dropout",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0038,
+        "p": 0.388
+      },
+      {
+        "order": 36,
+        "module": "encoder.transformer.layers.layers.2.0.fn.to_k",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0011,
+        "p": 0.756
+      },
+      {
+        "order": 37,
+        "module": "encoder.transformer.layers.layers.2.0.fn.to_out",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0038,
+        "p": 0.438
+      },
+      {
+        "order": 38,
+        "module": "encoder.transformer.layers.layers.2.0.fn.to_q",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0004,
+        "p": 0.93
+      },
+      {
+        "order": 39,
+        "module": "encoder.transformer.layers.layers.2.0.fn.to_v",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0002,
+        "p": 0.97
+      },
+      {
+        "order": 40,
+        "module": "encoder.transformer.layers.layers.2.0.norm",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0009,
+        "p": 0.826
+      },
+      {
+        "order": 41,
+        "module": "encoder.transformer.layers.layers.2.1",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0019,
+        "p": 0.677
+      },
+      {
+        "order": 42,
+        "module": "encoder.transformer.layers.layers.2.1.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0019,
+        "p": 0.677
+      },
+      {
+        "order": 43,
+        "module": "encoder.transformer.layers.layers.2.1.fn.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0019,
+        "p": 0.692
+      },
+      {
+        "order": 44,
+        "module": "encoder.transformer.layers.layers.2.1.fn.fn.act",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": 0.0024,
+        "p": 0.672
+      },
+      {
+        "order": 45,
+        "module": "encoder.transformer.layers.layers.2.1.fn.fn.dropout",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": 0.0024,
+        "p": 0.582
+      },
+      {
+        "order": 46,
+        "module": "encoder.transformer.layers.layers.2.1.fn.fn.w1",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": 0.001,
+        "p": 0.821
+      },
+      {
+        "order": 47,
+        "module": "encoder.transformer.layers.layers.2.1.fn.fn.w2",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0019,
+        "p": 0.682
+      },
+      {
+        "order": 48,
+        "module": "encoder.transformer.layers.layers.2.1.norm",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0008,
+        "p": 0.861
+      },
+      {
+        "order": 49,
+        "module": "encoder.transformer.layers.layers.3.0",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0037,
+        "p": 0.438
+      },
+      {
+        "order": 50,
+        "module": "encoder.transformer.layers.layers.3.0.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0037,
+        "p": 0.453
+      },
+      {
+        "order": 51,
+        "module": "encoder.transformer.layers.layers.3.0.fn.dropout",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0037,
+        "p": 0.433
+      },
+      {
+        "order": 52,
+        "module": "encoder.transformer.layers.layers.3.0.fn.to_k",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0037,
+        "p": 0.393
+      },
+      {
+        "order": 53,
+        "module": "encoder.transformer.layers.layers.3.0.fn.to_out",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0037,
+        "p": 0.393
+      },
+      {
+        "order": 54,
+        "module": "encoder.transformer.layers.layers.3.0.fn.to_q",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0015,
+        "p": 0.716
+      },
+      {
+        "order": 55,
+        "module": "encoder.transformer.layers.layers.3.0.fn.to_v",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": -0.0051,
+        "p": 0.239
+      },
+      {
+        "order": 56,
+        "module": "encoder.transformer.layers.layers.3.0.norm",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0,
+        "p": 1.0
+      },
+      {
+        "order": 57,
+        "module": "encoder.transformer.layers.layers.3.1",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0073,
+        "p": 0.124
+      },
+      {
+        "order": 58,
+        "module": "encoder.transformer.layers.layers.3.1.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0073,
+        "p": 0.104
+      },
+      {
+        "order": 59,
+        "module": "encoder.transformer.layers.layers.3.1.fn.fn",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0073,
+        "p": 0.144
+      },
+      {
+        "order": 60,
+        "module": "encoder.transformer.layers.layers.3.1.fn.fn.act",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": 0.0078,
+        "p": 0.124
+      },
+      {
+        "order": 61,
+        "module": "encoder.transformer.layers.layers.3.1.fn.fn.dropout",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": 0.0078,
+        "p": 0.139
+      },
+      {
+        "order": 62,
+        "module": "encoder.transformer.layers.layers.3.1.fn.fn.w1",
+        "n_tokens": 162,
+        "dim": 1024,
+        "r": 0.0035,
+        "p": 0.507
+      },
+      {
+        "order": 63,
+        "module": "encoder.transformer.layers.layers.3.1.fn.fn.w2",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0073,
+        "p": 0.114
+      },
+      {
+        "order": 64,
+        "module": "encoder.transformer.layers.layers.3.1.norm",
+        "n_tokens": 162,
+        "dim": 256,
+        "r": 0.0023,
+        "p": 0.562
+      }
+    ],
+    "summary": "最强 encoder.transformer.layers.layers.3.1.fn.fn.act r=+0.0078 p=0.124"
+  },
+  "signal-jepa": {
+    "rows": [
+      {
+        "order": 0,
+        "module": "transformer.encoder",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0044,
+        "p": 0.408
+      },
+      {
+        "order": 1,
+        "module": "transformer.encoder.layers.0",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": 0.0046,
+        "p": 0.363
+      },
+      {
+        "order": 2,
+        "module": "transformer.encoder.layers.0.dropout",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": 0.0004,
+        "p": 0.915
+      },
+      {
+        "order": 3,
+        "module": "transformer.encoder.layers.0.dropout1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": 0.014,
+        "p": 0.005
+      },
+      {
+        "order": 4,
+        "module": "transformer.encoder.layers.0.dropout2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0048,
+        "p": 0.284
+      },
+      {
+        "order": 5,
+        "module": "transformer.encoder.layers.0.linear1",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": 0.0021,
+        "p": 0.627
+      },
+      {
+        "order": 6,
+        "module": "transformer.encoder.layers.0.linear2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": 0.0007,
+        "p": 0.851
+      },
+      {
+        "order": 7,
+        "module": "transformer.encoder.layers.0.norm1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": 0.0107,
+        "p": 0.02
+      },
+      {
+        "order": 8,
+        "module": "transformer.encoder.layers.0.norm2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": 0.0046,
+        "p": 0.303
+      },
+      {
+        "order": 9,
+        "module": "transformer.encoder.layers.0.self_attn",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": 0.0058,
+        "p": 0.204
+      },
+      {
+        "order": 10,
+        "module": "transformer.encoder.layers.1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0086,
+        "p": 0.06
+      },
+      {
+        "order": 11,
+        "module": "transformer.encoder.layers.1.dropout",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": 0.0004,
+        "p": 0.93
+      },
+      {
+        "order": 12,
+        "module": "transformer.encoder.layers.1.dropout1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0014,
+        "p": 0.811
+      },
+      {
+        "order": 13,
+        "module": "transformer.encoder.layers.1.dropout2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0088,
+        "p": 0.06
+      },
+      {
+        "order": 14,
+        "module": "transformer.encoder.layers.1.linear1",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0019,
+        "p": 0.697
+      },
+      {
+        "order": 15,
+        "module": "transformer.encoder.layers.1.linear2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0076,
+        "p": 0.109
+      },
+      {
+        "order": 16,
+        "module": "transformer.encoder.layers.1.norm1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0009,
+        "p": 0.851
+      },
+      {
+        "order": 17,
+        "module": "transformer.encoder.layers.1.norm2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0086,
+        "p": 0.07
+      },
+      {
+        "order": 18,
+        "module": "transformer.encoder.layers.1.self_attn",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.002,
+        "p": 0.741
+      },
+      {
+        "order": 19,
+        "module": "transformer.encoder.layers.2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0009,
+        "p": 0.861
+      },
+      {
+        "order": 20,
+        "module": "transformer.encoder.layers.2.dropout",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0036,
+        "p": 0.458
+      },
+      {
+        "order": 21,
+        "module": "transformer.encoder.layers.2.dropout1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0033,
+        "p": 0.438
+      },
+      {
+        "order": 22,
+        "module": "transformer.encoder.layers.2.dropout2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0025,
+        "p": 0.602
+      },
+      {
+        "order": 23,
+        "module": "transformer.encoder.layers.2.linear1",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0028,
+        "p": 0.637
+      },
+      {
+        "order": 24,
+        "module": "transformer.encoder.layers.2.linear2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": 0.0006,
+        "p": 0.886
+      },
+      {
+        "order": 25,
+        "module": "transformer.encoder.layers.2.norm1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0052,
+        "p": 0.209
+      },
+      {
+        "order": 26,
+        "module": "transformer.encoder.layers.2.norm2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0009,
+        "p": 0.876
+      },
+      {
+        "order": 27,
+        "module": "transformer.encoder.layers.2.self_attn",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0067,
+        "p": 0.154
+      },
+      {
+        "order": 28,
+        "module": "transformer.encoder.layers.3",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0077,
+        "p": 0.08
+      },
+      {
+        "order": 29,
+        "module": "transformer.encoder.layers.3.dropout",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0045,
+        "p": 0.323
+      },
+      {
+        "order": 30,
+        "module": "transformer.encoder.layers.3.dropout1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0039,
+        "p": 0.388
+      },
+      {
+        "order": 31,
+        "module": "transformer.encoder.layers.3.dropout2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": 0.0005,
+        "p": 0.91
+      },
+      {
+        "order": 32,
+        "module": "transformer.encoder.layers.3.linear1",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0045,
+        "p": 0.299
+      },
+      {
+        "order": 33,
+        "module": "transformer.encoder.layers.3.linear2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0018,
+        "p": 0.697
+      },
+      {
+        "order": 34,
+        "module": "transformer.encoder.layers.3.norm1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0052,
+        "p": 0.284
+      },
+      {
+        "order": 35,
+        "module": "transformer.encoder.layers.3.norm2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0077,
+        "p": 0.129
+      },
+      {
+        "order": 36,
+        "module": "transformer.encoder.layers.3.self_attn",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0031,
+        "p": 0.498
+      },
+      {
+        "order": 37,
+        "module": "transformer.encoder.layers.4",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0052,
+        "p": 0.313
+      },
+      {
+        "order": 38,
+        "module": "transformer.encoder.layers.4.dropout",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0025,
+        "p": 0.517
+      },
+      {
+        "order": 39,
+        "module": "transformer.encoder.layers.4.dropout1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0032,
+        "p": 0.507
+      },
+      {
+        "order": 40,
+        "module": "transformer.encoder.layers.4.dropout2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0076,
+        "p": 0.085
+      },
+      {
+        "order": 41,
+        "module": "transformer.encoder.layers.4.linear1",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0051,
+        "p": 0.284
+      },
+      {
+        "order": 42,
+        "module": "transformer.encoder.layers.4.linear2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0054,
+        "p": 0.189
+      },
+      {
+        "order": 43,
+        "module": "transformer.encoder.layers.4.norm1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0058,
+        "p": 0.164
+      },
+      {
+        "order": 44,
+        "module": "transformer.encoder.layers.4.norm2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0052,
+        "p": 0.254
+      },
+      {
+        "order": 45,
+        "module": "transformer.encoder.layers.4.self_attn",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0028,
+        "p": 0.542
+      },
+      {
+        "order": 46,
+        "module": "transformer.encoder.layers.5",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0042,
+        "p": 0.328
+      },
+      {
+        "order": 47,
+        "module": "transformer.encoder.layers.5.dropout",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0053,
+        "p": 0.279
+      },
+      {
+        "order": 48,
+        "module": "transformer.encoder.layers.5.dropout1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0089,
+        "p": 0.06
+      },
+      {
+        "order": 49,
+        "module": "transformer.encoder.layers.5.dropout2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0002,
+        "p": 0.985
+      },
+      {
+        "order": 50,
+        "module": "transformer.encoder.layers.5.linear1",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0048,
+        "p": 0.284
+      },
+      {
+        "order": 51,
+        "module": "transformer.encoder.layers.5.linear2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0015,
+        "p": 0.746
+      },
+      {
+        "order": 52,
+        "module": "transformer.encoder.layers.5.norm1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0073,
+        "p": 0.114
+      },
+      {
+        "order": 53,
+        "module": "transformer.encoder.layers.5.norm2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0042,
+        "p": 0.348
+      },
+      {
+        "order": 54,
+        "module": "transformer.encoder.layers.5.self_attn",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0025,
+        "p": 0.597
+      },
+      {
+        "order": 55,
+        "module": "transformer.encoder.layers.6",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0088,
+        "p": 0.055
+      },
+      {
+        "order": 56,
+        "module": "transformer.encoder.layers.6.dropout",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0112,
+        "p": 0.03
+      },
+      {
+        "order": 57,
+        "module": "transformer.encoder.layers.6.dropout1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0038,
+        "p": 0.358
+      },
+      {
+        "order": 58,
+        "module": "transformer.encoder.layers.6.dropout2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.007,
+        "p": 0.109
+      },
+      {
+        "order": 59,
+        "module": "transformer.encoder.layers.6.linear1",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0082,
+        "p": 0.065
+      },
+      {
+        "order": 60,
+        "module": "transformer.encoder.layers.6.linear2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0105,
+        "p": 0.035
+      },
+      {
+        "order": 61,
+        "module": "transformer.encoder.layers.6.norm1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0064,
+        "p": 0.169
+      },
+      {
+        "order": 62,
+        "module": "transformer.encoder.layers.6.norm2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0088,
+        "p": 0.055
+      },
+      {
+        "order": 63,
+        "module": "transformer.encoder.layers.6.self_attn",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0066,
+        "p": 0.095
+      },
+      {
+        "order": 64,
+        "module": "transformer.encoder.layers.7",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0054,
+        "p": 0.313
+      },
+      {
+        "order": 65,
+        "module": "transformer.encoder.layers.7.dropout",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0031,
+        "p": 0.597
+      },
+      {
+        "order": 66,
+        "module": "transformer.encoder.layers.7.dropout1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0055,
+        "p": 0.214
+      },
+      {
+        "order": 67,
+        "module": "transformer.encoder.layers.7.dropout2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0055,
+        "p": 0.313
+      },
+      {
+        "order": 68,
+        "module": "transformer.encoder.layers.7.linear1",
+        "n_tokens": 62,
+        "dim": 2048,
+        "r": -0.0042,
+        "p": 0.428
+      },
+      {
+        "order": 69,
+        "module": "transformer.encoder.layers.7.linear2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0064,
+        "p": 0.299
+      },
+      {
+        "order": 70,
+        "module": "transformer.encoder.layers.7.norm1",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0043,
+        "p": 0.478
+      },
+      {
+        "order": 71,
+        "module": "transformer.encoder.layers.7.norm2",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0054,
+        "p": 0.338
+      },
+      {
+        "order": 72,
+        "module": "transformer.encoder.layers.7.self_attn",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.006,
+        "p": 0.209
+      },
+      {
+        "order": 73,
+        "module": "transformer.encoder.norm",
+        "n_tokens": 62,
+        "dim": 64,
+        "r": -0.0044,
+        "p": 0.333
+      }
+    ],
+    "summary": "最强 transformer.encoder.layers.0.dropout1 r=+0.0140 p=0.005"
+  },
+  "mirepnet": {
+    "rows": [
+      {
+        "order": 0,
+        "module": "transformer.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0016,
+        "p": 0.726
+      },
+      {
+        "order": 1,
+        "module": "transformer.0.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0016,
+        "p": 0.746
+      },
+      {
+        "order": 2,
+        "module": "transformer.0.0.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.003,
+        "p": 0.537
+      },
+      {
+        "order": 3,
+        "module": "transformer.0.0.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0022,
+        "p": 0.642
+      },
+      {
+        "order": 4,
+        "module": "transformer.0.0.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.003,
+        "p": 0.557
+      },
+      {
+        "order": 5,
+        "module": "transformer.0.0.fn.1.keys",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0038,
+        "p": 0.368
+      },
+      {
+        "order": 6,
+        "module": "transformer.0.0.fn.1.projection",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.003,
+        "p": 0.498
+      },
+      {
+        "order": 7,
+        "module": "transformer.0.0.fn.1.queries",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0059,
+        "p": 0.204
+      },
+      {
+        "order": 8,
+        "module": "transformer.0.0.fn.1.rearrange_stack",
+        "n_tokens": 1952,
+        "dim": 8,
+        "r": 0.0078,
+        "p": 0.08
+      },
+      {
+        "order": 9,
+        "module": "transformer.0.0.fn.1.rearrange_unstack",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0024,
+        "p": 0.597
+      },
+      {
+        "order": 10,
+        "module": "transformer.0.0.fn.1.values",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0058,
+        "p": 0.169
+      },
+      {
+        "order": 11,
+        "module": "transformer.0.0.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.003,
+        "p": 0.532
+      },
+      {
+        "order": 12,
+        "module": "transformer.0.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0016,
+        "p": 0.731
+      },
+      {
+        "order": 13,
+        "module": "transformer.0.1.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.014,
+        "p": 0.443
+      },
+      {
+        "order": 14,
+        "module": "transformer.0.1.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0019,
+        "p": 0.746
+      },
+      {
+        "order": 15,
+        "module": "transformer.0.1.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.014,
+        "p": 0.388
+      },
+      {
+        "order": 16,
+        "module": "transformer.0.1.fn.1.0",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0032,
+        "p": 0.478
+      },
+      {
+        "order": 17,
+        "module": "transformer.0.1.fn.1.1",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0208,
+        "p": 0.239
+      },
+      {
+        "order": 18,
+        "module": "transformer.0.1.fn.1.2",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0208,
+        "p": 0.239
+      },
+      {
+        "order": 19,
+        "module": "transformer.0.1.fn.1.3",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.014,
+        "p": 0.448
+      },
+      {
+        "order": 20,
+        "module": "transformer.0.1.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.014,
+        "p": 0.418
+      },
+      {
+        "order": 21,
+        "module": "transformer.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0026,
+        "p": 0.532
+      },
+      {
+        "order": 22,
+        "module": "transformer.1.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0018,
+        "p": 0.632
+      },
+      {
+        "order": 23,
+        "module": "transformer.1.0.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0038,
+        "p": 0.463
+      },
+      {
+        "order": 24,
+        "module": "transformer.1.0.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0034,
+        "p": 0.433
+      },
+      {
+        "order": 25,
+        "module": "transformer.1.0.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0038,
+        "p": 0.448
+      },
+      {
+        "order": 26,
+        "module": "transformer.1.0.fn.1.keys",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": -0.0,
+        "p": 1.0
+      },
+      {
+        "order": 27,
+        "module": "transformer.1.0.fn.1.projection",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0038,
+        "p": 0.373
+      },
+      {
+        "order": 28,
+        "module": "transformer.1.0.fn.1.queries",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": -0.0023,
+        "p": 0.632
+      },
+      {
+        "order": 29,
+        "module": "transformer.1.0.fn.1.rearrange_stack",
+        "n_tokens": 1952,
+        "dim": 8,
+        "r": -0.0019,
+        "p": 0.662
+      },
+      {
+        "order": 30,
+        "module": "transformer.1.0.fn.1.rearrange_unstack",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.001,
+        "p": 0.801
+      },
+      {
+        "order": 31,
+        "module": "transformer.1.0.fn.1.values",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": -0.0019,
+        "p": 0.677
+      },
+      {
+        "order": 32,
+        "module": "transformer.1.0.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0038,
+        "p": 0.408
+      },
+      {
+        "order": 33,
+        "module": "transformer.1.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0026,
+        "p": 0.537
+      },
+      {
+        "order": 34,
+        "module": "transformer.1.1.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0633,
+        "p": 0.025
+      },
+      {
+        "order": 35,
+        "module": "transformer.1.1.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0032,
+        "p": 0.537
+      },
+      {
+        "order": 36,
+        "module": "transformer.1.1.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0633,
+        "p": 0.015
+      },
+      {
+        "order": 37,
+        "module": "transformer.1.1.fn.1.0",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.001,
+        "p": 0.836
+      },
+      {
+        "order": 38,
+        "module": "transformer.1.1.fn.1.1",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0666,
+        "p": 0.045
+      },
+      {
+        "order": 39,
+        "module": "transformer.1.1.fn.1.2",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0666,
+        "p": 0.08
+      },
+      {
+        "order": 40,
+        "module": "transformer.1.1.fn.1.3",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0633,
+        "p": 0.015
+      },
+      {
+        "order": 41,
+        "module": "transformer.1.1.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0633,
+        "p": 0.035
+      },
+      {
+        "order": 42,
+        "module": "transformer.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.002,
+        "p": 0.637
+      },
+      {
+        "order": 43,
+        "module": "transformer.2.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0022,
+        "p": 0.687
+      },
+      {
+        "order": 44,
+        "module": "transformer.2.0.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0004,
+        "p": 0.935
+      },
+      {
+        "order": 45,
+        "module": "transformer.2.0.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0053,
+        "p": 0.254
+      },
+      {
+        "order": 46,
+        "module": "transformer.2.0.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0004,
+        "p": 0.92
+      },
+      {
+        "order": 47,
+        "module": "transformer.2.0.fn.1.keys",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0018,
+        "p": 0.701
+      },
+      {
+        "order": 48,
+        "module": "transformer.2.0.fn.1.projection",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0004,
+        "p": 0.935
+      },
+      {
+        "order": 49,
+        "module": "transformer.2.0.fn.1.queries",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0026,
+        "p": 0.577
+      },
+      {
+        "order": 50,
+        "module": "transformer.2.0.fn.1.rearrange_stack",
+        "n_tokens": 1952,
+        "dim": 8,
+        "r": 0.0045,
+        "p": 0.348
+      },
+      {
+        "order": 51,
+        "module": "transformer.2.0.fn.1.rearrange_unstack",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0022,
+        "p": 0.627
+      },
+      {
+        "order": 52,
+        "module": "transformer.2.0.fn.1.values",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0023,
+        "p": 0.572
+      },
+      {
+        "order": 53,
+        "module": "transformer.2.0.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0004,
+        "p": 0.935
+      },
+      {
+        "order": 54,
+        "module": "transformer.2.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.002,
+        "p": 0.677
+      },
+      {
+        "order": 55,
+        "module": "transformer.2.1.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0091,
+        "p": 0.159
+      },
+      {
+        "order": 56,
+        "module": "transformer.2.1.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0048,
+        "p": 0.284
+      },
+      {
+        "order": 57,
+        "module": "transformer.2.1.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0091,
+        "p": 0.119
+      },
+      {
+        "order": 58,
+        "module": "transformer.2.1.fn.1.0",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0022,
+        "p": 0.632
+      },
+      {
+        "order": 59,
+        "module": "transformer.2.1.fn.1.1",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.007,
+        "p": 0.234
+      },
+      {
+        "order": 60,
+        "module": "transformer.2.1.fn.1.2",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.007,
+        "p": 0.239
+      },
+      {
+        "order": 61,
+        "module": "transformer.2.1.fn.1.3",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0091,
+        "p": 0.129
+      },
+      {
+        "order": 62,
+        "module": "transformer.2.1.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0091,
+        "p": 0.144
+      },
+      {
+        "order": 63,
+        "module": "transformer.3",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0016,
+        "p": 0.726
+      },
+      {
+        "order": 64,
+        "module": "transformer.3.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0019,
+        "p": 0.667
+      },
+      {
+        "order": 65,
+        "module": "transformer.3.0.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0043,
+        "p": 0.303
+      },
+      {
+        "order": 66,
+        "module": "transformer.3.0.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0058,
+        "p": 0.229
+      },
+      {
+        "order": 67,
+        "module": "transformer.3.0.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0043,
+        "p": 0.393
+      },
+      {
+        "order": 68,
+        "module": "transformer.3.0.fn.1.keys",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": -0.0028,
+        "p": 0.527
+      },
+      {
+        "order": 69,
+        "module": "transformer.3.0.fn.1.projection",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0043,
+        "p": 0.348
+      },
+      {
+        "order": 70,
+        "module": "transformer.3.0.fn.1.queries",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": -0.0002,
+        "p": 0.985
+      },
+      {
+        "order": 71,
+        "module": "transformer.3.0.fn.1.rearrange_stack",
+        "n_tokens": 1952,
+        "dim": 8,
+        "r": 0.0022,
+        "p": 0.577
+      },
+      {
+        "order": 72,
+        "module": "transformer.3.0.fn.1.rearrange_unstack",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.004,
+        "p": 0.338
+      },
+      {
+        "order": 73,
+        "module": "transformer.3.0.fn.1.values",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0042,
+        "p": 0.313
+      },
+      {
+        "order": 74,
+        "module": "transformer.3.0.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0043,
+        "p": 0.328
+      },
+      {
+        "order": 75,
+        "module": "transformer.3.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0016,
+        "p": 0.726
+      },
+      {
+        "order": 76,
+        "module": "transformer.3.1.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0073,
+        "p": 0.095
+      },
+      {
+        "order": 77,
+        "module": "transformer.3.1.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0063,
+        "p": 0.214
+      },
+      {
+        "order": 78,
+        "module": "transformer.3.1.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0073,
+        "p": 0.124
+      },
+      {
+        "order": 79,
+        "module": "transformer.3.1.fn.1.0",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0034,
+        "p": 0.448
+      },
+      {
+        "order": 80,
+        "module": "transformer.3.1.fn.1.1",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0038,
+        "p": 0.313
+      },
+      {
+        "order": 81,
+        "module": "transformer.3.1.fn.1.2",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0038,
+        "p": 0.408
+      },
+      {
+        "order": 82,
+        "module": "transformer.3.1.fn.1.3",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0073,
+        "p": 0.159
+      },
+      {
+        "order": 83,
+        "module": "transformer.3.1.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0073,
+        "p": 0.139
+      },
+      {
+        "order": 84,
+        "module": "transformer.4",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0013,
+        "p": 0.786
+      },
+      {
+        "order": 85,
+        "module": "transformer.4.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0015,
+        "p": 0.731
+      },
+      {
+        "order": 86,
+        "module": "transformer.4.0.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0023,
+        "p": 0.602
+      },
+      {
+        "order": 87,
+        "module": "transformer.4.0.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0069,
+        "p": 0.109
+      },
+      {
+        "order": 88,
+        "module": "transformer.4.0.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0023,
+        "p": 0.632
+      },
+      {
+        "order": 89,
+        "module": "transformer.4.0.fn.1.keys",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": -0.003,
+        "p": 0.527
+      },
+      {
+        "order": 90,
+        "module": "transformer.4.0.fn.1.projection",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0023,
+        "p": 0.592
+      },
+      {
+        "order": 91,
+        "module": "transformer.4.0.fn.1.queries",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0016,
+        "p": 0.736
+      },
+      {
+        "order": 92,
+        "module": "transformer.4.0.fn.1.rearrange_stack",
+        "n_tokens": 1952,
+        "dim": 8,
+        "r": 0.0047,
+        "p": 0.279
+      },
+      {
+        "order": 93,
+        "module": "transformer.4.0.fn.1.rearrange_unstack",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0018,
+        "p": 0.731
+      },
+      {
+        "order": 94,
+        "module": "transformer.4.0.fn.1.values",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0019,
+        "p": 0.692
+      },
+      {
+        "order": 95,
+        "module": "transformer.4.0.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0023,
+        "p": 0.622
+      },
+      {
+        "order": 96,
+        "module": "transformer.4.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0013,
+        "p": 0.766
+      },
+      {
+        "order": 97,
+        "module": "transformer.4.1.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.009,
+        "p": 0.08
+      },
+      {
+        "order": 98,
+        "module": "transformer.4.1.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0072,
+        "p": 0.144
+      },
+      {
+        "order": 99,
+        "module": "transformer.4.1.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.009,
+        "p": 0.065
+      },
+      {
+        "order": 100,
+        "module": "transformer.4.1.fn.1.0",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0035,
+        "p": 0.398
+      },
+      {
+        "order": 101,
+        "module": "transformer.4.1.fn.1.1",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0035,
+        "p": 0.438
+      },
+      {
+        "order": 102,
+        "module": "transformer.4.1.fn.1.2",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0035,
+        "p": 0.393
+      },
+      {
+        "order": 103,
+        "module": "transformer.4.1.fn.1.3",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.009,
+        "p": 0.09
+      },
+      {
+        "order": 104,
+        "module": "transformer.4.1.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.009,
+        "p": 0.095
+      },
+      {
+        "order": 105,
+        "module": "transformer.5",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0011,
+        "p": 0.806
+      },
+      {
+        "order": 106,
+        "module": "transformer.5.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0014,
+        "p": 0.731
+      },
+      {
+        "order": 107,
+        "module": "transformer.5.0.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0041,
+        "p": 0.433
+      },
+      {
+        "order": 108,
+        "module": "transformer.5.0.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0074,
+        "p": 0.114
+      },
+      {
+        "order": 109,
+        "module": "transformer.5.0.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0041,
+        "p": 0.393
+      },
+      {
+        "order": 110,
+        "module": "transformer.5.0.fn.1.keys",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": -0.005,
+        "p": 0.159
+      },
+      {
+        "order": 111,
+        "module": "transformer.5.0.fn.1.projection",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0041,
+        "p": 0.323
+      },
+      {
+        "order": 112,
+        "module": "transformer.5.0.fn.1.queries",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": -0.0012,
+        "p": 0.771
+      },
+      {
+        "order": 113,
+        "module": "transformer.5.0.fn.1.rearrange_stack",
+        "n_tokens": 1952,
+        "dim": 8,
+        "r": 0.0017,
+        "p": 0.761
+      },
+      {
+        "order": 114,
+        "module": "transformer.5.0.fn.1.rearrange_unstack",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0055,
+        "p": 0.229
+      },
+      {
+        "order": 115,
+        "module": "transformer.5.0.fn.1.values",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0052,
+        "p": 0.308
+      },
+      {
+        "order": 116,
+        "module": "transformer.5.0.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0041,
+        "p": 0.383
+      },
+      {
+        "order": 117,
+        "module": "transformer.5.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0011,
+        "p": 0.766
+      },
+      {
+        "order": 118,
+        "module": "transformer.5.1.fn",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.014,
+        "p": 0.03
+      },
+      {
+        "order": 119,
+        "module": "transformer.5.1.fn.0",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.0079,
+        "p": 0.1
+      },
+      {
+        "order": 120,
+        "module": "transformer.5.1.fn.1",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.014,
+        "p": 0.025
+      },
+      {
+        "order": 121,
+        "module": "transformer.5.1.fn.1.0",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.006,
+        "p": 0.184
+      },
+      {
+        "order": 122,
+        "module": "transformer.5.1.fn.1.1",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0062,
+        "p": 0.229
+      },
+      {
+        "order": 123,
+        "module": "transformer.5.1.fn.1.2",
+        "n_tokens": 61,
+        "dim": 1024,
+        "r": 0.0062,
+        "p": 0.174
+      },
+      {
+        "order": 124,
+        "module": "transformer.5.1.fn.1.3",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.014,
+        "p": 0.025
+      },
+      {
+        "order": 125,
+        "module": "transformer.5.1.fn.2",
+        "n_tokens": 61,
+        "dim": 256,
+        "r": 0.014,
+        "p": 0.025
+      }
+    ],
+    "summary": "最强 transformer.1.1.fn.1.1 r=+0.0666 p=0.045"
+  }
+}

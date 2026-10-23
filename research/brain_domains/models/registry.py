@@ -683,9 +683,18 @@ def encode_trials(handle, eeg, batch_size=32, device="cpu", pool="mean_all",
             "layout": None, "layout_confidence": "none", "n_global": 0,
             "token_how": None}
     n = eeg.shape[0]
+    # ⚠️ 输入 dtype 必须**跟随模型参数**：
+    #   · 域适配（IDW 插值 / resample_poly / pad）可能把 dtype 提到 float64，
+    #     而权重是 float32 ⇒ "Input type (double) and bias type (float) should be the same"；
+    #   · mirepnet 的权重本身是 **fp16** ⇒ 喂 float32 反而报
+    #     "Input type (c10::Half) and bias type (float) should be the same"。
+    mdt = next((p.dtype for p in model.parameters()), None)
+    if mdt is None or not torch.is_floating_point(torch.empty(0, dtype=mdt)):
+        mdt = torch.float32
+
     for s in range(0, n, batch_size):
-        xb = torch.from_numpy(eeg[s:s + batch_size])
-        xb = xb.to(device)
+        xb = torch.from_numpy(np.ascontiguousarray(eeg[s:s + batch_size]))
+        xb = xb.to(device=device, dtype=mdt)
         try:
             with torch.no_grad():
                 out = model(xb)
