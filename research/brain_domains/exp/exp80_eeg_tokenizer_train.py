@@ -112,7 +112,12 @@ def open_train(subject):
 
 
 def sample_batch(eeg, rng, bs):
-    """随机取 bs 个试次（eeg 的前两轴是 [n_img, n_rep]）。"""
+    """随机取 bs 个试次（eeg 的前两轴是 [n_img, n_rep]）。
+
+    ⚠️ `train.pt` 里的 `eeg` 是 **numpy 数组**（实测 keys: eeg/label/img/text/
+    session/ch_names/times）⇒ 直接 `torch.stack(numpy_rows)` 会报
+    「expected Tensor as element 0」⇒ 统一先 `torch.as_tensor`。
+    """
     import torch
     n_img, n_rep = eeg.shape[0], eeg.shape[1]
     flat_n = n_img * n_rep
@@ -120,7 +125,7 @@ def sample_batch(eeg, rng, bs):
     rows = []
     for i in idx:
         im, rp = divmod(int(i), n_rep)
-        rows.append(eeg[im, rp])
+        rows.append(torch.as_tensor(np.asarray(eeg[im, rp])))
     x = torch.stack(rows).float()
     return x          # (bs, C, T)
 
@@ -330,17 +335,29 @@ def train(args):
             with torch.no_grad():
                 u = model.vq.usage(idx)
                 zstd = float(z.detach().reshape(-1, z.shape[-1]).std(0).mean())
+                # ⚠️ **被遮位置的 MSE**才是与 loss 同口径的量：
+                #    loss = 全波形 MSE，而被遮位置才是难的那部分。
+                #    基线也要同口径（「时间轴均值」在被遮位置上的 MSE），
+                #    否则「重建 MSE vs 基线」根本不能比（实测踩过：
+                #    全波形基线 0.54 vs 含被遮位置的 loss 0.94 ⇒ 假象）。
+                m = mask.unsqueeze(1)
+                rec_mse_masked = float(((rec - x) ** 2)[m].mean())
+                base_mse_masked = float(
+                    ((x.mean(dim=2, keepdim=True).expand_as(x) - x) ** 2)[m].mean())
             rec_mse = float(rec_loss.item())
-            # 基线：只预测「时间轴上的均值」（广播回原形状）
             base_mse = float(F.mse_loss(
                 x, x.mean(dim=2, keepdim=True).expand_as(x)).item())
             hist.append({"step": step, "loss": float(loss.item()),
                          "rec_mse": rec_mse, "base_mse": base_mse,
+                         "rec_mse_masked": rec_mse_masked,
+                         "base_mse_masked": base_mse_masked,
                          "vq_loss": float(vq_loss.item()),
                          "utilization": u["utilization"],
                          "entropy": u["entropy_nats"], "z_std": zstd})
             log(f"  step {step:>5} | loss {float(loss.item()):.4f} "
-                f"| 重建 MSE {rec_mse:.5f}（基线 {base_mse:.5f}） "
+                f"| 全波形 MSE {rec_mse:.4f}（基线 {base_mse:.4f}） "
+                f"| **被遮位置 MSE {rec_mse_masked:.4f}"
+                f"（基线 {base_mse_masked:.4f}）** "
                 f"| vq {float(vq_loss.item()):.4f} | z_std {zstd:.4f} "
                 f"| 码利用率 {u['utilization']:.1%} 熵 {u['entropy_nats']:.2f}"
                 f" | {time.time()-t0:.0f}s")

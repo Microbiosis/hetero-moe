@@ -80,7 +80,8 @@ FEAT_TRAIN = "/training/eeg/eeg-image-decode/ViT-H-14_features_train.pt"
 OUT_DIR = Path("/domains/runs/illusionbrain-align/exp81")
 SEED = 0
 
-READOUTS = ("emb_mean", "onehot_mean", "code_ids", "continuous", "random_codebook")
+READOUTS = ("recon", "emb_mean", "onehot_mean", "code_ids", "continuous",
+            "random_codebook")
 
 
 def log(*a):
@@ -118,33 +119,61 @@ def readouts_for(model, x, rnd_codebook):
         r_emb = rnd_codebook[r_idx]                          # (B,T',D)
         emb = model.vq.lookup(codes)                         # (B,T',D)
         onehot = F.one_hot(codes, K).float()                 # (B,T',K)
+        # 重建层：解码器重建的 EEG（**与 braintokenizer 那一行同口径**：
+        #          它的最终输出就是重建信号 (B,19,512)，沿通道轴池化 ⇒ (B,512)）
+        rec = model.decode(zq.transpose(1, 2), x.shape[-1])  # (B, C, T)
         out = {
             "emb_mean": emb.mean(dim=1),                     # (B, D)
             "onehot_mean": onehot.mean(dim=1),               # (B, K)
             "code_ids": codes.float(),                       # (B, T')
             "continuous": z.mean(dim=1),                     # (B, D)
             "random_codebook": r_emb.mean(dim=1),            # (B, D)
+            "recon": rec.mean(dim=1),                        # (B, T)
         }
     return out
 
 
 def extract(model, eeg, rnd_cb, batch_size=64, device="cpu"):
-    """(n_img, n_rep, C, T) → {readout: (n_img, n_rep, D)}"""
+    """(n_img, n_rep, C, T) → ({readout: (n_img, n_rep, D)}, 码号直方图)"""
     import torch
     n_img, n_rep = eeg.shape[0], eeg.shape[1]
     flat = eeg.reshape(n_img * n_rep, eeg.shape[2], eeg.shape[3])
     acc = {k: [] for k in READOUTS}
+    K = model.vq.n_codes
+    hist = np.zeros(K, dtype=np.int64)
     for s in range(0, flat.shape[0], batch_size):
         sub = flat[s:s + batch_size]
         x = torch.from_numpy(np.ascontiguousarray(sub)).float().to(device)
         o = readouts_for(model, x, rnd_cb)
         for k in READOUTS:
             acc[k].append(o[k].cpu().numpy())
-    return {k: np.concatenate(v, 0).reshape(n_img, n_rep, -1) for k, v in acc.items()}
+        # 码号直方图（**整个 test 集**，不是抽几张 ⇒ 利用率才可信）
+        codes = o["code_ids"].round().long().cpu().numpy().reshape(-1)
+        for v, c_ in zip(*np.unique(codes, return_counts=True)):
+            if v < K:
+                hist[v] += int(c_)
+    feats = {k: np.concatenate(v, 0).reshape(n_img, n_rep, -1) for k, v in acc.items()}
+    return feats, hist
+
+
+def usage_from_hist(hist):
+    """码本利用率 + 熵（**用整个 test 集的码号直方图**）。"""
+    cnt = hist[hist > 0]
+    total = max(int(hist.sum()), 1)
+    p = cnt / total
+    ent = float(-(p * np.log(p)).sum())
+    return {"used": int(len(cnt)), "total": int(len(hist)),
+            "utilization": len(cnt) / max(len(hist), 1),
+            "entropy_nats": ent,
+            "entropy_max": float(np.log(max(len(cnt), 2)))}
 
 
 def load_train_split(subject, n_images):
-    """train split 的前 n_images 张（每张 n_rep 次）—— 指标 B 的**拟合集**。"""
+    """train split 的前 n_images 张（每张 n_rep 次）—— 指标 B 的**拟合集**。
+
+    ⚠️ `train.pt` 里的 eeg 可能是 **numpy 数组**（实测）⇒ 用 `np.asarray` 统一，
+    别直接 `.numpy()`（numpy 数组没有那个方法）。
+    """
     import torch
     fp = TRAIN_PT / f"sub-{subject:02d}" / "train.pt"
     try:
@@ -153,8 +182,7 @@ def load_train_split(subject, n_images):
         obj = torch.load(fp, map_location="cpu", weights_only=False)
     eeg = obj["eeg"]
     log(f"  train split：{tuple(eeg.shape)}")
-    arr = eeg[:n_images]
-    return arr.numpy().astype(np.float32)
+    return np.asarray(eeg[:n_images], dtype=np.float32)
 
 
 def main():
@@ -196,8 +224,8 @@ def main():
         try:
             eeg_te = np.load(TEST_4D / f"sub-{sid:02d}.npz")["eeg"]
             eeg_tr = load_train_split(sid, args.train_images)
-            F_te = extract(model, eeg_te, rnd_cb, args.batch_size, args.device)
-            F_tr = extract(model, eeg_tr, rnd_cb, args.batch_size, args.device)
+            F_te, hist = extract(model, eeg_te, rnd_cb, args.batch_size, args.device)
+            F_tr, _h2 = extract(model, eeg_tr, rnd_cb, args.batch_size, args.device)
             for k in READOUTS:
                 Xte, Xtr = F_te[k], F_tr[k]
                 a = EVAL.metric_a_rsa(Xte, IMG_test, args.n_perm, rng)
@@ -213,14 +241,9 @@ def main():
                 log(f"  {k:<18} dim={Xte.shape[-1]:<5} A r={a['r_img']:+.4f} "
                     f"p={a['p_img']:.3f} | B acc1={rb['acc1_cos']:.4f} "
                     f"(零中位 {np.median(rb['null_acc1_cos']):.4f})")
-            # 码本利用率（训练后）
-            with torch.no_grad():
-                z = model.encode(torch.from_numpy(
-                    eeg_te[:2].reshape(-1, eeg_te.shape[2], eeg_te.shape[3])
-                ).float())
-                _zq, _l, idx = model.vq(z)
-                u = model.vq.usage(idx)
-            rec["codebook"] = u
+            # 码本利用率（**整个 test 集**的码号分布）
+            rec["codebook"] = usage_from_hist(hist)
+            u = rec["codebook"]
             log(f"  码本利用率：{u['used']}/{u['total']} = {u['utilization']:.1%} "
                 f"| 熵 {u['entropy_nats']:.2f} nats")
             del eeg_te, eeg_tr, F_te, F_tr
