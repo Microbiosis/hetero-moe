@@ -200,6 +200,7 @@ hf://buckets/illusion-brain/brain-domains/
 ### 总览
 | 文件 | 内容 |
 |---|---|
+| `MODEL_FORM.md` | **模型形态判定书**：脑域线自己的形态判定与目标架构（脑原生三模态 born-native + S1–S4 阶梯 + 阶段 C/D 的定位）|
 | `PAPER_DRAFT.md` | **论文草稿**（摘要 + 10 节 + 附录，整合全部结论）|
 | `FINDINGS_SET_THEORY.md` | **集合论审计：标签只解释 0.05% 方差**（统一解释）|
 
@@ -282,6 +283,7 @@ hf://buckets/illusion-brain/brain-domains/
 ```
 research/brain_domains/
 ├── README.md                    本文件（索引）
+├── MODEL_FORM.md                模型形态判定书（脑域线自己的形态判定 + 目标架构 + S1–S4）
 ├── FINDINGS*.md                 17 份实验记录
 ├── LITERATURE_ON_TIMESCALES.md  文献核查
 ├── data/
