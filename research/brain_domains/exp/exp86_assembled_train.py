@@ -284,7 +284,10 @@ def info_nce(a, b, temp=0.07):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--donor-ffn", default="none", choices=list(FFN_DONORS))
-    ap.add_argument("--attn-donor", default=ATTN_DONOR)
+    ap.add_argument("--attn-donor", default=ATTN_DONOR,
+                    choices=[ATTN_DONOR, "none"],
+                    help="嫁接哪个供体的注意力；'none' = **不嫁接注意力**"
+                         "（用于「嫁接注意力到底有没有增益」的同配方对照）")
     ap.add_argument("--freeze-attn", action="store_true",
                     help="嫁接来的注意力冻结（只当固定组件用）")
     ap.add_argument("--subject", type=int, default=1)
@@ -364,8 +367,12 @@ def main():
                      "src": "synthetic"}
         log("  [自测] 合成组件：MHA(64) + FFN(64→128→64)")
     else:
-        attn_state = extract_attn_state(args.attn_donor)
-        log(f"  嫁接注意力 {args.attn_donor}：键 {sorted(attn_state)}")
+        attn_state = None
+        if args.attn_donor != "none":
+            attn_state = extract_attn_state(args.attn_donor)
+            log(f"  嫁接注意力 {args.attn_donor}：键 {sorted(attn_state)}")
+        else:
+            log("  **不嫁接注意力**（同配方的「无嫁接」对照臂）")
         ffn_donor = None
         if args.donor_ffn != "none":
             ffn_donor = extract_ffn_donor(args.donor_ffn)

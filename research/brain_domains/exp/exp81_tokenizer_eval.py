@@ -112,7 +112,10 @@ def load_model(ckpt_path, seed=SEED):
         from exp86_assembled_train import (build_assembled, extract_attn_state,
                                            extract_ffn_donor)
         a = ck.get("args", {})
-        attn = extract_attn_state(a.get("attn_donor", "signal-jepa"))
+        attn_name = a.get("attn_donor", "signal-jepa")
+        # ⚠️ `attn_donor == "none"` ⇒ 那个 checkpoint **没有**注意力块
+        #    （同配方的「不嫁接注意力」对照臂）⇒ 不能去读供体文件
+        attn = None if attn_name == "none" else extract_attn_state(attn_name)
         ffn = None
         if ck.get("donor_ffn", "none") != "none":
             ffn = extract_ffn_donor(ck["donor_ffn"])
@@ -322,6 +325,23 @@ def self_test_assembled():
                 assert out["recon"].shape[-1] == 250
                 log(f"  ✓ {arch}：加载 + {len(READOUTS)} 个读出全部通过"
                     f"（头 {heads}）")
+
+            # 「不嫁接注意力」的对照臂：checkpoint 里**没有**注意力块
+            model = E86.build_assembled(n_codes=64, attn_state=None,
+                                        ffn_donor=None, heads="v2")
+            assert not any(k.startswith(("attn.", "norm1."))
+                           for k in model.state_dict()), "不该有注意力参数"
+            ck = {"state_dict": model.state_dict(),
+                  "args": {"attn_donor": "none", "steps": 1},
+                  "n_codes": 64, "d_model": 64, "arch": "assembled_v2",
+                  "donor_ffn": "none", "hist": []}
+            fp = tmp / "ck_noattn.pt"
+            torch.save(ck, fp)
+            m2, _, rnd = load_model(fp)
+            out = readouts_for(m2, torch.randn(6, 63, 250), rnd)
+            for k in READOUTS:
+                assert k in out and torch.isfinite(out[k]).all(), k
+            log("  ✓ 不嫁接注意力（attn_donor=none）：加载 + 读出全部通过")
         finally:
             E86.DONOR_DIR = old_dir
     log("--- 组装架构自测通过 ---")

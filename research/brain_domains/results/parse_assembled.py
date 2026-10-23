@@ -58,6 +58,8 @@ ARMS = [
     ("v2-biot", "v2-ffn-biot"),
     ("v2-eegdino-small", "v2-ffn-eegdino-small"),
     ("v2-none-nosem", "v2-ffn-none-nosem"),
+    ("v2-plain", "v2-ffn-plain"),
+    ("v2-plain-nosem", "v2-ffn-plain-nosem"),
 ]
 READOUTS = ["recon", "emb_mean", "onehot_mean", "code_ids", "continuous",
             "random_codebook"]
@@ -225,6 +227,76 @@ def main():
                     continue
                 print(f"  {label:<16}{r:<16}{st['median']:>+14.4f}"
                       f"{st['n_pos']:>4}/{st['n']:<3}{fmt_p(st['p']):>9}")
+
+    # --- 配对差：臂 vs 臂（零件资格赛口径：嫁接某组件到底有没有比不嫁接更好）---
+    base = arms.get("v2-none")
+    if base:
+        print("\n配对差（vs v2-none，即「只嫁接注意力、不嫁接 FFN」的基准臂）：")
+        print(f"  {'臂':<20}{'读出':<16}{'Δr':>10}{'正向':>8}{'p':>9}")
+        for label, d in arms.items():
+            if label in ("v2-none", "v2-none-nosem"):
+                continue
+            for r in ("recon", "onehot_mean", "emb_mean"):
+                st = paired(per_subject_r(d, r), per_subject_r(base, r))
+                if not st:
+                    continue
+                print(f"  {label:<20}{r:<16}{st['median']:>+10.4f}"
+                      f"{st['n_pos']:>4}/{st['n']:<3}{fmt_p(st['p']):>9}")
+
+    # --- 2×2 因子表：注意力嫁接 × 语义监督 ---
+    cells = {
+        ("不嫁接", "无"): "v2-plain-nosem",
+        ("不嫁接", "有"): "v2-plain",
+        ("嫁接", "无"): "v2-none-nosem",
+        ("嫁接", "有"): "v2-none",
+    }
+    if all(a in arms for a in cells.values()):
+        print("\n2×2 因子表（同一套配方，只有两个因子变）：")
+        for ro in ("recon", "onehot_mean", "emb_mean", "continuous",
+                   "random_codebook"):
+            print(f"  {ro}")
+            for attn in ("不嫁接", "嫁接"):
+                row = []
+                for sem in ("无", "有"):
+                    d = arms[cells[(attn, sem)]]
+                    e = d["summary"].get(ro)
+                    row.append(f"{e['r_median']:+.4f}({e['n_sig']}/{e['n']})"
+                               if e else "—")
+                print(f"    注意力{attn:<4} 语义监督{('有' if sem=='有' else '无')}: "
+                      f"{row[0]:>16} | {row[1]:>16}")
+        print("  单因子效应（逐被试配对 Δr，p=0.0010 即 10/10 全正）：")
+        for ro in ("recon", "onehot_mean", "emb_mean"):
+            for (a1, a2), lab in (
+                    (("v2-none", "v2-plain"), "嫁接注意力的净效应"),
+                    (("v2-plain", "v2-plain-nosem"), "语义监督的净效应（不嫁接注意力）"),
+                    (("v2-none", "v2-none-nosem"), "语义监督的净效应（嫁接注意力）")):
+                st = paired(per_subject_r(arms[a1], ro),
+                            per_subject_r(arms[a2], ro))
+                if not st:
+                    continue
+                print(f"    {lab:<28}{ro:<14}{st['median']:>+10.4f}"
+                      f"{st['n_pos']:>4}/{st['n']:<3}{fmt_p(st['p']):>9}")
+
+    # --- 决定性对照：学出来的码本 vs 随机码本 ---
+    # `emb_mean`（学出来的码本，64 维）与 `random_codebook`（**随机**码本，64 维）
+    # 用**同一个 encoder**、同一套池化 ⇒ 唯一差别就是「码本是不是学出来的」。
+    # ⇒ 这一条决定「语义在码本里」还是「语义只在连续表征里、随便量化都能带过去」。
+    print("\n决定性对照：学出来的码本 vs **随机**码本（同 encoder / 同维度 / 同池化）")
+    print(f"  {'臂':<20}{'emb_mean':>12}{'random_cb':>12}{'Δr(学-随机)':>14}"
+          f"{'正向':>8}{'p':>9}")
+    for label, d in arms.items():
+        if not label.startswith("v2-"):
+            continue
+        a = per_subject_r(d, "emb_mean")
+        b = per_subject_r(d, "random_codebook")
+        st = paired(a, b)
+        e = d["summary"].get("emb_mean")
+        rc = d["summary"].get("random_codebook")
+        if not st or not e or not rc:
+            continue
+        print(f"  {label:<20}{e['r_median']:>+12.4f}{rc['r_median']:>+12.4f}"
+              f"{st['median']:>+14.4f}{st['n_pos']:>4}/{st['n']:<3}"
+              f"{fmt_p(st['p']):>9}")
 
     # --- S1b 判据 ---
     print("\n" + "=" * 108)

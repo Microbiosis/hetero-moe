@@ -1,0 +1,455 @@
+{
+  "source": "job-logs",
+  "job": "t81-eval-v2-eegdino-small",
+  "job_id": "6adb6c431e112550ce7d571f",
+  "per_subject": [
+    {
+      "subject": "sub-01",
+      "rows": {
+        "recon": {
+          "dim": 250,
+          "r_img": 0.063,
+          "p_img": 0.005
+        },
+        "emb_mean": {
+          "dim": 64,
+          "r_img": 0.0471,
+          "p_img": 0.005
+        },
+        "onehot_mean": {
+          "dim": 1024,
+          "r_img": 0.0582,
+          "p_img": 0.005
+        },
+        "code_ids": {
+          "dim": 31,
+          "r_img": 0.021,
+          "p_img": 0.005
+        },
+        "continuous": {
+          "dim": 64,
+          "r_img": 0.0585,
+          "p_img": 0.005
+        },
+        "random_codebook": {
+          "dim": 64,
+          "r_img": 0.0574,
+          "p_img": 0.005
+        }
+      },
+      "codebook": {
+        "used": 1023,
+        "total": 1024,
+        "utilization": 0.9990000000000001,
+        "entropy_nats": 6.72
+      }
+    },
+    {
+      "subject": "sub-02",
+      "rows": {
+        "recon": {
+          "dim": 250,
+          "r_img": 0.0709,
+          "p_img": 0.005
+        },
+        "emb_mean": {
+          "dim": 64,
+          "r_img": 0.0226,
+          "p_img": 0.005
+        },
+        "onehot_mean": {
+          "dim": 1024,
+          "r_img": 0.0351,
+          "p_img": 0.005
+        },
+        "code_ids": {
+          "dim": 31,
+          "r_img": 0.0103,
+          "p_img": 0.03
+        },
+        "continuous": {
+          "dim": 64,
+          "r_img": 0.035,
+          "p_img": 0.005
+        },
+        "random_codebook": {
+          "dim": 64,
+          "r_img": 0.039,
+          "p_img": 0.005
+        }
+      },
+      "codebook": {
+        "used": 1020,
+        "total": 1024,
+        "utilization": 0.996,
+        "entropy_nats": 6.7
+      }
+    },
+    {
+      "subject": "sub-03",
+      "rows": {
+        "recon": {
+          "dim": 250,
+          "r_img": 0.1023,
+          "p_img": 0.005
+        },
+        "emb_mean": {
+          "dim": 64,
+          "r_img": 0.0389,
+          "p_img": 0.005
+        },
+        "onehot_mean": {
+          "dim": 1024,
+          "r_img": 0.0321,
+          "p_img": 0.005
+        },
+        "code_ids": {
+          "dim": 31,
+          "r_img": 0.0063,
+          "p_img": 0.164
+        },
+        "continuous": {
+          "dim": 64,
+          "r_img": 0.0516,
+          "p_img": 0.005
+        },
+        "random_codebook": {
+          "dim": 64,
+          "r_img": 0.0427,
+          "p_img": 0.005
+        }
+      },
+      "codebook": {
+        "used": 996,
+        "total": 1024,
+        "utilization": 0.973,
+        "entropy_nats": 6.59
+      }
+    },
+    {
+      "subject": "sub-04",
+      "rows": {
+        "recon": {
+          "dim": 250,
+          "r_img": 0.0904,
+          "p_img": 0.005
+        },
+        "emb_mean": {
+          "dim": 64,
+          "r_img": 0.0241,
+          "p_img": 0.005
+        },
+        "onehot_mean": {
+          "dim": 1024,
+          "r_img": 0.0367,
+          "p_img": 0.005
+        },
+        "code_ids": {
+          "dim": 31,
+          "r_img": 0.0166,
+          "p_img": 0.005
+        },
+        "continuous": {
+          "dim": 64,
+          "r_img": 0.0314,
+          "p_img": 0.005
+        },
+        "random_codebook": {
+          "dim": 64,
+          "r_img": 0.041,
+          "p_img": 0.005
+        }
+      },
+      "codebook": {
+        "used": 1020,
+        "total": 1024,
+        "utilization": 0.996,
+        "entropy_nats": 6.78
+      }
+    },
+    {
+      "subject": "sub-05",
+      "rows": {
+        "recon": {
+          "dim": 250,
+          "r_img": 0.0871,
+          "p_img": 0.005
+        },
+        "emb_mean": {
+          "dim": 64,
+          "r_img": 0.0223,
+          "p_img": 0.005
+        },
+        "onehot_mean": {
+          "dim": 1024,
+          "r_img": 0.0388,
+          "p_img": 0.005
+        },
+        "code_ids": {
+          "dim": 31,
+          "r_img": 0.0122,
+          "p_img": 0.02
+        },
+        "continuous": {
+          "dim": 64,
+          "r_img": 0.0492,
+          "p_img": 0.005
+        },
+        "random_codebook": {
+          "dim": 64,
+          "r_img": 0.0534,
+          "p_img": 0.005
+        }
+      },
+      "codebook": {
+        "used": 1013,
+        "total": 1024,
+        "utilization": 0.9890000000000001,
+        "entropy_nats": 6.76
+      }
+    },
+    {
+      "subject": "sub-06",
+      "rows": {
+        "recon": {
+          "dim": 250,
+          "r_img": 0.0848,
+          "p_img": 0.005
+        },
+        "emb_mean": {
+          "dim": 64,
+          "r_img": 0.0141,
+          "p_img": 0.035
+        },
+        "onehot_mean": {
+          "dim": 1024,
+          "r_img": 0.0207,
+          "p_img": 0.005
+        },
+        "code_ids": {
+          "dim": 31,
+          "r_img": 0.01,
+          "p_img": 0.035
+        },
+        "continuous": {
+          "dim": 64,
+          "r_img": 0.0233,
+          "p_img": 0.01
+        },
+        "random_codebook": {
+          "dim": 64,
+          "r_img": 0.0314,
+          "p_img": 0.005
+        }
+      },
+      "codebook": {
+        "used": 1003,
+        "total": 1024,
+        "utilization": 0.9790000000000001,
+        "entropy_nats": 6.69
+      }
+    },
+    {
+      "subject": "sub-07",
+      "rows": {
+        "recon": {
+          "dim": 250,
+          "r_img": 0.0797,
+          "p_img": 0.005
+        },
+        "emb_mean": {
+          "dim": 64,
+          "r_img": 0.0416,
+          "p_img": 0.005
+        },
+        "onehot_mean": {
+          "dim": 1024,
+          "r_img": 0.0476,
+          "p_img": 0.005
+        },
+        "code_ids": {
+          "dim": 31,
+          "r_img": 0.0172,
+          "p_img": 0.005
+        },
+        "continuous": {
+          "dim": 64,
+          "r_img": 0.0585,
+          "p_img": 0.005
+        },
+        "random_codebook": {
+          "dim": 64,
+          "r_img": 0.0635,
+          "p_img": 0.005
+        }
+      },
+      "codebook": {
+        "used": 1018,
+        "total": 1024,
+        "utilization": 0.9940000000000001,
+        "entropy_nats": 6.79
+      }
+    },
+    {
+      "subject": "sub-08",
+      "rows": {
+        "recon": {
+          "dim": 250,
+          "r_img": 0.0619,
+          "p_img": 0.005
+        },
+        "emb_mean": {
+          "dim": 64,
+          "r_img": 0.0194,
+          "p_img": 0.04
+        },
+        "onehot_mean": {
+          "dim": 1024,
+          "r_img": 0.0287,
+          "p_img": 0.005
+        },
+        "code_ids": {
+          "dim": 31,
+          "r_img": 0.015,
+          "p_img": 0.005
+        },
+        "continuous": {
+          "dim": 64,
+          "r_img": 0.0242,
+          "p_img": 0.015
+        },
+        "random_codebook": {
+          "dim": 64,
+          "r_img": 0.0372,
+          "p_img": 0.005
+        }
+      },
+      "codebook": {
+        "used": 1002,
+        "total": 1024,
+        "utilization": 0.9790000000000001,
+        "entropy_nats": 6.71
+      }
+    },
+    {
+      "subject": "sub-09",
+      "rows": {
+        "recon": {
+          "dim": 250,
+          "r_img": 0.0778,
+          "p_img": 0.005
+        },
+        "emb_mean": {
+          "dim": 64,
+          "r_img": 0.0121,
+          "p_img": 0.035
+        },
+        "onehot_mean": {
+          "dim": 1024,
+          "r_img": 0.0181,
+          "p_img": 0.005
+        },
+        "code_ids": {
+          "dim": 31,
+          "r_img": 0.0021,
+          "p_img": 0.647
+        },
+        "continuous": {
+          "dim": 64,
+          "r_img": 0.0223,
+          "p_img": 0.005
+        },
+        "random_codebook": {
+          "dim": 64,
+          "r_img": 0.0246,
+          "p_img": 0.005
+        }
+      },
+      "codebook": {
+        "used": 1009,
+        "total": 1024,
+        "utilization": 0.985,
+        "entropy_nats": 6.74
+      }
+    },
+    {
+      "subject": "sub-10",
+      "rows": {
+        "recon": {
+          "dim": 250,
+          "r_img": 0.103,
+          "p_img": 0.005
+        },
+        "emb_mean": {
+          "dim": 64,
+          "r_img": 0.0304,
+          "p_img": 0.005
+        },
+        "onehot_mean": {
+          "dim": 1024,
+          "r_img": 0.0507,
+          "p_img": 0.005
+        },
+        "code_ids": {
+          "dim": 31,
+          "r_img": 0.0093,
+          "p_img": 0.035
+        },
+        "continuous": {
+          "dim": 64,
+          "r_img": 0.0462,
+          "p_img": 0.005
+        },
+        "random_codebook": {
+          "dim": 64,
+          "r_img": 0.0553,
+          "p_img": 0.005
+        }
+      },
+      "codebook": {
+        "used": 1015,
+        "total": 1024,
+        "utilization": 0.991,
+        "entropy_nats": 6.81
+      }
+    }
+  ],
+  "summary": {
+    "recon": {
+      "n": 10,
+      "r_median": 0.08224999999999999,
+      "p_median": 0.005,
+      "n_sig": 10
+    },
+    "emb_mean": {
+      "n": 10,
+      "r_median": 0.02335,
+      "p_median": 0.005,
+      "n_sig": 10
+    },
+    "onehot_mean": {
+      "n": 10,
+      "r_median": 0.0359,
+      "p_median": 0.005,
+      "n_sig": 10
+    },
+    "code_ids": {
+      "n": 10,
+      "r_median": 0.01125,
+      "p_median": 0.03,
+      "n_sig": 8
+    },
+    "continuous": {
+      "n": 10,
+      "r_median": 0.0406,
+      "p_median": 0.005,
+      "n_sig": 10
+    },
+    "random_codebook": {
+      "n": 10,
+      "r_median": 0.04185,
+      "p_median": 0.005,
+      "n_sig": 10
+    }
+  }
+}
