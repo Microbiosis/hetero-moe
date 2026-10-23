@@ -228,20 +228,37 @@ def probe_one(name, M):
         if not n_t:
             n_t = 1000
         model.eval()
-        bs = 8
-        x = torch.zeros(bs, int(n_ch), int(n_t))
-        with torch.no_grad():
-            model(x)          # 预热
-            t0 = time.time()
-            y = model(x)
-            dt = time.time() - t0
-        rec["forward"] = {
-            "input": [bs, int(n_ch), int(n_t)], "sfreq": sf,
-            "out_shape": list(y.shape) if hasattr(y, "shape") else str(type(y)),
-            "ms_per_trial": round(dt / bs * 1000, 2),
-        }
-        log(f"  ✓ {name}: 参数 {rec['n_params']:,} | 前向 {rec['forward']['out_shape']} "
-            f"| {rec['forward']['ms_per_trial']} ms/试次 | 载入 {rec['load_path']}")
+        # 稳态吞吐：预热 1 次 + 计时 3 次取中位（单次计时会被首次分配/CUDA 初始化污染）
+        fwd = {"input_ch": int(n_ch), "input_times": int(n_t), "sfreq": sf,
+               "batches": {}}
+        for bs in (8, 32):
+            x = torch.zeros(bs, int(n_ch), int(n_t))
+            try:
+                with torch.no_grad():
+                    model(x)                       # 预热
+                    ts = []
+                    for _ in range(3):
+                        t0 = time.time()
+                        y = model(x)
+                        ts.append(time.time() - t0)
+                    ms = sorted(ts)[len(ts) // 2] / bs * 1000
+                fwd["batches"][str(bs)] = {
+                    "ms_per_trial": round(ms, 3),
+                    "runs_s": [round(t, 4) for t in ts],
+                }
+                if bs == 8:
+                    fwd["out_shape"] = (list(y.shape) if hasattr(y, "shape")
+                                        else str(type(y)))
+            except Exception as e:
+                fwd["batches"][str(bs)] = {"error": f"{type(e).__name__}: {e}"[:200]}
+        rec["forward"] = fwd
+        b8 = fwd["batches"].get("8", {})
+        b32 = fwd["batches"].get("32", {})
+        ms8 = b8.get("ms_per_trial")
+        ms32 = b32.get("ms_per_trial")
+        rec["ms_per_trial"] = ms32 or ms8
+        log(f"  ✓ {name}: 参数 {rec['n_params']:,} | 前向 {fwd.get('out_shape')} "
+            f"| bs8 {ms8} ms/试次 | bs32 {ms32} ms/试次 | 载入 {rec['load_path']}")
     except Exception as e:
         rec["forward_error"] = f"{type(e).__name__}: {e}"[:400]
         log(f"  ✓ {name} 已装载但前向失败：{e}")
@@ -276,13 +293,17 @@ def probe_things_channels():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", type=str, default="")
+    ap.add_argument("--flavor", type=str, default="unknown",
+                    help="当前档位名（写进报告，便于按档位汇总吞吐）")
+    ap.add_argument("--out", type=str, default="")
     args = ap.parse_args()
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(args.out) if args.out else OUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
 
     install, ok = ensure_braindecode()
     log(f"braindecode: {install}")
-    report = {"install": install, "models": {}}
+    report = {"install": install, "flavor": args.flavor, "models": {}}
     if ok:
         import braindecode.models as M
         allc = sorted(k for k in dir(M) if not k.startswith("_"))
@@ -302,7 +323,7 @@ def main():
             report["models"][name] = rec
             if not rec.get("ok"):
                 log(f"  ✗ {str(rec.get('error'))[:300]}")
-            (OUT_DIR / "probe.json").write_text(
+            (out_dir / "probe.json").write_text(
                 json.dumps(report, indent=2, ensure_ascii=False, default=str),
                 encoding="utf-8")
     else:
@@ -311,7 +332,7 @@ def main():
     log("\n===== THINGS-EEG 通道名 =====")
     report["things_channels"] = probe_things_channels()
     log(json.dumps(report["things_channels"], ensure_ascii=False)[:1200])
-    (OUT_DIR / "probe.json").write_text(
+    (out_dir / "probe.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
 
     ok_models = [n for n, r in report["models"].items() if r.get("ok")]
