@@ -1,0 +1,848 @@
+{
+  "target_d": 64,
+  "rows": [
+    {
+      "model": "signal-jepa",
+      "layer": "transformer.decoder.layers.0",
+      "child": "multihead_attn",
+      "role": "attn",
+      "verdict": "movable",
+      "why": "逐键同形（4 键）",
+      "shapes": {
+        "in_proj_weight": [
+          192,
+          64
+        ],
+        "in_proj_bias": [
+          192
+        ],
+        "out_proj.weight": [
+          64,
+          64
+        ],
+        "out_proj.bias": [
+          64
+        ]
+      }
+    },
+    {
+      "model": "signal-jepa",
+      "layer": "transformer.encoder.layers.0",
+      "child": "self_attn",
+      "role": "attn",
+      "verdict": "movable",
+      "why": "逐键同形（4 键）",
+      "shapes": {
+        "in_proj_weight": [
+          192,
+          64
+        ],
+        "in_proj_bias": [
+          192
+        ],
+        "out_proj.weight": [
+          64,
+          64
+        ],
+        "out_proj.bias": [
+          64
+        ]
+      }
+    },
+    {
+      "model": "biot",
+      "layer": "encoder.transformer.layers.layers.0.1.fn",
+      "child": "fn",
+      "role": "ffn",
+      "verdict": "projectable",
+      "why": "同角色但维度不同：w1.weight[1024, 256] / w2.weight[256, 1024]（目标 D=64）",
+      "shapes": {
+        "w1.weight": [
+          1024,
+          256
+        ],
+        "w1.bias": [
+          1024
+        ],
+        "w2.weight": [
+          256,
+          1024
+        ],
+        "w2.bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "eegdino-small",
+      "layer": "encoder_layers.0",
+      "child": "mlp",
+      "role": "ffn",
+      "verdict": "projectable",
+      "why": "同角色但维度不同：fc1.weight[512, 200] / fc2.weight[200, 512]（目标 D=64）",
+      "shapes": {
+        "fc1.weight": [
+          512,
+          200
+        ],
+        "fc1.bias": [
+          512
+        ],
+        "fc2.weight": [
+          200,
+          512
+        ],
+        "fc2.bias": [
+          200
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0.1",
+      "child": "fn",
+      "role": "ffn",
+      "verdict": "projectable",
+      "why": "同角色但维度不同：1.0.weight[1024, 256] / 1.3.weight[256, 1024]（目标 D=64）",
+      "shapes": {
+        "0.weight": [
+          256
+        ],
+        "0.bias": [
+          256
+        ],
+        "1.0.weight": [
+          1024,
+          256
+        ],
+        "1.0.bias": [
+          1024
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0.1.fn",
+      "child": "1",
+      "role": "ffn",
+      "verdict": "projectable",
+      "why": "同角色但维度不同：0.weight[1024, 256] / 3.weight[256, 1024]（目标 D=64）",
+      "shapes": {
+        "0.weight": [
+          1024,
+          256
+        ],
+        "0.bias": [
+          1024
+        ],
+        "3.weight": [
+          256,
+          1024
+        ],
+        "3.bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "biot",
+      "layer": "encoder.transformer.layers.layers.0",
+      "child": "0",
+      "role": "attn",
+      "verdict": "incompatible",
+      "why": "键集/结构不同族",
+      "shapes": {
+        "fn.to_q.weight": [
+          256,
+          256
+        ],
+        "fn.to_k.weight": [
+          256,
+          256
+        ],
+        "fn.to_v.weight": [
+          256,
+          256
+        ],
+        "fn.to_out.weight": [
+          256,
+          256
+        ]
+      }
+    },
+    {
+      "model": "biot",
+      "layer": "encoder.transformer.layers.layers.0.0",
+      "child": "fn",
+      "role": "attn",
+      "verdict": "incompatible",
+      "why": "键集/结构不同族",
+      "shapes": {
+        "to_q.weight": [
+          256,
+          256
+        ],
+        "to_k.weight": [
+          256,
+          256
+        ],
+        "to_v.weight": [
+          256,
+          256
+        ],
+        "to_out.weight": [
+          256,
+          256
+        ]
+      }
+    },
+    {
+      "model": "biot",
+      "layer": "encoder.transformer.layers.layers.0.0",
+      "child": "norm",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256
+        ],
+        "bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "biot",
+      "layer": "encoder.transformer.layers.layers.0.0.fn",
+      "child": "to_q",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256,
+          256
+        ]
+      }
+    },
+    {
+      "model": "biot",
+      "layer": "encoder.transformer.layers.layers.0.0.fn",
+      "child": "to_k",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256,
+          256
+        ]
+      }
+    },
+    {
+      "model": "biot",
+      "layer": "encoder.transformer.layers.layers.0.0.fn",
+      "child": "to_v",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256,
+          256
+        ]
+      }
+    },
+    {
+      "model": "biot",
+      "layer": "encoder.transformer.layers.layers.0.0.fn",
+      "child": "to_out",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256,
+          256
+        ],
+        "bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "biot",
+      "layer": "encoder.transformer.layers.layers.0.1.fn.fn",
+      "child": "w1",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          1024,
+          256
+        ],
+        "bias": [
+          1024
+        ]
+      }
+    },
+    {
+      "model": "biot",
+      "layer": "encoder.transformer.layers.layers.0.1.fn.fn",
+      "child": "w2",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256,
+          1024
+        ],
+        "bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "cbramod",
+      "layer": "encoder.layers.0",
+      "child": "self_attn_s",
+      "role": "attn",
+      "verdict": "incompatible",
+      "why": "键集/结构不同族",
+      "shapes": {
+        "in_proj_weight": [
+          300,
+          100
+        ],
+        "in_proj_bias": [
+          300
+        ],
+        "out_proj.weight": [
+          100,
+          100
+        ],
+        "out_proj.bias": [
+          100
+        ]
+      }
+    },
+    {
+      "model": "cbramod",
+      "layer": "encoder.layers.0",
+      "child": "self_attn_t",
+      "role": "attn",
+      "verdict": "incompatible",
+      "why": "键集/结构不同族",
+      "shapes": {
+        "in_proj_weight": [
+          300,
+          100
+        ],
+        "in_proj_bias": [
+          300
+        ],
+        "out_proj.weight": [
+          100,
+          100
+        ],
+        "out_proj.bias": [
+          100
+        ]
+      }
+    },
+    {
+      "model": "cbramod",
+      "layer": "encoder.layers.0",
+      "child": "linear1",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          800,
+          200
+        ],
+        "bias": [
+          800
+        ]
+      }
+    },
+    {
+      "model": "cbramod",
+      "layer": "encoder.layers.0",
+      "child": "linear2",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          200,
+          800
+        ],
+        "bias": [
+          200
+        ]
+      }
+    },
+    {
+      "model": "cbramod",
+      "layer": "encoder.layers.0",
+      "child": "norm1",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          200
+        ],
+        "bias": [
+          200
+        ]
+      }
+    },
+    {
+      "model": "cbramod",
+      "layer": "encoder.layers.0",
+      "child": "norm2",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          200
+        ],
+        "bias": [
+          200
+        ]
+      }
+    },
+    {
+      "model": "cbramod",
+      "layer": "encoder.layers.0.self_attn_s",
+      "child": "out_proj",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          100,
+          100
+        ],
+        "bias": [
+          100
+        ]
+      }
+    },
+    {
+      "model": "eegdino-small",
+      "layer": "encoder_layers.0",
+      "child": "norm1",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          200
+        ],
+        "bias": [
+          200
+        ]
+      }
+    },
+    {
+      "model": "eegdino-small",
+      "layer": "encoder_layers.0",
+      "child": "attn",
+      "role": "attn",
+      "verdict": "incompatible",
+      "why": "键集/结构不同族",
+      "shapes": {
+        "q_bias": [
+          200
+        ],
+        "v_bias": [
+          200
+        ],
+        "qkv.weight": [
+          600,
+          200
+        ],
+        "proj.weight": [
+          200,
+          200
+        ]
+      }
+    },
+    {
+      "model": "eegdino-small",
+      "layer": "encoder_layers.0",
+      "child": "norm2",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          200
+        ],
+        "bias": [
+          200
+        ]
+      }
+    },
+    {
+      "model": "eegdino-small",
+      "layer": "encoder_layers.0.attn",
+      "child": "qkv",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          600,
+          200
+        ]
+      }
+    },
+    {
+      "model": "eegdino-small",
+      "layer": "encoder_layers.0.attn",
+      "child": "proj",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          200,
+          200
+        ],
+        "bias": [
+          200
+        ]
+      }
+    },
+    {
+      "model": "eegdino-small",
+      "layer": "encoder_layers.0.mlp",
+      "child": "fc1",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          512,
+          200
+        ],
+        "bias": [
+          512
+        ]
+      }
+    },
+    {
+      "model": "eegdino-small",
+      "layer": "encoder_layers.0.mlp",
+      "child": "fc2",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          200,
+          512
+        ],
+        "bias": [
+          200
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0",
+      "child": "0",
+      "role": "attn",
+      "verdict": "incompatible",
+      "why": "键集/结构不同族",
+      "shapes": {
+        "fn.0.weight": [
+          256
+        ],
+        "fn.0.bias": [
+          256
+        ],
+        "fn.1.keys.weight": [
+          256,
+          256
+        ],
+        "fn.1.keys.bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0.0",
+      "child": "fn",
+      "role": "attn",
+      "verdict": "incompatible",
+      "why": "键集/结构不同族",
+      "shapes": {
+        "0.weight": [
+          256
+        ],
+        "0.bias": [
+          256
+        ],
+        "1.keys.weight": [
+          256,
+          256
+        ],
+        "1.keys.bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0.0.fn",
+      "child": "0",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256
+        ],
+        "bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0.0.fn",
+      "child": "1",
+      "role": "attn",
+      "verdict": "incompatible",
+      "why": "键集/结构不同族",
+      "shapes": {
+        "keys.weight": [
+          256,
+          256
+        ],
+        "keys.bias": [
+          256
+        ],
+        "queries.weight": [
+          256,
+          256
+        ],
+        "queries.bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0.0.fn.1",
+      "child": "keys",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256,
+          256
+        ],
+        "bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0.0.fn.1",
+      "child": "queries",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256,
+          256
+        ],
+        "bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0.0.fn.1",
+      "child": "values",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256,
+          256
+        ],
+        "bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0.0.fn.1",
+      "child": "projection",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256,
+          256
+        ],
+        "bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0.1.fn.1",
+      "child": "0",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          1024,
+          256
+        ],
+        "bias": [
+          1024
+        ]
+      }
+    },
+    {
+      "model": "mirepnet",
+      "layer": "transformer.0.1.fn.1",
+      "child": "3",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          256,
+          1024
+        ],
+        "bias": [
+          256
+        ]
+      }
+    },
+    {
+      "model": "signal-jepa",
+      "layer": "transformer.decoder.layers.0",
+      "child": "norm3",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          64
+        ],
+        "bias": [
+          64
+        ]
+      }
+    },
+    {
+      "model": "signal-jepa",
+      "layer": "transformer.encoder.layers.0",
+      "child": "linear1",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          2048,
+          64
+        ],
+        "bias": [
+          2048
+        ]
+      }
+    },
+    {
+      "model": "signal-jepa",
+      "layer": "transformer.encoder.layers.0",
+      "child": "linear2",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          64,
+          2048
+        ],
+        "bias": [
+          64
+        ]
+      }
+    },
+    {
+      "model": "signal-jepa",
+      "layer": "transformer.encoder.layers.0",
+      "child": "norm1",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          64
+        ],
+        "bias": [
+          64
+        ]
+      }
+    },
+    {
+      "model": "signal-jepa",
+      "layer": "transformer.encoder.layers.0",
+      "child": "norm2",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          64
+        ],
+        "bias": [
+          64
+        ]
+      }
+    },
+    {
+      "model": "signal-jepa",
+      "layer": "transformer.encoder.layers.0.self_attn",
+      "child": "out_proj",
+      "role": "ffn",
+      "verdict": "incompatible",
+      "why": "不是标准两层 FFN",
+      "shapes": {
+        "weight": [
+          64,
+          64
+        ],
+        "bias": [
+          64
+        ]
+      }
+    }
+  ]
+}
