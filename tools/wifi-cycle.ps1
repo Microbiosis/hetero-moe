@@ -11,6 +11,16 @@
 
     This script makes the disconnect safe by construction:
 
+      0. RESOLVE THE RECONNECT TARGET FIRST.  Before touching the adapter it
+         determines WHICH WiFi to reconnect to: an explicit -ProfileName, else
+         the profile name reported by `netsh wlan show interfaces`, else the
+         current SSID.  If none of those resolve, the script **exits without
+         disconnecting** (exit 3) -- a cycle whose reconnect target is unknown
+         is a cycle that can strand the machine offline.
+         (This was a real defect found on 2026-10-23: the script probed the
+         current profile/SSID but then never passed it to the reconnect, so the
+         only fallback was `netsh wlan connect` = "most recently used
+         profile", which may not be the network you were on.)
       1. WATCHDOG FIRST.  Before touching the adapter it spawns a DETACHED
          helper (separate powershell process, hidden window) that sleeps
          (DelaySeconds + MarginSeconds) and then reconnects on its own.
@@ -23,8 +33,8 @@
          WLAN handshake can never eat the verify window.
 
     The disconnect therefore never happens as a standalone step: by the time
-    the adapter goes down, a reconnect is already scheduled by an independent
-    process.
+    the adapter goes down, the reconnect target is known AND a reconnect is
+    already scheduled by an independent process.
 
     IMPLEMENTATION NOTES (learned the hard way on a MediaTek MT7925 box)
     -----------------------------------------------------------------
@@ -58,8 +68,10 @@
     Default 20.
 
 .PARAMETER ProfileName
-    Optional WiFi profile to reconnect to. When empty, `netsh wlan connect`
-    is used, which re-associates the most recently used profile.
+    Optional WiFi profile to reconnect to. When empty, the script auto-detects
+    the target: first the profile name reported by `netsh wlan show interfaces`,
+    then the current SSID. If neither can be resolved the script refuses to
+    disconnect (exit 3) rather than risk an unrecoverable cycle.
 
 .PARAMETER RetryTimes
     How many times to retry the reconnect. Default 3.
@@ -73,6 +85,10 @@
 
 .EXAMPLE
     pwsh -NoProfile -File .\wifi-cycle.ps1 -DelaySeconds 30 -ProfileName "MyWiFi"
+
+.EXAMPLE
+    pwsh -NoProfile -File .\wifi-cycle.ps1 -ResolveOnly
+    只解析并打印「断开后要连回的 WiFi 名称」，不碰网卡（不冒断网风险）。
 #>
 [CmdletBinding()]
 param(
@@ -81,7 +97,8 @@ param(
     [string]$ProfileName = "",
     [int]$RetryTimes = 3,
     [int]$VerifyTimeoutSec = 60,
-    [int]$ProbeTimeoutSec = 6
+    [int]$ProbeTimeoutSec = 6,
+    [switch]$ResolveOnly
 )
 
 $ErrorActionPreference = 'Continue'
@@ -115,6 +132,25 @@ function Get-ProfileLabel {
     if (-not $raw) { return $null }
     $m = [regex]::Match($raw, '(?im)^\s*(?:Profile|配置文件)\s*:\s*(.+?)\s*$')
     if ($m.Success) { return $m.Groups[1].Value }
+    return $null
+}
+
+function Resolve-ReconnectTarget {
+    # 决定「断开之后连回哪个 WiFi」。
+    #
+    # ⚠️ 这里曾经是个真缺陷（2026-10-23 用户指出）：
+    #    脚本**探测**到了当前 profile/SSID，却**没有把它传给重连**——
+    #    `Invoke-Reconnect` 与看门狗只认 `-ProfileName` 参数，而它默认是空，
+    #    于是回退到 `netsh wlan connect`（"最近使用的配置"）——
+    #    那个猜测可能指到别的网络，结果就是**断了连不回来**。
+    #
+    # 现在的规则：显式参数 > 探测到的 profile 名 > 探测到的 SSID。
+    # 三者都没有 ⇒ 返回 $null，调用方**必须拒绝断开**。
+    if ($ProfileName) { return $ProfileName }
+    $p = Get-ProfileLabel
+    if ($p) { return $p }
+    $s = Get-CurrentSsid
+    if ($s) { return $s }
     return $null
 }
 
@@ -222,11 +258,24 @@ function Test-WifiAssociated {
 }
 
 function Invoke-Reconnect {
-    if ($ProfileName) {
-        Write-Step "netsh wlan connect name='$ProfileName'"
-        netsh wlan connect name="$ProfileName" 2>&1 | Out-Null
+    # 连回**已解析好的目标名**（$script:ReconnectName），不再靠"最近使用的配置"猜。
+    $name = $script:ReconnectName
+    if ($name) {
+        Write-Step "netsh wlan connect name='$name'"
+        netsh wlan connect name="$name" 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            # profile 名与 SSID 不同、或 profile 不在库里时，带 ssid= 更稳
+            if ($script:Ssid -and $script:Ssid -ne $name) {
+                Write-Step "  带 ssid 重试：name='$name' ssid='$($script:Ssid)'"
+                netsh wlan connect name="$name" ssid="$($script:Ssid)" 2>&1 | Out-Null
+            }
+            if ($LASTEXITCODE -ne 0) {
+                Write-Step "  指定名连接失败，回退到'最近使用的配置'" "WARN"
+                netsh wlan connect 2>&1 | Out-Null
+            }
+        }
     } else {
-        Write-Step "netsh wlan connect (last used profile)"
+        Write-Step "netsh wlan connect (last used profile) —— **未解析到目标名**" "WARN"
         netsh wlan connect 2>&1 | Out-Null
     }
 }
@@ -247,10 +296,16 @@ function Start-Watchdog {
     param([int]$DelaySec, [string]$Profile)
 
     $wd = Join-Path $env:TEMP ("wifi_reconnect_watchdog_{0}.ps1" -f ([guid]::NewGuid().ToString('N')))
+    # 看门狗必须带着**已解析的目标名**；只有名字才能保证真的连得回去。
     $connectLine = if ($Profile) {
         'netsh wlan connect name="{0}" 2>&1 | Out-Null' -f ($Profile -replace '"', '`"')
     } else {
         'netsh wlan connect 2>&1 | Out-Null'
+    }
+    $fallbackLine = if ($Profile) {
+        'if ($LASTEXITCODE -ne 0) { netsh wlan connect 2>&1 | Out-Null }'
+    } else {
+        ''
     }
 
     @(
@@ -258,8 +313,10 @@ function Start-Watchdog {
         '$ErrorActionPreference = "Continue"'
         'Start-Sleep -Seconds {0}' -f $DelaySec
         $connectLine
+        $fallbackLine
         'Start-Sleep -Seconds 8'
         $connectLine
+        $fallbackLine
         'Start-Sleep -Seconds 2'
         'Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue'
     ) | Set-Content -LiteralPath $wd -Encoding UTF8
@@ -279,11 +336,31 @@ Write-Step "delay=${DelaySeconds}s margin=${MarginSeconds}s retries=$RetryTimes"
 
 $script:WifiName = Get-ActiveWifiName
 $ssid = Get-CurrentSsid
+$script:Ssid = $ssid
 if ($ssid) { Write-Step "current SSID: $ssid" } else { Write-Step "current SSID: <unknown>" "WARN" }
 $prof = Get-ProfileLabel
 if ($prof) { Write-Step "current profile: $prof" }
 if ($script:WifiName) { Write-Step "active interface: $($script:WifiName)" }
 if ($ProfileName) { Write-Step "target profile (explicit): $ProfileName" }
+
+# --- 断开之前必须先解决「连回哪个 WiFi」 ---
+# ⚠️ 2026-10-23 用户指出的真缺陷：探测到的 profile/SSID 以前**没有**传给重连，
+#    断开后只能靠 `netsh wlan connect`（"最近使用的配置"）去猜 ——
+#    猜错就再也连不回来。现在：**解析不出目标名 ⇒ 根本不断开**。
+$script:ReconnectName = Resolve-ReconnectTarget
+if (-not $script:ReconnectName) {
+    Write-Step "解析不到要重连的 WiFi 名称（-ProfileName 没给，profile/SSID 也探测不到）。" "ERROR"
+    Write-Step '**不切断连接**：断了就可能连不回来。请用 -ProfileName "<你的WiFi名>" 再跑。' "ERROR"
+    exit 3
+}
+Write-Step "reconnect target: '$($script:ReconnectName)'" "OK"
+
+if ($ResolveOnly) {
+    # 只解析目标、**完全不碰网卡**。用来验证「能不能连回去」这件事，
+    # 而不必真的断开一次网络。
+    Write-Step "resolve-only 模式：已解析出重连目标，未做任何断开/重连操作。"
+    exit 0
+}
 
 $state0 = Get-MediaConnectionStateFast -Name $script:WifiName -TimeoutSec $ProbeTimeoutSec
 Write-Step "media state now: $state0"
@@ -292,8 +369,8 @@ if ($state0 -ne 'Connected') {
     exit 2
 }
 
-# 1) arm the watchdog BEFORE the disconnect
-$watchdog = Start-Watchdog -DelaySec ($DelaySeconds + $MarginSeconds) -Profile $ProfileName
+# 1) arm the watchdog BEFORE the disconnect（看门狗带着**已解析的目标名**）
+$watchdog = Start-Watchdog -DelaySec ($DelaySeconds + $MarginSeconds) -Profile $script:ReconnectName
 
 # 2) only now is it safe to drop the link
 Write-Step "disconnecting WiFi ..." "WARN"
