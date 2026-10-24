@@ -13,6 +13,8 @@
 2. S1a 的读出中位数（`results/s1/`）
 3. **组件级组装的变体表**（§二十三·三）
 4. **「学出来的码本 vs 随机码本」决定性对照表**（§二十三·四）
+5. **整合台账**（`INTEGRATION.md`）的 A 类数字不得与数据漂移
+6. **exp89 位置轴**（§二十五·二 的通道组消融表 + 台账 A14/A15）
 """
 
 import json
@@ -26,6 +28,7 @@ FINDINGS = ROOT / "FINDINGS_TIER0_RSA.md"
 VARIANTS = HERE / "variant-results" / "variant_parsed_from_logs.json"
 S1 = HERE / "s1"
 ASSEMBLED = HERE / "assembled-results"
+POSAX = HERE / "posaxis-results" / "exp89_posaxis.json"
 
 # FINDINGS 里的关键断言：(小节标题关键字, 变体行名, 期望的 Δr vs 宿主 中位, 期望正向数)
 CLAIMS = [
@@ -127,6 +130,31 @@ def parse_delta_table(section):
     return out
 
 
+def paired_two_docs(doc_a, doc_b, readout="onehot_mean"):
+    """两个 checkpoint 之间的逐被试配对差（a − b）→ (中位, 正向数, n, p)。"""
+    from math import comb
+
+    def per_subj(d):
+        out = {}
+        for rec in d.get("per_subject", []):
+            rows = rec.get("rows") or {}
+            if readout in rows and "r_img" in rows[readout]:
+                out[rec.get("subject", "?")] = float(rows[readout]["r_img"])
+        return out
+
+    a, b = per_subj(doc_a), per_subj(doc_b)
+    keys = sorted(set(a) & set(b))
+    if not keys:
+        return None
+    diffs = [a[k] - b[k] for k in keys]
+    npos = sum(1 for x in diffs if x > 0)
+    srt = sorted(diffs)
+    n = len(srt)
+    med = srt[n // 2] if n % 2 else (srt[n // 2 - 1] + srt[n // 2]) / 2
+    p = sum(comb(n, k) for k in range(npos, n + 1)) / (2 ** n)
+    return med, npos, n, p
+
+
 def parse_num_cell(cell):
     """`+0.0372 (10)` / `**+0.0372 (10)**` → (0.0372, 10)；解析不出来返回 None。"""
     s = cell.replace("*", "").strip()
@@ -223,6 +251,31 @@ def paired_delta(d, readout_a, readout_b):
     med = srt[n // 2] if n % 2 else (srt[n // 2 - 1] + srt[n // 2]) / 2
     p = sum(comb(n, k) for k in range(npos, n + 1)) / (2 ** n)
     return med, npos, n, p
+
+
+def parse_posaxis_table(section):
+    """exp89 的通道组消融表 → {组: (r_median, n_sig)}。
+
+    表行长这样：`| **POST 后部** | 34 | **+0.0628** | **10/10** | +0.0402 ... |`
+    ⇒ 组名取第一格的**首个词**（`POST` / `ANT` / `OCC` …）。
+    """
+    out = {}
+    for line in section.splitlines():
+        s = line.strip()
+        if not s.startswith("|"):
+            continue
+        cells = [c.strip() for c in s.strip("|").split("|")]
+        if len(cells) < 4:
+            continue
+        key = re.split(r"[\s（(]", cells[0].replace("*", "").strip())[0]
+        if key not in ("ALL", "POST", "ANT", "OCC", "PARI", "TEMP", "CENT",
+                       "FRONT"):
+            continue
+        r = parse_num_cell(cells[2])
+        n = parse_num_cell(cells[3])
+        if r:
+            out[key] = (r[0], n[1] if n else None)
+    return out
 
 
 def main():
@@ -344,13 +397,121 @@ def main():
                         problems.append(f"[决定性/{sec_key[:6]}] {arm}：数据算得正向 "
                                         f"{np_}/{n}，文档写 {npos}")
 
+    # --- 5. 整合台账（INTEGRATION.md）不得与数据漂移 ---
+    integ = ROOT / "INTEGRATION.md"
+    if integ.exists():
+        # 文档里用的是排版减号「−」⇒ 比较前归一化
+        itext = integ.read_text(encoding="utf-8").replace("−", "-")
+        must = []
+
+        def _sum(path, readout="onehot_mean"):
+            fp = ASSEMBLED / f"{path}.json"
+            if not fp.exists():
+                return None
+            e = json.loads(fp.read_text(encoding="utf-8"))["summary"].get(readout)
+            return e
+
+        # A3：v2-none 的离散层中位数
+        e = _sum("v2-none")
+        if e:
+            must.append((f"{e['r_median']:+.4f}", "A3 v2-none 离散 one-hot 中位"))
+        # A4：语义监督的配对差（两种配方）
+        for a, b, label in (("v2-plain", "v2-plain-nosem", "A4 语义监督(不嫁接注意力)"),
+                            ("v2-none", "v2-none-nosem", "A4 语义监督(嫁接注意力)")):
+            fa, fb = ASSEMBLED / f"{a}.json", ASSEMBLED / f"{b}.json"
+            if fa.exists() and fb.exists():
+                st = paired_two_docs(json.loads(fa.read_text(encoding="utf-8")),
+                                     json.loads(fb.read_text(encoding="utf-8")))
+                if st:
+                    must.append((f"{st[0]:+.4f}", label))
+        # A5：组装（无语义监督）vs S1a 自研骨架
+        fa = ASSEMBLED / "v2-plain-nosem.json"
+        s1 = S1 / "k1024.json"
+        if fa.exists() and s1.exists():
+            st = paired_two_docs(json.loads(fa.read_text(encoding="utf-8")),
+                                 json.loads(s1.read_text(encoding="utf-8")))
+            if st:
+                must.append((f"{st[0]:+.4f}", "A5 组装 vs S1a"))
+        # A6：嫁接注意力的净效应（v2-none − v2-plain）
+        fa, fb = ASSEMBLED / "v2-none.json", ASSEMBLED / "v2-plain.json"
+        if fa.exists() and fb.exists():
+            st = paired_two_docs(json.loads(fa.read_text(encoding="utf-8")),
+                                 json.loads(fb.read_text(encoding="utf-8")))
+            if st:
+                must.append((f"{st[0]:+.4f}", "A6 嫁接注意力 净效应"))
+        # A7：决定性对照的 Δr（学出来的码本 − 随机码本）
+        for arm, (emb, rnd, d_dr, npos) in DECISIVE.items():
+            if arm in ("v2-none", "v2-plain"):
+                must.append((f"{d_dr:+.4f}", f"A7 {arm} Δr(学出来的码本-随机码本)"))
+        # A1：S1a 的重建层
+        if s1.exists():
+            e1 = json.loads(s1.read_text(encoding="utf-8"))["summary"].get("recon")
+            if e1:
+                must.append((f"{e1['r_median']:+.4f}", "A1 S1a 重建层"))
+        for s, what in must:
+            if s not in itext:
+                problems.append(f"[台账] INTEGRATION.md 缺 {what} 的数字 {s}")
+    else:
+        problems.append("找不到 INTEGRATION.md（整合台账）")
+
+    # --- 6. exp89 位置轴（§二十五·二 的表 + 台账 A14/A15）---
+    if POSAX.exists():
+        pd = json.loads(POSAX.read_text(encoding="utf-8"))
+        psumm = pd.get("summary", {})
+        sec = find_section(text, "二十五·二、(a) 通道组消融")
+        if not sec:
+            problems.append("FINDINGS 里找不到小节「二十五·二、(a) 通道组消融」")
+        else:
+            pdoc = parse_posaxis_table(sec)
+            for g, (r_med, n_sig) in pdoc.items():
+                e = psumm.get(g)
+                if not e:
+                    problems.append(f"[位置轴] 结果里没有组 {g}")
+                    continue
+                if abs(e["r_median"] - r_med) > 5e-4:
+                    problems.append(f"[位置轴] {g}：文档 {r_med}，"
+                                    f"结果 {e['r_median']}")
+                if n_sig is not None and e["n_sig"] != n_sig:
+                    problems.append(f"[位置轴] {g}：文档显著 {n_sig}，"
+                                    f"结果 {e['n_sig']}")
+            for g in ("ALL", "POST", "ANT", "OCC"):
+                if g not in pdoc:
+                    problems.append(f"[位置轴] 文档表里没有 {g} 行")
+            # 配对差（后部 − 前部）
+            pma = psumm.get("POST_minus_ANT")
+            if pma:
+                s = f"{pma['median']:+.4f}"
+                if s not in sec.replace("−", "-"):
+                    problems.append(f"[位置轴] 文档里找不到后−前差 {s}")
+            # 台账 A14/A15
+            integ_text = (ROOT / "INTEGRATION.md").read_text(
+                encoding="utf-8").replace("−", "-") if (
+                ROOT / "INTEGRATION.md").exists() else ""
+            pos_s = psumm.get("position_summary", {})
+            must89 = []
+            if "POST" in psumm:
+                must89.append((f"{psumm['POST']['r_median']:+.4f}", "A14 后部"))
+            if "ANT" in psumm:
+                must89.append((f"{psumm['ANT']['r_median']:+.4f}", "A14 前部"))
+            if pma:
+                must89.append((f"{pma['median']:+.4f}", "A14 后−前配对差"))
+            for key, label in (("amp_r", "A15 跨 split 幅度图 r"),
+                               ("amp_vs_anat_spearman", "A15 幅度~解剖位 sp")):
+                if key in pos_s:
+                    must89.append((f"{pos_s[key]['median']:+.4f}", label))
+            for s, what in must89:
+                if s not in integ_text:
+                    problems.append(f"[台账] INTEGRATION.md 缺 {what} 的数字 {s}")
+    else:
+        print(f"（缺 {POSAX}，跳过 exp89 位置轴比对）")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:
             print("   -", p)
         return 1
     print("✓ 文档与数据一致（变体表 Δr vs 宿主 / S1a 读出中位数 / "
-          "组装变体表 / 决定性对照表）")
+          "组装变体表 / 决定性对照表 / exp89 位置轴）")
     return 0
 
 

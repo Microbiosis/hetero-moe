@@ -1,0 +1,2033 @@
+{
+  "source": "job-logs",
+  "jobs": [
+    {
+      "job": "t89-posaxis-s1-5",
+      "job_id": "6adc68051e112550ce7de0f1",
+      "n": 5
+    },
+    {
+      "job": "t89-posaxis-s6-10",
+      "job_id": "6adc6807046eb82b1ecdb450",
+      "n": 5
+    }
+  ],
+  "per_subject": [
+    {
+      "subject": "sub-01",
+      "group_rsa": {
+        "ALL": {
+          "r": 0.0337,
+          "p": 0.005,
+          "n_ch": 63
+        },
+        "OCC": {
+          "r": 0.0527,
+          "p": 0.005,
+          "n_ch": 8
+        },
+        "PARI": {
+          "r": 0.0253,
+          "p": 0.005,
+          "n_ch": 16
+        },
+        "TEMP": {
+          "r": 0.0234,
+          "p": 0.005,
+          "n_ch": 10
+        },
+        "POST": {
+          "r": 0.0402,
+          "p": 0.005,
+          "n_ch": 34
+        },
+        "CENT": {
+          "r": 0.0077,
+          "p": 0.0647,
+          "n_ch": 14
+        },
+        "FRONT": {
+          "r": 0.0062,
+          "p": 0.1244,
+          "n_ch": 15
+        },
+        "ANT": {
+          "r": 0.0115,
+          "p": 0.0149,
+          "n_ch": 29
+        }
+      },
+      "random_group_null": {
+        "OCC": {
+          "r_null_median": 0.0202,
+          "r_null_max": 0.037,
+          "r_true": 0.0527,
+          "frac_null_ge_true": 0.0
+        },
+        "POST": {
+          "r_null_median": 0.0275,
+          "r_null_max": 0.0399,
+          "r_true": 0.0402,
+          "frac_null_ge_true": 0.0
+        },
+        "ANT": {
+          "r_null_median": 0.0269,
+          "r_null_max": 0.0354,
+          "r_true": 0.0115,
+          "frac_null_ge_true": 1.0
+        }
+      },
+      "shuffled": [
+        {
+          "r_all": 0.0337,
+          "r_all_true": 0.0337,
+          "r_post": 0.0328,
+          "r_ant": 0.0246,
+          "diff": 0.0082
+        },
+        {
+          "r_all": 0.0337,
+          "r_all_true": 0.0337,
+          "r_post": 0.0271,
+          "r_ant": 0.0312,
+          "diff": -0.0042
+        },
+        {
+          "r_all": 0.0337,
+          "r_all_true": 0.0337,
+          "r_post": 0.0259,
+          "r_ant": 0.0267,
+          "diff": -0.0007
+        },
+        {
+          "r_all": 0.0337,
+          "r_all_true": 0.0337,
+          "r_post": 0.0199,
+          "r_ant": 0.0354,
+          "diff": -0.0154
+        },
+        {
+          "r_all": 0.0337,
+          "r_all_true": 0.0337,
+          "r_post": 0.028,
+          "r_ant": 0.0273,
+          "diff": 0.0007
+        }
+      ],
+      "metric_b": {
+        "ALL": {
+          "acc1": 0.0082,
+          "null_acc1": 0.0046
+        },
+        "POST": {
+          "acc1": 0.0165,
+          "null_acc1": 0.0051
+        },
+        "ANT": {
+          "acc1": 0.0054,
+          "null_acc1": 0.0053
+        },
+        "OCC": {
+          "acc1": 0.0159,
+          "null_acc1": 0.0047
+        }
+      },
+      "position": {
+        "wave_median": 0.8919,
+        "wave_n_gt_0.8": 39,
+        "wave_total": 63,
+        "amp_r": 0.968,
+        "amp_spearman": 0.9494,
+        "amp_vs_anat_spearman": 0.7515
+      },
+      "amp_group_mean": {
+        "ALL": 0.3,
+        "OCC": 1.08,
+        "PARI": 0.304,
+        "TEMP": 0.263,
+        "POST": 0.475,
+        "CENT": 0.11,
+        "FRONT": 0.079,
+        "ANT": 0.094
+      },
+      "chmap": {
+        "P6": {
+          "r": 0.0526,
+          "group": "pari"
+        },
+        "PO8": {
+          "r": 0.0518,
+          "group": "occi"
+        },
+        "Oz": {
+          "r": 0.0514,
+          "group": "occi"
+        },
+        "TP9": {
+          "r": 0.0478,
+          "group": "temp"
+        },
+        "TP10": {
+          "r": 0.0452,
+          "group": "temp"
+        },
+        "TP8": {
+          "r": 0.0442,
+          "group": "temp"
+        },
+        "P8": {
+          "r": 0.0438,
+          "group": "pari"
+        },
+        "O2": {
+          "r": 0.0414,
+          "group": "occi"
+        }
+      }
+    },
+    {
+      "subject": "sub-02",
+      "group_rsa": {
+        "ALL": {
+          "r": 0.0344,
+          "p": 0.005,
+          "n_ch": 63
+        },
+        "OCC": {
+          "r": 0.0415,
+          "p": 0.005,
+          "n_ch": 8
+        },
+        "PARI": {
+          "r": 0.036,
+          "p": 0.005,
+          "n_ch": 16
+        },
+        "TEMP": {
+          "r": 0.0303,
+          "p": 0.005,
+          "n_ch": 10
+        },
+        "POST": {
+          "r": 0.0527,
+          "p": 0.005,
+          "n_ch": 34
+        },
+        "CENT": {
+          "r": 0.0001,
+          "p": 0.9701,
+          "n_ch": 14
+        },
+        "FRONT": {
+          "r": -0.0015,
+          "p": 0.7562,
+          "n_ch": 15
+        },
+        "ANT": {
+          "r": 0.002,
+          "p": 0.6816,
+          "n_ch": 29
+        }
+      },
+      "random_group_null": {
+        "OCC": {
+          "r_null_median": 0.0172,
+          "r_null_max": 0.0456,
+          "r_true": 0.0415,
+          "frac_null_ge_true": 0.1
+        },
+        "POST": {
+          "r_null_median": 0.029,
+          "r_null_max": 0.0352,
+          "r_true": 0.0527,
+          "frac_null_ge_true": 0.0
+        },
+        "ANT": {
+          "r_null_median": 0.0266,
+          "r_null_max": 0.0359,
+          "r_true": 0.002,
+          "frac_null_ge_true": 1.0
+        }
+      },
+      "shuffled": [
+        {
+          "r_all": 0.0344,
+          "r_all_true": 0.0344,
+          "r_post": 0.0343,
+          "r_ant": 0.0219,
+          "diff": 0.0124
+        },
+        {
+          "r_all": 0.0344,
+          "r_all_true": 0.0344,
+          "r_post": 0.0257,
+          "r_ant": 0.0277,
+          "diff": -0.002
+        },
+        {
+          "r_all": 0.0344,
+          "r_all_true": 0.0344,
+          "r_post": 0.0196,
+          "r_ant": 0.031,
+          "diff": -0.0115
+        },
+        {
+          "r_all": 0.0344,
+          "r_all_true": 0.0344,
+          "r_post": 0.0374,
+          "r_ant": 0.017,
+          "diff": 0.0204
+        },
+        {
+          "r_all": 0.0344,
+          "r_all_true": 0.0344,
+          "r_post": 0.0244,
+          "r_ant": 0.0304,
+          "diff": -0.006
+        }
+      ],
+      "metric_b": {
+        "ALL": {
+          "acc1": 0.0064,
+          "null_acc1": 0.0053
+        },
+        "POST": {
+          "acc1": 0.0081,
+          "null_acc1": 0.0049
+        },
+        "ANT": {
+          "acc1": 0.0044,
+          "null_acc1": 0.005
+        },
+        "OCC": {
+          "acc1": 0.0141,
+          "null_acc1": 0.0053
+        }
+      },
+      "position": {
+        "wave_median": 0.7976,
+        "wave_n_gt_0.8": 31,
+        "wave_total": 63,
+        "amp_r": 0.9868,
+        "amp_spearman": 0.8915,
+        "amp_vs_anat_spearman": 0.501
+      },
+      "amp_group_mean": {
+        "ALL": 0.24,
+        "OCC": 0.78,
+        "PARI": 0.2,
+        "TEMP": 0.219,
+        "POST": 0.342,
+        "CENT": 0.095,
+        "FRONT": 0.146,
+        "ANT": 0.121
+      },
+      "chmap": {
+        "P8": {
+          "r": 0.0852,
+          "group": "pari"
+        },
+        "TP10": {
+          "r": 0.0666,
+          "group": "temp"
+        },
+        "P6": {
+          "r": 0.0603,
+          "group": "pari"
+        },
+        "TP9": {
+          "r": 0.0532,
+          "group": "temp"
+        },
+        "TP8": {
+          "r": 0.052,
+          "group": "temp"
+        },
+        "PO8": {
+          "r": 0.046,
+          "group": "occi"
+        },
+        "PO4": {
+          "r": 0.0392,
+          "group": "occi"
+        },
+        "Oz": {
+          "r": 0.0385,
+          "group": "occi"
+        }
+      }
+    },
+    {
+      "subject": "sub-03",
+      "group_rsa": {
+        "ALL": {
+          "r": 0.0504,
+          "p": 0.005,
+          "n_ch": 63
+        },
+        "OCC": {
+          "r": 0.0663,
+          "p": 0.005,
+          "n_ch": 8
+        },
+        "PARI": {
+          "r": 0.0427,
+          "p": 0.005,
+          "n_ch": 16
+        },
+        "TEMP": {
+          "r": 0.0232,
+          "p": 0.005,
+          "n_ch": 10
+        },
+        "POST": {
+          "r": 0.0594,
+          "p": 0.005,
+          "n_ch": 34
+        },
+        "CENT": {
+          "r": 0.0152,
+          "p": 0.005,
+          "n_ch": 14
+        },
+        "FRONT": {
+          "r": 0.0038,
+          "p": 0.3831,
+          "n_ch": 15
+        },
+        "ANT": {
+          "r": 0.0123,
+          "p": 0.0149,
+          "n_ch": 29
+        }
+      },
+      "random_group_null": {
+        "OCC": {
+          "r_null_median": 0.0222,
+          "r_null_max": 0.0369,
+          "r_true": 0.0663,
+          "frac_null_ge_true": 0.0
+        },
+        "POST": {
+          "r_null_median": 0.0394,
+          "r_null_max": 0.0505,
+          "r_true": 0.0594,
+          "frac_null_ge_true": 0.0
+        },
+        "ANT": {
+          "r_null_median": 0.0397,
+          "r_null_max": 0.0563,
+          "r_true": 0.0123,
+          "frac_null_ge_true": 1.0
+        }
+      },
+      "shuffled": [
+        {
+          "r_all": 0.0504,
+          "r_all_true": 0.0504,
+          "r_post": 0.0476,
+          "r_ant": 0.0289,
+          "diff": 0.0187
+        },
+        {
+          "r_all": 0.0504,
+          "r_all_true": 0.0504,
+          "r_post": 0.0426,
+          "r_ant": 0.0363,
+          "diff": 0.0064
+        },
+        {
+          "r_all": 0.0504,
+          "r_all_true": 0.0504,
+          "r_post": 0.0337,
+          "r_ant": 0.0453,
+          "diff": -0.0116
+        },
+        {
+          "r_all": 0.0504,
+          "r_all_true": 0.0504,
+          "r_post": 0.0371,
+          "r_ant": 0.0399,
+          "diff": -0.0028
+        },
+        {
+          "r_all": 0.0504,
+          "r_all_true": 0.0504,
+          "r_post": 0.0436,
+          "r_ant": 0.0345,
+          "diff": 0.0091
+        }
+      ],
+      "metric_b": {
+        "ALL": {
+          "acc1": 0.0076,
+          "null_acc1": 0.005
+        },
+        "POST": {
+          "acc1": 0.0145,
+          "null_acc1": 0.0047
+        },
+        "ANT": {
+          "acc1": 0.0051,
+          "null_acc1": 0.005
+        },
+        "OCC": {
+          "acc1": 0.0146,
+          "null_acc1": 0.0049
+        }
+      },
+      "position": {
+        "wave_median": 0.8349,
+        "wave_n_gt_0.8": 33,
+        "wave_total": 63,
+        "amp_r": 0.9938,
+        "amp_spearman": 0.9428,
+        "amp_vs_anat_spearman": 0.5985
+      },
+      "amp_group_mean": {
+        "ALL": 0.233,
+        "OCC": 0.853,
+        "PARI": 0.217,
+        "TEMP": 0.131,
+        "POST": 0.341,
+        "CENT": 0.127,
+        "FRONT": 0.088,
+        "ANT": 0.107
+      },
+      "chmap": {
+        "PO8": {
+          "r": 0.0745,
+          "group": "occi"
+        },
+        "TP10": {
+          "r": 0.0733,
+          "group": "temp"
+        },
+        "POz": {
+          "r": 0.0666,
+          "group": "occi"
+        },
+        "P8": {
+          "r": 0.0592,
+          "group": "pari"
+        },
+        "PO7": {
+          "r": 0.0576,
+          "group": "occi"
+        },
+        "P5": {
+          "r": 0.0522,
+          "group": "pari"
+        },
+        "P7": {
+          "r": 0.0502,
+          "group": "pari"
+        },
+        "FT10": {
+          "r": 0.0501,
+          "group": "temp"
+        }
+      }
+    },
+    {
+      "subject": "sub-04",
+      "group_rsa": {
+        "ALL": {
+          "r": 0.0537,
+          "p": 0.005,
+          "n_ch": 63
+        },
+        "OCC": {
+          "r": 0.0649,
+          "p": 0.005,
+          "n_ch": 8
+        },
+        "PARI": {
+          "r": 0.0384,
+          "p": 0.005,
+          "n_ch": 16
+        },
+        "TEMP": {
+          "r": 0.0557,
+          "p": 0.005,
+          "n_ch": 10
+        },
+        "POST": {
+          "r": 0.0748,
+          "p": 0.005,
+          "n_ch": 34
+        },
+        "CENT": {
+          "r": 0.0007,
+          "p": 0.8955,
+          "n_ch": 14
+        },
+        "FRONT": {
+          "r": -0.001,
+          "p": 0.8756,
+          "n_ch": 15
+        },
+        "ANT": {
+          "r": 0.0028,
+          "p": 0.6318,
+          "n_ch": 29
+        }
+      },
+      "random_group_null": {
+        "OCC": {
+          "r_null_median": 0.0287,
+          "r_null_max": 0.051,
+          "r_true": 0.0649,
+          "frac_null_ge_true": 0.0
+        },
+        "POST": {
+          "r_null_median": 0.043,
+          "r_null_max": 0.0527,
+          "r_true": 0.0748,
+          "frac_null_ge_true": 0.0
+        },
+        "ANT": {
+          "r_null_median": 0.0419,
+          "r_null_max": 0.0605,
+          "r_true": 0.0028,
+          "frac_null_ge_true": 1.0
+        }
+      },
+      "shuffled": [
+        {
+          "r_all": 0.0537,
+          "r_all_true": 0.0537,
+          "r_post": 0.0465,
+          "r_ant": 0.0375,
+          "diff": 0.0089
+        },
+        {
+          "r_all": 0.0537,
+          "r_all_true": 0.0537,
+          "r_post": 0.0429,
+          "r_ant": 0.0433,
+          "diff": -0.0004
+        },
+        {
+          "r_all": 0.0537,
+          "r_all_true": 0.0537,
+          "r_post": 0.0593,
+          "r_ant": 0.0246,
+          "diff": 0.0347
+        },
+        {
+          "r_all": 0.0537,
+          "r_all_true": 0.0537,
+          "r_post": 0.0467,
+          "r_ant": 0.0384,
+          "diff": 0.0082
+        },
+        {
+          "r_all": 0.0537,
+          "r_all_true": 0.0537,
+          "r_post": 0.0504,
+          "r_ant": 0.0311,
+          "diff": 0.0193
+        }
+      ],
+      "metric_b": {
+        "ALL": {
+          "acc1": 0.0086,
+          "null_acc1": 0.0051
+        },
+        "POST": {
+          "acc1": 0.0183,
+          "null_acc1": 0.0052
+        },
+        "ANT": {
+          "acc1": 0.0053,
+          "null_acc1": 0.0052
+        },
+        "OCC": {
+          "acc1": 0.0151,
+          "null_acc1": 0.0051
+        }
+      },
+      "position": {
+        "wave_median": 0.8563,
+        "wave_n_gt_0.8": 37,
+        "wave_total": 63,
+        "amp_r": 0.9891,
+        "amp_spearman": 0.8916,
+        "amp_vs_anat_spearman": 0.5729
+      },
+      "amp_group_mean": {
+        "ALL": 0.244,
+        "OCC": 0.731,
+        "PARI": 0.264,
+        "TEMP": 0.234,
+        "POST": 0.365,
+        "CENT": 0.093,
+        "FRONT": 0.11,
+        "ANT": 0.102
+      },
+      "chmap": {
+        "PO3": {
+          "r": 0.0829,
+          "group": "occi"
+        },
+        "TP10": {
+          "r": 0.0768,
+          "group": "temp"
+        },
+        "TP7": {
+          "r": 0.0665,
+          "group": "temp"
+        },
+        "P8": {
+          "r": 0.0619,
+          "group": "pari"
+        },
+        "TP8": {
+          "r": 0.0616,
+          "group": "temp"
+        },
+        "TP9": {
+          "r": 0.0599,
+          "group": "temp"
+        },
+        "FT10": {
+          "r": 0.0591,
+          "group": "temp"
+        },
+        "PO4": {
+          "r": 0.059,
+          "group": "occi"
+        }
+      }
+    },
+    {
+      "subject": "sub-05",
+      "group_rsa": {
+        "ALL": {
+          "r": 0.0483,
+          "p": 0.005,
+          "n_ch": 63
+        },
+        "OCC": {
+          "r": 0.0459,
+          "p": 0.005,
+          "n_ch": 8
+        },
+        "PARI": {
+          "r": 0.0435,
+          "p": 0.005,
+          "n_ch": 16
+        },
+        "TEMP": {
+          "r": 0.044,
+          "p": 0.005,
+          "n_ch": 10
+        },
+        "POST": {
+          "r": 0.0628,
+          "p": 0.005,
+          "n_ch": 34
+        },
+        "CENT": {
+          "r": 0.009,
+          "p": 0.0597,
+          "n_ch": 14
+        },
+        "FRONT": {
+          "r": 0.0065,
+          "p": 0.1294,
+          "n_ch": 15
+        },
+        "ANT": {
+          "r": 0.0084,
+          "p": 0.0498,
+          "n_ch": 29
+        }
+      },
+      "random_group_null": {
+        "OCC": {
+          "r_null_median": 0.0234,
+          "r_null_max": 0.0376,
+          "r_true": 0.0459,
+          "frac_null_ge_true": 0.0
+        },
+        "POST": {
+          "r_null_median": 0.0398,
+          "r_null_max": 0.0529,
+          "r_true": 0.0628,
+          "frac_null_ge_true": 0.0
+        },
+        "ANT": {
+          "r_null_median": 0.0379,
+          "r_null_max": 0.0495,
+          "r_true": 0.0084,
+          "frac_null_ge_true": 1.0
+        }
+      },
+      "shuffled": [
+        {
+          "r_all": 0.0483,
+          "r_all_true": 0.0483,
+          "r_post": 0.0462,
+          "r_ant": 0.0244,
+          "diff": 0.0218
+        },
+        {
+          "r_all": 0.0483,
+          "r_all_true": 0.0483,
+          "r_post": 0.0394,
+          "r_ant": 0.0369,
+          "diff": 0.0025
+        },
+        {
+          "r_all": 0.0483,
+          "r_all_true": 0.0483,
+          "r_post": 0.0401,
+          "r_ant": 0.0365,
+          "diff": 0.0035
+        },
+        {
+          "r_all": 0.0483,
+          "r_all_true": 0.0483,
+          "r_post": 0.0394,
+          "r_ant": 0.0401,
+          "diff": -0.0007
+        },
+        {
+          "r_all": 0.0483,
+          "r_all_true": 0.0483,
+          "r_post": 0.04,
+          "r_ant": 0.0346,
+          "diff": 0.0054
+        }
+      ],
+      "metric_b": {
+        "ALL": {
+          "acc1": 0.0075,
+          "null_acc1": 0.0054
+        },
+        "POST": {
+          "acc1": 0.0093,
+          "null_acc1": 0.0047
+        },
+        "ANT": {
+          "acc1": 0.0057,
+          "null_acc1": 0.0052
+        },
+        "OCC": {
+          "acc1": 0.0119,
+          "null_acc1": 0.0046
+        }
+      },
+      "position": {
+        "wave_median": 0.8891,
+        "wave_n_gt_0.8": 39,
+        "wave_total": 63,
+        "amp_r": 0.9933,
+        "amp_spearman": 0.9633,
+        "amp_vs_anat_spearman": 0.8003
+      },
+      "amp_group_mean": {
+        "ALL": 0.224,
+        "OCC": 0.763,
+        "PARI": 0.264,
+        "TEMP": 0.141,
+        "POST": 0.345,
+        "CENT": 0.081,
+        "FRONT": 0.083,
+        "ANT": 0.082
+      },
+      "chmap": {
+        "TP9": {
+          "r": 0.0633,
+          "group": "temp"
+        },
+        "CP6": {
+          "r": 0.0632,
+          "group": "pari"
+        },
+        "P6": {
+          "r": 0.0565,
+          "group": "pari"
+        },
+        "Oz": {
+          "r": 0.0524,
+          "group": "occi"
+        },
+        "P8": {
+          "r": 0.0516,
+          "group": "pari"
+        },
+        "POz": {
+          "r": 0.0492,
+          "group": "occi"
+        },
+        "Pz": {
+          "r": 0.048,
+          "group": "pari"
+        },
+        "CP5": {
+          "r": 0.0462,
+          "group": "pari"
+        }
+      }
+    },
+    {
+      "subject": "sub-06",
+      "group_rsa": {
+        "ALL": {
+          "r": 0.0612,
+          "p": 0.005,
+          "n_ch": 63
+        },
+        "OCC": {
+          "r": 0.0752,
+          "p": 0.005,
+          "n_ch": 8
+        },
+        "PARI": {
+          "r": 0.0649,
+          "p": 0.005,
+          "n_ch": 16
+        },
+        "TEMP": {
+          "r": 0.0542,
+          "p": 0.005,
+          "n_ch": 10
+        },
+        "POST": {
+          "r": 0.0846,
+          "p": 0.005,
+          "n_ch": 34
+        },
+        "CENT": {
+          "r": 0.0082,
+          "p": 0.0647,
+          "n_ch": 14
+        },
+        "FRONT": {
+          "r": 0.0126,
+          "p": 0.01,
+          "n_ch": 15
+        },
+        "ANT": {
+          "r": 0.0109,
+          "p": 0.0199,
+          "n_ch": 29
+        }
+      },
+      "random_group_null": {
+        "OCC": {
+          "r_null_median": 0.0325,
+          "r_null_max": 0.0589,
+          "r_true": 0.0752,
+          "frac_null_ge_true": 0.0
+        },
+        "POST": {
+          "r_null_median": 0.0519,
+          "r_null_max": 0.0629,
+          "r_true": 0.0846,
+          "frac_null_ge_true": 0.0
+        },
+        "ANT": {
+          "r_null_median": 0.0464,
+          "r_null_max": 0.0616,
+          "r_true": 0.0109,
+          "frac_null_ge_true": 1.0
+        }
+      },
+      "shuffled": [
+        {
+          "r_all": 0.0612,
+          "r_all_true": 0.0612,
+          "r_post": 0.0571,
+          "r_ant": 0.0417,
+          "diff": 0.0155
+        },
+        {
+          "r_all": 0.0612,
+          "r_all_true": 0.0612,
+          "r_post": 0.0567,
+          "r_ant": 0.046,
+          "diff": 0.0107
+        },
+        {
+          "r_all": 0.0612,
+          "r_all_true": 0.0612,
+          "r_post": 0.0432,
+          "r_ant": 0.0593,
+          "diff": -0.0161
+        },
+        {
+          "r_all": 0.0612,
+          "r_all_true": 0.0612,
+          "r_post": 0.0502,
+          "r_ant": 0.0504,
+          "diff": -0.0002
+        },
+        {
+          "r_all": 0.0612,
+          "r_all_true": 0.0612,
+          "r_post": 0.0461,
+          "r_ant": 0.0538,
+          "diff": -0.0077
+        }
+      ],
+      "metric_b": {
+        "ALL": {
+          "acc1": 0.0081,
+          "null_acc1": 0.0049
+        },
+        "POST": {
+          "acc1": 0.014,
+          "null_acc1": 0.0052
+        },
+        "ANT": {
+          "acc1": 0.0044,
+          "null_acc1": 0.0052
+        },
+        "OCC": {
+          "acc1": 0.0146,
+          "null_acc1": 0.0048
+        }
+      },
+      "position": {
+        "wave_median": 0.8821,
+        "wave_n_gt_0.8": 37,
+        "wave_total": 63,
+        "amp_r": 0.9959,
+        "amp_spearman": 0.9368,
+        "amp_vs_anat_spearman": 0.7543
+      },
+      "amp_group_mean": {
+        "ALL": 0.262,
+        "OCC": 0.91,
+        "PARI": 0.315,
+        "TEMP": 0.141,
+        "POST": 0.404,
+        "CENT": 0.098,
+        "FRONT": 0.092,
+        "ANT": 0.095
+      },
+      "chmap": {
+        "TP9": {
+          "r": 0.0858,
+          "group": "temp"
+        },
+        "TP10": {
+          "r": 0.0815,
+          "group": "temp"
+        },
+        "P8": {
+          "r": 0.0785,
+          "group": "pari"
+        },
+        "TP7": {
+          "r": 0.0733,
+          "group": "temp"
+        },
+        "P6": {
+          "r": 0.073,
+          "group": "pari"
+        },
+        "TP8": {
+          "r": 0.07,
+          "group": "temp"
+        },
+        "PO4": {
+          "r": 0.0668,
+          "group": "occi"
+        },
+        "T7": {
+          "r": 0.0587,
+          "group": "temp"
+        }
+      }
+    },
+    {
+      "subject": "sub-07",
+      "group_rsa": {
+        "ALL": {
+          "r": 0.0418,
+          "p": 0.005,
+          "n_ch": 63
+        },
+        "OCC": {
+          "r": 0.0527,
+          "p": 0.005,
+          "n_ch": 8
+        },
+        "PARI": {
+          "r": 0.0262,
+          "p": 0.005,
+          "n_ch": 16
+        },
+        "TEMP": {
+          "r": 0.0184,
+          "p": 0.005,
+          "n_ch": 10
+        },
+        "POST": {
+          "r": 0.0472,
+          "p": 0.005,
+          "n_ch": 34
+        },
+        "CENT": {
+          "r": 0.0148,
+          "p": 0.005,
+          "n_ch": 14
+        },
+        "FRONT": {
+          "r": 0.0074,
+          "p": 0.1443,
+          "n_ch": 15
+        },
+        "ANT": {
+          "r": 0.0166,
+          "p": 0.005,
+          "n_ch": 29
+        }
+      },
+      "random_group_null": {
+        "OCC": {
+          "r_null_median": 0.0202,
+          "r_null_max": 0.0325,
+          "r_true": 0.0527,
+          "frac_null_ge_true": 0.0
+        },
+        "POST": {
+          "r_null_median": 0.0327,
+          "r_null_max": 0.0397,
+          "r_true": 0.0472,
+          "frac_null_ge_true": 0.0
+        },
+        "ANT": {
+          "r_null_median": 0.0312,
+          "r_null_max": 0.0443,
+          "r_true": 0.0166,
+          "frac_null_ge_true": 1.0
+        }
+      },
+      "shuffled": [
+        {
+          "r_all": 0.0418,
+          "r_all_true": 0.0418,
+          "r_post": 0.0246,
+          "r_ant": 0.0394,
+          "diff": -0.0148
+        },
+        {
+          "r_all": 0.0418,
+          "r_all_true": 0.0418,
+          "r_post": 0.0323,
+          "r_ant": 0.0349,
+          "diff": -0.0025
+        },
+        {
+          "r_all": 0.0418,
+          "r_all_true": 0.0418,
+          "r_post": 0.0237,
+          "r_ant": 0.0433,
+          "diff": -0.0196
+        },
+        {
+          "r_all": 0.0418,
+          "r_all_true": 0.0418,
+          "r_post": 0.0275,
+          "r_ant": 0.0369,
+          "diff": -0.0095
+        },
+        {
+          "r_all": 0.0418,
+          "r_all_true": 0.0418,
+          "r_post": 0.034,
+          "r_ant": 0.0322,
+          "diff": 0.0019
+        }
+      ],
+      "metric_b": {
+        "ALL": {
+          "acc1": 0.0123,
+          "null_acc1": 0.0051
+        },
+        "POST": {
+          "acc1": 0.0198,
+          "null_acc1": 0.0049
+        },
+        "ANT": {
+          "acc1": 0.0045,
+          "null_acc1": 0.0048
+        },
+        "OCC": {
+          "acc1": 0.0211,
+          "null_acc1": 0.0049
+        }
+      },
+      "position": {
+        "wave_median": 0.8231,
+        "wave_n_gt_0.8": 34,
+        "wave_total": 63,
+        "amp_r": 0.9964,
+        "amp_spearman": 0.9028,
+        "amp_vs_anat_spearman": 0.6827
+      },
+      "amp_group_mean": {
+        "ALL": 0.259,
+        "OCC": 1.093,
+        "PARI": 0.233,
+        "TEMP": 0.134,
+        "POST": 0.407,
+        "CENT": 0.093,
+        "FRONT": 0.081,
+        "ANT": 0.087
+      },
+      "chmap": {
+        "P8": {
+          "r": 0.0791,
+          "group": "pari"
+        },
+        "P6": {
+          "r": 0.0612,
+          "group": "pari"
+        },
+        "Oz": {
+          "r": 0.0586,
+          "group": "occi"
+        },
+        "TP8": {
+          "r": 0.0527,
+          "group": "temp"
+        },
+        "CP6": {
+          "r": 0.0511,
+          "group": "pari"
+        },
+        "O2": {
+          "r": 0.0458,
+          "group": "occi"
+        },
+        "PO8": {
+          "r": 0.0422,
+          "group": "occi"
+        },
+        "P7": {
+          "r": 0.0421,
+          "group": "pari"
+        }
+      }
+    },
+    {
+      "subject": "sub-08",
+      "group_rsa": {
+        "ALL": {
+          "r": 0.0673,
+          "p": 0.005,
+          "n_ch": 63
+        },
+        "OCC": {
+          "r": 0.046,
+          "p": 0.005,
+          "n_ch": 8
+        },
+        "PARI": {
+          "r": 0.0604,
+          "p": 0.005,
+          "n_ch": 16
+        },
+        "TEMP": {
+          "r": 0.0637,
+          "p": 0.005,
+          "n_ch": 10
+        },
+        "POST": {
+          "r": 0.079,
+          "p": 0.005,
+          "n_ch": 34
+        },
+        "CENT": {
+          "r": 0.0261,
+          "p": 0.005,
+          "n_ch": 14
+        },
+        "FRONT": {
+          "r": 0.0136,
+          "p": 0.005,
+          "n_ch": 15
+        },
+        "ANT": {
+          "r": 0.0265,
+          "p": 0.005,
+          "n_ch": 29
+        }
+      },
+      "random_group_null": {
+        "OCC": {
+          "r_null_median": 0.0359,
+          "r_null_max": 0.0526,
+          "r_true": 0.046,
+          "frac_null_ge_true": 0.2
+        },
+        "POST": {
+          "r_null_median": 0.0543,
+          "r_null_max": 0.0785,
+          "r_true": 0.079,
+          "frac_null_ge_true": 0.0
+        },
+        "ANT": {
+          "r_null_median": 0.0529,
+          "r_null_max": 0.072,
+          "r_true": 0.0265,
+          "frac_null_ge_true": 1.0
+        }
+      },
+      "shuffled": [
+        {
+          "r_all": 0.0673,
+          "r_all_true": 0.0673,
+          "r_post": 0.0521,
+          "r_ant": 0.0571,
+          "diff": -0.005
+        },
+        {
+          "r_all": 0.0673,
+          "r_all_true": 0.0673,
+          "r_post": 0.0628,
+          "r_ant": 0.0457,
+          "diff": 0.0172
+        },
+        {
+          "r_all": 0.0673,
+          "r_all_true": 0.0673,
+          "r_post": 0.0477,
+          "r_ant": 0.0629,
+          "diff": -0.0153
+        },
+        {
+          "r_all": 0.0673,
+          "r_all_true": 0.0673,
+          "r_post": 0.0583,
+          "r_ant": 0.0501,
+          "diff": 0.0082
+        },
+        {
+          "r_all": 0.0673,
+          "r_all_true": 0.0673,
+          "r_post": 0.0638,
+          "r_ant": 0.041,
+          "diff": 0.0227
+        }
+      ],
+      "metric_b": {
+        "ALL": {
+          "acc1": 0.0127,
+          "null_acc1": 0.0046
+        },
+        "POST": {
+          "acc1": 0.0204,
+          "null_acc1": 0.0047
+        },
+        "ANT": {
+          "acc1": 0.0039,
+          "null_acc1": 0.0052
+        },
+        "OCC": {
+          "acc1": 0.0171,
+          "null_acc1": 0.0046
+        }
+      },
+      "position": {
+        "wave_median": 0.8415,
+        "wave_n_gt_0.8": 36,
+        "wave_total": 63,
+        "amp_r": 0.9911,
+        "amp_spearman": 0.9093,
+        "amp_vs_anat_spearman": 0.5987
+      },
+      "amp_group_mean": {
+        "ALL": 0.284,
+        "OCC": 0.96,
+        "PARI": 0.288,
+        "TEMP": 0.187,
+        "POST": 0.417,
+        "CENT": 0.114,
+        "FRONT": 0.141,
+        "ANT": 0.128
+      },
+      "chmap": {
+        "CP6": {
+          "r": 0.0979,
+          "group": "pari"
+        },
+        "T8": {
+          "r": 0.0861,
+          "group": "temp"
+        },
+        "C6": {
+          "r": 0.0847,
+          "group": "cent"
+        },
+        "P6": {
+          "r": 0.0826,
+          "group": "pari"
+        },
+        "P8": {
+          "r": 0.078,
+          "group": "pari"
+        },
+        "PO4": {
+          "r": 0.0751,
+          "group": "occi"
+        },
+        "TP10": {
+          "r": 0.0662,
+          "group": "temp"
+        },
+        "FT8": {
+          "r": 0.0648,
+          "group": "temp"
+        }
+      }
+    },
+    {
+      "subject": "sub-09",
+      "group_rsa": {
+        "ALL": {
+          "r": 0.0337,
+          "p": 0.005,
+          "n_ch": 63
+        },
+        "OCC": {
+          "r": 0.0578,
+          "p": 0.005,
+          "n_ch": 8
+        },
+        "PARI": {
+          "r": 0.0294,
+          "p": 0.005,
+          "n_ch": 16
+        },
+        "TEMP": {
+          "r": 0.0194,
+          "p": 0.0149,
+          "n_ch": 10
+        },
+        "POST": {
+          "r": 0.0442,
+          "p": 0.005,
+          "n_ch": 34
+        },
+        "CENT": {
+          "r": 0.0048,
+          "p": 0.2935,
+          "n_ch": 14
+        },
+        "FRONT": {
+          "r": 0.0052,
+          "p": 0.3333,
+          "n_ch": 15
+        },
+        "ANT": {
+          "r": 0.004,
+          "p": 0.3532,
+          "n_ch": 29
+        }
+      },
+      "random_group_null": {
+        "OCC": {
+          "r_null_median": 0.0196,
+          "r_null_max": 0.0365,
+          "r_true": 0.0578,
+          "frac_null_ge_true": 0.0
+        },
+        "POST": {
+          "r_null_median": 0.0273,
+          "r_null_max": 0.035,
+          "r_true": 0.0442,
+          "frac_null_ge_true": 0.0
+        },
+        "ANT": {
+          "r_null_median": 0.0258,
+          "r_null_max": 0.0356,
+          "r_true": 0.004,
+          "frac_null_ge_true": 1.0
+        }
+      },
+      "shuffled": [
+        {
+          "r_all": 0.0337,
+          "r_all_true": 0.0337,
+          "r_post": 0.031,
+          "r_ant": 0.0226,
+          "diff": 0.0084
+        },
+        {
+          "r_all": 0.0337,
+          "r_all_true": 0.0337,
+          "r_post": 0.0262,
+          "r_ant": 0.0264,
+          "diff": -0.0002
+        },
+        {
+          "r_all": 0.0337,
+          "r_all_true": 0.0337,
+          "r_post": 0.0242,
+          "r_ant": 0.0335,
+          "diff": -0.0093
+        },
+        {
+          "r_all": 0.0337,
+          "r_all_true": 0.0337,
+          "r_post": 0.0296,
+          "r_ant": 0.0256,
+          "diff": 0.004
+        },
+        {
+          "r_all": 0.0337,
+          "r_all_true": 0.0337,
+          "r_post": 0.0255,
+          "r_ant": 0.0261,
+          "diff": -0.0007
+        }
+      ],
+      "metric_b": {
+        "ALL": {
+          "acc1": 0.0066,
+          "null_acc1": 0.0047
+        },
+        "POST": {
+          "acc1": 0.0088,
+          "null_acc1": 0.0051
+        },
+        "ANT": {
+          "acc1": 0.0056,
+          "null_acc1": 0.0046
+        },
+        "OCC": {
+          "acc1": 0.0124,
+          "null_acc1": 0.0059
+        }
+      },
+      "position": {
+        "wave_median": 0.8717,
+        "wave_n_gt_0.8": 42,
+        "wave_total": 63,
+        "amp_r": 0.9872,
+        "amp_spearman": 0.9159,
+        "amp_vs_anat_spearman": 0.7259
+      },
+      "amp_group_mean": {
+        "ALL": 0.195,
+        "OCC": 0.598,
+        "PARI": 0.217,
+        "TEMP": 0.149,
+        "POST": 0.287,
+        "CENT": 0.103,
+        "FRONT": 0.075,
+        "ANT": 0.089
+      },
+      "chmap": {
+        "TP9": {
+          "r": 0.0847,
+          "group": "temp"
+        },
+        "P6": {
+          "r": 0.0664,
+          "group": "pari"
+        },
+        "P8": {
+          "r": 0.0617,
+          "group": "pari"
+        },
+        "PO8": {
+          "r": 0.0616,
+          "group": "occi"
+        },
+        "O2": {
+          "r": 0.0558,
+          "group": "occi"
+        },
+        "TP7": {
+          "r": 0.0549,
+          "group": "temp"
+        },
+        "POz": {
+          "r": 0.0504,
+          "group": "occi"
+        },
+        "Pz": {
+          "r": 0.0499,
+          "group": "pari"
+        }
+      }
+    },
+    {
+      "subject": "sub-10",
+      "group_rsa": {
+        "ALL": {
+          "r": 0.0621,
+          "p": 0.005,
+          "n_ch": 63
+        },
+        "OCC": {
+          "r": 0.076,
+          "p": 0.005,
+          "n_ch": 8
+        },
+        "PARI": {
+          "r": 0.0499,
+          "p": 0.005,
+          "n_ch": 16
+        },
+        "TEMP": {
+          "r": 0.0432,
+          "p": 0.005,
+          "n_ch": 10
+        },
+        "POST": {
+          "r": 0.0774,
+          "p": 0.005,
+          "n_ch": 34
+        },
+        "CENT": {
+          "r": 0.0081,
+          "p": 0.1194,
+          "n_ch": 14
+        },
+        "FRONT": {
+          "r": 0.0064,
+          "p": 0.2736,
+          "n_ch": 15
+        },
+        "ANT": {
+          "r": 0.0129,
+          "p": 0.01,
+          "n_ch": 29
+        }
+      },
+      "random_group_null": {
+        "OCC": {
+          "r_null_median": 0.0283,
+          "r_null_max": 0.0648,
+          "r_true": 0.076,
+          "frac_null_ge_true": 0.0
+        },
+        "POST": {
+          "r_null_median": 0.0508,
+          "r_null_max": 0.0604,
+          "r_true": 0.0774,
+          "frac_null_ge_true": 0.0
+        },
+        "ANT": {
+          "r_null_median": 0.049,
+          "r_null_max": 0.0622,
+          "r_true": 0.0129,
+          "frac_null_ge_true": 1.0
+        }
+      },
+      "shuffled": [
+        {
+          "r_all": 0.0621,
+          "r_all_true": 0.0621,
+          "r_post": 0.0554,
+          "r_ant": 0.0397,
+          "diff": 0.0157
+        },
+        {
+          "r_all": 0.0621,
+          "r_all_true": 0.0621,
+          "r_post": 0.0382,
+          "r_ant": 0.0613,
+          "diff": -0.0231
+        },
+        {
+          "r_all": 0.0621,
+          "r_all_true": 0.0621,
+          "r_post": 0.0469,
+          "r_ant": 0.0549,
+          "diff": -0.0079
+        },
+        {
+          "r_all": 0.0621,
+          "r_all_true": 0.0621,
+          "r_post": 0.0458,
+          "r_ant": 0.0526,
+          "diff": -0.0068
+        },
+        {
+          "r_all": 0.0621,
+          "r_all_true": 0.0621,
+          "r_post": 0.0595,
+          "r_ant": 0.0402,
+          "diff": 0.0192
+        }
+      ],
+      "metric_b": {
+        "ALL": {
+          "acc1": 0.0114,
+          "null_acc1": 0.0049
+        },
+        "POST": {
+          "acc1": 0.0213,
+          "null_acc1": 0.0047
+        },
+        "ANT": {
+          "acc1": 0.0053,
+          "null_acc1": 0.0057
+        },
+        "OCC": {
+          "acc1": 0.0183,
+          "null_acc1": 0.0049
+        }
+      },
+      "position": {
+        "wave_median": 0.8736,
+        "wave_n_gt_0.8": 38,
+        "wave_total": 63,
+        "amp_r": 0.9938,
+        "amp_spearman": 0.8972,
+        "amp_vs_anat_spearman": 0.6625
+      },
+      "amp_group_mean": {
+        "ALL": 0.251,
+        "OCC": 0.968,
+        "PARI": 0.226,
+        "TEMP": 0.168,
+        "POST": 0.384,
+        "CENT": 0.097,
+        "FRONT": 0.095,
+        "ANT": 0.096
+      },
+      "chmap": {
+        "P7": {
+          "r": 0.0808,
+          "group": "pari"
+        },
+        "PO8": {
+          "r": 0.0709,
+          "group": "occi"
+        },
+        "PO4": {
+          "r": 0.0698,
+          "group": "occi"
+        },
+        "TP7": {
+          "r": 0.0686,
+          "group": "temp"
+        },
+        "P6": {
+          "r": 0.0675,
+          "group": "pari"
+        },
+        "P8": {
+          "r": 0.0626,
+          "group": "pari"
+        },
+        "TP8": {
+          "r": 0.0599,
+          "group": "temp"
+        },
+        "O2": {
+          "r": 0.0511,
+          "group": "occi"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ALL": {
+      "n": 10,
+      "r_median": 0.0504,
+      "r_mean": 0.048659999999999995,
+      "n_sig": 10,
+      "r_all": [
+        0.0337,
+        0.0344,
+        0.0504,
+        0.0537,
+        0.0483,
+        0.0612,
+        0.0418,
+        0.0673,
+        0.0337,
+        0.0621
+      ]
+    },
+    "ANT": {
+      "n": 10,
+      "r_median": 0.0115,
+      "r_mean": 0.01079,
+      "n_sig": 7,
+      "r_all": [
+        0.0115,
+        0.002,
+        0.0123,
+        0.0028,
+        0.0084,
+        0.0109,
+        0.0166,
+        0.0265,
+        0.004,
+        0.0129
+      ]
+    },
+    "CENT": {
+      "n": 10,
+      "r_median": 0.0082,
+      "r_mean": 0.009470000000000001,
+      "n_sig": 3,
+      "r_all": [
+        0.0077,
+        0.0001,
+        0.0152,
+        0.0007,
+        0.009,
+        0.0082,
+        0.0148,
+        0.0261,
+        0.0048,
+        0.0081
+      ]
+    },
+    "FRONT": {
+      "n": 10,
+      "r_median": 0.0064,
+      "r_mean": 0.00592,
+      "n_sig": 2,
+      "r_all": [
+        0.0062,
+        -0.0015,
+        0.0038,
+        -0.001,
+        0.0065,
+        0.0126,
+        0.0074,
+        0.0136,
+        0.0052,
+        0.0064
+      ]
+    },
+    "OCC": {
+      "n": 10,
+      "r_median": 0.0578,
+      "r_mean": 0.05789999999999999,
+      "n_sig": 10,
+      "r_all": [
+        0.0527,
+        0.0415,
+        0.0663,
+        0.0649,
+        0.0459,
+        0.0752,
+        0.0527,
+        0.046,
+        0.0578,
+        0.076
+      ]
+    },
+    "PARI": {
+      "n": 10,
+      "r_median": 0.0427,
+      "r_mean": 0.04167,
+      "n_sig": 10,
+      "r_all": [
+        0.0253,
+        0.036,
+        0.0427,
+        0.0384,
+        0.0435,
+        0.0649,
+        0.0262,
+        0.0604,
+        0.0294,
+        0.0499
+      ]
+    },
+    "POST": {
+      "n": 10,
+      "r_median": 0.0628,
+      "r_mean": 0.062229999999999994,
+      "n_sig": 10,
+      "r_all": [
+        0.0402,
+        0.0527,
+        0.0594,
+        0.0748,
+        0.0628,
+        0.0846,
+        0.0472,
+        0.079,
+        0.0442,
+        0.0774
+      ]
+    },
+    "TEMP": {
+      "n": 10,
+      "r_median": 0.0432,
+      "r_mean": 0.03755,
+      "n_sig": 10,
+      "r_all": [
+        0.0234,
+        0.0303,
+        0.0232,
+        0.0557,
+        0.044,
+        0.0542,
+        0.0184,
+        0.0637,
+        0.0194,
+        0.0432
+      ]
+    },
+    "POST_minus_ANT": {
+      "n": 10,
+      "n_pos": 10,
+      "n_neg": 0,
+      "p_sign": 0.001953125,
+      "median": 0.052500000000000005,
+      "mean": 0.05144,
+      "diffs": [
+        0.0287,
+        0.050699999999999995,
+        0.0471,
+        0.07200000000000001,
+        0.0544,
+        0.07369999999999999,
+        0.0306,
+        0.052500000000000005,
+        0.0402,
+        0.0645
+      ]
+    },
+    "POST_minus_ANT_null": {
+      "n_null": 50,
+      "null_median": 0.0007,
+      "null_max": 0.0347,
+      "null_p95": 0.0204,
+      "n_true_above_null_max": 8,
+      "n_true": 10
+    },
+    "permutation_invariance_ALL": {
+      "max_abs_delta": 0.0,
+      "n": 50,
+      "r_true_median": 0.0504,
+      "r_shuffled_median": 0.0504
+    },
+    "position_summary": {
+      "wave_median": {
+        "median": 0.8717,
+        "min": 0.7976,
+        "max": 0.8919
+      },
+      "wave_n_gt_0.8": {
+        "median": 37,
+        "min": 31,
+        "max": 42
+      },
+      "wave_total": {
+        "median": 63,
+        "min": 63,
+        "max": 63
+      },
+      "amp_r": {
+        "median": 0.9933,
+        "min": 0.968,
+        "max": 0.9964
+      },
+      "amp_spearman": {
+        "median": 0.9159,
+        "min": 0.8915,
+        "max": 0.9633
+      },
+      "amp_vs_anat_spearman": {
+        "median": 0.6827,
+        "min": 0.501,
+        "max": 0.8003
+      }
+    },
+    "random_group_null_summary": {
+      "ANT": {
+        "mean_frac_null_ge_true": 1.0,
+        "median_of_null_medians": 0.0397
+      },
+      "OCC": {
+        "mean_frac_null_ge_true": 0.030000000000000006,
+        "median_of_null_medians": 0.0234
+      },
+      "POST": {
+        "mean_frac_null_ge_true": 0.0,
+        "median_of_null_medians": 0.0398
+      }
+    },
+    "metric_b_summary": {
+      "ALL": {
+        "acc1_median": 0.0082,
+        "null_median": 0.005,
+        "n": 10,
+        "acc1_all": [
+          0.0082,
+          0.0064,
+          0.0076,
+          0.0086,
+          0.0075,
+          0.0081,
+          0.0123,
+          0.0127,
+          0.0066,
+          0.0114
+        ]
+      },
+      "ANT": {
+        "acc1_median": 0.0053,
+        "null_median": 0.0052,
+        "n": 10,
+        "acc1_all": [
+          0.0054,
+          0.0044,
+          0.0051,
+          0.0053,
+          0.0057,
+          0.0044,
+          0.0045,
+          0.0039,
+          0.0056,
+          0.0053
+        ]
+      },
+      "OCC": {
+        "acc1_median": 0.0151,
+        "null_median": 0.0049,
+        "n": 10,
+        "acc1_all": [
+          0.0159,
+          0.0141,
+          0.0146,
+          0.0151,
+          0.0119,
+          0.0146,
+          0.0211,
+          0.0171,
+          0.0124,
+          0.0183
+        ]
+      },
+      "POST": {
+        "acc1_median": 0.0165,
+        "null_median": 0.0049,
+        "n": 10,
+        "acc1_all": [
+          0.0165,
+          0.0081,
+          0.0145,
+          0.0183,
+          0.0093,
+          0.014,
+          0.0198,
+          0.0204,
+          0.0088,
+          0.0213
+        ]
+      }
+    }
+  }
+}
