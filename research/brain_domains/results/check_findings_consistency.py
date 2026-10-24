@@ -75,7 +75,6 @@ DECISIVE = {
     "v2-eegdino-small": (0.0233, 0.0418, -0.0171, 0),
 }
 
-
 def find_section(text, key):
     """截出含 key 的小节文本。"""
     i = text.find(key)
@@ -307,28 +306,30 @@ def main():
             problems.append(f"[组装] 变体表只解析出 {len(doc)} 行，"
                             f"期望 {len(ASM_FILES)} 行")
 
-    # --- 4. 决定性对照表（§二十三·四）---
-    sec4 = find_section(text, "二十三·四、决定性对照")
-    if not sec4:
-        problems.append("FINDINGS 里找不到小节「二十三·四、决定性对照」")
-    else:
-        doc4 = parse_readout_table(sec4, "学出来的码本", cols_map=DEC_COLS,
+    # --- 4. 决定性对照表（§二十三·四 与 §二十四·五 各有一份 ⇒ 两份都要查）---
+    for sec_key in ("二十三·四、决定性对照", "二十四·五、2×2 补齐"):
+        sec4 = find_section(text, sec_key)
+        if not sec4:
+            problems.append(f"FINDINGS 里找不到小节「{sec_key}」")
+            continue
+        doc4 = parse_readout_table(sec4, "学出来的码本",
+                                    cols_map=DEC_COLS,
                                     extra_cols=(("Δr", "delta"), ("正向", "npos")))
         for arm, (emb, rnd, d_dr, npos) in DECISIVE.items():
             row = doc4.get(arm)
             if row is None:
-                problems.append(f"[决定性] 文档里找不到 {arm} 行")
+                problems.append(f"[决定性/{sec_key[:6]}] 文档里找不到 {arm} 行")
                 continue
             for key, exp in (("emb_mean", emb), ("random_codebook", rnd)):
                 if key in row and abs(row[key][0] - exp) > 5e-4:
-                    problems.append(f"[决定性] {arm}/{key}：文档 {row[key][0]}，"
-                                    f"期望 {exp}")
+                    problems.append(f"[决定性/{sec_key[:6]}] {arm}/{key}："
+                                    f"文档 {row[key][0]}，期望 {exp}")
             if "delta" in row and abs(row["delta"][0] - d_dr) > 5e-4:
-                problems.append(f"[决定性] {arm}：文档 Δr={row['delta'][0]}，"
-                                f"期望 {d_dr}")
+                problems.append(f"[决定性/{sec_key[:6]}] {arm}：文档 Δr="
+                                f"{row['delta'][0]}，期望 {d_dr}")
             if "npos" in row and row["npos"][0] != npos:
-                problems.append(f"[决定性] {arm}：文档正向 {row['npos'][0]}，"
-                                f"期望 {npos}")
+                problems.append(f"[决定性/{sec_key[:6]}] {arm}：文档正向 "
+                                f"{row['npos'][0]}，期望 {npos}")
             # 数据侧：自己算一遍配对差
             fp = ASSEMBLED / f"{arm}.json"
             if fp.exists():
@@ -337,11 +338,11 @@ def main():
                 if st:
                     med, np_, n, p = st
                     if abs(med - d_dr) > 5e-4:
-                        problems.append(f"[决定性] {arm}：数据算得 Δr={med:.4f}，"
-                                        f"文档写 {d_dr}")
+                        problems.append(f"[决定性/{sec_key[:6]}] {arm}：数据算得 "
+                                        f"Δr={med:.4f}，文档写 {d_dr}")
                     if np_ != npos:
-                        problems.append(f"[决定性] {arm}：数据算得正向 {np_}/{n}，"
-                                        f"文档写 {npos}")
+                        problems.append(f"[决定性/{sec_key[:6]}] {arm}：数据算得正向 "
+                                        f"{np_}/{n}，文档写 {npos}")
 
     if problems:
         print("✗ 文档与数据不一致：")
