@@ -89,6 +89,19 @@ def find_section(text, key):
     return text[i: j if j > 0 else len(text)]
 
 
+def find_section_h2(text, key):
+    """截出含 key 的 **H2 级**章节（到下一个 `## ` 为止）。
+
+    ⚠️ `find_section` 在 H2 标题下会**立刻**被下一个 `### ` 截断
+    ⇒ 用来查 H2 章节会取到空串（实测：左右轴那一节的所有数字都查不到）。
+    """
+    i = text.find(key)
+    if i < 0:
+        return ""
+    j = text.find("\n## ", i + 1)
+    return text[i: j if j > 0 else len(text)]
+
+
 def parse_delta_table(section):
     """从「供体贡献」表里解析 {行名: (Δr vs 宿主 中位, 正向数)}。
 
@@ -505,13 +518,88 @@ def main():
     else:
         print(f"（缺 {POSAX}，跳过 exp89 位置轴比对）")
 
+    # --- 7. 左右轴（exp90 系列）：文档数字不得与结果漂移 ---
+    latf = HERE / "lateral-results" / "lateral_sitepairs.json"
+    ampf = HERE / "lateral-results" / "lateral_ampcheck.json"
+    if latf.exists() and ampf.exists():
+        ld = json.loads(latf.read_text(encoding="utf-8"))
+        ad = json.loads(ampf.read_text(encoding="utf-8"))
+        aggs = ld.get("per_subject_aggregate", {})
+        agg_all = aggs.get("all_pairs", {})
+        agg_post = aggs.get("posterior_O_PO_P_T", {})
+
+        def _doc(name):
+            p = ROOT / name
+            if not p.exists():
+                return None
+            return p.read_text(encoding="utf-8").replace("−", "-")
+
+        ftext = _doc("FINDINGS_TIER0_RSA.md")
+        itext2 = _doc("INTEGRATION.md")
+        # ⚠️ **必须限定到具体小节 / 具体行**：
+        #    同一个数字在别处也会出现（`0.0020` 既是左右轴的 p，也是 A14 后−前差的 p）
+        #    ⇒ 全文件搜索会让检查**永远通过**（反向测试抓到过这个坑）
+        fsec = find_section_h2(ftext, "## 二十六、左右轴") if ftext else ""
+        a16 = ""
+        if itext2:
+            for line in itext2.splitlines():
+                if "**A16**" in line:
+                    a16 = line
+                    break
+        if fsec:
+            lines = fsec.splitlines()
+
+            def _line(marker):
+                for ln in lines:
+                    if marker in ln:
+                        return ln
+                return ""
+
+            # ⚠️ **按行定位**（不能整节搜）：同一个数可能在别处重复出现
+            #    （`0.0020` 既是表里的 p，也是 §二十六·四 正文里的 p）
+            #    ⇒ 整节搜 ⇒ 篡改抓不到（实测）
+            for marker, pairs in (
+                    ("逐被试聚合",
+                     ((f"{agg_all.get('p_sign', 0):.4f}", "逐被试聚合 p"),
+                      (f"{agg_all.get('median_of_subject_means', 0):+.4f}",
+                       "逐被试均值中位"))),
+                    ("后部位点族",
+                     ((f"{agg_post.get('median_of_subject_means', 0):+.4f}",
+                       "后部族中位"),)),
+                    ("**后部**（O/PO/P/T",
+                     ((f"{ad['posterior']['median_diff']:+.3f}", "后部幅度差中位"),)),
+                    ("**前部**（F/FC/AF/FT/C/CP",
+                     ((f"{ad['anterior']['median_diff']:+.3f}", "前部幅度差中位"),))):
+                ln = _line(marker)
+                if not ln:
+                    problems.append(f"[左右轴] FINDINGS §二十六 找不到行「{marker}」")
+                    continue
+                for s, what in pairs:
+                    if s not in ln:
+                        problems.append(
+                            f"[左右轴] FINDINGS §二十六「{marker}」行缺 {what} 的数字 {s}")
+        elif ftext:
+            problems.append("FINDINGS 里找不到「二十六、左右轴」小节")
+        if a16:
+            for s, what in ((f"{agg_all.get('p_sign', 0):.4f}", "左右轴 p"),
+                            (f"{ad['posterior']['n_pos']}/{ad['posterior']['n_pos']+ad['posterior']['n_neg']}",
+                             "后部幅度 右>左 被试数"),
+                            (f"{ad['anterior']['n_pos']}/{ad['anterior']['n_pos']+ad['anterior']['n_neg']}",
+                             "前部幅度 右>左 被试数")):
+                if s not in a16:
+                    problems.append(f"[左右轴] INTEGRATION A16 行缺 {what} 的数字 {s}")
+        elif itext2:
+            problems.append("INTEGRATION.md 里找不到 A16 行")
+    else:
+        print(f"（缺 {latf} 或 {ampf}，跳过左右轴比对）")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:
             print("   -", p)
         return 1
     print("✓ 文档与数据一致（变体表 Δr vs 宿主 / S1a 读出中位数 / "
-          "组装变体表 / 决定性对照表 / exp89 位置轴）")
+          "组装变体表 / 决定性对照表 / exp89 位置轴 / 左右轴）")
     return 0
 
 
