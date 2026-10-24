@@ -649,6 +649,40 @@ def main():
     else:
         print(f"（缺 {latf} 或 {ampf}，跳过左右轴比对）")
 
+    # --- 8. exp91a 读出强度检验（§二十七·五 的三行表）---
+    rdf = HERE / "readout-results" / "exp91a_readout.json"
+    if rdf.exists():
+        rd = json.loads(rdf.read_text(encoding="utf-8"))
+        rs = rd.get("summary", {})
+        sec27 = find_section_h2(text, "## 二十七、外部核对")
+        lines27 = sec27.splitlines()
+        for ro in ("amp630", "bandpow", "covpat"):
+            e = rs.get(ro) or {}
+            if not e:
+                problems.append(f"[读出检验] 结果里没有 {ro}")
+                continue
+            ln = next((l for l in lines27
+                       if l.startswith(f"| `{ro}` |")), "")
+            if not ln:
+                problems.append(f"[读出检验] §二十七·五 找不到 {ro} 那一行")
+                continue
+            ln_n = ln.replace("−", "-")
+            for g in ("ALL", "POST", "ANT"):
+                if g not in e:
+                    continue
+                s = f"{e[g]['r_median']:+.4f}"
+                if s not in ln_n:
+                    problems.append(
+                        f"[读出检验] §二十七·五 {ro}/{g} 行缺数字 {s}")
+            d = e.get("_POST_minus_ANT")
+            if d:
+                for s in (f"{d['median']:+.4f}", f"{d['p_sign']:.4f}"):
+                    if s not in ln_n:
+                        problems.append(
+                            f"[读出检验] §二十七·五 {ro} 的后−前缺数字 {s}")
+    else:
+        print(f"（缺 {rdf}，跳过读出强度检验比对）")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:
