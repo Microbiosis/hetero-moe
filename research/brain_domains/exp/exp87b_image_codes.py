@@ -143,10 +143,22 @@ def main():
         onehot[np.arange(len(idx)), codes[idx]] = 1.0
         a = EVAL.metric_a_rsa(onehot[:, None, :], IMG[idx], 200, rng)
         log(f"  r_img = {a['r_img']:+.4f}，p = {a['p_img']:.4f}")
-        if a["p_img"] >= 0.05:
-            log("  ⚠ 图像侧的码**没有**与语义对齐 ⇒ 「让 EEG 预测它」没有意义，先修这个")
+        # ⚠️ **one-hot 上的 RSA 是病态的**：两个 one-hot 行支撑不交 ⇒ 零方差 ⇒
+        #    相关系数未定义（实现里靠 epsilon 兜 ⇒ 数值没有意义）。
+        #    实测给出 r = **−0.1625**（p=0.005）—— 既不能读成「对齐」，
+        #    也不能读成「反对齐」⇒ **这个判据不可用**。
+        # ⇒ 改用**稠密**的质心向量来判（质心 = 该簇的特征均值 ⇒ 有定义）。
+        cen = C[codes[idx]]                      # (n, dim)：每张图所在簇的质心
+        a2 = EVAL.metric_a_rsa(cen[:, None, :], IMG[idx], 200, rng)
+        log(f"  [稠密对照] 簇质心 vs 图像特征：r_img = {a2['r_img']:+.4f}，"
+            f"p = {a2['p_img']:.4f}")
+        if a2["r_img"] > 0 and a2["p_img"] < 0.05:
+            log("  ✓ 图像侧的码与图像语义对齐（稠密对照通过）"
+                " ⇒ 可以拿它当共享词典的目标")
         else:
-            log("  ✓ 图像侧的码与图像语义对齐 ⇒ 可以拿它当共享词典的目标")
+            log("  ⚠ 稠密对照也没通过 ⇒ 先查 k-means，别急着训")
+        if a["r_img"] < 0:
+            log("  （one-hot 那个负值是病态计算的产物，**不作判据**）")
     except Exception as e:
         log(f"  （RSA 判据没跑成：{type(e).__name__}: {e}）")
 

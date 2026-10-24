@@ -35,6 +35,21 @@ function Get-RemoteSize {
     return $null
 }
 
+function Invoke-Hf {
+    param([string[]]$Args, [int]$TimeoutSec = 120)
+    """跑 `hf` 并**带超时**（实测：`hf buckets cp` 可能**挂起**而不是快速失败，
+    不设超时的话重试逻辑会卡死在一个调用上）。"""
+    $p = Start-Process -FilePath "hf" -ArgumentList $Args -NoNewWindow -PassThru `
+        -RedirectStandardOutput "$env:TEMP\hf_out.txt" -RedirectStandardError "$env:TEMP\hf_err.txt"
+    if (-not $p.WaitForExit($TimeoutSec * 1000)) {
+        try { $p.Kill() } catch { }
+        return "TIMEOUT"
+    }
+    $o = (Get-Content "$env:TEMP\hf_out.txt" -Raw -ErrorAction SilentlyContinue)
+    $e = (Get-Content "$env:TEMP\hf_err.txt" -Raw -ErrorAction SilentlyContinue)
+    return ("$o`n$e")
+}
+
 $fail = @()
 foreach ($f in $Files) {
     $src = Join-Path $expDir $f
@@ -42,17 +57,17 @@ foreach ($f in $Files) {
     $local = (Get-Item $src).Length
     $ok = $false
     for ($i = 1; $i -le $Retries; $i++) {
-        hf buckets cp $src "$bucket/$f" 2>&1 |
-            Select-String -Pattern 'Uploaded|Error|error' | Select-Object -First 1
+        $out = Invoke-Hf -Args @("buckets", "cp", $src, "$bucket/$f")
+        Write-Host ("[{0}]   尝试 {1}（{2}）：{3}" -f (Get-Date -Format 'HH:mm:ss'), $f, $i,
+            (($out -split "`n" | Where-Object { $_ -match 'Uploaded|Error|error|TIMEOUT' } |
+              Select-Object -First 1) -replace '\s+', ' '))
         $remote = Get-RemoteSize -Name $f
         if ($remote -eq $local) {
             Write-Host ("[{0}] ✓ {1}（{2} 字节，一致）" -f (Get-Date -Format 'HH:mm:ss'), $f, $local)
             $ok = $true
             break
         }
-        Write-Host ("[{0}]   重传 {1}（第 {2} 次；桶里 {3} / 本地 {4}）" -f
-            (Get-Date -Format 'HH:mm:ss'), $f, $i, $remote, $local)
-        Start-Sleep -Seconds 10
+        Start-Sleep -Seconds 8
     }
     if (-not $ok) { $fail += $f }
 }

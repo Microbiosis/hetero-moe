@@ -95,13 +95,15 @@ def log(*a):
 # ---------------------------------------------------------------------------
 # 共享词典的量化器
 # ---------------------------------------------------------------------------
-def build_vqshared():
+def build_vqshared(balance=False, eps_bal=0.05, sinkhorn_iters=3):
     """返回 `VQShared` 类（梯度版码本）。
 
     **关键差异（相对 exp80 的 VQ）**：**不再**用 EMA 覆盖 `embedding.weight`
     ⇒ 码向量能保住语义梯度。
     其余（键名、死码重启、lookup 接口）与 exp80 的 VQ **保持一致**
     ⇒ 同一个评测脚本能加载两种 checkpoint。
+
+    `balance=True` ⇒ 用 **Sinkhorn 平衡分配**（切塌缩，见 VQShared.forward 的注释）。
     """
     import torch
     import torch.nn.functional as F
@@ -112,9 +114,13 @@ def build_vqshared():
 
         kind = "vq_shared"
 
-        def __init__(self, n_codes=K_CODES, dim=D_MODEL, decay=0.99, eps=1e-5):
+        def __init__(self, n_codes=K_CODES, dim=D_MODEL, decay=0.99, eps=1e-5,
+                     balance=False, eps_bal=0.05, sinkhorn_iters=3):
             super().__init__()
             self.n_codes, self.dim, self.decay, self.eps = n_codes, dim, decay, eps
+            self.balance = balance          # 是否用 Sinkhorn 平衡分配
+            self.eps_bal = eps_bal          # Sinkhorn 的 ε（越小越硬）
+            self.sinkhorn_iters = sinkhorn_iters
             self.embedding = nn.Embedding(n_codes, dim)
             self.embedding.weight.data.normal_(0, 0.05)
             # ⚠️ 键名与 exp80 的 VQ 一致 ⇒ checkpoint 可互换加载
@@ -146,13 +152,23 @@ def build_vqshared():
             - 直线估计 `z_q = z + (e − z).detach()` ⇒ 重建损失的梯度到 **encoder**
             - 码本损失 `||sg[e] − z||²` ⇒ 梯度到**码向量**（e 被拉向 z）
             - 承诺损失 `||e − sg[z]||²` ⇒ 梯度到 **z**（z 被拉向 e）
+
+            ⚠️ **平衡分配（Sinkhorn）**：不加它会**塌缩**。
+            实测（v3 四个臂）：码向量两两余弦 → **+0.90～+0.97**、有效秩 → **1.1/64**、
+            语义 CE 卡在随机水平 ⇒ 跨模态码预测命中率 = 随机。
+            机制：跨模态 CE 把 **z 拉向码**，而码本损失把 **码拉向 z** ⇒ 互相强化 ⇒ 一起塌。
+            ⇒ Sinkhorn 让分配**均衡**（每个码拿到大致相同份额的 token）
+            ⇒ 塌缩被切断（SwAV 的标准解法）。
             """
             B, T, D = z.shape
             flat = z.reshape(-1, D)
             d = (flat.pow(2).sum(1, keepdim=True)
                  - 2 * flat @ self.embedding.weight.t()
                  + self.embedding.weight.pow(2).sum(1))
-            idx = d.argmin(1)
+            if self.balance:
+                idx = self._sinkhorn_assign(d, flat)
+            else:
+                idx = d.argmin(1)
             zq_e = self.embedding(idx).view(B, T, D)
             l_cb = ((zq_e.detach() - z) ** 2).mean()        # 码本损失（梯度到 e）
             l_cm = ((zq_e - z.detach()) ** 2).mean()        # 承诺损失（梯度到 z）
@@ -165,6 +181,27 @@ def build_vqshared():
                                                      alpha=1 - self.decay)
             zq = z + (zq_e - z).detach()                   # 直线估计
             return zq, l_cb, l_cm, idx.view(B, T)
+
+        @torch.no_grad()
+        def _sinkhorn_assign(self, d, flat):
+            """平衡分配（Sinkhorn）：让每个码拿到大致相同的份额。
+
+            ⚠️ **affinity 必须用余弦相似度**（SwAV 标准做法）：
+            平方距离做 affinity 时 `exp(-d/ε)` 会**下溢**（d~10、ε=0.05 ⇒ exp(-200)）
+            ⇒ 只有最近的码活下来 ⇒ 分配反而更不均衡（实测：活跃码 = 1）。
+            ⇒ 用有界的余弦，并先减最大值防溢出。
+            """
+            import torch
+            zn = torch.nn.functional.normalize(flat, dim=-1)
+            en = torch.nn.functional.normalize(self.embedding.weight, dim=-1)
+            sim = zn @ en.t()                       # (N, K) ∈ [-1, 1]
+            Q = torch.exp((sim - sim.max(dim=1, keepdim=True).values) / self.eps_bal)
+            Q = Q / Q.sum().clamp(min=1e-12)
+            n = Q.shape[0]
+            for _ in range(self.sinkhorn_iters):
+                Q = Q / Q.sum(dim=1, keepdim=True).clamp(min=1e-12) * n
+                Q = Q / Q.sum(dim=0, keepdim=True).clamp(min=1e-12) * n
+            return Q.argmax(dim=1)
 
         @torch.no_grad()
         def restart_dead(self, z, frac=0.05):
@@ -192,7 +229,14 @@ def build_vqshared():
                     "utilization": used / max(self.n_codes, 1),
                     "entropy_nats": ent}
 
-    return VQShared
+    # 返回**工厂闭包**（把 balance 等设置带进去）⇒ `build_assembled` 只要一个
+    # `(n_codes, dim) -> VQ` 的可调用对象。
+    def factory(n_codes, dim):
+        return VQShared(n_codes, dim, balance=balance, eps_bal=eps_bal,
+                        sinkhorn_iters=sinkhorn_iters)
+
+    factory.__name__ = f"VQShared(balance={balance})"
+    return factory
 
 
 # ---------------------------------------------------------------------------
@@ -229,12 +273,99 @@ def code_logits(z, emb, tau=0.07, mode="none", target=None):
         sim_pos = (zn * en[target].unsqueeze(1)).sum(-1)          # (B,T)
         # 其余码：detach（不给码本负类压力）
         sim_all = zn @ en.detach().t()                            # (B,T,K)
-        idx_t = target.view(B, 1).expand(B, T).unsqueeze(-1)      # (B,T,1)
-        logits = sim_all.scatter(1, idx_t, sim_pos.unsqueeze(-1))  # (B,T,K)
+        # ⚠️ **沿 K 维 scatter**（dim=2）—— 沿 T 维 scatter 会把「码号」当成「位置」下标
+        #    ⇒ 码号 ≥ T 时直接 RuntimeError；码号 < T 时**不报错但结果全错**
+        #    （本地自测就漏在这里：合成数据只有 8 个码，恰好都 < T=31）
+        idx_t = target.view(B, 1, 1).expand(B, T, 1)              # (B,T,1)
+        logits = sim_all.scatter(2, idx_t, sim_pos.unsqueeze(-1))  # (B,T,K)
         return logits / tau
     else:
         raise ValueError(f"未知 mode={mode}")
     return (zn @ en_use.t()) / tau
+
+def eval_crossmodal(model, codes_centroids, eeg_te, img_te, device="cpu"):
+    """**跨模态码预测**：EEG 的 token 能不能直接报出图像侧的码。
+
+    这是「统一词表」的**直接**判据（比 RSA 读出更贴定义）：
+    同一本词典 ⇒ 同一个 token 在两个模态里表示同一个概念
+    ⇒ 拿 EEG 的 token 去撞图像的码，命中率显著高于随机（1/K）就是「共用词典」。
+
+    返回三个数：
+    - `pos_acc`：逐位置命中率（31 个 token 各自报一个码）
+    - `any_acc`：整幅至少一个位置命中（更宽松 ⇒ 只要语义进了码本就算）
+    - `top1_hit`：按位置投票（多数票）出的码 == 图像的码
+    """
+    import torch
+    import torch.nn.functional as F
+
+    model.eval()
+    K = codes_centroids.shape[0]
+    # 图像侧：test 图 → 最近质心（= 它的码）
+    with torch.no_grad():
+        sim = torch.from_numpy(img_te) @ torch.from_numpy(codes_centroids).T
+        img_code = sim.argmax(dim=1).numpy()
+    n_img, n_rep = eeg_te.shape[0], eeg_te.shape[1]
+    flat = eeg_te.reshape(n_img * n_rep, eeg_te.shape[2], eeg_te.shape[3])
+    tgt = np.repeat(img_code, n_rep)
+    hits, anys, votes = 0, 0, 0
+    bs = 64
+    with torch.no_grad():
+        for s in range(0, flat.shape[0], bs):
+            e = min(s + bs, flat.shape[0])
+            x = torch.from_numpy(np.ascontiguousarray(flat[s:e])).float().to(device)
+            z = model.encode(x)
+            out = model.vq(z)
+            idx = out[3] if len(out) == 4 else out[2]   # VQShared 返回 4 元组，exp80 的 VQ 返回 3 元组
+            idx = idx.reshape(e - s, -1).cpu().numpy()
+            for r in range(idx.shape[0]):
+                row = idx[r]
+                t = int(tgt[s + r])
+                nhit = int((row == t).sum())
+                hits += nhit
+                anys += 1 if nhit > 0 else 0
+                # 多数票
+                vals, cnt = np.unique(row, return_counts=True)
+                if int(vals[cnt.argmax()]) == t:
+                    votes += 1
+    model.train()
+    total_pos = flat.shape[0] * idx.shape[1]
+    return {"pos_acc": hits / max(total_pos, 1),
+            "any_acc": anys / max(flat.shape[0], 1),
+            "top1_hit": votes / max(flat.shape[0], 1),
+            "n_test": int(n_img),
+            "random_pos_acc": 1.0 / K}
+
+
+def self_test_logits():
+    """`code_logits` 的**单元断言**：目标位置上的 logit 必须等于
+    「z 与 e[target] 的余弦」/τ。
+
+    为什么必须有这条：这一版曾把 scatter 沿**错的一维**做
+    （沿 T 维 ⇒ 把「码号」当「位置」下标）
+    ⇒ 码号 ≥ T 时 RuntimeError，码号 < T 时**不报错但结果全错**
+    ⇒ 而本地合成自测只有 8 个码（0–7），恰好都 < T=31 ⇒ **自测没抓到**。
+    ⇒ 这条断言直接盯住「目标位置的值」，任何 scatter 维度错误都会立刻暴露。
+    """
+    import torch
+    g = torch.Generator().manual_seed(0)
+    B, T, D, K = 4, 7, 16, 32
+    z = torch.randn(B, T, D, generator=g)
+    emb = torch.randn(K, D, generator=g)
+    target = torch.tensor([0, 5, 31, 7])          # 故意含 ≥ T 的码号（31）
+    tau = 0.07
+    for mode in ("none", "full", "positive"):
+        lg = code_logits(z, emb, tau=tau, mode=mode, target=target)
+        assert lg.shape == (B, T, K), (mode, lg.shape)
+        for b in range(B):
+            for t in range(T):
+                want = (torch.nn.functional.normalize(z[b, t], dim=-1)
+                        * torch.nn.functional.normalize(emb[target[b]], dim=-1)
+                        ).sum() / tau
+                got = lg[b, t, target[b]]
+                assert abs(float(got) - float(want)) < 1e-4, (
+                    mode, b, t, float(got), float(want))
+    log("  [自测] code_logits：三种 mode 的目标位置取值都等于直接余弦 ✓")
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -258,10 +389,16 @@ def main():
     ap.add_argument("--lambda-sem", type=float, default=1.0)
     ap.add_argument("--lambda-vq", type=float, default=0.25)
     ap.add_argument("--tau", type=float, default=0.07)
+    ap.add_argument("--balance", default="none", choices=["none", "sinkhorn"],
+                    help="量化分配是否用 **Sinkhorn 平衡**（切塌缩；实测不加会塌）")
+    ap.add_argument("--eps-bal", type=float, default=0.05,
+                    help="Sinkhorn 的 ε（越小越硬；SwAV 用 0.05→0.01 退火）")
     ap.add_argument("--log-every", type=int, default=250)
     ap.add_argument("--max-seconds", type=int, default=0)
     ap.add_argument("--out-dir", default="/domains/runs/illusionbrain-align/exp87/grad")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--eval-test", type=int, default=1,
+                    help="训练完在 test split 上测**跨模态码预测**（统一词表的直接判据）")
     args = ap.parse_args()
 
     import torch
@@ -275,7 +412,12 @@ def main():
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    vq_factory = build_vqshared() if args.vq == "grad" else VQ
+    if args.self_test:
+        self_test_logits()
+
+    vq_factory = (build_vqshared(balance=(args.balance == "sinkhorn"),
+                                 eps_bal=args.eps_bal)
+                  if args.vq == "grad" else VQ)
     log(f"=== S1b-v3 共享词典 | 码本机制 {args.vq} | "
         f"CE→码本 {args.sem_codebook_mode} | "
         f"注意力 {args.attn_donor} | FFN {args.donor_ffn} ===")
@@ -460,8 +602,35 @@ def main():
     out = out_dir / "tokenizer_assembled.pt"
     torch.save(ck, out)
     log(f"权重写入 {out}（{out.stat().st_size/1e6:.1f} MB）")
+
+    # --- 跨模态码预测（test split）⇒「统一词表」的直接判据 ---
+    if not args.self_test and args.eval_test:
+        try:
+            import torch as _t
+            cd = _t.load(args.image_codes, map_location="cpu", weights_only=False)
+            cent = cd["centroids"].astype(np.float32)
+            eeg_te = np.load("/domains/omnibrain4d/eeg/"
+                             f"sub-{args.subject:02d}.npz")["eeg"]
+            fte = _t.load("/training/eeg/eeg-image-decode/"
+                          "ViT-H-14_features_test.pt",
+                          map_location="cpu", weights_only=False)
+            IMG_te = fte["img_features"].numpy().astype(np.float32)
+            # 图像侧的质心是归一化特征上的 ⇒ 归一化后再算最近质心
+            c = cent / np.maximum(np.linalg.norm(cent, axis=1, keepdims=True), 1e-12)
+            q = IMG_te / np.maximum(np.linalg.norm(IMG_te, axis=1, keepdims=True), 1e-12)
+            st = eval_crossmodal(model, c.astype(np.float32), eeg_te, q.astype(np.float32))
+            log(f"\n=== 跨模态码预测（test split {st['n_test']} 图）===")
+            log(f"  逐位置命中 {st['pos_acc']:.4f}（随机 {st['random_pos_acc']:.5f}）")
+            log(f"  整幅至少一位置命中 {st['any_acc']:.4f}")
+            log(f"  多数票命中 {st['top1_hit']:.4f}")
+            ck["crossmodal"] = st
+            _t.save(ck, out)
+        except Exception as e:
+            log(f"  ⚠ 跨模态评测没跑成：{type(e).__name__}: {e}")
+
     (out_dir / "train_log.json").write_text(
-        json.dumps({"args": vars(args), "hist": hist}, indent=2,
+        json.dumps({"args": vars(args), "hist": hist,
+                    "crossmodal": ck.get("crossmodal")}, indent=2,
                    ensure_ascii=False, default=str), encoding="utf-8")
     log(f"总耗时 {time.time()-t0:.0f}s")
     return 0

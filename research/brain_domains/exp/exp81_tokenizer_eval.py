@@ -126,7 +126,10 @@ def load_model(ckpt_path, seed=SEED):
         vq_factory = None
         if arch == "assembled_v3" and ck.get("vq") == "grad":
             from exp87_shared_vocab import build_vqshared
-            vq_factory = build_vqshared()
+            a = ck.get("args", {})
+            vq_factory = build_vqshared(
+                balance=(a.get("balance", "none") == "sinkhorn"),
+                eps_bal=float(a.get("eps_bal", 0.05)))
         model = build_assembled(n_codes=int(ck["n_codes"]), attn_state=attn,
                                 ffn_donor=ffn, heads=heads, vq_factory=vq_factory)
         log(f"  架构：{arch}（注意力 {attn_name} / "
