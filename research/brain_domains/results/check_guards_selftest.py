@@ -23,6 +23,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 G_NUM = str(HERE / "check_findings_consistency.py")
 G_TERM = str(HERE / "check_terminology.py")
+G_ORD = str(HERE / "check_section_order.py")
 
 # (守卫, 文件, 原串, 改串, 说明)
 # ⚠️ 每个用例都必须**打在被检查的位置**上：
@@ -50,6 +51,20 @@ CASES = [
      "| +0.0222 (10/10) | +0.0014 (**0/10**) |", "exp91a bandpow 后部读出"),
     (G_NUM, "FINDINGS_TIER0_RSA.md", "**+0.0213，10/10，p=0.0020**",
      "**+0.0213，10/10，p=0.0099**", "exp91a bandpow 后−前 p"),
+    # --- exp92 三支线（§二十八·二）---
+    (G_NUM, "FINDINGS_TIER0_RSA.md",
+     "| S1a（纯自监督） | +0.0352 | **+0.0566** |",
+     "| S1a（纯自监督） | +0.0352 | **+0.0666** |", "exp92-A S1a 后部"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md",
+     "| 后部残余（后部 R−L − 前部 R−L） | +0.0868 | 9/10 | 0.0215 |",
+     "| 后部残余（后部 R−L − 前部 R−L） | +0.0868 | 9/10 | 0.0915 |",
+     "exp92-B 后部残余 p"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md",
+     "| **630-d 手工特征** | **0.0082** | 1.6× |",
+     "| **630-d 手工特征** | **0.0092** | 1.6× |", "exp92-C 手工档位"),
+    # --- 章节顺序（结构级）---
+    (G_ORD, "FINDINGS_TIER0_RSA.md", "## 二十六、左右轴（外侧轴）",
+     "## 二十九、左右轴（外侧轴）", "章节编号顺序错位"),
     # --- 措辞守卫 ---
     (G_TERM, "INTEGRATION.md", "最小模型 = 位置轴上的两个原语", "最小模型 = 两个原语",
      "措辞：原语表述缺轴限定"),

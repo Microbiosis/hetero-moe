@@ -168,6 +168,19 @@ def paired_two_docs(doc_a, doc_b, readout="onehot_mean"):
     return med, npos, n, p
 
 
+def sign_test_p(diffs):
+    """双侧符号检验（精确二项）。返回 (n_pos, n_neg, p)。"""
+    from math import comb
+    d = [float(x) for x in diffs if x == x]
+    n = len(d)
+    if n == 0:
+        return 0, 0, float("nan")
+    k = sum(1 for x in d if x > 0)
+    m = n - k
+    p = 2.0 * sum(comb(n, i) for i in range(min(k, m) + 1)) / (2 ** n)
+    return k, m, float(min(1.0, p))
+
+
 def parse_num_cell(cell):
     """`+0.0372 (10)` / `**+0.0372 (10)**` → (0.0372, 10)；解析不出来返回 None。"""
     s = cell.replace("*", "").strip()
@@ -637,13 +650,50 @@ def main():
         elif ftext:
             problems.append("FINDINGS 里找不到「二十六、左右轴」小节")
         if a16:
-            for s, what in ((f"{agg_all.get('p_sign', 0):.4f}", "左右轴 p"),
-                            (f"{ad['posterior']['n_pos']}/{ad['posterior']['n_pos']+ad['posterior']['n_neg']}",
-                             "后部幅度 右>左 被试数"),
-                            (f"{ad['anterior']['n_pos']}/{ad['anterior']['n_pos']+ad['anterior']['n_neg']}",
-                             "前部幅度 右>左 被试数")):
-                if s not in a16:
-                    problems.append(f"[左右轴] INTEGRATION A16 行缺 {what} 的数字 {s}")
+            # ⚠️ A16 的归因数字现在来自**支线 B（10 个被试）**，不是 5 个被试的 ampcheck
+            #    （那 5 个被试的读法已被支线 B 推翻 ⇒ 见 FINDINGS §二十七·二）
+            bfile = HERE / "cross-validation" / "lateral_baseline.json"
+            bsum = None
+            if bfile.exists():
+                bj = json.loads(bfile.read_text(encoding="utf-8"))
+                # 支线 B 的 JSON：per_subject[].vals
+                vs = [(r.get("vals") or {}) for r in bj.get("per_subject", [])]
+                if vs:
+                    def _stat(key):
+                        xs = [v.get(key) for v in vs if v.get(key) is not None]
+                        if not xs:
+                            return None
+                        kk = sum(1 for x in xs if x > 0)
+                        srt = sorted(xs)
+                        return {"n_pos": kk, "n": len(xs),
+                                "median": srt[len(srt) // 2],
+                                "p_sign": sign_test_p(xs)[2]}
+                    bsum = {k: _stat(k) for k in
+                            ("post_RL", "ant_RL", "post_resid_ant_base")}
+            if bsum:
+                for key, label in (("post_RL", "后部幅度 右>左 被试数"),
+                                   ("ant_RL", "前部幅度 右>左 被试数")):
+                    e = bsum.get(key)
+                    if e:
+                        s = f"{e['n_pos']}/{e['n']}"
+                        if s not in a16:
+                            problems.append(
+                                f"[左右轴] INTEGRATION A16 行缺 {label} 的数字 {s}")
+                r = bsum.get("post_resid_ant_base")
+                if r:
+                    for s, what in ((f"{r['median']:+.4f}", "后部残余中位"),
+                                    (f"{r['p_sign']:.4f}", "后部残余 p")):
+                        if s not in a16:
+                            problems.append(
+                                f"[左右轴] INTEGRATION A16 行缺 {what} 的数字 {s}")
+            else:
+                for s, what in ((f"{agg_all.get('p_sign', 0):.4f}", "左右轴 p"),
+                                (f"{ad['posterior']['n_pos']}/{ad['posterior']['n_pos']+ad['posterior']['n_neg']}",
+                                 "后部幅度 右>左 被试数"),
+                                (f"{ad['anterior']['n_pos']}/{ad['anterior']['n_pos']+ad['anterior']['n_neg']}",
+                                 "前部幅度 右>左 被试数")):
+                    if s not in a16:
+                        problems.append(f"[左右轴] INTEGRATION A16 行缺 {what} 的数字 {s}")
         elif itext2:
             problems.append("INTEGRATION.md 里找不到 A16 行")
     else:
@@ -682,6 +732,69 @@ def main():
                             f"[读出检验] §二十七·五 {ro} 的后−前缺数字 {s}")
     else:
         print(f"（缺 {rdf}，跳过读出强度检验比对）")
+
+    # --- 9. exp92 三支线（§二十八·二）---
+    cvf = HERE / "cross-validation" / "cross_validation.json"
+    if cvf.exists():
+        cv = json.loads(cvf.read_text(encoding="utf-8"))
+        br = cv.get("branches", {})
+        A, B, C = br.get("A", {}), br.get("B", {}), br.get("C", {})
+        sec28 = find_section_h2(text, "## 二十八、三条支线并行")
+        lines28 = sec28.splitlines() if sec28 else []
+
+        def row28(marker):
+            for ln in lines28:
+                if ln.startswith(marker):
+                    return ln.replace("−", "-")
+            return ""
+
+        # A 支线：两个模型 × 后部/前部 + 后−前
+        for tag, marker in (("s1a", "| S1a（纯自监督）"), ("s1b", "| S1b（带语义监督）")):
+            e = A.get(tag) or {}
+            ln = row28(marker)
+            if not e or not ln:
+                problems.append(f"[exp92-A] 找不到 {tag} 的行或结果")
+                continue
+            for g in ("POST", "ANT"):
+                if g in e and f"{e[g]['median']:+.4f}" not in ln:
+                    problems.append(f"[exp92-A] §二十八 {tag}/{g} 行缺数字 "
+                                    f"{e[g]['median']:+.4f}")
+            d = e.get("_POST_minus_ANT")
+            if d:
+                for s, what in ((f"{d['median']:+.4f}", "后−前中位"),
+                                (f"{d['p_sign']:.4f}", "后−前 p"),
+                                (f"{d['n_pos']}/{d['n']}", "后−前正向数")):
+                    if s not in ln:
+                        problems.append(f"[exp92-A] §二十八 {tag} 行缺 {what} 的数字 {s}")
+        # B 支线
+        for key, marker in (("post_RL", "| 后部 R−L（原始）"),
+                            ("ant_RL", "| 前部 R−L（全局增益差的代理）"),
+                            ("resid", "| 后部残余（后部 R−L − 前部 R−L）")):
+            e = B.get(key) or {}
+            ln = row28(marker)
+            if not e or not ln:
+                problems.append(f"[exp92-B] 找不到 {key} 的行或结果")
+                continue
+            for s, what in ((f"{e['median']:+.4f}", "中位"),
+                            (f"{e.get('n_pos','-')}/{e.get('n','-')}", "正向数"),
+                            (f"{e.get('p_sign', 0):.4f}", "p")):
+                if s not in ln:
+                    problems.append(f"[exp92-B] §二十八 {key} 行缺 {what} 的数字 {s}")
+        # C 支线
+        for tag, marker in (("raw630", "| **630-d 手工特征**"),
+                            ("s1a_recon", "| S1a 重建层（我们自训）"),
+                            ("s1b_onehot_mean", "| S1b 离散层（带语义监督）"),
+                            ("s1a_onehot_mean", "| S1a 离散层 |")):
+            e = C.get(tag) or {}
+            ln = row28(marker)
+            if not e or not ln:
+                problems.append(f"[exp92-C] 找不到 {tag} 的行或结果")
+                continue
+            s = f"{e['median']:.4f}"
+            if s not in ln:
+                problems.append(f"[exp92-C] §二十八 {tag} 行缺数字 {s}")
+    else:
+        print(f"（缺 {cvf}，跳过 exp92 三支线比对）")
 
     if problems:
         print("✗ 文档与数据不一致：")

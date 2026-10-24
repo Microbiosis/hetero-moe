@@ -1,0 +1,237 @@
+{
+  "config": {
+    "branch": "level",
+    "subjects": "1,2,3,4,5,6,7,8,9,10",
+    "train_images": 1000,
+    "n_perm": 200,
+    "n_perm_null": 50,
+    "n_null": 4,
+    "n_random": 10,
+    "batch_size": 64,
+    "chunk": 20,
+    "out_dir": "/domains/runs/illusionbrain-align/exp92",
+    "self_test": false
+  },
+  "per_subject": [
+    {
+      "subject": "sub-01",
+      "level": {
+        "raw630": {
+          "acc1": 0.0081875,
+          "null_acc1": 0.005218749999999999
+        },
+        "s1a_recon": {
+          "acc1": 0.0061875,
+          "null_acc1": 0.0049375
+        },
+        "s1a_onehot_mean": {
+          "acc1": 0.0046875,
+          "null_acc1": 0.004875
+        },
+        "s1b_onehot_mean": {
+          "acc1": 0.0066875,
+          "null_acc1": 0.0056875
+        }
+      },
+      "elapsed_s": 337.1
+    },
+    {
+      "subject": "sub-02",
+      "level": {
+        "raw630": {
+          "acc1": 0.006375,
+          "null_acc1": 0.005062499999999999
+        },
+        "s1a_recon": {
+          "acc1": 0.00575,
+          "null_acc1": 0.004750000000000001
+        },
+        "s1a_onehot_mean": {
+          "acc1": 0.0048125,
+          "null_acc1": 0.004375
+        },
+        "s1b_onehot_mean": {
+          "acc1": 0.0068125,
+          "null_acc1": 0.005156249999999999
+        }
+      },
+      "elapsed_s": 228.5
+    },
+    {
+      "subject": "sub-03",
+      "level": {
+        "raw630": {
+          "acc1": 0.0075625,
+          "null_acc1": 0.005
+        },
+        "s1a_recon": {
+          "acc1": 0.0053125,
+          "null_acc1": 0.0046875
+        },
+        "s1a_onehot_mean": {
+          "acc1": 0.005,
+          "null_acc1": 0.00509375
+        },
+        "s1b_onehot_mean": {
+          "acc1": 0.0055,
+          "null_acc1": 0.0054375
+        }
+      },
+      "elapsed_s": 194.3
+    },
+    {
+      "subject": "sub-04",
+      "level": {
+        "raw630": {
+          "acc1": 0.0085625,
+          "null_acc1": 0.0045312500000000006
+        },
+        "s1a_recon": {
+          "acc1": 0.005375,
+          "null_acc1": 0.005125
+        },
+        "s1a_onehot_mean": {
+          "acc1": 0.00575,
+          "null_acc1": 0.004625000000000001
+        },
+        "s1b_onehot_mean": {
+          "acc1": 0.0045,
+          "null_acc1": 0.005
+        }
+      },
+      "elapsed_s": 203.6
+    },
+    {
+      "subject": "sub-05",
+      "level": {
+        "raw630": {
+          "acc1": 0.0075,
+          "null_acc1": 0.0049375
+        },
+        "s1a_recon": {
+          "acc1": 0.00525,
+          "null_acc1": 0.0045625
+        },
+        "s1a_onehot_mean": {
+          "acc1": 0.0058125,
+          "null_acc1": 0.005
+        },
+        "s1b_onehot_mean": {
+          "acc1": 0.006,
+          "null_acc1": 0.0043125
+        }
+      },
+      "elapsed_s": 187.7
+    },
+    {
+      "subject": "sub-06",
+      "level": {
+        "raw630": {
+          "acc1": 0.0080625,
+          "null_acc1": 0.00465625
+        },
+        "s1a_recon": {
+          "acc1": 0.0065625,
+          "null_acc1": 0.0049375
+        },
+        "s1a_onehot_mean": {
+          "acc1": 0.0056875,
+          "null_acc1": 0.00503125
+        },
+        "s1b_onehot_mean": {
+          "acc1": 0.0059375,
+          "null_acc1": 0.00540625
+        }
+      },
+      "elapsed_s": 178.4
+    },
+    {
+      "subject": "sub-07",
+      "level": {
+        "raw630": {
+          "acc1": 0.0123125,
+          "null_acc1": 0.00484375
+        },
+        "s1a_recon": {
+          "acc1": 0.006375,
+          "null_acc1": 0.004875
+        },
+        "s1a_onehot_mean": {
+          "acc1": 0.0053125,
+          "null_acc1": 0.00490625
+        },
+        "s1b_onehot_mean": {
+          "acc1": 0.005625,
+          "null_acc1": 0.005125
+        }
+      },
+      "elapsed_s": 167.4
+    },
+    {
+      "subject": "sub-08",
+      "level": {
+        "raw630": {
+          "acc1": 0.0126875,
+          "null_acc1": 0.00509375
+        },
+        "s1a_recon": {
+          "acc1": 0.0065,
+          "null_acc1": 0.005375
+        },
+        "s1a_onehot_mean": {
+          "acc1": 0.0050625,
+          "null_acc1": 0.00509375
+        },
+        "s1b_onehot_mean": {
+          "acc1": 0.00575,
+          "null_acc1": 0.005124999999999999
+        }
+      },
+      "elapsed_s": 167.0
+    },
+    {
+      "subject": "sub-09",
+      "level": {
+        "raw630": {
+          "acc1": 0.0065625,
+          "null_acc1": 0.00475
+        },
+        "s1a_recon": {
+          "acc1": 0.005125,
+          "null_acc1": 0.0049375
+        },
+        "s1a_onehot_mean": {
+          "acc1": 0.0054375,
+          "null_acc1": 0.0048125
+        },
+        "s1b_onehot_mean": {
+          "acc1": 0.005,
+          "null_acc1": 0.0054375
+        }
+      },
+      "elapsed_s": 184.3
+    },
+    {
+      "subject": "sub-10",
+      "level": {
+        "raw630": {
+          "acc1": 0.011375,
+          "null_acc1": 0.0046875
+        },
+        "s1a_recon": {
+          "acc1": 0.007,
+          "null_acc1": 0.0048125
+        },
+        "s1a_onehot_mean": {
+          "acc1": 0.0045625,
+          "null_acc1": 0.00496875
+        },
+        "s1b_onehot_mean": {
+          "acc1": 0.00675,
+          "null_acc1": 0.0045625
+        }
+      },
+      "elapsed_s": 170.6
+    }
+  ]
+}
