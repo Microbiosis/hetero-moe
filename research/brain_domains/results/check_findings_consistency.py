@@ -796,6 +796,189 @@ def main():
     else:
         print(f"（缺 {cvf}，跳过 exp92 三支线比对）")
 
+    # --- 10. exp93：档位归因 / 对比学习 encoder / 模型层地板 ---
+    R93 = HERE / "exp93-results"
+    CV = HERE / "cross-validation"
+    sec29 = find_section_h2(text, "## 二十九、exp93")
+    if not sec29:
+        problems.append("FINDINGS 里找不到「## 二十九、exp93」小节")
+    else:
+        lines29 = sec29.splitlines()
+
+        def row29(prefix):
+            for ln in lines29:
+                if ln.startswith(prefix):
+                    return ln.replace("−", "-")
+            return ""
+
+        def med_up(xs):
+            xs = [float(x) for x in xs if x == x]
+            if not xs:
+                return None
+            s = sorted(xs)
+            return s[len(s) // 2]
+
+        # (a) exp93b 的三条读出 + RSA
+        e93b = R93 / "exp93b_contrastive.json"
+        if e93b.exists():
+            bd = json.loads(e93b.read_text(encoding="utf-8"))
+            rows = [r for r in bd.get("per_subject", []) if "error" not in r]
+
+            def col(path):
+                out = []
+                for r in rows:
+                    v = r
+                    for p in path:
+                        v = (v or {}).get(p) if isinstance(v, dict) else None
+                        if v is None:
+                            break
+                    if v is not None:
+                        out.append(float(v))
+                return out
+
+            for path, marker, label in (
+                    (("zeroshot", "acc1_cos"), "| zeroshot top-1（**单试次**） |",
+                     "exp93b 单试次 top-1"),
+                    (("zeroshot", "acc1_featavg_cos"),
+                     "| zeroshot top-1（**试次平均**） |", "exp93b 试次平均 top-1"),
+                    (("zeroshot", "acc5_cos"), "| zeroshot top-5 |", "exp93b top-5"),
+                    (("ridge_feat", "acc1_cos"),
+                     "| ridge-on-features top-1（A13 口径） |", "exp93b ridge 读出"),
+                    (("rsa", "r"), "| **RSA** |", "exp93b RSA")):
+                m = med_up(col(path))
+                if m is None:
+                    continue
+                ln = row29(marker)
+                if not ln:
+                    problems.append(f"[exp93b] §二十九·四 找不到行「{marker}」")
+                    continue
+                s = f"{m:.4f}" if path[-1] != "r" else f"{m:+.4f}"
+                if s not in ln:
+                    problems.append(f"[exp93b] §二十九·四「{label}」行缺数字 {s}")
+            # 跨被试：完全没进过训练的第 10 个被试
+            hold = [r for r in rows if r.get("subject") == "sub-10"]
+            if hold:
+                v = (hold[0].get("zeroshot") or {}).get("acc1_cos")
+                if v is not None:
+                    ln = next((l for l in lines29 if "sub-10" in l), "")
+                    if not ln:
+                        problems.append("[exp93b] §二十九·四 找不到 sub-10 那一句")
+                    else:
+                        s = f"{float(v):.4f}"
+                        if s not in ln:
+                            problems.append(
+                                f"[exp93b] §二十九·四 的 sub-10 缺数字 {s}")
+        else:
+            print(f"（缺 {e93b}，跳过 exp93b 比对）")
+
+        # (b) exp93a 的因子表（**合并后的 10 被试版**：s1-5 来自 Job 日志、s6-10 来自桶内 JSON）
+        m93 = R93 / "exp93a_merged.json"
+        if m93.exists():
+            merged = json.loads(m93.read_text(encoding="utf-8"))
+            for marker, cellname, label in (
+                    ("| 拟合集 1000 张、单试次 |", "P1/ridge/1000", "exp93a n_train=1000"),
+                    ("| 拟合集 4000 张、单试次 |", "P1/ridge/4000", "exp93a n_train=4000"),
+                    ("| **拟合集 16540 张、单试次** |", "P1/ridge/16540",
+                     "exp93a 全量单试次")):
+                ln = row29(marker)
+                e = merged.get(cellname)
+                if not ln or not e:
+                    continue
+                if f"{e['median_up']:.4f}" not in ln:
+                    problems.append(
+                        f"[exp93a] §二十九·二「{label}」行缺数字 {e['median_up']:.4f}")
+        else:
+            print(f"（缺 {m93}，跳过 exp93a 比对）")
+
+        # (c) 模型层地板：POST/ANT 相对全部随机组的被试数
+        fl = [CV / "posaxis_model_floor_s1-5.json",
+              CV / "posaxis_model_floor.json"]
+        per = {}
+        for fp in fl:
+            if not fp.exists():
+                continue
+            d = json.loads(fp.read_text(encoding="utf-8"))
+            for r in d.get("per_subject", []):
+                if "error" not in r:
+                    per[r["subject"]] = r
+        if per:
+            cnt = {}
+            for tag in ("s1a", "s1b"):
+                up = dn = 0
+                for r in per.values():
+                    g = (r.get("groups") or {}).get(tag, {})
+                    n = (r.get("random_null") or {}).get(tag, {})
+                    gp = (g.get("POST") or {}).get("r")
+                    ga = (g.get("ANT") or {}).get("r")
+                    rp = (n.get("POST") or {}).get("r_max")
+                    ra = (n.get("ANT") or {}).get("r_max")
+                    if gp is not None and rp is not None and gp > rp:
+                        up += 1
+                    if ga is not None and ra is not None and ga < ra:
+                        dn += 1
+                cnt[tag] = (up, dn, len(per))
+            for tag, marker in (("s1a", "| S1a（纯自监督） |"),
+                                ("s1b", "| S1b（带语义监督） |")):
+                up, dn, n = cnt.get(tag, (0, 0, 0))
+                if not n:
+                    continue
+                ln = row29(marker)
+                if not ln:
+                    problems.append(f"[地板] §二十九·五 找不到行「{marker}」")
+                    continue
+                for s, what in ((f"{up}/{n}", "POST 高于全部随机组"),
+                                (f"{dn}/{n}", "ANT 低于全部随机组")):
+                    if s not in ln:
+                        problems.append(
+                            f"[地板] §二十九·五 {tag} 行缺{what}的数字 {s}")
+        else:
+            print(f"（缺地板结果，跳过 exp92-A 地板比对）")
+
+        # (d) exp93c 剂量-反应表（§二十九·五）
+        dosf = R93 / "exp93c_dose.summary.json"
+        if dosf.exists():
+            ds = json.loads(dosf.read_text(encoding="utf-8"))
+            for tag, marker, label in (
+                    ("feature", "| **特征层** 630-d |", "exp93c 特征层"),
+                    ("s1a", "| **模型层 S1a**（纯自监督） |", "exp93c 模型层 S1a"),
+                    ("s1b", "| **模型层 S1b**（带语义监督） |", "exp93c 模型层 S1b")):
+                row = ds.get(tag) or {}
+                if not row:
+                    continue
+                ln = row29(marker)
+                if not ln:
+                    problems.append(f"[exp93c] §二十九·五 找不到行「{marker}」")
+                    continue
+                for k in sorted(row, key=lambda x: int(x)):
+                    s = f"{row[k]['median_up']:+.4f}"
+                    if s not in ln:
+                        problems.append(
+                            f"[exp93c] §二十九·五 {label} 行缺 k={k} 的数字 {s}")
+        else:
+            print(f"（缺 {dosf}，跳过 exp93c 比对）")
+
+        # (e) exp93e 窗口表（§二十九·六）
+        winf = R93 / "exp93e_window.from_log.json"
+        if winf.exists():
+            wn = json.loads(winf.read_text(encoding="utf-8")).get("windows", {})
+            for w, v in wn.items():
+                # 文档里窗口名带 `w` 前缀（日志版不带）⇒ 两种都试
+                ln = row29(f"| `w{w}`") or row29(f"| `{w}`")
+                if not ln:
+                    problems.append(f"[exp93e] §二十九·六 找不到窗口行「{w}」")
+                    continue
+                for s, what in ((f"{v['POST']['median_up']:+.4f}", "POST"),
+                                (f"{v['ANT']['median_up']:+.4f}", "ANT"),
+                                (f"{v['level']['median_up']:.4f}", "档位"),
+                                (f"{v['null_median']:+.4f}", "随机组中位"),
+                                (f"{v['POST_above_all']}/{v['n']}", "POST>全部随机组"),
+                                (f"{v['ANT_below_all']}/{v['n']}", "ANT<全部随机组")):
+                    if s not in ln:
+                        problems.append(
+                            f"[exp93e] §二十九·六 窗口 {w} 行缺{what}的数字 {s}")
+        else:
+            print(f"（缺 {winf}，跳过 exp93e 比对）")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:

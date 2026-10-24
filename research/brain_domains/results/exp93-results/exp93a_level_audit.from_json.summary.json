@@ -1,0 +1,140 @@
+{
+  "n_ok": 5,
+  "n_err": 0,
+  "errors": [],
+  "align_check": [],
+  "table": [
+    {
+      "cell": "P1/ridge/16540",
+      "n": 5,
+      "median_up": 0.034,
+      "mean": 0.03495,
+      "chance": 0.005,
+      "ratio_to_chance": 6.800000000000001,
+      "max": 0.0444375,
+      "min": 0.0260625,
+      "n_above_chance": 5
+    },
+    {
+      "cell": "P1/ridge/16540/试次平均",
+      "n": 5,
+      "median_up": 0.11,
+      "mean": 0.101,
+      "chance": 0.005,
+      "ratio_to_chance": 22.0,
+      "max": 0.115,
+      "min": 0.07,
+      "n_above_chance": 5
+    },
+    {
+      "cell": "P1/ridge/4000",
+      "n": 5,
+      "median_up": 0.023625,
+      "mean": 0.021975,
+      "chance": 0.005,
+      "ratio_to_chance": 4.725,
+      "max": 0.0279375,
+      "min": 0.016,
+      "n_above_chance": 5
+    },
+    {
+      "cell": "P1/ridge/1000",
+      "n": 5,
+      "median_up": 0.011625,
+      "mean": 0.010212500000000001,
+      "chance": 0.005,
+      "ratio_to_chance": 2.3249999999999997,
+      "max": 0.0126875,
+      "min": 0.0065625,
+      "n_above_chance": 5
+    },
+    {
+      "cell": "P1/rrr_k64/16540",
+      "n": 5,
+      "median_up": 0.0341875,
+      "mean": 0.034550000000000004,
+      "chance": 0.005,
+      "ratio_to_chance": 6.8375,
+      "max": 0.04225,
+      "min": 0.026,
+      "n_above_chance": 5
+    },
+    {
+      "cell": "P1/rrr_k256/16540",
+      "n": 5,
+      "median_up": 0.0344375,
+      "mean": 0.0348375,
+      "chance": 0.005,
+      "ratio_to_chance": 6.8875,
+      "max": 0.0443125,
+      "min": 0.0249375,
+      "n_above_chance": 5
+    },
+    {
+      "cell": "P1/cca_k32/16540",
+      "n": 5,
+      "median_up": 0.0260625,
+      "mean": 0.027862500000000002,
+      "chance": 0.005,
+      "ratio_to_chance": 5.2124999999999995,
+      "max": 0.0395625,
+      "min": 0.0166875,
+      "n_above_chance": 5
+    },
+    {
+      "cell": "P1/cca_k128/16540",
+      "n": 5,
+      "median_up": 0.015375,
+      "mean": 0.0149875,
+      "chance": 0.005,
+      "ratio_to_chance": 3.0749999999999997,
+      "max": 0.0180625,
+      "min": 0.012,
+      "n_above_chance": 5
+    },
+    {
+      "cell": "P1/ridge_unit_target/16540",
+      "n": 5,
+      "median_up": 0.034,
+      "mean": 0.03495,
+      "chance": 0.005,
+      "ratio_to_chance": 6.800000000000001,
+      "max": 0.0444375,
+      "min": 0.0260625,
+      "n_above_chance": 5
+    },
+    {
+      "cell": "P1/ridge+PCA128目标/16540",
+      "n": 5,
+      "median_up": 0.0344375,
+      "mean": 0.035875000000000004,
+      "chance": 0.005,
+      "ratio_to_chance": 6.8875,
+      "max": 0.0460625,
+      "min": 0.024875,
+      "n_above_chance": 5
+    },
+    {
+      "cell": "P2/同集检索",
+      "n": 5,
+      "median_up": 0.00375,
+      "mean": 0.00405,
+      "chance": 0.0005,
+      "ratio_to_chance": 7.5,
+      "max": 0.0065,
+      "min": 0.0025,
+      "n_above_chance": 5
+    },
+    {
+      "cell": "P3/同集身份解码",
+      "n": 5,
+      "median_up": 0.065125,
+      "mean": 0.06135,
+      "chance": 0.005,
+      "ratio_to_chance": 13.025,
+      "max": 0.112875,
+      "min": 0.025375,
+      "n_above_chance": 5
+    }
+  ]
+}
