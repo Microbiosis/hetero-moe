@@ -1,0 +1,272 @@
+
+=== sub-01 ===
+  npz 键：['eeg']
+  架构：base
+  [参考 ALL] s1a: recon=+0.0385  onehot_mean=+0.0033  continuous=+0.0032  emb_mean=+0.0051  random_codebook=+0.0012  code_ids=+0.0002
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [参考 ALL] s1b: recon=+0.0855  onehot_mean=+0.0357  continuous=+0.0221  emb_mean=+0.0227  random_codebook=+0.0235  code_ids=+0.0157
+  架构：base
+  [s1a] k=5   recon=+0.0061  onehot_mean=+0.0007  continuous=+0.0047  emb_mean=+0.0046  random_codebook=-0.0019  code_ids=-0.0028
+  [s1a] k=11  recon=+0.0074  onehot_mean=-0.0018  continuous=+0.0029  emb_mean=+0.0038  random_codebook=-0.0019  code_ids=-0.0070
+  [s1a] k=17  recon=+0.0202  onehot_mean=-0.0000  continuous=+0.0045  emb_mean=+0.0052  random_codebook=+0.0029  code_ids=+0.0023
+  [s1a] k=23  recon=+0.0430  onehot_mean=+0.0074  continuous=-0.0067  emb_mean=-0.0040  random_codebook=-0.0040  code_ids=+0.0025
+  [s1a] k=29  recon=+0.0507  onehot_mean=+0.0042  continuous=-0.0035  emb_mean=-0.0042  random_codebook=-0.0001  code_ids=+0.0041
+  [s1a] k=34  recon=+0.0594  onehot_mean=+0.0076  continuous=-0.0073  emb_mean=-0.0055  random_codebook=+0.0025  code_ids=+0.0117
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [s1b] k=5   recon=+0.0557  onehot_mean=+0.0057  continuous=+0.0087  emb_mean=+0.0130  random_codebook=+0.0066  code_ids=+0.0039
+  [s1b] k=11  recon=+0.0623  onehot_mean=+0.0091  continuous=+0.0009  emb_mean=+0.0032  random_codebook=+0.0003  code_ids=+0.0065
+  [s1b] k=17  recon=+0.0637  onehot_mean=+0.0102  continuous=+0.0089  emb_mean=+0.0098  random_codebook=+0.0039  code_ids=+0.0038
+  [s1b] k=23  recon=+0.0728  onehot_mean=+0.0149  continuous=+0.0138  emb_mean=+0.0152  random_codebook=+0.0122  code_ids=+0.0081
+  [s1b] k=29  recon=+0.0856  onehot_mean=+0.0147  continuous=+0.0184  emb_mean=+0.0224  random_codebook=+0.0200  code_ids=+0.0094
+  [s1b] k=34  recon=+0.0884  onehot_mean=+0.0254  continuous=+0.0178  emb_mean=+0.0173  random_codebook=+0.0291  code_ids=+0.0093
+  [参考 ALL] c93b: zeroshot_proj=+0.0928
+  [c93b] k=5   zeroshot_proj=+0.0597
+  [c93b] k=11  zeroshot_proj=+0.0785
+  [c93b] k=17  zeroshot_proj=+0.0872
+  [c93b] k=23  zeroshot_proj=+0.0954
+  [c93b] k=29  zeroshot_proj=+0.0847
+  [c93b] k=34  zeroshot_proj=+0.0910
+  用时 376s
+
+=== sub-02 ===
+  npz 键：['eeg']
+  架构：base
+  [参考 ALL] s1a: recon=+0.0180  onehot_mean=-0.0091  continuous=+0.0021  emb_mean=-0.0036  random_codebook=-0.0083  code_ids=-0.0024
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [参考 ALL] s1b: recon=+0.0718  onehot_mean=+0.0140  continuous=+0.0138  emb_mean=+0.0199  random_codebook=+0.0119  code_ids=+0.0080
+  架构：base
+  [s1a] k=5   recon=-0.0019  onehot_mean=-0.0036  continuous=+0.0001  emb_mean=-0.0031  random_codebook=-0.0044  code_ids=-0.0036
+  [s1a] k=11  recon=+0.0042  onehot_mean=-0.0038  continuous=+0.0016  emb_mean=-0.0000  random_codebook=-0.0074  code_ids=-0.0023
+  [s1a] k=17  recon=+0.0089  onehot_mean=+0.0033  continuous=-0.0018  emb_mean=-0.0029  random_codebook=+0.0009  code_ids=-0.0013
+  [s1a] k=23  recon=+0.0225  onehot_mean=+0.0046  continuous=-0.0005  emb_mean=-0.0007  random_codebook=-0.0044  code_ids=+0.0030
+  [s1a] k=29  recon=+0.0286  onehot_mean=+0.0041  continuous=-0.0019  emb_mean=-0.0021  random_codebook=-0.0033  code_ids=+0.0054
+  [s1a] k=34  recon=+0.0437  onehot_mean=+0.0081  continuous=+0.0041  emb_mean=+0.0047  random_codebook=+0.0088  code_ids=+0.0066
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [s1b] k=5   recon=+0.0213  onehot_mean=-0.0034  continuous=-0.0019  emb_mean=-0.0011  random_codebook=-0.0017  code_ids=+0.0017
+  [s1b] k=11  recon=+0.0354  onehot_mean=+0.0020  continuous=+0.0006  emb_mean=+0.0006  random_codebook=+0.0010  code_ids=-0.0029
+  [s1b] k=17  recon=+0.0593  onehot_mean=+0.0092  continuous=+0.0082  emb_mean=+0.0135  random_codebook=+0.0035  code_ids=+0.0007
+  [s1b] k=23  recon=+0.0791  onehot_mean=+0.0184  continuous=+0.0136  emb_mean=+0.0193  random_codebook=+0.0111  code_ids=+0.0061
+  [s1b] k=29  recon=+0.0813  onehot_mean=+0.0186  continuous=+0.0250  emb_mean=+0.0265  random_codebook=+0.0143  code_ids=-0.0000
+  [s1b] k=34  recon=+0.0821  onehot_mean=+0.0131  continuous=+0.0344  emb_mean=+0.0389  random_codebook=+0.0292  code_ids=+0.0110
+  [参考 ALL] c93b: zeroshot_proj=+0.1150
+  [c93b] k=5   zeroshot_proj=+0.0734
+  [c93b] k=11  zeroshot_proj=+0.1191
+  [c93b] k=17  zeroshot_proj=+0.1270
+  [c93b] k=23  zeroshot_proj=+0.1396
+  [c93b] k=29  zeroshot_proj=+0.1301
+  [c93b] k=34  zeroshot_proj=+0.1142
+  用时 289s
+
+=== sub-03 ===
+  npz 键：['eeg']
+  架构：base
+  [参考 ALL] s1a: recon=+0.0392  onehot_mean=-0.0038  continuous=+0.0041  emb_mean=+0.0049  random_codebook=+0.0055  code_ids=+0.0126
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [参考 ALL] s1b: recon=+0.0966  onehot_mean=+0.0128  continuous=+0.0263  emb_mean=+0.0311  random_codebook=+0.0178  code_ids=+0.0060
+  架构：base
+  [s1a] k=5   recon=+0.0001  onehot_mean=+0.0001  continuous=+0.0029  emb_mean=+0.0032  random_codebook=+0.0027  code_ids=-0.0056
+  [s1a] k=11  recon=+0.0153  onehot_mean=-0.0033  continuous=+0.0014  emb_mean=+0.0026  random_codebook=+0.0024  code_ids=-0.0021
+  [s1a] k=17  recon=+0.0226  onehot_mean=+0.0033  continuous=+0.0029  emb_mean=+0.0029  random_codebook=+0.0062  code_ids=+0.0015
+  [s1a] k=23  recon=+0.0443  onehot_mean=+0.0102  continuous=+0.0064  emb_mean=+0.0040  random_codebook=+0.0051  code_ids=+0.0013
+  [s1a] k=29  recon=+0.0643  onehot_mean=+0.0076  continuous=+0.0021  emb_mean=+0.0029  random_codebook=-0.0025  code_ids=+0.0085
+  [s1a] k=34  recon=+0.0570  onehot_mean=+0.0089  continuous=+0.0102  emb_mean=+0.0103  random_codebook=-0.0044  code_ids=-0.0000
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [s1b] k=5   recon=+0.0317  onehot_mean=+0.0020  continuous=+0.0050  emb_mean=+0.0052  random_codebook=+0.0048  code_ids=-0.0016
+  [s1b] k=11  recon=+0.0784  onehot_mean=+0.0103  continuous=+0.0094  emb_mean=+0.0137  random_codebook=+0.0081  code_ids=+0.0026
+  [s1b] k=17  recon=+0.0927  onehot_mean=+0.0110  continuous=+0.0112  emb_mean=+0.0116  random_codebook=+0.0120  code_ids=+0.0127
+  [s1b] k=23  recon=+0.0874  onehot_mean=+0.0084  continuous=+0.0126  emb_mean=+0.0180  random_codebook=+0.0151  code_ids=+0.0038
+  [s1b] k=29  recon=+0.0919  onehot_mean=+0.0154  continuous=+0.0209  emb_mean=+0.0253  random_codebook=+0.0192  code_ids=-0.0022
+  [s1b] k=34  recon=+0.0973  onehot_mean=+0.0153  continuous=+0.0283  emb_mean=+0.0288  random_codebook=+0.0263  code_ids=-0.0039
+  [参考 ALL] c93b: zeroshot_proj=+0.1368
+  [c93b] k=5   zeroshot_proj=+0.0758
+  [c93b] k=11  zeroshot_proj=+0.1167
+  [c93b] k=17  zeroshot_proj=+0.1193
+  [c93b] k=23  zeroshot_proj=+0.1170
+  [c93b] k=29  zeroshot_proj=+0.1364
+  [c93b] k=34  zeroshot_proj=+0.1364
+  用时 367s
+
+=== sub-04 ===
+  npz 键：['eeg']
+  架构：base
+  [参考 ALL] s1a: recon=+0.0352  onehot_mean=-0.0001  continuous=-0.0038  emb_mean=-0.0028  random_codebook=-0.0010  code_ids=+0.0084
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [参考 ALL] s1b: recon=+0.1177  onehot_mean=+0.0218  continuous=+0.0058  emb_mean=+0.0064  random_codebook=+0.0076  code_ids=+0.0029
+  架构：base
+  [s1a] k=5   recon=-0.0009  onehot_mean=-0.0034  continuous=-0.0032  emb_mean=-0.0034  random_codebook=+0.0032  code_ids=+0.0035
+  [s1a] k=11  recon=+0.0060  onehot_mean=-0.0034  continuous=-0.0013  emb_mean=-0.0056  random_codebook=-0.0007  code_ids=+0.0043
+  [s1a] k=17  recon=+0.0101  onehot_mean=+0.0051  continuous=-0.0048  emb_mean=-0.0049  random_codebook=-0.0038  code_ids=+0.0023
+  [s1a] k=23  recon=+0.0482  onehot_mean=+0.0029  continuous=-0.0066  emb_mean=-0.0067  random_codebook=-0.0026  code_ids=+0.0006
+  [s1a] k=29  recon=+0.0551  onehot_mean=+0.0085  continuous=-0.0006  emb_mean=-0.0007  random_codebook=+0.0042  code_ids=+0.0054
+  [s1a] k=34  recon=+0.0501  onehot_mean=+0.0061  continuous=-0.0047  emb_mean=-0.0070  random_codebook=+0.0028  code_ids=+0.0195
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [s1b] k=5   recon=+0.0520  onehot_mean=+0.0130  continuous=+0.0056  emb_mean=+0.0051  random_codebook=+0.0086  code_ids=+0.0017
+  [s1b] k=11  recon=+0.0571  onehot_mean=+0.0056  continuous=+0.0011  emb_mean=+0.0008  random_codebook=+0.0011  code_ids=-0.0013
+  [s1b] k=17  recon=+0.0903  onehot_mean=+0.0106  continuous=+0.0022  emb_mean=+0.0040  random_codebook=+0.0008  code_ids=+0.0115
+  [s1b] k=23  recon=+0.1240  onehot_mean=+0.0146  continuous=+0.0060  emb_mean=+0.0053  random_codebook=+0.0077  code_ids=+0.0075
+  [s1b] k=29  recon=+0.1138  onehot_mean=+0.0149  continuous=+0.0053  emb_mean=+0.0068  random_codebook=+0.0118  code_ids=+0.0047
+  [s1b] k=34  recon=+0.1199  onehot_mean=+0.0174  continuous=+0.0106  emb_mean=+0.0092  random_codebook=+0.0171  code_ids=+0.0111
+  [参考 ALL] c93b: zeroshot_proj=+0.1449
+  [c93b] k=5   zeroshot_proj=+0.0718
+  [c93b] k=11  zeroshot_proj=+0.1135
+  [c93b] k=17  zeroshot_proj=+0.1251
+  [c93b] k=23  zeroshot_proj=+0.1126
+  [c93b] k=29  zeroshot_proj=+0.1654
+  [c93b] k=34  zeroshot_proj=+0.1453
+  用时 261s
+
+=== sub-05 ===
+  npz 键：['eeg']
+  架构：base
+  [参考 ALL] s1a: recon=+0.0201  onehot_mean=+0.0092  continuous=+0.0093  emb_mean=+0.0096  random_codebook=+0.0057  code_ids=+0.0021
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [参考 ALL] s1b: recon=+0.0919  onehot_mean=+0.0331  continuous=+0.0243  emb_mean=+0.0325  random_codebook=+0.0275  code_ids=+0.0132
+  架构：base
+  [s1a] k=5   recon=+0.0025  onehot_mean=+0.0029  continuous=+0.0030  emb_mean=+0.0040  random_codebook=-0.0008  code_ids=-0.0003
+  [s1a] k=11  recon=+0.0026  onehot_mean=+0.0100  continuous=+0.0054  emb_mean=+0.0027  random_codebook=+0.0010  code_ids=-0.0006
+  [s1a] k=17  recon=+0.0135  onehot_mean=+0.0055  continuous=+0.0063  emb_mean=+0.0067  random_codebook=+0.0026  code_ids=+0.0010
+  [s1a] k=23  recon=+0.0207  onehot_mean=+0.0087  continuous=+0.0050  emb_mean=+0.0026  random_codebook=+0.0039  code_ids=-0.0065
+  [s1a] k=29  recon=+0.0318  onehot_mean=+0.0079  continuous=+0.0108  emb_mean=+0.0060  random_codebook=+0.0050  code_ids=-0.0000
+  [s1a] k=34  recon=+0.0305  onehot_mean=-0.0007  continuous=+0.0154  emb_mean=+0.0128  random_codebook=+0.0074  code_ids=+0.0091
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [s1b] k=5   recon=+0.0515  onehot_mean=+0.0076  continuous=+0.0102  emb_mean=+0.0144  random_codebook=+0.0124  code_ids=-0.0009
+  [s1b] k=11  recon=+0.0620  onehot_mean=+0.0124  continuous=+0.0086  emb_mean=+0.0096  random_codebook=+0.0076  code_ids=+0.0040
+  [s1b] k=17  recon=+0.0724  onehot_mean=+0.0139  continuous=+0.0131  emb_mean=+0.0165  random_codebook=+0.0124  code_ids=+0.0131
+  [s1b] k=23  recon=+0.0861  onehot_mean=+0.0091  continuous=+0.0168  emb_mean=+0.0204  random_codebook=+0.0132  code_ids=+0.0099
+  [s1b] k=29  recon=+0.0786  onehot_mean=+0.0099  continuous=+0.0088  emb_mean=+0.0121  random_codebook=+0.0021  code_ids=+0.0103
+  [s1b] k=34  recon=+0.0885  onehot_mean=+0.0079  continuous=+0.0246  emb_mean=+0.0260  random_codebook=+0.0181  code_ids=+0.0040
+  [参考 ALL] c93b: zeroshot_proj=+0.1245
+  [c93b] k=5   zeroshot_proj=+0.0691
+  [c93b] k=11  zeroshot_proj=+0.0957
+  [c93b] k=17  zeroshot_proj=+0.1202
+  [c93b] k=23  zeroshot_proj=+0.1241
+  [c93b] k=29  zeroshot_proj=+0.1224
+  [c93b] k=34  zeroshot_proj=+0.1232
+  用时 275s
+
+完成：5/5 成功
+结果写入 /domains/runs/illusionbrain-align/exp93f/exp93f_readout_control.json
+Hint: If the job is still running, use `hf jobs logs -f 6adcc1361e112550ce7e0881` to stream new logs until it completes.
+
+=== sub-06 ===
+  npz 键：['eeg']
+  架构：base
+  [参考 ALL] s1a: recon=+0.0482  onehot_mean=-0.0013  continuous=+0.0025  emb_mean=+0.0017  random_codebook=+0.0021  code_ids=+0.0017
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [参考 ALL] s1b: recon=+0.0999  onehot_mean=+0.0145  continuous=+0.0138  emb_mean=+0.0242  random_codebook=+0.0093  code_ids=-0.0099
+  架构：base
+  [s1a] k=5   recon=+0.0062  onehot_mean=-0.0001  continuous=+0.0046  emb_mean=+0.0033  random_codebook=-0.0014  code_ids=+0.0010
+  [s1a] k=11  recon=+0.0056  onehot_mean=+0.0006  continuous=+0.0020  emb_mean=+0.0010  random_codebook=+0.0006  code_ids=+0.0108
+  [s1a] k=17  recon=+0.0271  onehot_mean=+0.0012  continuous=+0.0003  emb_mean=-0.0003  random_codebook=+0.0023  code_ids=-0.0023
+  [s1a] k=23  recon=+0.0507  onehot_mean=+0.0084  continuous=-0.0006  emb_mean=+0.0002  random_codebook=+0.0057  code_ids=+0.0053
+  [s1a] k=29  recon=+0.0689  onehot_mean=+0.0121  continuous=+0.0008  emb_mean=-0.0007  random_codebook=-0.0021  code_ids=+0.0115
+  [s1a] k=34  recon=+0.0667  onehot_mean=+0.0160  continuous=+0.0097  emb_mean=+0.0083  random_codebook=+0.0022  code_ids=+0.0107
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [s1b] k=5   recon=+0.0412  onehot_mean=+0.0006  continuous=-0.0002  emb_mean=+0.0022  random_codebook=-0.0027  code_ids=+0.0041
+  [s1b] k=11  recon=+0.0805  onehot_mean=+0.0124  continuous=+0.0024  emb_mean=+0.0042  random_codebook=+0.0022  code_ids=+0.0078
+  [s1b] k=17  recon=+0.0797  onehot_mean=+0.0120  continuous=+0.0137  emb_mean=+0.0211  random_codebook=+0.0118  code_ids=+0.0114
+  [s1b] k=23  recon=+0.0927  onehot_mean=+0.0137  continuous=+0.0188  emb_mean=+0.0236  random_codebook=+0.0090  code_ids=+0.0079
+  [s1b] k=29  recon=+0.0948  onehot_mean=+0.0163  continuous=+0.0248  emb_mean=+0.0246  random_codebook=+0.0195  code_ids=+0.0062
+  [s1b] k=34  recon=+0.0979  onehot_mean=+0.0196  continuous=+0.0236  emb_mean=+0.0238  random_codebook=+0.0184  code_ids=+0.0041
+  [参考 ALL] c93b: zeroshot_proj=+0.1234
+  [c93b] k=5   zeroshot_proj=+0.0873
+  [c93b] k=11  zeroshot_proj=+0.1113
+  [c93b] k=17  zeroshot_proj=+0.0871
+  [c93b] k=23  zeroshot_proj=+0.1109
+  [c93b] k=29  zeroshot_proj=+0.1087
+  [c93b] k=34  zeroshot_proj=+0.1227
+  用时 345s
+
+=== sub-07 ===
+  npz 键：['eeg']
+  架构：base
+  [参考 ALL] s1a: recon=+0.0256  onehot_mean=+0.0044  continuous=+0.0045  emb_mean=+0.0034  random_codebook=+0.0032  code_ids=-0.0047
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [参考 ALL] s1b: recon=+0.0831  onehot_mean=+0.0186  continuous=+0.0279  emb_mean=+0.0300  random_codebook=+0.0257  code_ids=+0.0018
+  架构：base
+  [s1a] k=5   recon=+0.0055  onehot_mean=-0.0029  continuous=+0.0005  emb_mean=-0.0013  random_codebook=+0.0028  code_ids=+0.0035
+  [s1a] k=11  recon=+0.0160  onehot_mean=+0.0027  continuous=+0.0021  emb_mean=+0.0023  random_codebook=+0.0033  code_ids=+0.0038
+  [s1a] k=17  recon=+0.0205  onehot_mean=+0.0023  continuous=+0.0018  emb_mean=+0.0016  random_codebook=-0.0030  code_ids=-0.0039
+  [s1a] k=23  recon=+0.0252  onehot_mean=+0.0025  continuous=+0.0039  emb_mean=+0.0027  random_codebook=+0.0009  code_ids=-0.0023
+  [s1a] k=29  recon=+0.0469  onehot_mean=+0.0079  continuous=+0.0064  emb_mean=+0.0072  random_codebook=+0.0086  code_ids=+0.0005
+  [s1a] k=34  recon=+0.0486  onehot_mean=+0.0075  continuous=+0.0157  emb_mean=+0.0161  random_codebook=+0.0115  code_ids=+0.0033
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [s1b] k=5   recon=+0.0366  onehot_mean=+0.0061  continuous=+0.0005  emb_mean=+0.0038  random_codebook=+0.0042  code_ids=+0.0018
+  [s1b] k=11  recon=+0.0680  onehot_mean=+0.0151  continuous=+0.0119  emb_mean=+0.0125  random_codebook=+0.0170  code_ids=+0.0052
+  [s1b] k=17  recon=+0.0748  onehot_mean=+0.0183  continuous=+0.0175  emb_mean=+0.0197  random_codebook=+0.0145  code_ids=-0.0007
+  [s1b] k=23  recon=+0.0746  onehot_mean=+0.0170  continuous=+0.0199  emb_mean=+0.0203  random_codebook=+0.0147  code_ids=-0.0011
+  [s1b] k=29  recon=+0.0835  onehot_mean=+0.0162  continuous=+0.0369  emb_mean=+0.0329  random_codebook=+0.0273  code_ids=+0.0070
+  [s1b] k=34  recon=+0.0826  onehot_mean=+0.0187  continuous=+0.0366  emb_mean=+0.0323  random_codebook=+0.0226  code_ids=+0.0037
+  [参考 ALL] c93b: zeroshot_proj=+0.1102
+  [c93b] k=5   zeroshot_proj=+0.0464
+  [c93b] k=11  zeroshot_proj=+0.0671
+  [c93b] k=17  zeroshot_proj=+0.0697
+  [c93b] k=23  zeroshot_proj=+0.1008
+  [c93b] k=29  zeroshot_proj=+0.1025
+  [c93b] k=34  zeroshot_proj=+0.1096
+  用时 255s
+
+=== sub-08 ===
+  npz 键：['eeg']
+  架构：base
+  [参考 ALL] s1a: recon=+0.0240  onehot_mean=+0.0017  continuous=+0.0045  emb_mean=+0.0030  random_codebook=-0.0067  code_ids=-0.0016
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [参考 ALL] s1b: recon=+0.0587  onehot_mean=+0.0121  continuous=+0.0173  emb_mean=+0.0193  random_codebook=+0.0095  code_ids=+0.0123
+  架构：base
+  [s1a] k=5   recon=+0.0007  onehot_mean=-0.0012  continuous=+0.0045  emb_mean=+0.0056  random_codebook=-0.0064  code_ids=-0.0063
+  [s1a] k=11  recon=+0.0092  onehot_mean=+0.0024  continuous=+0.0006  emb_mean=-0.0009  random_codebook=-0.0044  code_ids=+0.0024
+  [s1a] k=17  recon=+0.0202  onehot_mean=+0.0051  continuous=+0.0035  emb_mean=+0.0019  random_codebook=+0.0026  code_ids=+0.0008
+  [s1a] k=23  recon=+0.0312  onehot_mean=+0.0091  continuous=+0.0095  emb_mean=+0.0126  random_codebook=+0.0068  code_ids=+0.0079
+  [s1a] k=29  recon=+0.0272  onehot_mean=+0.0099  continuous=+0.0041  emb_mean=+0.0040  random_codebook=+0.0030  code_ids=-0.0015
+  [s1a] k=34  recon=+0.0348  onehot_mean=+0.0079  continuous=+0.0058  emb_mean=+0.0099  random_codebook=+0.0076  code_ids=+0.0035
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [s1b] k=5   recon=+0.0380  onehot_mean=+0.0026  continuous=+0.0056  emb_mean=+0.0062  random_codebook=+0.0051  code_ids=+0.0015
+  [s1b] k=11  recon=+0.0522  onehot_mean=+0.0131  continuous=+0.0147  emb_mean=+0.0165  random_codebook=+0.0110  code_ids=+0.0057
+  [s1b] k=17  recon=+0.0671  onehot_mean=+0.0141  continuous=+0.0136  emb_mean=+0.0124  random_codebook=+0.0063  code_ids=+0.0116
+  [s1b] k=23  recon=+0.0558  onehot_mean=+0.0041  continuous=+0.0062  emb_mean=+0.0088  random_codebook=+0.0012  code_ids=+0.0001
+  [s1b] k=29  recon=+0.0560  onehot_mean=+0.0125  continuous=+0.0178  emb_mean=+0.0192  random_codebook=+0.0151  code_ids=-0.0015
+  [s1b] k=34  recon=+0.0591  onehot_mean=+0.0095  continuous=+0.0208  emb_mean=+0.0214  random_codebook=+0.0083  code_ids=+0.0044
+  [参考 ALL] c93b: zeroshot_proj=+0.1371
+  [c93b] k=5   zeroshot_proj=+0.0754
+  [c93b] k=11  zeroshot_proj=+0.1064
+  [c93b] k=17  zeroshot_proj=+0.1109
+  [c93b] k=23  zeroshot_proj=+0.1232
+  [c93b] k=29  zeroshot_proj=+0.1317
+  [c93b] k=34  zeroshot_proj=+0.1353
+  用时 317s
+
+=== sub-09 ===
+  npz 键：['eeg']
+  架构：base
+  [参考 ALL] s1a: recon=+0.0244  onehot_mean=+0.0063  continuous=+0.0031  emb_mean=+0.0037  random_codebook=+0.0031  code_ids=+0.0019
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [参考 ALL] s1b: recon=+0.0912  onehot_mean=+0.0107  continuous=+0.0054  emb_mean=+0.0130  random_codebook=+0.0067  code_ids=+0.0025
+  架构：base
+  [s1a] k=5   recon=+0.0024  onehot_mean=+0.0045  continuous=+0.0029  emb_mean=+0.0054  random_codebook=-0.0009  code_ids=+0.0006
+  [s1a] k=11  recon=+0.0117  onehot_mean=+0.0055  continuous=+0.0053  emb_mean=+0.0073  random_codebook=+0.0049  code_ids=+0.0051
+  [s1a] k=17  recon=+0.0088  onehot_mean=+0.0074  continuous=+0.0040  emb_mean=+0.0016  random_codebook=+0.0010  code_ids=+0.0027
+  [s1a] k=23  recon=+0.0427  onehot_mean=+0.0076  continuous=+0.0006  emb_mean=+0.0031  random_codebook=-0.0010  code_ids=+0.0030
+  [s1a] k=29  recon=+0.0587  onehot_mean=+0.0100  continuous=+0.0028  emb_mean=+0.0012  random_codebook=-0.0045  code_ids=+0.0074
+  [s1a] k=34  recon=+0.0668  onehot_mean=-0.0014  continuous=+0.0025  emb_mean=+0.0048  random_codebook=-0.0027  code_ids=+0.0054
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [s1b] k=5   recon=+0.0439  onehot_mean=+0.0060  continuous=+0.0052  emb_mean=+0.0096  random_codebook=-0.0024  code_ids=+0.0000
+  [s1b] k=11  recon=+0.0651  onehot_mean=+0.0041  continuous=+0.0033  emb_mean=+0.0064  random_codebook=+0.0013  code_ids=+0.0016
+  [s1b] k=17  recon=+0.0827  onehot_mean=+0.0067  continuous=+0.0048  emb_mean=+0.0079  random_codebook=+0.0046  code_ids=-0.0025
+  [s1b] k=23  recon=+0.0775  onehot_mean=+0.0059  continuous=+0.0037  emb_mean=+0.0037  random_codebook=+0.0019  code_ids=+0.0041
+  [s1b] k=29  recon=+0.0826  onehot_mean=+0.0047  continuous=+0.0001  emb_mean=+0.0019  random_codebook=+0.0106  code_ids=+0.0030
+  [s1b] k=34  recon=+0.0866  onehot_mean=+0.0100  continuous=-0.0023  emb_mean=-0.0011  random_codebook=+0.0082  code_ids=-0.0005
+  [参考 ALL] c93b: zeroshot_proj=+0.1273
+  [c93b] k=5   zeroshot_proj=+0.0909
+  [c93b] k=11  zeroshot_proj=+0.1134
+  [c93b] k=17  zeroshot_proj=+0.1069
+  [c93b] k=23  zeroshot_proj=+0.1114
+  [c93b] k=29  zeroshot_proj=+0.1254
+  [c93b] k=34  zeroshot_proj=+0.1259
+  用时 1672s
+
+=== sub-10 ===
+  npz 键：['eeg']
+  架构：base
+  [参考 ALL] s1a: recon=+0.0479  onehot_mean=-0.0044  continuous=-0.0031  emb_mean=-0.0028  random_codebook=-0.0056  code_ids=-0.0025
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+Hint: If the job is still running, use `hf jobs logs -f 6adcc1e71e112550ce7e08d6` to stream new logs until it completes.

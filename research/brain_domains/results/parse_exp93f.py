@@ -126,19 +126,85 @@ def slopes_from_dose(dose, ref):
     return out
 
 
+def row_stats(r):
+    """一条曲线的斜率 / 归一化斜率 / 单调性（并**写回**该行，供守卫用）。"""
+    ks = sorted(r["curve"], key=int)
+    r0 = r["curve"][ks[0]]["median_up"]
+    r1 = r["curve"][ks[-1]]["median_up"]
+    slope = r1 - r0
+    norm = None
+    if r.get("ref_all") is not None and abs(r["ref_all"] - r0) > 1e-9:
+        norm = slope / (r["ref_all"] - r0)
+    seq = [r["curve"][k]["median_up"] for k in ks]
+    mono = sum(1 for a, b in zip(seq, seq[1:]) if b > a)
+    r["slope"] = slope
+    r["norm_slope"] = norm
+    r["monotonic"] = f"{mono}/{len(seq)-1}"
+    r["n_monotonic"] = mono
+    r["n_steps"] = len(seq) - 1
+    return {"slope": slope, "norm": norm, "mono": mono, "n_steps": len(seq) - 1}
+
+
+def norm_dose(dose):
+    """桶内 JSON 的 dose 值是 `{"r_median":…, "rs":[…]}`，日志里是纯浮点 ⇒ 统一成浮点。"""
+    out = {}
+    for tag, ros in (dose or {}).items():
+        out[tag] = {}
+        for ro, curve in (ros or {}).items():
+            out[tag][ro] = {k: (v["r_median"] if isinstance(v, dict) else float(v))
+                            for k, v in curve.items()}
+    return out
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     data = fetch_json()
     per = None
+    srcs = []
     if data:
         for r in data.get("per_subject", []):
             if "error" in r:
                 continue
             per = per or {}
-            per[r["subject"]] = {"ref": r.get("ref_all", {}), "dose": r.get("dose", {})}
-    if not per:
-        per = parse_log(LOGF)
-        print("（桶内 JSON 未就位 ⇒ 用 Job 日志解析）")
+            per[r["subject"]] = {"ref": r.get("ref_all", {}),
+                                 "dose": norm_dose(r.get("dose", {}))}
+        if per:
+            srcs.append(f"桶内 JSON（{len(per)} 个被试）")
+    # ---- 兜底/补充：**Job 日志**里已完成的被试（桶内 JSON 只含一个 Job 的一半）----
+    lg = parse_log(LOGF)
+    if lg:
+        cand = {}
+        for s, v in lg.items():
+            if s in per:
+                continue
+            cand[s] = v
+        # ⚠️ **两遍严格过滤**（否则斜率是**不同样本集相减**）：
+        #   ① 先取所有候选被试**共有**的 (模型, 读出) 组合；
+        #   ② 再要求每个被试在这些组合上**都有全部 6 个 k**。
+        #   （否则「跑到一半的被试」会让 k=5 用 9 个、k=34 只用 8 个。）
+        if cand:
+            # ⚠️ **空曲线的候选（刚开始的被试）直接跳过**：
+            #    否则它会让「所有候选共有的 (模型,读出) 集合」变成空 ⇒ 全部被误杀。
+            nonempty = {s: v for s, v in cand.items()
+                        if any(v["dose"].get(t) for t in v["dose"])}
+            keysets = []
+            for v in nonempty.values():
+                keysets.append({(t, r) for t, ros in v["dose"].items() for r in ros})
+            common = set.intersection(*keysets) if keysets else set()
+            need = {"5", "11", "17", "23", "29", "34"}
+            keep = {}
+            for s, v in nonempty.items():
+                if common and all(set(v["dose"][t][r]) >= need for (t, r) in common):
+                    keep[s] = v
+            dropped = sorted(set(cand) - set(keep))
+            if dropped:
+                print(f"  （剔除曲线不完整/为空的被试：{', '.join(dropped)}）")
+            if keep:
+                per = per or {}
+                per.update(keep)
+                srcs.append(f"Job 日志补 {len(keep)} 个被试")
+    if per:
+        print(f"数据来源：{' + '.join(srcs)} ⇒ 共 {len(per)} 个被试")
     if not per:
         print("✗ 没有可用数据")
         return
@@ -168,18 +234,10 @@ def main():
     for r in rows:
         ks = sorted(r["curve"], key=int)
         vals = " ".join(f"{r['curve'][k]['median_up']:+.4f}  " for k in ks)
-        ks_ = [float(k) for k in ks]
-        r0 = r["curve"][ks[0]]["median_up"]
-        r1 = r["curve"][ks[-1]]["median_up"]
-        slope = r1 - r0
-        norm = None
-        if r["ref_all"] is not None and abs(r["ref_all"] - r0) > 1e-9:
-            norm = slope / (r["ref_all"] - r0)
-        seq = [r["curve"][k]["median_up"] for k in ks]
-        mono = sum(1 for a, b in zip(seq, seq[1:]) if b > a)
-        print(f"{r['tag']:<6} {r['readout']:<16} {vals} {slope:>+9.4f} "
-              f"{(f'{norm:>+9.3f}' if norm is not None else '      —  ')} "
-              f"{mono}/{len(seq)-1:>4}")
+        st = row_stats(r)
+        print(f"{r['tag']:<6} {r['readout']:<16} {vals} {st['slope']:>+9.4f} "
+              f"{(f'{st['norm']:>+9.3f}' if st['norm'] is not None else '      —  ')} "
+              f"{st['mono']}/{st['n_steps']:>4}  (n={min(v['n'] for v in r['curve'].values())})")
 
     (OUT / "exp93f_summary.json").write_text(
         json.dumps({"n_subjects": len(per), "rows": rows}, indent=2,
@@ -188,23 +246,17 @@ def main():
          f"被试 {len(per)} 个；**中位 = 上中位**；斜率 = r(k=34) − r(k=5)", "",
          "| 模型 | 读出 | " + " | ".join(f"k={k}" for k in
                                         sorted({int(k) for r in rows for k in r['curve']})) +
-         " | 斜率 | 归一斜率 | 单调 |",
-         "|---|---|" + "---:|" * (len({int(k) for r in rows for k in r['curve']}) + 3)]
+         " | 斜率 | 归一斜率 | 单调 | n |",
+         "|---|---|" + "---:|" * (len({int(k) for r in rows for k in r['curve']}) + 4)]
     for r in rows:
         ks = sorted(r["curve"], key=int)
-        r0 = r["curve"][ks[0]]["median_up"]
-        r1 = r["curve"][ks[-1]]["median_up"]
-        slope = r1 - r0
-        norm = None
-        if r["ref_all"] is not None and abs(r["ref_all"] - r0) > 1e-9:
-            norm = slope / (r["ref_all"] - r0)
-        seq = [r["curve"][k]["median_up"] for k in ks]
-        mono = sum(1 for a, b in zip(seq, seq[1:]) if b > a)
+        st = row_stats(r)
         L.append(f"| {r['tag']} | {r['readout']} | " +
                  " | ".join(f"{r['curve'][k]['median_up']:+.4f}" for k in ks) +
-                 f" | {slope:+.4f} | " +
-                 (f"{norm:+.3f} |" if norm is not None else "— |") +
-                 f" {mono}/{len(seq)-1} |")
+                 f" | {st['slope']:+.4f} | " +
+                 (f"{st['norm']:+.3f} |" if st["norm"] is not None else "— |") +
+                 f" {st['mono']}/{st['n_steps']} |" +
+                 f" {min(v['n'] for v in r['curve'].values())} |")
     (OUT / "exp93f_summary.md").write_text("\n".join(L) + "\n", encoding="utf-8")
     print(f"\n写入 {OUT/'exp93f_summary.md'}")
 

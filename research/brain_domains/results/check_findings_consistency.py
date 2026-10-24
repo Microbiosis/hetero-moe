@@ -979,6 +979,36 @@ def main():
         else:
             print(f"（缺 {winf}，跳过 exp93e 比对）")
 
+        # (f) exp93f 读出混淆预检表（§二十九·九）
+        f93 = R93 / "exp93f_summary.json"
+        if f93.exists():
+            fs = json.loads(f93.read_text(encoding="utf-8"))
+            # ⚠️ **只搜 §二十九·九 子节**：整节里还有 exp93c 的剂量表（同样含 S1a/recon 字样）
+            i99 = text.find("### 二十九·九")
+            sub99 = text[i99:] if i99 >= 0 else ""
+            j99 = sub99.find("\n### ")
+            if j99 > 0:
+                sub99 = sub99[:j99]
+            lines99 = sub99.splitlines()
+            for r in fs.get("rows", []):
+                if "slope" not in r:
+                    continue
+                tag, ro = r["tag"], r["readout"]
+                cand = [l for l in lines99
+                        if (f"**{tag}**".lower() in l.lower()
+                            or f"| {tag} |".lower() in l.lower()) and ro in l]
+                if not cand:
+                    problems.append(f"[exp93f] §二十九·九 找不到 {tag}/{ro} 那一行")
+                    continue
+                slope_s = f"{r['slope']:+.4f}"
+                mono_s = str(r.get("monotonic", ""))
+                if not any(slope_s in l and (not mono_s or mono_s in l) for l in cand):
+                    problems.append(
+                        f"[exp93f] §二十九·九 {tag}/{ro} 行缺斜率 {slope_s}"
+                        + (f" / 单调 {mono_s}" if mono_s else ""))
+        else:
+            print(f"（缺 {f93}，跳过 exp93f 比对）")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:
