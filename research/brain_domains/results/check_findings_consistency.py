@@ -487,6 +487,21 @@ def main():
                 if n_sig is not None and e["n_sig"] != n_sig:
                     problems.append(f"[位置轴] {g}：文档显著 {n_sig}，"
                                     f"结果 {e['n_sig']}")
+            # 配对差（后部 − 前部）那一行：数字与 p 值都要在
+            pma = psumm.get("POST_minus_ANT")
+            if pma:
+                ln = ""
+                for line in sec.splitlines():
+                    if "后部 - 前部（配对）" in line.replace("−", "-"):
+                        ln = line.replace("−", "-")
+                        break
+                if not ln:
+                    problems.append("[位置轴] 文档里找不到「后部 − 前部（配对）」那一行")
+                else:
+                    for s, what in ((f"{pma['median']:+.4f}", "后−前差中位"),
+                                    (f"{pma['p_sign']:.4f}", "后−前差 p")):
+                        if s not in ln:
+                            problems.append(f"[位置轴] 「后部 − 前部（配对）」行缺 {what} 的数字 {s}")
             for g in ("ALL", "POST", "ANT", "OCC"):
                 if g not in pdoc:
                     problems.append(f"[位置轴] 文档表里没有 {g} 行")
@@ -550,9 +565,12 @@ def main():
             lines = fsec.splitlines()
 
             def _line(marker):
+                # ⚠️ 文档里的排版减号「−」已被归一成 ASCII「-」⇒ **标记也要一起归一**
+                #    （否则标记永远匹配不上，守卫会误报「找不到行」）
+                m = marker.replace("−", "-")
                 for ln in lines:
-                    if marker in ln:
-                        return ln
+                    if m in ln.replace("−", "-"):
+                        return ln.replace("−", "-")
                 return ""
 
             # ⚠️ **按行定位**（不能整节搜）：同一个数可能在别处重复出现
@@ -578,6 +596,44 @@ def main():
                     if s not in ln:
                         problems.append(
                             f"[左右轴] FINDINGS §二十六「{marker}」行缺 {what} 的数字 {s}")
+            # --- exp90-lateral 的组级/迁移数（§二十六·三）---
+            lf = HERE / "lateral-results" / "exp90_lateral.json"
+            if lf.exists():
+                lj = json.loads(lf.read_text(encoding="utf-8"))
+                vs = (lj.get("v2") or {}).get("summary", {})
+                lr = vs.get("LEFT_minus_RIGHT", {})
+                for marker, pairs in (
+                        ("语义对齐 RSA（中位，10/10 显著）",
+                         ((f"{vs.get('LEFT_RSA', {}).get('median', 0):+.4f}", "LEFT RSA"),
+                          (f"{vs.get('RIGHT_RSA', {}).get('median', 0):+.4f}", "RIGHT RSA"),
+                          (f"{vs.get('ALL_RSA', {}).get('median', 0):+.4f}", "ALL RSA"))),
+                        ("逐被试配对差（左 − 右）",
+                         ((f"{lr.get('median', 0):+.4f}", "左右配对差中位"),
+                          (f"{lr.get('p_sign', 0):.4f}", "左右配对差 p"))),
+                        ("左右两组的「图像相似度结构」相关",
+                         ((f"{vs.get('RDMRED_L_R', {}).get('median', 0):+.4f}",
+                           "左右结构冗余"),)),
+                        ("同侧分半可靠度上限",
+                         ((f"{vs.get('RDMRED_CEILING', {}).get('median', 0):+.4f}",
+                           "同侧分半上限"),)),
+                        ("跨侧 左→右（位点镜像对齐）",
+                         ((f"{vs.get('MB_XL2R', {}).get('median', 0):.4f}",
+                           "跨侧 transfer acc1"),
+                          (f"{vs.get('MB_XM2R', {}).get('median', 0):.4f}",
+                           "错位对照 acc1"))),
+                        ("对齐/错位 = ",
+                         ((f"{vs.get('TRANSFER_XL2R_over_XM2R', {}).get('median', 0):.3f}",
+                           "对齐/错位比"),))):
+                    ln = _line(marker)
+                    if not ln:
+                        problems.append(f"[左右轴] FINDINGS §二十六 找不到行「{marker}」")
+                        continue
+                    for s, what in pairs:
+                        if s not in ln:
+                            problems.append(
+                                f"[左右轴] FINDINGS §二十六「{marker}」行缺 {what} 的数字 {s}")
+            else:
+                problems.append("缺 lateral-results/exp90_lateral.json")
         elif ftext:
             problems.append("FINDINGS 里找不到「二十六、左右轴」小节")
         if a16:

@@ -59,18 +59,26 @@ def main():
                     f"[轴标签] {name}:{i} 出现「裂脑」但同行没有「左右轴」"
                     f"：{line.strip()[:90]}")
 
-    # --- 轴表 ---
+    # --- 轴台账：结构检查（不只是找词）---
     spec = ROOT / "BRAIN_STRUCTURE_SPEC.md"
     if spec.exists():
         text = spec.read_text(encoding="utf-8")
-        i = text.find("### 1.4")
+        i = text.find("### 1.2")
         j = text.find("\n### ", i + 1) if i >= 0 else -1
-        sec = text[i:j] if i >= 0 else ""
+        sec = text[i: j if j > 0 else len(text)] if i >= 0 else ""
         if not sec:
-            problems.append("BRAIN_STRUCTURE_SPEC.md 里找不到 §1.4 轴表")
-        for ax in AXES:
-            if ax not in sec:
-                problems.append(f"[轴表] §1.4 缺「{ax}」这一行")
+            problems.append("BRAIN_STRUCTURE_SPEC.md 里找不到「### 1.2 四条轴的台账」")
+        else:
+            for ax in AXES:
+                if ax not in sec:
+                    problems.append(f"[轴台账] §1.2 缺「{ax}」这一行")
+            for col in ("证据状态", "不能借来干什么"):
+                if col not in sec:
+                    problems.append(f"[轴台账] §1.2 缺「{col}」这一列")
+            for ax, need in (("位置轴", "实测是真轴"), ("发育轴", "缺 pNE 侧数据"),
+                             ("左右轴", "不可归因")):
+                if ax in sec and need not in sec:
+                    problems.append(f"[轴台账] §1.2 的「{ax}」行没写明状态（应含「{need}」）")
     mf = ROOT / "MODEL_FORM.md"
     if mf.exists():
         if "左右轴" not in mf.read_text(encoding="utf-8"):
@@ -81,8 +89,8 @@ def main():
         for p in problems:
             print("   -", p)
         return 1
-    print(f"✓ 措辞合格（原语表述都带「位置轴」；裂脑引用都带「左右轴」；"
-          f"四套轴都在表里）｜豁免：{', '.join(sorted(EXEMPT))}")
+    print(f"✓ 措辞合格（原语表述都带「位置轴/前后轴」；裂脑引用都带「左右轴」；"
+          f"轴台账有四条轴 + 证据状态 + 不可借用列）｜豁免：{', '.join(sorted(EXEMPT))}")
     return 0
 
 
