@@ -35,7 +35,7 @@ EXEMPT = {"TERMINOLOGY.md"}
 
 PRIMITIVE_TERMS = ("两原语", "两个原语", "一对原语", "分原语")
 LATERAL_TERMS = ("裂脑",)
-AXES = ("谱系轴", "位置轴", "左右轴", "功能轴")
+AXES = ("谱系轴", "位置轴", "左右轴", "功能轴", "层/柱轴")
 # 「位置轴」的两个同义写法都算数（规则本身用「位置轴」，正文有时写「前后轴」）
 POSITION_QUALIFIERS = ("位置轴", "前后轴")
 
@@ -90,7 +90,7 @@ def main():
             print("   -", p)
         return 1
     print(f"✓ 措辞合格（原语表述都带「位置轴/前后轴」；裂脑引用都带「左右轴」；"
-          f"轴台账有四条轴 + 证据状态 + 不可借用列）｜豁免：{', '.join(sorted(EXEMPT))}")
+          f"轴台账有 {len(AXES)} 条轴 + 证据状态 + 不可借用列）｜豁免：{', '.join(sorted(EXEMPT))}")
     return 0
 
 
