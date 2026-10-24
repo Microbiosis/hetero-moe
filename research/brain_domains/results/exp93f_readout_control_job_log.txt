@@ -269,4 +269,30 @@ Hint: If the job is still running, use `hf jobs logs -f 6adcc1361e112550ce7e0881
   架构：base
   [参考 ALL] s1a: recon=+0.0479  onehot_mean=-0.0044  continuous=-0.0031  emb_mean=-0.0028  random_codebook=-0.0056  code_ids=-0.0025
   架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [参考 ALL] s1b: recon=+0.1095  onehot_mean=+0.0281  continuous=+0.0262  emb_mean=+0.0410  random_codebook=+0.0234  code_ids=+0.0173
+  架构：base
+  [s1a] k=5   recon=+0.0006  onehot_mean=-0.0040  continuous=-0.0041  emb_mean=-0.0016  random_codebook=-0.0018  code_ids=-0.0028
+  [s1a] k=11  recon=+0.0046  onehot_mean=+0.0033  continuous=+0.0015  emb_mean=+0.0022  random_codebook=-0.0006  code_ids=-0.0013
+  [s1a] k=17  recon=+0.0373  onehot_mean=+0.0021  continuous=-0.0001  emb_mean=-0.0006  random_codebook=-0.0000  code_ids=+0.0033
+  [s1a] k=23  recon=+0.0380  onehot_mean=+0.0077  continuous=-0.0002  emb_mean=-0.0008  random_codebook=+0.0040  code_ids=+0.0048
+  [s1a] k=29  recon=+0.0556  onehot_mean=+0.0060  continuous=-0.0007  emb_mean=-0.0004  random_codebook=+0.0062  code_ids=+0.0104
+  [s1a] k=34  recon=+0.0607  onehot_mean=+0.0087  continuous=-0.0015  emb_mean=-0.0010  random_codebook=+0.0006  code_ids=+0.0040
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  [s1b] k=5   recon=+0.0601  onehot_mean=+0.0031  continuous=-0.0055  emb_mean=-0.0000  random_codebook=+0.0013  code_ids=-0.0014
+  [s1b] k=11  recon=+0.0840  onehot_mean=+0.0184  continuous=+0.0152  emb_mean=+0.0240  random_codebook=+0.0153  code_ids=+0.0079
+  [s1b] k=17  recon=+0.0840  onehot_mean=+0.0130  continuous=+0.0174  emb_mean=+0.0218  random_codebook=+0.0178  code_ids=+0.0147
+  [s1b] k=23  recon=+0.1063  onehot_mean=+0.0254  continuous=+0.0318  emb_mean=+0.0339  random_codebook=+0.0324  code_ids=+0.0113
+  [s1b] k=29  recon=+0.1066  onehot_mean=+0.0242  continuous=+0.0211  emb_mean=+0.0233  random_codebook=+0.0212  code_ids=+0.0129
+  [s1b] k=34  recon=+0.1107  onehot_mean=+0.0194  continuous=+0.0341  emb_mean=+0.0348  random_codebook=+0.0399  code_ids=+0.0157
+  [参考 ALL] c93b: zeroshot_proj=+0.1302
+  [c93b] k=5   zeroshot_proj=+0.0754
+  [c93b] k=11  zeroshot_proj=+0.0814
+  [c93b] k=17  zeroshot_proj=+0.0952
+  [c93b] k=23  zeroshot_proj=+0.1360
+  [c93b] k=29  zeroshot_proj=+0.1257
+  [c93b] k=34  zeroshot_proj=+0.1288
+  用时 686s
+
+完成：5/5 成功
+结果写入 /domains/runs/illusionbrain-align/exp93f/exp93f_readout_control.json
 Hint: If the job is still running, use `hf jobs logs -f 6adcc1e71e112550ce7e08d6` to stream new logs until it completes.

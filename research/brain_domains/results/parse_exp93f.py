@@ -84,20 +84,32 @@ def parse_log(path):
 
 def fetch_json(retries=5):
     dst = OUT / "exp93f_readout_control.json"
-    if dst.exists() and dst.stat().st_size > 0:
-        return json.loads(dst.read_text(encoding="utf-8"))
-    src = f"{BUCKET}/exp93f/exp93f_readout_control.json"
-    for i in range(retries):
+    if not (dst.exists() and dst.stat().st_size > 0):
+        src = f"{BUCKET}/exp93f/exp93f_readout_control.json"
+        for i in range(retries):
+            try:
+                r = subprocess.run(["hf", "buckets", "cp", src, str(dst)],
+                                   capture_output=True, text=True, timeout=420)
+                if r.returncode == 0 and dst.exists() and dst.stat().st_size > 0:
+                    break
+            except subprocess.TimeoutExpired:
+                pass
+            print(f"  重试 {i+1}/{retries}")
+            time.sleep(6)
+    # ⚠️ **两个 Job 写同一个桶内路径** ⇒ 会互相覆盖 ⇒ 本地把**每一段**单独存一份，
+    #    这里按被试把**所有分段**合并（缺哪段就再从桶里补那一段）。
+    if not (dst.exists() and dst.stat().st_size > 0):
+        return None
+    merged = {}
+    for fp in sorted(OUT.glob("exp93f_readout_control*.json")):
         try:
-            r = subprocess.run(["hf", "buckets", "cp", src, str(dst)],
-                               capture_output=True, text=True, timeout=420)
-            if r.returncode == 0 and dst.exists() and dst.stat().st_size > 0:
-                return json.loads(dst.read_text(encoding="utf-8"))
-        except subprocess.TimeoutExpired:
-            pass
-        print(f"  重试 {i+1}/{retries}")
-        time.sleep(6)
-    return None
+            d = json.loads(fp.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        for r in d.get("per_subject", []):
+            if "error" not in r:
+                merged[r["subject"]] = r
+    return {"per_subject": [merged[k] for k in sorted(merged)]}
 
 
 def slopes_from_dose(dose, ref):
