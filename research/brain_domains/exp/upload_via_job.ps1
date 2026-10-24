@@ -47,6 +47,26 @@ function Send-Job {
         Select-String -Pattern 'id:|Error|error' | Select-Object -First 1
 }
 
+# ⚠️ **只认「真的拿到 id」**：提交失败时 `hf jobs run` 会打 RemoteProtocolError，
+#    那行里有 "Error" 却没有 "id:" ⇒ 用 'id:' 判定，避免把失败当成功。
+function Test-Submitted {
+    param($Out)
+    return ($Out -and ($Out.ToString() -match 'id:\s*[0-9a-f]{8,}'))
+}
+
+# ⚠️ **落地校验**：Job 写进去的字节数必须等于本地字节数，否则就是半个文件。
+function Test-Landed {
+    param([string]$File, [int]$Expect)
+    $out = hf buckets ls "hf://buckets/illusion-brain/brain-domains/scripts" 2>&1 | Out-String
+    # ⚠️ **必须先剥 ANSI 颜色码**（`hf` 输出带转义序列 ⇒ 否则正则匹配不到）
+    $out = $out -replace "`e\[[0-9;]*[A-Za-z]", ""
+    $m = [regex]::Match($out, "(?m)^\s*(\d+)\s+\S+\s+\S+\s+scripts/$([regex]::Escape($File))\s*$")
+    if (-not $m.Success) { return $false }
+    $sz = [int]$m.Groups[1].Value
+    Write-Host ("[{0}]   落地校验：{1} 字节（期望 {2}）" -f (Get-Date -Format 'HH:mm:ss'), $sz, $Expect)
+    return ($sz -eq $Expect)
+}
+
 $chunkDir = "/domains/.chunks"
 
 foreach ($f in $Files) {
@@ -66,15 +86,23 @@ foreach ($f in $Files) {
           "p.write_bytes(zlib.decompress(base64.b64decode('$b64'),47));" +
           "print('WROTE',p,p.stat().st_size)"
     $ok = $false
-    for ($i = 1; $i -le 2; $i++) {
+    for ($i = 1; $i -le 4; $i++) {
         $out = Send-Job -Name "upload-$($f -replace '\.py$','')" -Code $py
         Write-Host ("[{0}]   整传第 {1} 次：{2}" -f (Get-Date -Format 'HH:mm:ss'), $i,
             ($out -replace '\s+', ' '))
-        if ($out -and $out -match 'id:') { $ok = $true; break }
+        if (Test-Submitted $out) { $ok = $true; break }
+        Start-Sleep -Seconds 15
     }
     # --- 分块兜底：接口对大 payload 持续失败时用 ---
     if (-not $ok) {
-        $chunk = 3000
+        # ⚠️ **先把同名旧分块清掉**：拼接用的是 `glob('$chunkDir/$f.*')`
+        #    ⇒ 上一次失败留下的残块会被一起拼进去 ⇒ 产出**损坏**的文件。
+        $clean = "import pathlib,glob;" +
+                 "[pathlib.Path(p).unlink() for p in glob.glob('$chunkDir/$f.*')];" +
+                 "print('CLEANED')"
+        $oc = Send-Job -Name "clean-$($f -replace '\.py$','')" -Code $clean
+        if (Test-Submitted $oc) { Start-Sleep -Seconds 25 }
+        $chunk = 2000
         $n = [math]::Ceiling($b64.Length / $chunk)
         Write-Host ("[{0}]   改分块：{1} 块 × {2} 字符" -f (Get-Date -Format 'HH:mm:ss'), $n, $chunk)
         $sent = 0
@@ -85,12 +113,13 @@ foreach ($f in $Files) {
                   "p.parent.mkdir(parents=True,exist_ok=True);" +
                   "p.write_text('$part');print('CHUNK',p,p.stat().st_size)"
             $s = $false
-            for ($k = 1; $k -le 4; $k++) {
+            for ($k = 1; $k -le 6; $k++) {
                 $o2 = Send-Job -Name "chunk-$($f -replace '\.py$','')-$c" -Code $cp
-                if ($o2 -and $o2 -match 'id:') { $s = $true; break }
-                Start-Sleep -Seconds 8
+                if (Test-Submitted $o2) { $s = $true; break }
+                Start-Sleep -Seconds 12
             }
             if ($s) { $sent++ } else { Write-Host "    ✗ 第 $c 块没发出去" }
+            Start-Sleep -Seconds 4
         }
         if ($sent -eq $n) {
             $join = "import base64,zlib,pathlib,glob;" +
@@ -100,9 +129,16 @@ foreach ($f in $Files) {
                     "p.write_bytes(zlib.decompress(base64.b64decode(b),47));" +
                     "print('WROTE',p,p.stat().st_size)"
             $oj = Send-Job -Name "join-$($f -replace '\.py$','')" -Code $join
-            if ($oj -and $oj -match 'id:') { $ok = $true; Write-Host "    ✓ 拼接 Job 已发" }
+            if (Test-Submitted $oj) { $ok = $true; Write-Host "    ✓ 拼接 Job 已发" }
+        }
+    }
+    if ($ok) {
+        # ⚠️ **等 Job 跑完再校验**（刚提交时文件还没写进去）
+        for ($w = 1; $w -le 12; $w++) {
+            Start-Sleep -Seconds 20
+            if (Test-Landed -File $f -Expect $bytes.Length) { break }
         }
     }
     if (-not $ok) { Write-Host "  ✗ $f 没发出去" }
 }
-Write-Host "上传 Job 已发出（等它们跑完后校验桶里的大小）"
+Write-Host "上传 Job 已发出（字节数已校验）"
