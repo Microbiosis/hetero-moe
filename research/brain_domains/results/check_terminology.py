@@ -348,6 +348,15 @@ def main():
         for d in doc_ops:
             if d not in cls_names:
                 problems.append(f"[设计书] §3 写了代码里不存在的算子「{d}」")
+        # ⚠️ **算子类名在全文只能出现一次**（在 §3 表格里）——
+        #    理由：同一个事实抄在两处 ⇒ 篡改其中一处时守卫会打不中（锚点不唯一）
+        #    ⇒ 既防文档漂移，也防守卫自身失效。
+        for c in cls_names:
+            n = cdtext.count(c)
+            if n != 1:
+                problems.append(
+                    f"[设计书] 算子类名「{c}」在全文出现 {n} 次（应恰好 1 次，"
+                    "且只在 §3 的算子表里 ⇒ 其它地方只写指针）")
         # 性质测试的**项数**必须与测试文件里的 check() 调用数一致
         n_checks = len(re.findall(r"(?m)^\s*check\(",
                                   test_f.read_text(encoding="utf-8")))
