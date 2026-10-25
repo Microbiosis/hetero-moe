@@ -879,7 +879,9 @@ def main():
                     ("| 拟合集 1000 张、单试次 |", "P1/ridge/1000", "exp93a n_train=1000"),
                     ("| 拟合集 4000 张、单试次 |", "P1/ridge/4000", "exp93a n_train=4000"),
                     ("| **拟合集 16540 张、单试次** |", "P1/ridge/16540",
-                     "exp93a 全量单试次")):
+                     "exp93a 全量单试次"),
+                    ("| **拟合集 16540 张、试次平均** |", "P1/ridge/16540/试次平均",
+                     "exp93a 全量试次平均")):
                 ln = row29(marker)
                 e = merged.get(cellname)
                 if not ln or not e:
@@ -957,11 +959,20 @@ def main():
         else:
             print(f"（缺 {dosf}，跳过 exp93c 比对）")
 
-        # (e) exp93e 窗口表（§二十九·六）
-        winf = R93 / "exp93e_window.from_log.json"
-        if winf.exists():
-            wn = json.loads(winf.read_text(encoding="utf-8")).get("windows", {})
+        # (e) exp93e 窗口表（§二十九·六）—— 优先用**合并后的 n=10 汇总**，
+        #     没有就退回日志版（n=6–7），两条路的键名不同 ⇒ 两种都认。
+        wn = None
+        sumf = R93 / "exp93e_window.summary.json"
+        logf = R93 / "exp93e_window.from_log.json"
+        if sumf.exists():
+            wn = json.loads(sumf.read_text(encoding="utf-8"))
+            wn = wn.get("windows", wn)
+        elif logf.exists():
+            wn = json.loads(logf.read_text(encoding="utf-8")).get("windows", {})
+        if wn:
             for w, v in wn.items():
+                if not isinstance(v, dict) or "POST" not in v:
+                    continue          # 汇总文件的元数据键（n_ok/n_err 等）不是窗口
                 # 文档里窗口名带 `w` 前缀（日志版不带）⇒ 两种都试
                 ln = row29(f"| `w{w}`") or row29(f"| `{w}`")
                 if not ln:
@@ -977,9 +988,25 @@ def main():
                         problems.append(
                             f"[exp93e] §二十九·六 窗口 {w} 行缺{what}的数字 {s}")
         else:
-            print(f"（缺 {winf}，跳过 exp93e 比对）")
+            print(f"（缺 {sumf} 与 {logf}，跳过 exp93e 比对）")
 
-        # (f) exp93f 读出混淆预检表（§二十九·九）
+        # (f) exp93d 模型层读出 @ n_train=16540（§二十九·四 的 A18 检验表）
+        d93 = R93 / "exp93d_level.summary.json"
+        if d93.exists():
+            dd = json.loads(d93.read_text(encoding="utf-8"))
+            for r in dd.get("rows", []):
+                tag = r["tag"]
+                ln = row29(f"| {tag} |")
+                if not ln:
+                    problems.append(f"[exp93d] §二十九·四 找不到 {tag} 那一行")
+                    continue
+                if f"{r['median_up']:.4f}" not in ln:
+                    problems.append(
+                        f"[exp93d] §二十九·四 {tag} 行缺数字 {r['median_up']:.4f}")
+        else:
+            print(f"（缺 {d93}，跳过 exp93d 比对）")
+
+        # (g) exp93f 读出混淆预检表（§二十九·九）
         f93 = R93 / "exp93f_summary.json"
         if f93.exists():
             fs = json.loads(f93.read_text(encoding="utf-8"))

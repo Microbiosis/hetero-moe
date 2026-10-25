@@ -63,7 +63,9 @@ def mean(xs):
 def fetch(rel, retries=6, wait=6, force=False):
     """从桶里取 JSON（读通道不稳 ⇒ 重试）。"""
     OUT.mkdir(parents=True, exist_ok=True)
-    dst = OUT / Path(rel).name
+    # ⚠️ 本地名必须带**相对路径**（不能只取 basename）：
+    #    否则 exp93e-s1-5/... 与 exp93e-s6-10/... 会落成同一个文件而互相覆盖。
+    dst = OUT / (rel.replace("/", "__") + ".json")
     if (not force) and dst.exists() and dst.stat().st_size > 0:
         return json.loads(dst.read_text(encoding="utf-8"))
     src = f"{BUCKET}/{rel}"
@@ -305,6 +307,19 @@ def summarize_window(data):
     return out
 
 
+def fetch_segments(name, rels, force=False):
+    """取**多段**结果并按被试合并（两个 Job 写不同目录 ⇒ 必须合并才有 n=10）。"""
+    merged = {}
+    for rel in rels:
+        d = fetch(rel, force=force)
+        if not d:
+            continue
+        for r in d.get("per_subject", []):
+            if "error" not in r:
+                merged[r.get("subject", f"{name}-{len(merged)}")] = r
+    return {"per_subject": [merged[k] for k in sorted(merged)]}
+
+
 def pick_font():
     """中文字体（沿用本项目 plot_*.py 的同一套候选与写法）。"""
     import matplotlib
@@ -528,7 +543,9 @@ def main():
     a = merge_exp93a()
     b = fetch("exp93b/exp93b_contrastive.json", force=args.force)
     c = fetch("exp93c/exp93c_dose_response.json", force=args.force)
-    e = fetch("exp93e/exp93e_window_sweep.json", force=args.force)
+    e = fetch_segments("exp93e", ["exp93e-s1-5/exp93e_window_sweep.json",
+                                  "exp93e-s6-10/exp93e_window_sweep.json"],
+                       force=args.force)
     dose = summarize_dose(c) if c else None
     window = summarize_window(e) if e else None
     if window is None:
