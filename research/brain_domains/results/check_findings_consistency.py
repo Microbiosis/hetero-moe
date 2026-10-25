@@ -1131,7 +1131,8 @@ def main():
                         if f"{float(val):.4f}" not in a20:
                             problems.append(
                                 f"[台账] A20 缺{what} {float(val):.4f}")
-                    for need in ("p=0.0020", "R4", "9–10/10"):
+                    for need in ("p=0.0020", "R4", "9–10/10",
+                                 "CENT 运动 14", "FRONT 执行 15"):
                         if need not in a20:
                             problems.append(f"[台账] A20 缺「{need}」")
         else:
@@ -1290,6 +1291,69 @@ def main():
                             f"[exp95] §三十一·四 里找不到判决字符串「{v95}」")
         else:
             print(f"（缺 {e95}，跳过 exp95 比对）")
+
+        # --- 13. 三组切分（按脑科学解剖）：§4.1 的分组剖面表 ← exp89 的组级数字 ---
+        pos89 = HERE / "posaxis-results" / "exp89_posaxis.json"
+        specf = ROOT / "BRAIN_STRUCTURE_SPEC.md"
+        if pos89.exists() and specf.exists():
+            p89 = json.loads(pos89.read_text(encoding="utf-8")).get("summary", {})
+            stext = specf.read_text(encoding="utf-8")
+            i = stext.find("### 4.1 前提已实测")
+            j = stext.find("### 4.2 ", i + 1) if i >= 0 else -1
+            sec41 = stext[i: j if j > 0 else len(stext)]
+            for g, marker in (("POST", "| **POST** 感觉/语义 |"),
+                              ("CENT", "| **CENT** 运动 |"),
+                              ("FRONT", "| **FRONT** 执行 |"),
+                              ("ANT", "| （原 **ANT**")):
+                e = p89.get(g) or {}
+                v = e.get("r_median")
+                ns = e.get("n_sig")
+                if v is None:
+                    continue
+                row = next((ln for ln in sec41.splitlines()
+                            if ln.startswith(marker)), "")
+                if not row:
+                    problems.append(
+                        f"[三组] BRAIN_STRUCTURE_SPEC §4.1 找不到分组行「{marker}」")
+                    continue
+                if f"{float(v):+.4f}" not in row:
+                    problems.append(
+                        f"[三组] §4.1 分组行 {g} 的 RSA 不符：文档里没有 {float(v):+.4f}")
+                if ns is not None and f"{ns}/10" not in row:
+                    problems.append(
+                        f"[三组] §4.1 分组行 {g} 的显著被试数不符：文档里没有 {ns}/10")
+
+            # 通道数：**同一事实两处呈现**（exp89 原表 §二十五·二 与 §4.1 的三组表）⇒ 机器绑定
+            sec89 = find_section(text, "二十五·二、(a) 通道组消融")
+            if not sec89:
+                problems.append("FINDINGS 里找不到「二十五·二」小节（通道数的正本）")
+            else:
+                ch89 = {}
+                for ln in sec89.splitlines():
+                    if not ln.startswith("|"):
+                        continue
+                    cells = [c.strip() for c in ln.strip().strip("|").split("|")]
+                    if len(cells) < 2 or not cells[1].isdigit():
+                        continue
+                    name = cells[0].replace("**", "").split(" ")[0]
+                    ch89[name] = cells[1]
+                for g, marker in (("POST", "| **POST** 感觉/语义 |"),
+                                  ("CENT", "| **CENT** 运动 |"),
+                                  ("FRONT", "| **FRONT** 执行 |"),
+                                  ("ANT", "| （原 **ANT**")):
+                    if g not in ch89:
+                        continue
+                    row = next((ln for ln in sec41.splitlines()
+                                if ln.startswith(marker)), "")
+                    if not row:
+                        continue
+                    cells = [c.strip() for c in row.strip().strip("|").split("|")]
+                    if len(cells) < 2 or cells[1] != ch89[g]:
+                        problems.append(
+                            f"[三组] §4.1 分组行 {g} 的通道数 {cells[1] if len(cells) > 1 else '?'}"
+                            f" 与 exp89 原表的 {ch89[g]} 不一致")
+        else:
+            print(f"（缺 {pos89} 或 {specf}，跳过三组切分比对）")
 
     if problems:
         print("✗ 文档与数据不一致：")

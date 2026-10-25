@@ -207,6 +207,42 @@ def main():
                             f"但台账 §1 已把它标为「{st[:24]}…」"
                             f"⇒ 两个状态互斥（改台账，或从未测表移除）")
 
+    # --- G4：三组切分（按脑科学解剖）必须三处口径一致 ---
+    #     ① C 类表要有 C19（前部不是一个功能单位 + 两条关键一手出处）
+    #     ② A14 必须带「ANT 不是一个原语」的限定
+    #     ③ 规格 §4.2 必须有三组切分 + 3×3 转分化矩阵
+    integ_f = ROOT / "INTEGRATION.md"
+    spec_f = ROOT / "BRAIN_STRUCTURE_SPEC.md"
+    if integ_f.exists() and spec_f.exists():
+        itext = integ_f.read_text(encoding="utf-8")
+        stext = spec_f.read_text(encoding="utf-8")
+        c19 = next((l for l in itext.splitlines() if l.startswith("| **C19**")), "")
+        if not c19:
+            problems.append("[C19] INTEGRATION.md 里找不到 C19 那一行（前部皮层功能的外部参照）")
+        else:
+            for need in ("不是一个功能单位", "10.1038/nrn2667", "10.1126/science.1138071",
+                         "CENT", "FRONT", "功能轴"):
+                if need not in c19:
+                    problems.append(f"[C19] 缺「{need}」")
+        a14 = next((l for l in itext.splitlines() if l.startswith("| **A14**")), "")
+        if not a14:
+            problems.append("[台账] INTEGRATION.md 里找不到 A14 那一行")
+        else:
+            for need in ("不是一个原语", "CENT 运动 14", "FRONT 执行 15", "可分性未测"):
+                if need not in a14:
+                    problems.append(
+                        f"[台账] A14 缺「{need}」"
+                        f"（前部按脑科学解剖含两个子系统 ⇒ 不能当成一个原语）")
+        i42 = stext.find("### 4.2 exp90 的规格")
+        j42 = stext.find("### 4.3 ", i42 + 1) if i42 >= 0 else -1
+        sec42 = stext[i42: j42 if j42 > 0 else len(stext)]
+        if not sec42:
+            problems.append("[规格] BRAIN_STRUCTURE_SPEC.md 里找不到「### 4.2 exp90 的规格」小节")
+        else:
+            for need in ("三组切分", "CENT 运动 14", "FRONT 执行 15", "3×3 矩阵"):
+                if need not in sec42:
+                    problems.append(f"[规格] §4.2 缺「{need}」")
+
     if problems:
         print("✗ 措辞限定词问题：")
         for p in problems:

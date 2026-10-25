@@ -135,6 +135,17 @@ CASES = [
      "exp95：V2 的 C1 值被改"),
     (G_NUM, "FINDINGS_TIER0_RSA.md", "`HYBRID_WORSE`", "`HYBRID_BETTER`",
      "exp95：判决字符串被改（与 JSON 双向绑定）"),
+    # --- 三组切分（按脑科学解剖）---
+    (G_TERM, "INTEGRATION.md", "| **C19** |", "| **C18** |",
+     "三组：C19（前部不是一个功能单位的外部参照）被删"),
+    (G_TERM, "INTEGRATION.md", "「前部（ANT 29）」不是一个原语", "「前部（ANT 29）」就是一个原语",
+     "三组：A14 的「ANT 不是一个原语」限定被删"),
+    (G_TERM, "BRAIN_STRUCTURE_SPEC.md", "**三组切分**", "**两组合并**",
+     "三组：规格 §4.2 的三组切分被删"),
+    (G_NUM, "BRAIN_STRUCTURE_SPEC.md", "| **CENT** 运动 | 14 |", "| **CENT** 运动 | 15 |",
+     "三组：§4.1 分组表的 CENT 通道数被改"),
+    (G_NUM, "BRAIN_STRUCTURE_SPEC.md", "| **FRONT** 执行 | 15 |", "| **FRONT** 执行 | 14 |",
+     "三组：§4.1 分组表的 FRONT 通道数被改"),
 ]
 
 
