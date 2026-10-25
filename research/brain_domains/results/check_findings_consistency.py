@@ -1023,6 +1023,120 @@ def main():
         else:
             print(f"（缺 {f93}，跳过 exp93f 比对）")
 
+        # --- 11. exp94：骨干对照 × 交叉验证 ---
+        e94 = HERE / "exp94-results" / "exp94_summary.json"
+        if e94.exists():
+            d94 = json.loads(e94.read_text(encoding="utf-8"))
+            dec94 = d94.get("decision") or {}
+            s94 = d94.get("summaries") or {}
+            sec30 = find_section(text, "三十·四、结果")
+            if not sec30:
+                problems.append("FINDINGS 里找不到「三十·四、结果」小节")
+            else:
+                rows30 = sec30.splitlines()
+
+                def row94(prefix):
+                    for ln in rows30:
+                        if ln.startswith(prefix):
+                            return ln.replace("−", "-")
+                    return ""
+
+                # (a) C7 自一致性表：4 个量的「已发表 / 本实验 V0」
+                #     ⚠️ 标记用**文档里的可读行标签**（不是 JSON 键名）⇒ 改文档会报错
+                for k, marker in (("zeroshot_acc1", "| zeroshot acc1 |"),
+                                  ("zeroshot_acc1_featavg", "| zeroshot acc1（试次平均）|"),
+                                  ("rsa", "| RSA |"),
+                                  ("zeroshot_acc5", "| zeroshot acc5 |")):
+                    got = (s94.get("v0") or {}).get(k)
+                    if got is None:
+                        continue
+                    sc = (dec94.get("self_consistency") or {}).get(k) or {}
+                    pub = sc.get("published")
+                    row = row94(marker)
+                    if not row:
+                        problems.append(f"[exp94] §三十·四 找不到自一致性行「{marker}」")
+                        continue
+                    for val, what in ((pub, "已发表值"), (got, "本实验 V0")):
+                        if val is None:
+                            continue
+                        if f"{float(val):.4f}" not in row:
+                            problems.append(
+                                f"[exp94] §三十·四 自一致性行 {k} 缺{what} {float(val):.4f}")
+
+                # (b) 主表：C1/C2/C3 的 V0 / V1 / 配对差 / n_pos / p
+                pr = dec94.get("paired") or {}
+                for key, marker in (("zeroshot_acc1", "| **C1 单试次 top-1** |"),
+                                    ("zeroshot_acc1_featavg", "| **C2 试次平均 top-1** |"),
+                                    ("rsa", "| **C3 RSA** |")):
+                    row = row94(marker)
+                    if not row:
+                        problems.append(f"[exp94] §三十·四 找不到主表行「{marker}」")
+                        continue
+                    v0 = (s94.get("v0") or {}).get(key)
+                    v1 = (s94.get("v1") or {}).get(key)
+                    pd = pr.get(key) or {}
+                    for val, what in ((v0, "V0"), (v1, "V1"),
+                                      (pd.get("median_diff"), "配对差中位")):
+                        if val is None:
+                            continue
+                        if f"{float(val):.4f}" not in row:
+                            problems.append(
+                                f"[exp94] §三十·四 主表 {key} 缺{what} {float(val):.4f}")
+                    if pd.get("n") and pd.get("n_pos") is not None:
+                        tag = f"{pd['n_pos']}/{pd['n']}"
+                        if tag not in row:
+                            problems.append(f"[exp94] §三十·四 主表 {key} 缺配对计数 {tag}")
+                    if pd.get("p_sign") is not None:
+                        ps = f"{float(pd['p_sign']):.4f}"
+                        if ps not in row:
+                            problems.append(
+                                f"[exp94] §三十·四 主表 {key} 缺符号检验 p {ps}")
+
+                # (c) 位置轴表：两个骨干的计数与 POST-ANT
+                pa = dec94.get("posaxis") or {}
+                for v, lab in (("v0", "| V0（混通道）|"), ("v1", "| V1（保留通道身份）|")):
+                    row = row94(lab)
+                    d = pa.get(v)
+                    if not d:
+                        continue
+                    if not row:
+                        problems.append(f"[exp94] §三十·四 找不到位置轴行「{lab}」")
+                        continue
+                    for cnt, what in ((f"{d['post_above_all_rand34']}/{d['n']}", "POST>随机34"),
+                                      (f"{d['ant_below_all_rand29']}/{d['n']}", "ANT<随机29")):
+                        if cnt not in row:
+                            problems.append(
+                                f"[exp94] §三十·四 位置轴 {v} 行缺{what} {cnt}")
+                    for val, what in ((d.get("post_minus_ant_median"), "POST-ANT"),
+                                      (d.get("post_acc1_median"), "POST acc1"),
+                                      (d.get("ant_acc1_median"), "ANT acc1"),
+                                      (d.get("post_rsa_median"), "POST RSA")):
+                        if val is None:
+                            continue
+                        if f"{float(val):.4f}" not in row:
+                            problems.append(
+                                f"[exp94] §三十·四 位置轴 {v} 行缺{what} {float(val):.4f}")
+
+                # (d) INTEGRATION 的 A20 台账行必须带关键数与 R4 限定
+                it = (ROOT / "INTEGRATION.md").read_text(encoding="utf-8")
+                a20 = next((l for l in it.splitlines() if l.startswith("| **A20**")), "")
+                if not a20:
+                    problems.append("[台账] INTEGRATION.md 里找不到 A20 那一行")
+                else:
+                    for val, what in (((s94.get("v1") or {}).get("zeroshot_acc1"), "V1 单试次"),
+                                      ((s94.get("v0") or {}).get("zeroshot_acc1"), "V0 单试次"),
+                                      ((pr.get("zeroshot_acc1") or {}).get("median_diff"), "配对差")):
+                        if val is None:
+                            continue
+                        if f"{float(val):.4f}" not in a20:
+                            problems.append(
+                                f"[台账] A20 缺{what} {float(val):.4f}")
+                    for need in ("p=0.0020", "R4", "10/10 & 10/10"):
+                        if need not in a20:
+                            problems.append(f"[台账] A20 缺「{need}」")
+        else:
+            print(f"（缺 {e94}，跳过 exp94 比对）")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:
