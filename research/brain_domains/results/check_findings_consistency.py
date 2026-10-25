@@ -818,47 +818,34 @@ def main():
             s = sorted(xs)
             return s[len(s) // 2]
 
-        # (a) exp93b 的三条读出 + RSA
-        e93b = R93 / "exp93b_contrastive.json"
+        # (a) exp93b 的三条读出 + RSA（绑定**汇总** JSON ⇒ 不受原始文件改名影响）
+        e93b = R93 / "exp93b_contrastive.summary.json"
         if e93b.exists():
             bd = json.loads(e93b.read_text(encoding="utf-8"))
-            rows = [r for r in bd.get("per_subject", []) if "error" not in r]
-
-            def col(path):
-                out = []
-                for r in rows:
-                    v = r
-                    for p in path:
-                        v = (v or {}).get(p) if isinstance(v, dict) else None
-                        if v is None:
-                            break
-                    if v is not None:
-                        out.append(float(v))
-                return out
-
-            for path, marker, label in (
-                    (("zeroshot", "acc1_cos"), "| zeroshot top-1（**单试次**） |",
-                     "exp93b 单试次 top-1"),
-                    (("zeroshot", "acc1_featavg_cos"),
-                     "| zeroshot top-1（**试次平均**） |", "exp93b 试次平均 top-1"),
-                    (("zeroshot", "acc5_cos"), "| zeroshot top-5 |", "exp93b top-5"),
-                    (("ridge_feat", "acc1_cos"),
-                     "| ridge-on-features top-1（A13 口径） |", "exp93b ridge 读出"),
-                    (("rsa", "r"), "| **RSA** |", "exp93b RSA")):
-                m = med_up(col(path))
-                if m is None:
+            for key, marker, label in (
+                    ("zeroshot_acc1", "| zeroshot top-1（**单试次**） |", "exp93b 单试次 top-1"),
+                    ("zeroshot_acc1_featavg", "| zeroshot top-1（**试次平均**） |",
+                     "exp93b 试次平均 top-1"),
+                    ("zeroshot_acc5", "| zeroshot top-5 |", "exp93b top-5"),
+                    ("ridge_feat_acc1", "| ridge-on-features top-1（A13 口径） |",
+                     "exp93b ridge 读出"),
+                    ("rsa", "| **RSA** |", "exp93b RSA")):
+                e = bd.get(key) or {}
+                if e.get("median_up") is None:
                     continue
                 ln = row29(marker)
                 if not ln:
                     problems.append(f"[exp93b] §二十九·四 找不到行「{marker}」")
                     continue
-                s = f"{m:.4f}" if path[-1] != "r" else f"{m:+.4f}"
+                s = (f"{e['median_up']:+.4f}" if key == "rsa"
+                     else f"{e['median_up']:.4f}")
                 if s not in ln:
                     problems.append(f"[exp93b] §二十九·四「{label}」行缺数字 {s}")
             # 跨被试：完全没进过训练的第 10 个被试
-            hold = [r for r in rows if r.get("subject") == "sub-10"]
+            ps = bd.get("per_subject") or []
+            hold = [r for r in ps if r.get("subject") == "sub-10"]
             if hold:
-                v = (hold[0].get("zeroshot") or {}).get("acc1_cos")
+                v = ((hold[0].get("zeroshot") or {}).get("acc1_cos"))
                 if v is not None:
                     ln = next((l for l in lines29 if "sub-10" in l), "")
                     if not ln:

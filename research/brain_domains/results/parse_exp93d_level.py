@@ -36,6 +36,7 @@ CHANCE = 1.0 / 200.0
 SEGMENTS = [
     ("exp92-level-full-s1-5", "level/level.json"),
     ("exp92-level-full-s6-10", "level/level.json"),
+    ("exp93d-gpu", "exp93d_gpu.json"),     # ★ GPU 版（CPU 版一个被试 60 分钟，跑不满）
 ]
 # 手工基线（exp93a，全量 16540，10 被试合并后）
 HANDCRAFT = {"raw630": 0.0321}
