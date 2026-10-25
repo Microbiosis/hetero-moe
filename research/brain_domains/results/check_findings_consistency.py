@@ -1213,6 +1213,81 @@ def main():
                             problems.append(
                                 f"[台账] A14 缺「{need}」"
                                 f"（exp95 复现把 POST 侧的 10/10 降级成 9–10/10）")
+
+                # (d) §三十一·四：V1 vs V2 的主表 + 位置轴（**判决已出**）
+                dec95 = d95.get("decision") or {}
+                sec31c = find_section(text, "三十一·四、")
+                if not sec31c:
+                    problems.append("FINDINGS 里找不到「三十一·四」小节")
+                else:
+                    rows_c = sec31c.splitlines()
+
+                    def row95c(prefix):
+                        for ln in rows_c:
+                            if ln.startswith(prefix):
+                                return ln.replace("−", "-")
+                        return ""
+
+                    pr95 = dec95.get("paired_v2_minus_v1") or {}
+                    s95v1 = (d95.get("summaries") or {}).get("v1") or {}
+                    s95v2 = (d95.get("summaries") or {}).get("v2") or {}
+                    for key, marker in (("zeroshot_acc1", "| **C1 单试次 top-1** |"),
+                                        ("zeroshot_acc1_featavg", "| **C2 试次平均 top-1** |"),
+                                        ("rsa", "| C3 RSA |")):
+                        row = row95c(marker)
+                        if not row:
+                            problems.append(f"[exp95] §三十一·四 找不到主表行「{marker}」")
+                            continue
+                        for val, what in ((s95v1.get(key), "V1"), (s95v2.get(key), "V2"),
+                                          ((pr95.get(key) or {}).get("median_diff"), "配对差中位")):
+                            if val is None:
+                                continue
+                            if f"{float(val):.4f}" not in row:
+                                problems.append(
+                                    f"[exp95] §三十一·四 主表 {key} 缺{what} {float(val):.4f}")
+                        pd = pr95.get(key) or {}
+                        if pd.get("n") and pd.get("n_pos") is not None:
+                            tag = f"{pd['n_pos']}/{pd['n']}"
+                            if tag not in row:
+                                problems.append(
+                                    f"[exp95] §三十一·四 主表 {key} 缺配对计数 {tag}")
+                        if pd.get("p_sign") is not None:
+                            ps = f"{float(pd['p_sign']):.4f}"
+                            if ps not in row:
+                                problems.append(
+                                    f"[exp95] §三十一·四 主表 {key} 缺符号检验 p {ps}")
+                    pa95c = dec95.get("posaxis") or {}
+                    for v, marker in (("v1", "| V1 |"), ("v2", "| V2 |")):
+                        row = row95c(marker)
+                        d = pa95c.get(v)
+                        if not d:
+                            continue
+                        if not row:
+                            problems.append(f"[exp95] §三十一·四 找不到位置轴行「{marker}」")
+                            continue
+                        for cnt, what in ((f"{d['post_above_all_rand34']}/{d['n']}", "POST>随机34"),
+                                          (f"{d['ant_below_all_rand29']}/{d['n']}", "ANT<随机29")):
+                            if cnt not in row:
+                                problems.append(
+                                    f"[exp95] §三十一·四 位置轴 {v} 行缺{what} {cnt}")
+                        for val, what in ((d.get("post_minus_ant_median"), "POST−ANT"),
+                                          (d.get("post_acc1_median"), "POST acc1"),
+                                          (d.get("ant_acc1_median"), "ANT acc1")):
+                            if val is None:
+                                continue
+                            if f"{float(val):.4f}" not in row:
+                                problems.append(
+                                    f"[exp95] §三十一·四 位置轴 {v} 行缺{what} {float(val):.4f}")
+                    # 判决必须落在「V2 被砍、用 V1」这一支（HYBRID_WORSE / REDUNDANT）
+                    v95 = dec95.get("verdict")
+                    if v95 not in (None, "HYBRID_WORSE", "HYBRID_REDUNDANT"):
+                        problems.append(
+                            f"[exp95] §三十一·四 的判决是 {v95}"
+                            f" ⇒ 与「剃刀砍掉 V2、用 V1」的表述不一致")
+                    # 判决**双向绑定**：JSON 里的判决字符串必须出现在文档里
+                    if v95 and v95 not in sec31c:
+                        problems.append(
+                            f"[exp95] §三十一·四 里找不到判决字符串「{v95}」")
         else:
             print(f"（缺 {e95}，跳过 exp95 比对）")
 

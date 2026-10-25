@@ -129,6 +129,12 @@ CASES = [
      "exp95：位置轴 POST 侧的 9/10 被改成 10/10"),
     (G_NUM, "INTEGRATION.md", "**POST 侧 9–10/10**", "**POST 侧 10/10**",
      "exp95：台账 A14 的「9–10/10」降级表述被删"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md",
+     "| **C1 单试次 top-1** | **0.0622**（12.4×）| 0.0619（12.4×）|",
+     "| **C1 单试次 top-1** | **0.0622**（12.4×）| 0.0719（12.4×）|",
+     "exp95：V2 的 C1 值被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "`HYBRID_WORSE`", "`HYBRID_BETTER`",
+     "exp95：判决字符串被改（与 JSON 双向绑定）"),
 ]
 
 

@@ -210,6 +210,7 @@ def main():
     L("")
     L("| 骨干 | POST>全部随机34 | ANT<全部随机29 | POST−ANT（中位） | POST acc1 | ANT acc1 | n |")
     L("|---|---:|---:|---:|---:|---:|---:|")
+    pa_by_v = {}
     for v, lab in (("v1", "V1（exp94 的赢家）"), ("v2", "V2（合成版）")):
         recs = [r for r in per.get(v, []) if "error" not in r and "posaxis" in r]
         if not recs:
@@ -217,19 +218,20 @@ def main():
             continue
         up = sum(1 for r in recs if r["posaxis"]["verdict"]["post_above_all_rand34"])
         dn = sum(1 for r in recs if r["posaxis"]["verdict"]["ant_below_all_rand29"])
-        pa_v1 = {"post_above_all_rand34": up, "ant_below_all_rand29": dn,
-                 "post_minus_ant_median": med(
-                     [r["posaxis"]["verdict"]["post_minus_ant"] for r in recs]),
-                 "post_acc1_median": med(
-                     [r["posaxis"]["groups"]["POST"]["acc1"] for r in recs]),
-                 "ant_acc1_median": med(
-                     [r["posaxis"]["groups"]["ANT"]["acc1"] for r in recs])}
-        if v == "v1":
-            up_v1, dn_v1, ps_v1 = up, dn, recs
+        pa = {"post_above_all_rand34": up, "ant_below_all_rand29": dn,
+              "post_minus_ant_median": med(
+                  [r["posaxis"]["verdict"]["post_minus_ant"] for r in recs]),
+              "post_acc1_median": med(
+                  [r["posaxis"]["groups"]["POST"]["acc1"] for r in recs]),
+              "ant_acc1_median": med(
+                  [r["posaxis"]["groups"]["ANT"]["acc1"] for r in recs]),
+              "n": len(recs)}
+        # ⚠️ **按变体分别存**（早先写成一个变量 ⇒ 被后一个变体覆盖 ⇒ 存进去的是 V2 的数）
+        pa_by_v[v] = pa
         L(f"| {lab} | {up}/{len(recs)} | {dn}/{len(recs)} | "
-          f"{pa_v1['post_minus_ant_median']:+.4f} | "
-          f"{pa_v1['post_acc1_median']:.4f} | "
-          f"{pa_v1['ant_acc1_median']:.4f} | {len(recs)} |")
+          f"{pa['post_minus_ant_median']:+.4f} | "
+          f"{pa['post_acc1_median']:.4f} | "
+          f"{pa['ant_acc1_median']:.4f} | {len(recs)} |")
     L("")
 
     # ---------- 判决 ----------
@@ -265,12 +267,8 @@ def main():
                             "ok": bool(v1s.get(k) is not None
                                        and abs(v1s[k] - p) <= t)}
                         for k, (p, t) in PUB94V1.items()},
-                    "posaxis_v1": {
-                        "post_above_all_rand34": up_v1, "ant_below_all_rand29": dn_v1,
-                        "post_minus_ant_median": pa_v1.get("post_minus_ant_median"),
-                        "post_acc1_median": pa_v1.get("post_acc1_median"),
-                        "ant_acc1_median": pa_v1.get("ant_acc1_median"),
-                        "n": len(ps_v1)},
+                    "posaxis_v1": pa_by_v.get("v1", {}),
+                    "posaxis_v2": pa_by_v.get("v2", {}),
                     },
                    indent=2, ensure_ascii=False), encoding="utf-8")
     print("\n".join(lines))

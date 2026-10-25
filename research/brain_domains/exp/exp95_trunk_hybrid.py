@@ -343,7 +343,11 @@ def decide(summaries, per, args):
                                  "zeroshot_acc1_featavg": p2, "rsa": p3}
     paired_ok = all(p["n"] > 0 for p in (p1, p2, p3))
     dec["paired_ok"] = paired_ok
-    h1 = paired_ok and p1["p_sign"] is not None and p1["p_sign"] < 0.05
+    # ⚠️ **方向必须一起查**：H1' 的原文是「V2 在 C1 上**优于** V1（p<0.05）」
+    #    ⇒ 只看 p 是不够的 —— p 小也可能是因为「V2 **更差**」而 9/10 反向。
+    #    （2026-10-25 踩过：这一版只看 p ⇒ 把「V2 显著更差」判成了 HYBRID_BETTER。）
+    h1 = (paired_ok and p1["n_pos"] > p1["n"] / 2
+          and p1["p_sign"] is not None and p1["p_sign"] < 0.05)
     dec["H1_hybrid_better"] = bool(h1)
     dec["H1_detail"] = {
         "C1_single_trial": {"v1": v1.get("zeroshot_acc1"), "v2": v2.get("zeroshot_acc1"),
@@ -400,11 +404,15 @@ def decide(summaries, per, args):
         dec["verdict"] = "INVALID_SELF_CONSISTENCY"
     elif dec["H1_hybrid_better"] and dec["H2_posaxis_not_worse"]:
         dec["verdict"] = "HYBRID_BETTER"
+    elif paired_ok and p1["n_pos"] < p1["n"] / 2 and p1["p_sign"] is not None \
+            and p1["p_sign"] < 0.05:
+        # V2 在 C1 上**显著更差**（多数被试 V1 更好）⇒ 合成版有害 ⇒ 砍掉它
+        dec["verdict"] = "HYBRID_WORSE"
     elif p1["n_pos"] and p1["n_pos"] > p1["n"] / 2 and p1["p_sign"] is not None \
             and p1["p_sign"] >= 0.05:
         dec["verdict"] = "HYBRID_REDUNDANT"
     else:
-        dec["verdict"] = "HYBRID_WORSE"
+        dec["verdict"] = "HYBRID_INCONCLUSIVE"
     return dec
 
 
