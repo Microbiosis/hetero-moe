@@ -1,12 +1,22 @@
 支线 level｜图像特征 test (200, 1024)
+Hint: If the job is still running, use `hf jobs logs -f 6add75cc046eb82b1ece1e04` to stream new logs until it completes.
 
 === sub-01 ===
   npz 键：['eeg']
-Hint: If the job is still running, use `hf jobs logs -f 6add75cc046eb82b1ece1e04` to stream new logs until it completes.
+  LEVEL raw630       acc1=0.0297 (零中位 0.0046)
+  架构：base
 支线 level｜图像特征 test (200, 1024)
 
 === sub-06 ===
   npz 键：['eeg']
   LEVEL raw630       acc1=0.0292 (零中位 0.0054)
   架构：base
+  LEVEL s1a_recon    acc1=0.0101 (零中位 0.0050)
+  LEVEL s1a_onehot_mean acc1=0.0051 (零中位 0.0043)
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  LEVEL s1b_onehot_mean acc1=0.0065 (零中位 0.0046)
+  用时 1191s
+
+=== sub-07 ===
+  npz 键：['eeg']
 Hint: If the job is still running, use `hf jobs logs -f 6add75ce046eb82b1ece1e08` to stream new logs until it completes.
