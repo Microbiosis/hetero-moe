@@ -65,7 +65,7 @@ def fetch(rel, retries=6, wait=6, force=False):
     OUT.mkdir(parents=True, exist_ok=True)
     # ⚠️ 本地名必须带**相对路径**（不能只取 basename）：
     #    否则 exp93e-s1-5/... 与 exp93e-s6-10/... 会落成同一个文件而互相覆盖。
-    dst = OUT / (rel.replace("/", "__") + ".json")
+    dst = OUT / (rel.replace("/", "__").removesuffix(".json") + ".json")
     if (not force) and dst.exists() and dst.stat().st_size > 0:
         return json.loads(dst.read_text(encoding="utf-8"))
     src = f"{BUCKET}/{rel}"

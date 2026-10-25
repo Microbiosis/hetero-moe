@@ -23,6 +23,7 @@ exp92-C 当时的比较是 **n_train=1000** ⇒ 「我们自训的 tokenizer 不
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -73,6 +74,34 @@ def fetch(seg_dir, rel, retries=5):
     return json.loads(dst.read_text(encoding="utf-8"))
 
 
+LOGF = HERE / "exp93d_level_job_log.txt"
+RE_SUBJ = re.compile(r"^===\s*(sub-\d+)\s*===")
+RE_LEVEL = re.compile(r"LEVEL\s+(?P<tag>\S+)\s+acc1=(?P<acc>[\d.]+)\s+\(零中位\s+(?P<nul>[\d.]+)\)")
+
+
+def parse_log(path):
+    """从 Job 日志解析逐被试的 LEVEL 行（**跑到几个算几个**）。
+
+    exp93d 每个被试要编码 66160×2 次前向（比 exp92-C 贵 16.5 倍）⇒ 常常跑不满
+    ⇒ 日志行是「已完成被试」的可靠来源。
+    """
+    if not path.exists():
+        return {}
+    cur = None
+    per = {}
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        m = RE_SUBJ.match(line.strip())
+        if m:
+            cur = m.group(1)
+            per.setdefault(cur, {})
+            continue
+        m = RE_LEVEL.search(line)
+        if m and cur:
+            per[cur][m.group("tag")] = {"acc1_cos": float(m.group("acc")),
+                                       "null_acc1_cos": float(m.group("nul"))}
+    return per
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     per = {}
@@ -83,7 +112,19 @@ def main():
             continue
         for r in d.get("per_subject", []):
             if "error" not in r:
-                per[r["subject"]] = r
+                per[r["subject"]] = r.get("level") or {}
+    # ---- 日志：补上 JSON 还没有的被试（只补**该被试已出现的标签**）----
+    lg = parse_log(LOGF)
+    added = 0
+    for s, tags in lg.items():
+        if s not in per:
+            per[s] = tags
+            added += 1
+        else:
+            for t, v in tags.items():
+                per[s].setdefault(t, v)
+    if added:
+        print(f"日志补了 {added} 个被试")
     if not per:
         print("✗ 没有可用数据")
         return
@@ -91,16 +132,14 @@ def main():
 
     tags = []
     for r in per.values():
-        for t in (r.get("level") or {}):
+        for t in (r or {}):
             if t not in tags:
                 tags.append(t)
     rows = []
     for t in tags:
-        vals = [(r.get("level") or {}).get(t, {}).get("acc1_cos")
-                for r in per.values()]
+        vals = [(r or {}).get(t, {}).get("acc1_cos") for r in per.values()]
         vals = [v for v in vals if v is not None]
-        nulls = [(r.get("level") or {}).get(t, {}).get("null_acc1_cos")
-                 for r in per.values()]
+        nulls = [(r or {}).get(t, {}).get("null_acc1_cos") for r in per.values()]
         nulls = [v for v in nulls if v is not None]
         rows.append({"tag": t, "n": len(vals), "median_up": med(vals),
                      "mean": mean(vals), "null_median": med(nulls),

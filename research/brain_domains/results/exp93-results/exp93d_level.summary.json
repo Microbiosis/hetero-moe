@@ -1,0 +1,14 @@
+{
+  "n_subjects": 2,
+  "rows": [
+    {
+      "tag": "raw630",
+      "n": 1,
+      "median_up": 0.0292,
+      "mean": 0.0292,
+      "null_median": 0.0054,
+      "ratio_to_chance": 5.84
+    }
+  ],
+  "handcraft_baseline": 0.0321
+}
