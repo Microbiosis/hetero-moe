@@ -159,6 +159,10 @@ PYEOFCHK
         # V52.0 独立复算 v50/v51 的探针结论 (重写实现 + 预登记判决 C1a/C1b/C1c/C2/C3)
         python3 examples/run_v52_independent_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
         ;;
+    v53)
+        # V53.0 第三审: 独立复算 (值域分割 + 三族探针 + 残差抬升 + 跨底座一致性)
+        python3 examples/run_v53_third_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
     e2e)
         # §8.1-8.3 端到端仿真
         python3 examples/run_e2e_simulation.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"

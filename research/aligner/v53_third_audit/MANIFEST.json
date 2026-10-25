@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "version": "53.0",
+  "package": "v53_third_audit",
+  "line": "aligner",
+  "title": "第三审: 独立复算 v50/v51/v52 (第三套实现) + 跨底座一致性 (首个正面量)",
+  "generation": {
+    "one_mechanism_added": "第三套**互不相同**的实现 (值域分割的数据 / 三族探针 / 残差抬升 / 新种子 / 不重叠的 D_shared), 外加首个**正面量**: 跨底座一致性 (同一文本在三底座上的输出余弦)",
+    "parent": "52.0",
+    "children": []
+  },
+  "lineage": {"line_parent": "10.0", "line_children": [],
+    "note": "aligner 线第 9 个成员; 审计链: v50(首审, 审 v33 线) → v51(审 v6/v7 线) → v52(二审, 独立复算 v50/v51) → v53(三审, 独立复算 v52) → 结论闭合"},
+  "implementation": {"location": "self", "lifted_to": null, "modules": ["audit.py"],
+    "note": "刻意不 import v49/v50/v51/v52 的实现; 只保留被审计对象 (三个真实底座 + v33 融合层)"},
+  "claim": {
+    "asserts": "三套互不相同的独立实现给出**同向结论**: (1) 冻结随机空间里 margin 对**目标置换完全免疫** (D96: +20.5%→+20.5%; D384: +37.0%→+37.0%); (2) 换成有意义空间后 margin 归零 (D96: −0.2%; D384: −0.4%); (3) 源身份可解码性 1.000 远高于类别可解码性 (三族探针同向, 差 +0.33~+0.57); (4) ★**首个正面量**: 跨底座一致性从冻结随机空间的 +0.01/−0.01 升到有意义空间的 **+0.54/+0.61** → 共享空间确实让异构底座'相遇'了",
+    "metric": "held_out_fuse_mse",
+    "direction": "lower_is_better",
+    "value": 0.1545,
+    "baseline": {"ref": "frozen_random @D384", "value": 6.0785},
+    "delta_pct": -97.5,
+    "seeds": 5,
+    "outcome_label": "mixed",
+    "note": "outcome_label=mixed: **结论层面三套独立实现一致**; 但**预登记判据 D2 未通过** (两档都未过): D2 假设'冻结随机空间里不可能残留类别信息', 而随机线性映射本就保留输入的类别几何 → 输出里恒有类别信息 (0.43~0.67), 因此 D2 把'输出含类别信息'误当成'模型用了目标'的代理。**不改判据**: 更强且无需阈值的判决在同一臂内 —— 把目标换成逐样本随机后, held-out 数字与对齐目标**逐位相同** → 模型从未使用目标 → margin 与'学会任务'无关 (反而加强了 v50/v51 的结论)。D3(一致性)两档通过。"
+  },
+  "protocol": {
+    "eval_set": "held-out = **值域分割**: 训练只见 slot1∈前8∧slot2∈前8, 留出只见 slot1∈后8∧slot2∈后8 (换域, 比 v52 的'未见组合'更严); 8 类 × 16 = 128 文本/底座",
+    "input": "三个真实底座 (MSA-4B 浅层1层 + embedding-0.6b + reranker-0.6b); D_shared ∈ {96, 384} (与 v52 的 {128,256,512} 不重叠); 5 seeds (基址 2000); 200 步; 固定 minibatch 288",
+    "caveat": "探针三族 (ridge/mlp/knn) 交叉以排除'结论只在某一族探针下成立'; 跨底座一致性是代理量 (衡量'三底座对同一文本给出相似输出', 不区分'因为都对'与'因为都说同样的话'), 需与 held-out MSE 一起读"
+  },
+  "acceptance": {
+    "criterion": "预登记: D1a (源−类 ≥0.30, 三族同向) / D1b (目标置换后 margin 变化 ≤10pp) / D1c (有意义空间 margin ≤ 冻结臂一半) / D2 (随机目标臂 类可解码 ≤0.50, 三族都) / D3 (一致性 ≥ 随机空间 +0.15) / D4 (D_shared {96,384} 方向一致) / D5 (复现 v52)",
+    "outcome": "D1a ✓ / D1b ✓ / D1c ✓ / **D2 ✗ (两档都未过)** / D3 ✓ / D4 ✓；D5: 结论与 v52 一致。→ 按字面口径第三审未全过, 如实记录 D2 未过及其原因, 并给出更强对照 (随机化目标下数字逐位相同)",
+    "note": "D2 的失败不影响结论, 反而提供了更强证据; 但**不事后修改判据**"
+  },
+  "leakage_audit": {
+    "status": "clean",
+    "audits": [],
+    "note": "本包是对 v52 的独立复算 (三审制第三审); 预登记判据 D2 未过已如实记录在案, 并给出解释与更强对照。"
+  },
+  "falsified": [
+    {"hypothesis": "『冻结随机空间里不可能残留类别信息, 因此类别可解码性可当'模型是否用了目标'的代理』",
+     "verdict": "**证伪 (本代自查推翻自己的预登记判据)**: 随机线性映射保留输入的类别几何 → 输出里恒有类别信息 (0.43-0.67)。正确判据是同臂内'目标随机化后数字逐位相同'",
+     "evidence": "results/metrics.json → D 臂(随机目标) 与 A 臂(对齐目标) 的 held_out 数字逐位相同 (7.527 / 6.079)"},
+    {"hypothesis": "『margin 是识别机制的产物, 但至少融合让异构底座'相遇'了』",
+     "verdict": "**部分证伪**: 在冻结随机空间里三者**没有**相遇 (跨底座一致性 +0.01/−0.01); 只有在有意义的空间里才相遇 (+0.54/+0.61)",
+     "evidence": "results/metrics.json → consistency.input / consistency.output 列"}
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v53_third_audit.py",
+    "forwarder_spec": "docs/V53_0_THIRD_AUDIT.md"
+  },
+  "_needs_human": [],
+  "_extracted_from": ["research/aligner/README.md"]
+}
