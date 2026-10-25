@@ -7,18 +7,30 @@
   "generation": {
     "one_mechanism_added": "把 v50 的两把尺子搬到架构异构线上, 并发现该线的目标块就是模态下标 (任务本身=识别来源底座); 目标置换对照用于检验 margin 是否依赖底座间的语义对应关系",
     "parent": "50.0",
-    "children": []
+    "children": [
+      "52.0"
+    ]
   },
-  "lineage": {"line_parent": "10.0", "line_children": [],
-    "note": "aligner 线第 7 个成员; 与 v50 配对: v50 审计规模异构线, v51 审计架构异构线"},
-  "implementation": {"location": "self", "lifted_to": null, "modules": [],
-    "note": "复用 v7 的 runner (模型/attn 抽取/层构造/目标构造) → 与论文数字同源; 新增: 目标置换、held-out 划分、探针"},
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线第 7 个成员; 与 v50 配对: v50 审计规模异构线, v51 审计架构异构线"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [],
+    "note": "复用 v7 的 runner (模型/attn 抽取/层构造/目标构造) → 与论文数字同源; 新增: 目标置换、held-out 划分、探针"
+  },
   "claim": {
     "asserts": "架构异构线的'融合优于单专家' margin 同样是识别机制的产物: (1) 该配置的目标块就是模态下标 (任务=识别来源底座); (2) 目标置换 (模态 m → 块 π(m), 无不动点) 后 margin 完全不变 (+70.4% → +72.7%) → 与底座间任何语义对应关系无关; (3) 换成有意义空间 (非线性可训练) 后 margin 塌到 +2.3%, 绝对误差降 68 倍 (2.159 → 0.0315); (4) attention 通路的领先随之从 +69% 降到 3% → 论文的'增益集中在 attention 通路'也是随机空间下的产物",
     "metric": "held_out_fuse_mse",
     "direction": "lower_is_better",
     "value": 0.0315,
-    "baseline": {"ref": "A_frozen_aligned (v7 原配置, 冻结随机线性 P_m + 目标=模态块)", "value": 2.1589},
+    "baseline": {
+      "ref": "A_frozen_aligned (v7 原配置, 冻结随机线性 P_m + 目标=模态块)",
+      "value": 2.1589
+    },
     "delta_pct": -98.5,
     "seeds": 5,
     "outcome_label": "mixed",
@@ -40,12 +52,16 @@
     "note": "本代自带双口径 + 目标置换对照 + 置换零分布 + 探针自检, 但尚未由独立审计包结清"
   },
   "falsified": [
-    {"hypothesis": "『+20.3% (vs 单专家) / +84.8% (vs 平均) 度量的是异构架构共享路由器的收益』",
-     "verdict": "**证伪 (本代)**: 目标块就是模态下标 → 任务是识别来源; 目标置换后 margin 不变 (+70.4% → +72.7%) → margin 与底座间语义对应无关; 有意义空间下塌到 +2.3%",
-     "evidence": "results/metrics.json → A/B/C/D 四臂的 held_out 与 probe 列"},
-    {"hypothesis": "『增益集中在 attention 通路是架构异构性的结构性证据 (+82.7%/+70.6% held-out)』",
-     "verdict": "**证伪 (本代)**: 该领先在冻结随机空间里确实存在 (+69% held-out), 但在有意义空间里降到 3% → 它是空间性质的产物",
-     "evidence": "results/metrics.json → attn_only 与 ffn_only 列 (A 臂 vs C 臂)"}
+    {
+      "hypothesis": "『+20.3% (vs 单专家) / +84.8% (vs 平均) 度量的是异构架构共享路由器的收益』",
+      "verdict": "**证伪 (本代)**: 目标块就是模态下标 → 任务是识别来源; 目标置换后 margin 不变 (+70.4% → +72.7%) → margin 与底座间语义对应无关; 有意义空间下塌到 +2.3%",
+      "evidence": "results/metrics.json → A/B/C/D 四臂的 held_out 与 probe 列"
+    },
+    {
+      "hypothesis": "『增益集中在 attention 通路是架构异构性的结构性证据 (+82.7%/+70.6% held-out)』",
+      "verdict": "**证伪 (本代)**: 该领先在冻结随机空间里确实存在 (+69% held-out), 但在有意义空间里降到 3% → 它是空间性质的产物",
+      "evidence": "results/metrics.json → attn_only 与 ffn_only 列 (A 臂 vs C 臂)"
+    }
   ],
   "superseded_by": null,
   "tests_status": "present",
@@ -56,6 +72,11 @@
     "forwarder_tests": "tests/test_v51_arch_fusion_audit.py",
     "forwarder_spec": "docs/V51_0_ARCH_FUSION_AUDIT.md"
   },
-  "_needs_human": ["claim.outcome_label", "leakage_audit.status"],
-  "_extracted_from": ["research/aligner/README.md"]
+  "_needs_human": [
+    "claim.outcome_label",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/aligner/README.md"
+  ]
 }

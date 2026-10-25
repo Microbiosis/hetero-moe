@@ -155,6 +155,10 @@ PYEOFCHK
         # V51.0 架构异构线 (v6/v7) 融合收益审计: 目标置换对照 + 有意义空间 + 探针
         python3 examples/run_v51_arch_fusion_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
         ;;
+    v52)
+        # V52.0 独立复算 v50/v51 的探针结论 (重写实现 + 预登记判决 C1a/C1b/C1c/C2/C3)
+        python3 examples/run_v52_independent_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
     e2e)
         # §8.1-8.3 端到端仿真
         python3 examples/run_e2e_simulation.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
