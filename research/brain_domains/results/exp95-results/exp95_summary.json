@@ -1,0 +1,79 @@
+{
+  "decision": {},
+  "decision_recomputed": false,
+  "decision_raw_job": null,
+  "summaries": {
+    "v1": {
+      "zeroshot_acc1": 0.06225,
+      "zeroshot_acc1_featavg": 0.225,
+      "zeroshot_acc5": 0.1978125,
+      "ridge_feat_acc1": 0.0325625,
+      "rsa": 0.12104827713691062,
+      "n_ok": 10,
+      "n_err": 0
+    }
+  },
+  "missing_variants": [
+    "v2"
+  ],
+  "self_consistency_exp93b": {
+    "zeroshot_acc1": {
+      "published": 0.0589,
+      "got": 0.06225,
+      "tol": 0.02,
+      "ok": true
+    },
+    "zeroshot_acc1_featavg": {
+      "published": 0.23,
+      "got": 0.225,
+      "tol": 0.06,
+      "ok": true
+    },
+    "rsa": {
+      "published": 0.1273,
+      "got": 0.12104827713691062,
+      "tol": 0.045,
+      "ok": true
+    },
+    "zeroshot_acc5": {
+      "published": 0.1875,
+      "got": 0.1978125,
+      "tol": 0.04,
+      "ok": true
+    }
+  },
+  "job_drift_vs_exp94": {
+    "zeroshot_acc1": {
+      "exp94": 0.0626875,
+      "got": 0.06225,
+      "tol": 0.01,
+      "ok": true
+    },
+    "zeroshot_acc1_featavg": {
+      "exp94": 0.215,
+      "got": 0.225,
+      "tol": 0.03,
+      "ok": true
+    },
+    "rsa": {
+      "exp94": 0.11921705748210504,
+      "got": 0.12104827713691062,
+      "tol": 0.02,
+      "ok": true
+    },
+    "zeroshot_acc5": {
+      "exp94": 0.1943125,
+      "got": 0.1978125,
+      "tol": 0.025,
+      "ok": true
+    }
+  },
+  "posaxis_v1": {
+    "post_above_all_rand34": 9,
+    "ant_below_all_rand29": 10,
+    "post_minus_ant_median": 0.05675,
+    "post_acc1_median": 0.0625,
+    "ant_acc1_median": 0.00575,
+    "n": 10
+  }
+}

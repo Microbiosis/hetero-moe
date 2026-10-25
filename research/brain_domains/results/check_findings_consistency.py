@@ -1131,11 +1131,90 @@ def main():
                         if f"{float(val):.4f}" not in a20:
                             problems.append(
                                 f"[台账] A20 缺{what} {float(val):.4f}")
-                    for need in ("p=0.0020", "R4", "10/10 & 10/10"):
+                    for need in ("p=0.0020", "R4", "9–10/10"):
                         if need not in a20:
                             problems.append(f"[台账] A20 缺「{need}」")
         else:
             print(f"（缺 {e94}，跳过 exp94 比对）")
+
+        # --- 12. exp95：合成版 V2（**未结案**：V2 被额度中断）→ 只绑已跑出的部分 ---
+        e95 = HERE / "exp95-results" / "exp95_summary.json"
+        if e95.exists():
+            d95 = json.loads(e95.read_text(encoding="utf-8"))
+            s95 = (d95.get("summaries") or {}).get("v1") or {}
+            sec31a = find_section(text, "三十一·二、已跑出的部分")
+            sec31b = find_section(text, "三十一·三、")
+            if not sec31a or not sec31b:
+                problems.append("FINDINGS 里找不到「三十一·二 / 三十一·三」小节")
+            else:
+                rows_a = sec31a.splitlines()
+
+                def row95a(prefix):
+                    for ln in rows_a:
+                        if ln.startswith(prefix):
+                            return ln.replace("−", "-")
+                    return ""
+
+                # (a) C7' 合并表：exp93b 已发表 / exp94 的 V1 / exp95 的 V1 / 漂移
+                for k, marker in (("zeroshot_acc1", "| zeroshot acc1 |"),
+                                  ("zeroshot_acc1_featavg", "| zeroshot acc1（试次平均）|"),
+                                  ("rsa", "| RSA |"),
+                                  ("zeroshot_acc5", "| zeroshot acc5 |")):
+                    got = s95.get(k)
+                    if got is None:
+                        continue
+                    row = row95a(marker)
+                    if not row:
+                        problems.append(f"[exp95] §三十一·二 找不到自一致性行「{marker}」")
+                        continue
+                    sc95 = (d95.get("self_consistency_exp93b") or {}).get(k) or {}
+                    dr95 = (d95.get("job_drift_vs_exp94") or {}).get(k) or {}
+                    for val, what in ((sc95.get("published"), "exp93b 已发表值"),
+                                      (dr95.get("exp94"), "exp94 的 V1"),
+                                      (got, "exp95 的 V1 复现")):
+                        if val is None:
+                            continue
+                        if f"{float(val):.4f}" not in row:
+                            problems.append(
+                                f"[exp95] §三十一·二 行 {k} 缺{what} {float(val):.4f}")
+
+                # (b) 位置轴表：exp95 的 V1 复现那一行
+                pa95 = d95.get("posaxis_v1") or {}
+                row = next((ln for ln in sec31b.splitlines()
+                            if ln.startswith("| **exp95 的 V1 复现**")), "")
+                if not row:
+                    problems.append("[exp95] §三十一·三 找不到「exp95 的 V1 复现」那一行")
+                else:
+                    n95 = pa95.get("n")
+                    for cnt, what in ((f"{pa95.get('post_above_all_rand34')}/{n95}",
+                                       "POST>全部随机34"),
+                                      (f"{pa95.get('ant_below_all_rand29')}/{n95}",
+                                       "ANT<全部随机29")):
+                        if cnt not in row:
+                            problems.append(f"[exp95] §三十一·三 位置轴行缺{what} {cnt}")
+                    for val, what in ((pa95.get("post_minus_ant_median"), "POST−ANT"),
+                                      (pa95.get("post_acc1_median"), "POST acc1"),
+                                      (pa95.get("ant_acc1_median"), "ANT acc1")):
+                        if val is None:
+                            continue
+                        if f"{float(val):.4f}" not in row:
+                            problems.append(
+                                f"[exp95] §三十一·三 位置轴行缺{what} {float(val):.4f}")
+
+                # (c) INTEGRATION 的 A14 必须带「9–10/10」这个**降级后的**区间表述
+                it95 = (ROOT / "INTEGRATION.md").read_text(encoding="utf-8")
+                a14 = next((l for l in it95.splitlines()
+                            if l.startswith("| **A14**")), "")
+                if not a14:
+                    problems.append("[台账] INTEGRATION.md 里找不到 A14 那一行")
+                else:
+                    for need in ("9–10/10", "骨干交叉验证"):
+                        if need not in a14:
+                            problems.append(
+                                f"[台账] A14 缺「{need}」"
+                                f"（exp95 复现把 POST 侧的 10/10 降级成 9–10/10）")
+        else:
+            print(f"（缺 {e95}，跳过 exp95 比对）")
 
     if problems:
         print("✗ 文档与数据不一致：")

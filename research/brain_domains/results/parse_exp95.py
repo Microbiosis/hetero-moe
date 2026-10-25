@@ -41,6 +41,10 @@ for _p in (str(EXP), str(HERE)):
         sys.path.insert(0, _p)
 BUCKET = "hf://buckets/illusion-brain/brain-domains/runs/illusionbrain-align"
 REL = "exp95-hybrid/exp95_trunk_hybrid.json"
+# ⚠️ exp95 的正式 Job 被**账户额度耗尽**中断（V1 跑完、V2 训练到 epoch 2 被平台取消）
+#    ⇒ 结果**按变体分开落盘** ⇒ 这里逐变体取回再合并（一条命令就能在补跑后出表）
+RELS = {"v1": "exp95-hybrid/v1/exp95_v1.json",
+        "v2": "exp95-hybrid/v2/exp95_v2.json"}
 
 CHANCE = 1.0 / 200.0
 
@@ -102,21 +106,39 @@ def variant_rows(ps, path):
 
 
 def main():
-    data = fetch(force="--force" in sys.argv)
-    per = data.get("per_subject") or {}
-    raw_dec = data.get("decision") or {}
+    # 逐变体取回并合并（**V1 与 V2 可能是两个 Job 跑的** ⇒ 不依赖合并 JSON）
+    per, summ, raw_dec = {}, {}, {}
+    missing = []
+    for v, rel in RELS.items():
+        try:
+            d = fetch(rel, force="--force" in sys.argv)
+        except SystemExit:
+            missing.append(v)
+            continue
+        per[v] = d.get("per_subject") or []
+        summ[v] = d.get("summary") or {}
+        if v == "v1":
+            raw_dec = d.get("decision") or {}
+    if not per:
+        raise SystemExit("✗ 一个变体都没取到")
+    if missing:
+        print(f"⚠️ 缺变体 {missing} ⇒ 判决不可出（只出已有部分）")
 
     # 判决**重算**（用修好的 decide()，不依赖 Job 写下的字段）
-    try:
-        import exp95_trunk_hybrid as E95
-        dec = E95.decide(data.get("summaries") or {}, per, None)
-        recomputed = True
-    except Exception as e:  # pragma: no cover
+    dec = {}
+    recomputed = False
+    if "v1" in per and "v2" in per:
+        try:
+            import exp95_trunk_hybrid as E95
+            dec = E95.decide(summ, per, None)
+            recomputed = True
+        except Exception as e:  # pragma: no cover
+            dec = raw_dec
+            print(f"⚠️ 重算失败（{type(e).__name__}: {e}）⇒ 用 Job 里的原始判决")
+    else:
         dec = raw_dec
-        recomputed = False
-        print(f"⚠️ 重算失败（{type(e).__name__}: {e}）⇒ 用 Job 里的原始判决")
+        print("⚠️ 只有部分变体 ⇒ 不出判决（缺 H1'/H2' 所需的一侧）")
 
-    summ = data.get("summaries") or {}
     lines = []
     L = lines.append
     L("# exp95：合成版 V2（保留通道身份 + 恢复时间粒度）vs V1（exp94 的赢家）")
@@ -126,28 +148,38 @@ def main():
     L("> **中位 = 上中位**；配对差用逐被试配对 + 双侧符号检验。")
     L("")
 
-    # ---------- C7' 两重自一致性 ----------
+    # ---------- C7' 两重自一致性（**只依赖 V1** ⇒ 缺 V2 也能算）----------
     L("## C7' 自一致性（两重）")
     L("")
     L("### ① V1 复现 vs exp93b 已发表值（实现漂移）")
     L("")
     L("| 量 | exp93b 已发表 | 本实验 V1 | 容差 | 判定 |")
     L("|---|---:|---:|---:|---|")
-    for k, v in (dec.get("self_consistency_exp93b") or {}).items():
-        L(f"| {k} | {v['published']:.4f} | "
-          f"{(v['got'] if v['got'] is not None else float('nan')):.4f} | "
-          f"±{v['tol']} | {'✅' if v['ok'] else '❌'} |")
+    PUB93B = {"zeroshot_acc1": (0.0589, 0.020), "zeroshot_acc1_featavg": (0.2300, 0.060),
+              "rsa": (0.1273, 0.045), "zeroshot_acc5": (0.1875, 0.040)}
+    PUB94V1 = {"zeroshot_acc1": (0.0626875, 0.010), "zeroshot_acc1_featavg": (0.215, 0.030),
+               "rsa": (0.11921705748210504, 0.020), "zeroshot_acc5": (0.1943125, 0.025)}
+    v1s = summ.get("v1") or {}
+    sc_ok, drift_ok = True, True
+    for k, (pub, tol) in PUB93B.items():
+        got = v1s.get(k)
+        ok = got is not None and abs(got - pub) <= tol
+        sc_ok = sc_ok and ok
+        L(f"| {k} | {pub:.4f} | "
+          f"{(got if got is not None else float('nan')):.4f} | ±{tol} | {'✅' if ok else '❌'} |")
     L("")
     L("### ② V1 复现 vs exp94 的 V1（**两次 Job 之间的漂移**）")
     L("")
     L("| 量 | exp94 的 V1 | 本实验 V1 | 容差 | 判定 |")
     L("|---|---:|---:|---:|---|")
-    for k, v in (dec.get("job_drift_vs_exp94") or {}).items():
-        L(f"| {k} | {v['exp94']:.4f} | "
-          f"{(v['got'] if v['got'] is not None else float('nan')):.4f} | "
-          f"±{v['tol']} | {'✅' if v['ok'] else '❌'} |")
+    for k, (pub, tol) in PUB94V1.items():
+        got = v1s.get(k)
+        ok = got is not None and abs(got - pub) <= tol
+        drift_ok = drift_ok and ok
+        L(f"| {k} | {pub:.4f} | "
+          f"{(got if got is not None else float('nan')):.4f} | ±{tol} | {'✅' if ok else '❌'} |")
     L("")
-    L(f"⇒ **{'通过' if dec.get('self_consistency_pass') else '未通过'}"
+    L(f"⇒ **{'通过' if (sc_ok and drift_ok) else '未通过'}"
       f"**（未通过 ⇒ 本实验结论作废）。")
     L("")
 
@@ -173,33 +205,48 @@ def main():
           f"{k}/{len(common)} | {p:.4f} |")
     L("")
 
-    # ---------- 位置轴 ----------
+    # ---------- 位置轴（**直接从逐被试数据算** ⇒ 缺 V2 也能出）----------
     L("## 位置轴 × 地板：合成版有没有破坏位置轴")
     L("")
     L("| 骨干 | POST>全部随机34 | ANT<全部随机29 | POST−ANT（中位） | POST acc1 | ANT acc1 | n |")
     L("|---|---:|---:|---:|---:|---:|---:|")
-    pa = dec.get("posaxis") or {}
     for v, lab in (("v1", "V1（exp94 的赢家）"), ("v2", "V2（合成版）")):
-        d = pa.get(v)
-        if not d:
+        recs = [r for r in per.get(v, []) if "error" not in r and "posaxis" in r]
+        if not recs:
             L(f"| {lab} | — | — | — | — | — | — |")
             continue
-        L(f"| {lab} | {d['post_above_all_rand34']}/{d['n']} | "
-          f"{d['ant_below_all_rand29']}/{d['n']} | {d['post_minus_ant_median']:+.4f} | "
-          f"{d['post_acc1_median']:.4f} | {d['ant_acc1_median']:.4f} | {d['n']} |")
+        up = sum(1 for r in recs if r["posaxis"]["verdict"]["post_above_all_rand34"])
+        dn = sum(1 for r in recs if r["posaxis"]["verdict"]["ant_below_all_rand29"])
+        pa_v1 = {"post_above_all_rand34": up, "ant_below_all_rand29": dn,
+                 "post_minus_ant_median": med(
+                     [r["posaxis"]["verdict"]["post_minus_ant"] for r in recs]),
+                 "post_acc1_median": med(
+                     [r["posaxis"]["groups"]["POST"]["acc1"] for r in recs]),
+                 "ant_acc1_median": med(
+                     [r["posaxis"]["groups"]["ANT"]["acc1"] for r in recs])}
+        if v == "v1":
+            up_v1, dn_v1, ps_v1 = up, dn, recs
+        L(f"| {lab} | {up}/{len(recs)} | {dn}/{len(recs)} | "
+          f"{pa_v1['post_minus_ant_median']:+.4f} | "
+          f"{pa_v1['post_acc1_median']:.4f} | "
+          f"{pa_v1['ant_acc1_median']:.4f} | {len(recs)} |")
     L("")
 
     # ---------- 判决 ----------
     L("## 预登记判据的判决")
     L("")
-    L(f"- **H1'（合成版更好）**：`{dec.get('H1_hybrid_better')}`")
-    L(f"- **H2'（位置轴不反向）**：`{dec.get('H2_posaxis_not_worse')}`")
-    L(f"- **R4（读出方向一致）**：`{dec.get('readout_consistent')}` —— {dec.get('R4_note', '')}")
-    L(f"- **总判决**：`{dec.get('verdict')}`")
-    L("")
-    L("**判决含义**：`HYBRID_BETTER` ⇒ 用 V2（合成版）；`HYBRID_REDUNDANT` ⇒ "
-      "**剃刀砍掉 V2，用 V1**（并把「V1 的增益归因于通道身份」写进台账）；"
-      "`HYBRID_WORSE` ⇒ 用 V1。")
+    if "v1" in per and "v2" in per:
+        L(f"- **H1'（合成版更好）**：`{dec.get('H1_hybrid_better')}`")
+        L(f"- **H2'（位置轴不反向）**：`{dec.get('H2_posaxis_not_worse')}`")
+        L(f"- **R4（读出方向一致）**：`{dec.get('readout_consistent')}` —— {dec.get('R4_note', '')}")
+        L(f"- **总判决**：`{dec.get('verdict')}`")
+        L("")
+        L("**判决含义**：`HYBRID_BETTER` ⇒ 用 V2（合成版）；`HYBRID_REDUNDANT` ⇒ "
+          "**剃刀砍掉 V2，用 V1**（并把「V1 的增益归因于通道身份」写进台账）；"
+          "`HYBRID_WORSE` ⇒ 用 V1。")
+    else:
+        L(f"- ⚠️ **判决不可出**：缺变体 {missing} ⇒ H1'/H2' 需要 V1 与 V2 两侧。")
+        L("- ⇒ **exp95 未结案**；已有的 V1 复现与上面的 C7' 漂移量化**仍然有效**。")
     L("")
 
     OUT.mkdir(parents=True, exist_ok=True)
@@ -207,7 +254,24 @@ def main():
     (OUT / "exp95_summary.json").write_text(
         json.dumps({"decision": dec, "decision_recomputed": recomputed,
                     "decision_raw_job": raw_dec.get("verdict"),
-                    "summaries": summ},
+                    "summaries": summ, "missing_variants": missing,
+                    "self_consistency_exp93b": {
+                        k: {"published": p, "got": v1s.get(k), "tol": t,
+                            "ok": bool(v1s.get(k) is not None
+                                       and abs(v1s[k] - p) <= t)}
+                        for k, (p, t) in PUB93B.items()},
+                    "job_drift_vs_exp94": {
+                        k: {"exp94": p, "got": v1s.get(k), "tol": t,
+                            "ok": bool(v1s.get(k) is not None
+                                       and abs(v1s[k] - p) <= t)}
+                        for k, (p, t) in PUB94V1.items()},
+                    "posaxis_v1": {
+                        "post_above_all_rand34": up_v1, "ant_below_all_rand29": dn_v1,
+                        "post_minus_ant_median": pa_v1.get("post_minus_ant_median"),
+                        "post_acc1_median": pa_v1.get("post_acc1_median"),
+                        "ant_acc1_median": pa_v1.get("ant_acc1_median"),
+                        "n": len(ps_v1)},
+                    },
                    indent=2, ensure_ascii=False), encoding="utf-8")
     print("\n".join(lines))
     print(f"\n写入 {OUT/'exp95_summary.md'}")
