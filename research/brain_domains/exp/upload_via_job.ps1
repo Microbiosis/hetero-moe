@@ -68,6 +68,7 @@ function Test-Landed {
 }
 
 $chunkDir = "/domains/.chunks"
+$failed = 0
 
 foreach ($f in $Files) {
     $src = Join-Path $expDir $f
@@ -134,11 +135,24 @@ foreach ($f in $Files) {
     }
     if ($ok) {
         # ⚠️ **等 Job 跑完再校验**（刚提交时文件还没写进去）
-        for ($w = 1; $w -le 12; $w++) {
+        # ⚠️ 2026-10-25 修：原来这里**只提交就算成功**，落地校验失败也照样往下走
+        #    ⇒ 末尾那句「上传 Job 已发出（字节数已校验）」是**假消息**（曾误导我以为传好了）。
+        #    ⇒ 现在：**校验没过就明确报失败**，并给出重试提示。
+        $landed = $false
+        for ($w = 1; $w -le 30; $w++) {
             Start-Sleep -Seconds 20
-            if (Test-Landed -File $f -Expect $bytes.Length) { break }
+            if (Test-Landed -File $f -Expect $bytes.Length) { $landed = $true; break }
+        }
+        if (-not $landed) {
+            Write-Host ("  ✗✗ {0}：**提交成功但落地校验未过**（文件可能还在排队/Job 失败）" -f $f)
+            Write-Host "     ⇒ 不要当成已传好；先 `hf buckets ls` 确认，再重跑本脚本。"
+            $failed += 1
         }
     }
-    if (-not $ok) { Write-Host "  ✗ $f 没发出去" }
+    if (-not $ok) { Write-Host "  ✗ $f 没发出去"; $failed += 1 }
 }
-Write-Host "上传 Job 已发出（字节数已校验）"
+if ($failed -gt 0) {
+    Write-Host ("✗ 有 {0} 个文件没落地（提交≠落地）" -f $failed)
+    exit 1
+}
+Write-Host "✓ 上传完成：所有文件均已落地且字节数校验通过"
