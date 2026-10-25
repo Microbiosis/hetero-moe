@@ -94,6 +94,12 @@ def main():
             for need in ("读出类型相同", "还有哪个因子也变了", "同一批被试"):
                 if need not in ttext:
                     problems.append(f"[R4] TERMINOLOGY.md 的 R4 缺要素「{need}」")
+        if "### R5" not in ttext:
+            problems.append("[R5] TERMINOLOGY.md 缺「### R5 · 跨 Job 的速度比较必须同 flavor、同争用、同口径」")
+        else:
+            for need in ("flavor 相同", "争用相同", "口径相同", "前向"):
+                if need not in ttext:
+                    problems.append(f"[R5] TERMINOLOGY.md 的 R5 缺要素「{need}」")
     else:
         problems.append("缺文件 TERMINOLOGY.md")
 
@@ -114,6 +120,22 @@ def main():
                 problems.append(
                     f"[台账] {aid} 行的检查点「{need}」出现 {line.count(need)} 次"
                     f"（自测会命中不到 ⇒ 请换成单次出现的串）")
+
+    # FINDINGS 里 A18 的那条「修正表」行也必须带读出限定（它在 §二十九·七）
+    fnd = ROOT / "FINDINGS_TIER0_RSA.md"
+    if fnd.exists():
+        ftext = fnd.read_text(encoding="utf-8")
+        a18 = [l for l in ftext.splitlines() if "**A18**" in l and l.startswith("|")]
+        if not a18:
+            problems.append("[台账] FINDINGS 里找不到 A18 的修正表那一行")
+        else:
+            hits = [l for l in a18 if "要加读出限定" in l]
+            if not hits:
+                problems.append("[台账] FINDINGS 的 A18 修正表行缺「要加读出限定」")
+            elif len(hits) > 1:
+                problems.append(
+                    f"[台账] FINDINGS 的 A18 行有 {len(hits)} 处含「要加读出限定」"
+                    f"（自测会命中不到 ⇒ 请用单次出现的串）")
 
     if problems:
         print("✗ 措辞限定词问题：")

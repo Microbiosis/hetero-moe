@@ -74,6 +74,13 @@ CASES = [
      "台账：A18 的读出限定被删"),
     (G_TERM, "INTEGRATION.md", "（n_train=16540，6.4× 随机）", "（n_train=2000，6.4× 随机）",
      "台账：A13 的 n_train 限定被改"),
+    (G_TERM, "TERMINOLOGY.md", "**flavor 相同**", "**机器随便**",
+     "措辞：R5 的 flavor 要素被删"),
+    (G_TERM, "TERMINOLOGY.md", "**争用相同**", "**随便跑**",
+     "措辞：R5 的争用要素被删"),
+    (G_TERM, "FINDINGS_TIER0_RSA.md",
+     "⇒ **要加读出限定**：在**离散码读出**下成立", "⇒ **一直成立**：在**离散码读出**下成立",
+     "台账：A18 的读出限定在 FINDINGS 里被删"),
     # --- 措辞守卫 ---
     (G_TERM, "INTEGRATION.md", "最小模型 = 位置轴上的两个原语", "最小模型 = 两个原语",
      "措辞：原语表述缺轴限定"),
