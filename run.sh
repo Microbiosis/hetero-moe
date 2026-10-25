@@ -147,6 +147,10 @@ PYEOFCHK
         # 分批跑 (每格一跑, 便于远端续跑): V49_SIZES=S32 V49_ARMS=NL_cond bash run.sh v49
         python3 examples/run_v49_projection_space.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
         ;;
+    v50)
+        # V50.0 「融合收益从哪来」审计: 双探针 (源专家身份 vs 目标类别) + proxy 对齐对照
+        python3 examples/run_v50_fusion_gain_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
     e2e)
         # §8.1-8.3 端到端仿真
         python3 examples/run_e2e_simulation.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"

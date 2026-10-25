@@ -70,7 +70,7 @@ Sublayer Fusion, Coordinated Routing, and Chimera Distillation}
 \maketitle
 
 \begin{abstract}
-Combining heterogeneous pretrained models---bidirectional encoders, causal decoders, and vision transformers that differ in architecture, hidden width, and modality---usually requires joint retraining, architecture surgery, or lossy output-level ensembling. We study how such models can be \emph{reconstructed} while every base stays frozen, in three steps. \textbf{(i) Sublayer fusion.} A shared sparse Top-$K$ router selects one of $M$ frozen architectural experts per token; semantic aligners map mismatched hidden spaces into one shared routing space; experts are fused residually with per-expert gates. Across four aligner designs we measure a strict but \emph{saturating} ladder (linear $<$ mean $<$ cross-architecture attention $<$ mixture), and a capacity-matched control shows the ceiling is a matter of design rather than of parameter count. \textbf{(ii) Coordinated routing.} We ask how a global hub should influence the shared router, and prove that modulating the softmax temperature (gate-style) is the only one of four hub modes satisfying perfect degeneration, order preservation, boundedness, and low overhead at once; we also diagnose a hidden failure mode in which tanh saturation severs the gradient to the hub during long training. \textbf{(iii) Independent-model reconstruction.} Chimera distillation collapses the ensemble into a single-base student, and a weight scan over the loss shows that the apparent ``student beats teacher'' margin is entirely attributable to a direct-target term rather than to concept-direction transfer or variance averaging. Because fused inference keeps every base alive and distillation is a deployment device, the study is only as trustworthy as its evaluation. We therefore apply a uniform \emph{out-of-sample discipline} across the whole stack, and it overturns several of our own in-sample findings: the in-sample best hub mode is not the out-of-sample best, an advertised corpus-scale boundary is not established, and long-training and repair gains shrink to noise. What survives held-out evaluation is the alignment-ladder ceiling, the attention-path advantage, and the scale-heterogeneous fusion gain (\S\ref{sec:scale-hetero-exp}), whose in-sample margin of $+26.7\%$ is retained out of sample. We report the negative results that bound the method---component composition, nested aligners, multi-teacher distillation, and toy multimodal benchmarks---from hundreds of seeded end-to-end runs across 41 versioned engineering generations and 430 unit and integration tests.
+Combining heterogeneous pretrained models---bidirectional encoders, causal decoders, and vision transformers that differ in architecture, hidden width, and modality---usually requires joint retraining, architecture surgery, or lossy output-level ensembling. We study how such models can be \emph{reconstructed} while every base stays frozen, in three steps. \textbf{(i) Sublayer fusion.} A shared sparse Top-$K$ router selects one of $M$ frozen architectural experts per token; semantic aligners map mismatched hidden spaces into one shared routing space; experts are fused residually with per-expert gates. Across four aligner designs we measure a strict but \emph{saturating} ladder (linear $<$ mean $<$ cross-architecture attention $<$ mixture), and a capacity-matched control shows the ceiling is a matter of design rather than of parameter count. \textbf{(ii) Coordinated routing.} We ask how a global hub should influence the shared router, and prove that modulating the softmax temperature (gate-style) is the only one of four hub modes satisfying perfect degeneration, order preservation, boundedness, and low overhead at once; we also diagnose a hidden failure mode in which tanh saturation severs the gradient to the hub during long training. \textbf{(iii) Independent-model reconstruction.} Chimera distillation collapses the ensemble into a single-base student, and a weight scan over the loss shows that the apparent ``student beats teacher'' margin is entirely attributable to a direct-target term rather than to concept-direction transfer or variance averaging. Because fused inference keeps every base alive and distillation is a deployment device, the study is only as trustworthy as its evaluation. We therefore apply a uniform \emph{out-of-sample discipline} across the whole stack, and it overturns several of our own in-sample findings: the in-sample best hub mode is not the out-of-sample best, an advertised corpus-scale boundary is not established, and long-training and repair gains shrink to noise. What survives held-out evaluation is the alignment-ladder ceiling and the attention-path advantage. The scale-heterogeneous fusion margin does not: a projection-space audit (\S\ref{sec:projection-space}) shows it to be a source-identification effect inside a shared space that was never optimized, and it does not persist once that space is learned. We report the negative results that bound the method---component composition, nested aligners, multi-teacher distillation, and toy multimodal benchmarks---from hundreds of seeded end-to-end runs across 41 versioned engineering generations and 430 unit and integration tests.
 \end{abstract}
 
 \section{Introduction}
@@ -86,7 +86,7 @@ This paper studies a fourth option, one level lower, and asks how far it can be 
 
 \textbf{Stage 3 --- independent-model reconstruction.} Fusion has a deployment cost: the fused system still needs every base alive at inference. We close the loop with \textbf{chimera distillation}, in which a single-base student---a real frozen TinyBERT \citep{jiao2020} with a low-rank adapter \citep{hu2022}---is trained to reproduce the fused teacher's output from its \emph{own} modality's input alone.
 
-\textbf{The thread that holds the three stages together.} Each stage is a claim about a quantity measured at small scale, and each claim is only as good as its evaluation. We therefore adopt a single discipline throughout: every headline number is validated on inputs the model never trained on. This discipline is not cosmetic. Applying it retroactively to our own earlier results changed several of them, in both directions. On the negative side, the in-sample best hub mode is not the best out-of-sample, an advertised corpus-scale boundary does not survive, and the two gradient repairs turn out not to move fusion MSE at all. On the positive side, the alignment-ladder ceiling, the attention-path advantage, and the scale-heterogeneous fusion gain (\S\ref{sec:scale-hetero-exp}) all survive held-out evaluation intact, the last retaining $99$--$100\%$ of its in-sample margin under both a re-sampled-noise and a shifted-stimulus protocol. We report both outcomes, because a mechanism-level study whose positive results are not separated from its evaluation artifacts is not evidence.
+\textbf{The thread that holds the three stages together.} Each stage is a claim about a quantity measured at small scale, and each claim is only as good as its evaluation. We therefore adopt a single discipline throughout: every headline number is validated on inputs the model never trained on. This discipline is not cosmetic. Applying it retroactively to our own earlier results changed several of them, in both directions. On the negative side, the in-sample best hub mode is not the best out-of-sample, an advertised corpus-scale boundary does not survive, and the two gradient repairs turn out not to move fusion MSE at all. On the positive side, the alignment-ladder ceiling and the attention-path advantage survive held-out evaluation intact. The scale-heterogeneous fusion gain (\S\ref{sec:scale-hetero-exp}) does not: under the same held-out protocol its margin is retained in full, but an audit of the projection space (\S\ref{sec:projection-space}) attributes that margin to the projection being frozen and randomly initialized, and shows that it disappears when the space is learned. We report both outcomes, because a mechanism-level study whose positive results are not separated from its evaluation artifacts is not evidence.
 
 We make the following contributions, ordered from mechanism to evidence.
 
@@ -381,7 +381,7 @@ sign is stable across all three columns.}
 \toprule
 \textbf{Finding} & \textbf{In-sample} & \textbf{Noise} & \textbf{Stimulus} & \textbf{Verdict} \\
 \midrule
-Fused beats best single expert (v33) & $+26.7\%$ \ (5/5) & $+26.7\%$ \ (5/5) & $+26.5\%$ \ (5/5) & \textbf{survives} \\
+Fused beats best single expert (v33) & $+26.7\%$ \ (5/5) & $+26.7\%$ \ (5/5) & $+26.5\%$ \ (5/5) & \textbf{retained, but see} \S\ref{sec:projection-space} \\
 $\quad$ retention of the in-sample effect & --- & $100\%$ & $99\%$ & --- \\
 DMN association layer, additive to v33 (v34) & $+6.4\%$ \ (5/5) & $+6.4\%$ \ (5/5) & $+6.5\%$ \ (5/5) & \textbf{survives} \\
 $\quad$ retention of the in-sample effect & --- & $100\%$ & $103\%$ & --- \\
@@ -389,6 +389,8 @@ Entry-model injection into a container (v35) & $-11.1\%$ \ (2/5) & $-11.1\%$ \ (
 \bottomrule
 \end{tabular}
 \end{table}
+
+\paragraph{The margin above is retained, but it is not a margin for fusion.} The projection in this configuration is orthogonally initialized and frozen, and an audit of the shared space (\S\ref{sec:projection-space}) shows that the fused output is a detector of its \emph{source base} rather than of the target: on held-out data the source identity is recoverable from the fused output with probability $1.000$, while the target class is recoverable with probability $0.279$ against a $0.125$ chance baseline. The router's task in a random space is the trivial one of recognizing which base produced the token. When the space is made meaningful---a nonlinear lift, trained rather than frozen---the same margin collapses to $+4\%$--$+12\%$, the absolute error falls below the trivial zero predictor, and the source-identity decodability of the output falls with it. We therefore read this row as evidence that a shared space must be meaningful for heterogeneous fusion to work at all, not as evidence that fusing beats using one base well.
 
 Two results deserve to be read together with the rest of this section rather than on their own.
 First, the scale-heterogeneous gain is \emph{not} a re-scaling of the architectural one: it is the
@@ -408,6 +410,86 @@ in form; and the synthetic targets are the same class-direction construction use
 claim this experiment supports is therefore that \emph{routing across a large--small size gap does not
 destroy the fusion gain and retains it out of sample}---not that depth-heterogeneous composition at
 production scale has been demonstrated.
+
+\subsection{The projection space is load-bearing: its size, its nonlinearity, and its conditioning}
+\label{sec:projection-space}
+
+Everything above treats the rectangular projection $P_m$ as fixed plumbing: a
+$d_{\text{shared}}\times D_m$ matrix carrying each base into the shared routing space. That
+assumption turned out to be the largest untested surface in the study, and testing it changes what
+the headline numbers mean. We report it as a separate line of work because it does not merely
+refine an existing claim---it relocates the mechanism.
+
+\paragraph{The projection in every fusion experiment was frozen and random.}
+In the scale-heterogeneous configuration of \S\ref{sec:scale-hetero-exp} and in the
+architectural configuration of \S\ref{sec:fusion-exp}, every $P_m$ is orthogonally initialized and
+then \emph{frozen}, the per-expert feed-forward blocks are frozen as well, and the only trainable
+tensors are the shared router and three per-expert affine pairs ($\approx 2.3$K parameters in
+total). The margins reported for both lines were therefore obtained inside a shared space whose
+geometry was random. Any claim of the form ``fusion beats its parts'' must be read against that
+fact.
+
+\paragraph{How large does the space need to be?}
+A training-free diagnostic (no gradients) stacks the bases' token representations, takes the
+covariance spectrum, and measures cross-base redundancy with linear centered kernel alignment
+(CKA) against a row-permutation null. On a controlled corpus of $8$ semantic classes built from
+slot combinations---so that the training and held-out splits share no sentence at all---the union of
+the three bases occupies $4$--$19$ dimensions at the $95$--$99\%$ variance level, against the
+$d_{\text{shared}}{=}256$ actually used; the pairwise CKA is far above its permutation null. Two
+things follow. The space is provisioned for roughly an order of magnitude more directions than the
+data occupy, and the redundancy that would justify a small space is real---but it is invisible to
+a linear method: the joint principal subspace of the union, which is the best a linear
+construction can do, leaves the three bases in nearly disjoint directions (footprint overlap
+$<0.06$).
+
+\paragraph{Nonlinearity, not capacity, closes the gap.}
+We then run a $2\times2$ factorial over the two axes that the diagnosis implicates---nonlinear
+versus linear lifting, and static versus content-conditioned lifting---crossed with a sample-size
+axis ($32$, $256$, $1024$ examples per base), with the hidden width of the nonlinear lift solved
+so that the two arms differ in fewer than $0.3\%$ of parameters, and with a fixed minibatch and
+step count so that the sample-size axis measures data diversity rather than compute. The
+nonlinear arm reduces held-out fusion error by $4.7$--$9.9\times$ relative to the
+parameter-matched linear arm, and does so with roughly half the overfitting gap; the linear arm's
+advantage instead comes from sample size, and shrinks as the nonlinear arm saturates. A
+random-projection construction is $38\times$ worse than the trivial zero predictor in absolute
+error. The redundancy the diagnostic located is therefore recoverable, but only through a nonlinear
+map.
+
+\paragraph{Conditioning needs a nonlinear base, and needs data.}
+Conditioning the projection on a content-derived vector (a hypernetwork emitting a rank-16
+modulation) is useless on a linear base---the conditioned and static linear arms agree to within
+noise at all three sample sizes---and becomes useful on top of the nonlinear lift
+($0.0798$ versus $0.0931$ at $1024$ examples). Permuting the conditions across samples
+degrades held-out error by $+24.6\%$, $+47.0\%$ and $+50.3\%$ as the sample size grows, so the
+conditioning is used rather than decorative. It also requires data: at $32$ examples the
+conditioned nonlinear arm is \emph{worse} than the unconditioned one.
+
+\paragraph{Auditing the margin itself.}
+The finding above makes the headline margin suspect, and we test it directly rather than by
+argument. If the frozen random space inflates the fused-over-single-expert margin, then in that
+configuration the fused output should carry the \emph{identity of its source base} rather than the
+semantics of the input. We test this with two linear probes on the held-out fused output: one
+predicts which of the three bases produced the sample, the other predicts the target class. In the
+frozen random configuration the margin over the best single expert is $+66.6$ (held-out fusion
+error $4.7423$, against a trivial zero-predictor error of $0.125$), and the probes return
+$1.000$ for source identity and only $0.279$ for the target class, while the projected inputs
+themselves identify their source with probability $1.000$. The fused output is, in effect, a
+source detector: the router's task is trivial in that space, and the margin over a single expert
+measures source detection and dispatch rather than semantic fusion. Across the audited arms the
+margin over the best single expert is $+66.6$ (frozen random), $+53.7$ (nonlinear, frozen
+random), $+4.1$ (nonlinear, trained), $+12.0$ (nonlinear, proxy-aligned, frozen) and
+$-0.1$ (nonlinear, proxy-aligned, trained), with held-out errors of $4.7423$, $0.0974$ and
+$0.1016$ respectively.
+
+\paragraph{What we therefore claim.}
+We cannot attribute the earlier margins to fusion. They are attributable to a shared space that
+was never optimized, and they do not persist once the space is learned: with a meaningful
+(nonlinear, trained) space, a single expert with the same space solves the task about as well as
+the fused model does. The defensible claim is the weaker and more useful one: \emph{a shared space
+must be meaningful for sublayer fusion to work at all}---in a random space the fused output is
+$38\times$ worse than predicting zeros---and once it is meaningful, fusing heterogeneous bases
+adds little over using one of them well. We report the negative result with the same prominence
+as the positive ones, and we mark the audit as pending a fully independent re-derivation.
 
 \subsection{The alignment ladder and its ceiling}
 \label{sec:align-exp}
