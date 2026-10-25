@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "version": "49.0",
+  "package": "v49_projection_space",
+  "line": "aligner",
+  "title": "投影空间三重检验: 非线性 x 条件依赖 x 样本量 (2x2 析因 + 样本量自变量)",
+  "generation": {
+    "one_mechanism_added": "把 v48 的三个悬案 (非线性映射 / 条件依赖 / 样本量) 同时做成 2x2 析因 + 样本量自变量, 并用 shuffle-c 做条件轴的判决性对照",
+    "parent": "48.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线的第 5 个成员; v48 问'空间多大/能不能学', v49 问'怎么学(非线性/条件依赖)以及学到了什么(样本量)'"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "data.py",
+      "mechanism.py"
+    ],
+    "note": "空间诊断复用 v48_projection_space.space (谱 / CKA+零分布 / K 网格)"
+  },
+  "claim": {
+    "asserts": "在参数量对齐 (<0.3%) 与算力对齐 (固定 minibatch+固定步数) 下: (1) 非线性抬升显著优于线性 (held-out 低 4.7-9.9 倍, 过拟合间隙低一半), 说明 v48 诊断到的'冗余存在但线性抓不到'确实只能靠非线性拿到; (2) 条件依赖只在**非线性基座**上起作用 (线性基座上 C 三档都在噪声内), shuffle-c 退化随样本量升到 +50.3% → 条件真在用, 但需要数据; (3) 最佳格 NL_cond@S1024=0.0798 已低于平凡基线 0.125",
+    "metric": "held_out_fuse_mse",
+    "direction": "lower_is_better",
+    "value": 0.0798,
+    "baseline": {
+      "ref": "L_static (线性可训练, 同容量) @S1024",
+      "value": 0.4398
+    },
+    "delta_pct": -81.9,
+    "seeds": 5,
+    "outcome_label": "clean",
+    "note": "⚠️ 同时产出贯穿性负面结论: 所有'投影可训练'臂的『融合 vs 单专家』相对增益都塌到 +0.5%~+10.4% (冻结臂 +60.6%~+65.8%), 且与样本量无关 → v33 架构的融合收益**不来自融合**, 而来自'投影空间可训练'。该主张需独立审计结清 (v50)。"
+  },
+  "protocol": {
+    "eval_set": "held-out = 每类后 128 个槽位组合 (与训练池**文本零交集**) + in-sample 双口径",
+    "input": "8 类组合式槽位文本 (16x16=256 组合/类); MSA-4B 浅层1层(D=2560) + embedding-0.6b(D=1024) + reranker-0.6b(D=1024) 三个真正不同的底座; 样本量档 32/256/1024 (每底座)",
+    "caveat": "组合式文本是合成分布 (类内结构比真实语料规整), 只有趋势可外推, 绝对数值不可外推; 条件由输入内容派生 (与输入同源, 非标签泄漏) 但与容量轴部分纠缠, 故以 shuffle-c 为唯一判决; 平凡基线(预测全零)=0.125 是绝对下界参照"
+  },
+  "acceptance": {
+    "criterion": "A 臂 (投影冻结) 保持 v48 的形态 (held-out 远高于平凡基线, vs 单大有 +60% 增益), 且 CKA 诊断显著超置换零分布",
+    "outcome": "通过: L_static_frozen 三档 held=4.83/4.74/4.80 (平凡基线 0.125 → 差 38 倍), vs 单大 +60.6%/+65.8%/+64.4%; CKA 均值 0.2545 vs 零分布上限 0.0008 (8192 token), 三对底座全部超零分布",
+    "note": "另注: v49 的样本量把 v48 的'并集 95% 维数'从 28 修正到 **5** → v48 '空间过配 5-14 倍' 的口径需按 v49 重算"
+  },
+  "leakage_audit": {
+    "status": "pending",
+    "audits": [],
+    "note": "本代自带双口径 (in-sample/held-out) + 文本零交集 + shuffle-c 零分布对照, 但尚未由独立审计包结清; '融合 vs 单专家增益归零' 这条负面结论需要 v50 独立复算"
+  },
+  "falsified": [
+    {
+      "hypothesis": "『让投影可训练的收益来自对齐, 样本越多越好』",
+      "verdict": "部分证伪 —— 收益主要来自**拟合能力**: 任何可训练臂的『融合 vs 单专家』相对增益都塌到 ~0 (冻结臂 +60.6%), 且非线性臂在 S32 就接近平凡基线 (增量饱和)",
+      "evidence": "results/metrics.json → 各格的 held_out.fuse / single_big / trivial"
+    },
+    {
+      "hypothesis": "『条件依赖需要足够样本才有用 (退化幅度随 S 减小)』",
+      "verdict": "**证伪** —— 退化幅度随 S **增大** (shuffle-c: NL_cond @S32 +24.6% → @S256 +47.0%): 样本越多, 条件学得越实, 不是越松",
+      "evidence": "results/metrics.json → held_out_shuffled_cond"
+    },
+    {
+      "hypothesis": "『非线性臂的过拟合间隙会像线性臂一样高 (只是多参数)』",
+      "verdict": "证伪 —— 参数量对齐 (<0.3%) 下, 非线性臂的过拟合间隙**远小于**线性臂 (S32: +41.9% vs +93.6%; S256: +23.5% vs +81.1%), 且 held-out 低 5-10 倍 → 它不是多参数, 是更会用",
+      "evidence": "results/metrics.json → in_sample vs held_out 的间隙列"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v49_projection_space.py",
+    "forwarder_spec": "docs/V49_0_PROJECTION_SPACE.md"
+  },
+  "_needs_human": [
+    "claim.outcome_label",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/aligner/README.md"
+  ]
+}
