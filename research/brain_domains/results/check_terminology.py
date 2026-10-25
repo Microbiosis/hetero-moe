@@ -23,6 +23,15 @@
      —— 兑现 §二十九·六 的承诺（位置轴读数随窗口系统性变化）；
    - **G3 状态不互斥**：台账 §1 已标 ✅ 的结论不得又出现在未测表 §4.2
      （台账状态格自带「未定」的除外，如 A16）。
+7. **拆分与设计书的结构守卫**：
+   - **G4 三组绑定**：`BRAIN_STRUCTURE_SPEC.md` §4.1 的通道数必须与 exp89 原表一致，
+     §4.4 必须写清「形状共享，权重不共享」与「③-FRONT 弱代理」；
+   - **G5 设计书不许退化成空话**：五个动词、三行组件、每条自写连接都要带判据、
+     关键外部出处（Eliasmith 2005 / World Models）必须在；
+   - **G6 算子表 ⇄ 代码类名绑定**：`COMPONENT_DESIGN.md` §3 的算子表必须与
+     `arch/ops_brain.py` 里的类**双向一致**，性质测试的**项数**必须与
+     `arch/test_ops_brain.py` 里的 `check()` 调用数一致，
+     且 §3 必须写明「只有性质测试，没有判据实验」（不许把实现正确说成有用）。
 
 ## 豁免
 
@@ -309,6 +318,50 @@ def main():
         # R2 的警告要在
         if "R2" not in cdtext:
             problems.append("[设计书] 缺 R2 的轴标注警告")
+
+    # --- G6：设计书 §3 的算子表必须与 `arch/ops_brain.py` 的类**机器绑定** ---
+    # ⚠️ 目的：防止「文档里的算子清单」与「代码里真有的算子」各走各的
+    #    （文档漂移是本项目反复出现过的失败模式）。
+    ops_f = ROOT / "arch" / "ops_brain.py"
+    test_f = ROOT / "arch" / "test_ops_brain.py"
+    cdtext = cd_f.read_text(encoding="utf-8") if cd_f.exists() else ""
+    m3 = re.search(r"^## 3\.[^\n]*\n(.*?)^---\s*$", cdtext, re.M | re.S)
+    if not ops_f.exists():
+        problems.append("[设计书] 缺 arch/ops_brain.py（我们自写的算子）")
+    elif not test_f.exists():
+        problems.append("[设计书] 缺 arch/test_ops_brain.py（算子的性质测试）")
+    elif not m3:
+        problems.append("[设计书] 缺「## 3.」小节（我们自写的算子清单）")
+    else:
+        sec3 = m3.group(1)
+        cls_names = re.findall(r"^class\s+([A-Za-z_]\w*)\s*\(",
+                               ops_f.read_text(encoding="utf-8"), re.M)
+        # 只取**表格第一列**的算子名 ⇒ 正文里的 `ch_mix` 之类不会被误当成算子
+        doc_ops = []
+        for line in sec3.splitlines():
+            mm = re.match(r"\|\s*`([A-Za-z_]\w*)`", line)
+            if mm:
+                doc_ops.append(mm.group(1))
+        for c in cls_names:
+            if c not in doc_ops:
+                problems.append(f"[设计书] §3 的算子表缺算子「{c}」（代码里有、文档里没有）")
+        for d in doc_ops:
+            if d not in cls_names:
+                problems.append(f"[设计书] §3 写了代码里不存在的算子「{d}」")
+        # 性质测试的**项数**必须与测试文件里的 check() 调用数一致
+        n_checks = len(re.findall(r"(?m)^\s*check\(",
+                                  test_f.read_text(encoding="utf-8")))
+        mc = re.search(r"\*\*(\d+) 项全绿\*\*", sec3)
+        if not mc:
+            problems.append("[设计书] §3 缺「**N 项全绿**」的项数声明")
+        elif int(mc.group(1)) != n_checks:
+            problems.append(
+                f"[设计书] §3 声明 {mc.group(1)} 项性质测试，"
+                f"测试文件里实际有 {n_checks} 项（项数变了 ⇒ 文档要同步）")
+        # 诚实状态：算子目前**只有性质测试，没有判据实验**
+        for need in ("只有性质测试，没有判据实验", "区内混、区间不混"):
+            if need not in sec3:
+                problems.append(f"[设计书] §3 缺「{need}」")
 
     if problems:
         print("✗ 措辞限定词问题：")

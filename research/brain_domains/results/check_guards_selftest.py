@@ -166,6 +166,13 @@ CASES = [
      "设计书：包装范式的外部出处（Eliasmith 2005）被改"),
     (G_TERM, "COMPONENT_DESIGN.md", "| **运动**<br>（CENT 14ch）|", "| **动作**<br>（CENT 14ch）|",
      "设计书：组件行「运动」被改"),
+    # --- G6：算子表 ⇄ 代码类名 ⇄ 性质测试项数 ---
+    (G_TERM, "COMPONENT_DESIGN.md", "`RegionLocalSynergy`", "`RegionLocalSynergys`",
+     "设计书：§3 的算子名与代码类名脱钩"),
+    (G_TERM, "COMPONENT_DESIGN.md", "**26 项全绿**", "**27 项全绿**",
+     "设计书：§3 的性质测试项数与测试文件脱钩"),
+    (G_TERM, "COMPONENT_DESIGN.md", "只有性质测试，没有判据实验", "已通过判据实验",
+     "设计书：§3 把「只有性质测试」说成「已通过判据实验」"),
 ]
 
 
