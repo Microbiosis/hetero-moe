@@ -1,0 +1,3726 @@
+{
+  "schema_version": "1.0",
+  "version": "49.0",
+  "package": "v49_projection_space",
+  "line": "aligner",
+  "config": {
+    "d_shared": 256,
+    "batch": 288,
+    "steps": 300,
+    "lr": 0.01,
+    "lr_big": 0.001,
+    "seeds": 5,
+    "tokens": 8,
+    "n_classes": 8,
+    "sample_sizes": {
+      "S32": 4,
+      "S256": 32,
+      "S1024": 128
+    }
+  },
+  "diagnostics": {
+    "union": {
+      "n": 8192,
+      "p": 4608,
+      "noise_floor": 0.9268092646435321,
+      "k_aff": 522,
+      "k_1pct": 19,
+      "k_5pct": 4,
+      "elbow": 4457,
+      "eff_rank": 37.99210226715079,
+      "total_var": 15252.08355683417
+    },
+    "per_expert": {
+      "big": {
+        "n": 8192,
+        "p": 2560,
+        "noise_floor": 0.17374797229862216,
+        "k_aff": 460,
+        "k_1pct": 20,
+        "k_5pct": 2,
+        "elbow": 2526,
+        "eff_rank": 23.683285323014843,
+        "total_var": 6803.725756967832
+      },
+      "small1": {
+        "n": 8192,
+        "p": 1024,
+        "noise_floor": 0.4210035889492206,
+        "k_aff": 307,
+        "k_1pct": 19,
+        "k_5pct": 2,
+        "elbow": 64,
+        "eff_rank": 22.633876602219306,
+        "total_var": 4959.769986310263
+      },
+      "small2": {
+        "n": 8192,
+        "p": 1024,
+        "noise_floor": 0.08391188774934392,
+        "k_aff": 285,
+        "k_1pct": 5,
+        "k_5pct": 3,
+        "elbow": 87,
+        "eff_rank": 4.7249117506193805,
+        "total_var": 3488.587813556086
+      }
+    },
+    "canonical_correlations": [
+      {
+        "pair": [
+          0,
+          1
+        ],
+        "cka": 0.23378136032340344,
+        "cka_null_max": 0.0010699970609769603,
+        "cka_exceeds_null": true,
+        "cc1": 0.49133947008436485
+      },
+      {
+        "pair": [
+          0,
+          2
+        ],
+        "cka": 0.0995022981760548,
+        "cka_null_max": 0.0007011524488371288,
+        "cka_exceeds_null": true,
+        "cc1": 0.3754782049434456
+      },
+      {
+        "pair": [
+          1,
+          2
+        ],
+        "cka": 0.43009015468679723,
+        "cka_null_max": 0.0006143123107892535,
+        "cka_exceeds_null": true,
+        "cc1": 0.939856530625206
+      }
+    ],
+    "cka_mean": 0.25445793772875186,
+    "cka_null_max_mean": 0.0007951539402011142
+  },
+  "results": {
+    "S32:L_static_frozen": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 4.677416801452637,
+            "single_big": 10.048779487609863,
+            "avg": 8.835594177246094,
+            "trivial": 0.125,
+            "route": [
+              301,
+              222,
+              245
+            ]
+          },
+          "held_out": {
+            "fuse": 4.94068717956543,
+            "single_big": 10.03665542602539,
+            "avg": 8.806714057922363,
+            "trivial": 0.125,
+            "route": [
+              297,
+              234,
+              237
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 4.781526565551758,
+            "single_big": 15.15748119354248,
+            "avg": 8.926770210266113,
+            "trivial": 0.125,
+            "route": [
+              154,
+              390,
+              224
+            ]
+          },
+          "held_out": {
+            "fuse": 4.893001556396484,
+            "single_big": 15.193577766418457,
+            "avg": 8.870368003845215,
+            "trivial": 0.125,
+            "route": [
+              147,
+              376,
+              245
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 4.403244972229004,
+            "single_big": 9.794075012207031,
+            "avg": 8.984487533569336,
+            "trivial": 0.125,
+            "route": [
+              405,
+              209,
+              154
+            ]
+          },
+          "held_out": {
+            "fuse": 4.630207061767578,
+            "single_big": 9.809184074401855,
+            "avg": 9.004463195800781,
+            "trivial": 0.125,
+            "route": [
+              415,
+              206,
+              147
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 4.692016124725342,
+            "single_big": 10.582893371582031,
+            "avg": 8.638232231140137,
+            "trivial": 0.125,
+            "route": [
+              221,
+              245,
+              302
+            ]
+          },
+          "held_out": {
+            "fuse": 4.995570659637451,
+            "single_big": 10.605681419372559,
+            "avg": 8.6124267578125,
+            "trivial": 0.125,
+            "route": [
+              226,
+              248,
+              294
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 4.512808322906494,
+            "single_big": 15.38742446899414,
+            "avg": 9.221362113952637,
+            "trivial": 0.125,
+            "route": [
+              340,
+              198,
+              230
+            ]
+          },
+          "held_out": {
+            "fuse": 4.691910266876221,
+            "single_big": 15.58487319946289,
+            "avg": 9.197104454040527,
+            "trivial": 0.125,
+            "route": [
+              326,
+              196,
+              246
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        }
+      ]
+    },
+    "S32:L_static": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.0748264417052269,
+            "single_big": 0.07475686818361282,
+            "avg": 0.07812710851430893,
+            "trivial": 0.125,
+            "route": [
+              768,
+              0,
+              0
+            ]
+          },
+          "held_out": {
+            "fuse": 1.1541801691055298,
+            "single_big": 1.194371223449707,
+            "avg": 1.1253713369369507,
+            "trivial": 0.125,
+            "route": [
+              686,
+              35,
+              47
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.06481633335351944,
+            "single_big": 0.0649336576461792,
+            "avg": 0.06493770331144333,
+            "trivial": 0.125,
+            "route": [
+              0,
+              547,
+              221
+            ]
+          },
+          "held_out": {
+            "fuse": 1.1097996234893799,
+            "single_big": 1.1030973196029663,
+            "avg": 1.1064599752426147,
+            "trivial": 0.125,
+            "route": [
+              19,
+              414,
+              335
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.06565318256616592,
+            "single_big": 0.06565219908952713,
+            "avg": 0.06644283980131149,
+            "trivial": 0.125,
+            "route": [
+              763,
+              0,
+              5
+            ]
+          },
+          "held_out": {
+            "fuse": 1.1460756063461304,
+            "single_big": 1.1770936250686646,
+            "avg": 1.1211093664169312,
+            "trivial": 0.125,
+            "route": [
+              677,
+              31,
+              60
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.07645473629236221,
+            "single_big": 0.08082927018404007,
+            "avg": 0.07943203300237656,
+            "trivial": 0.125,
+            "route": [
+              55,
+              299,
+              414
+            ]
+          },
+          "held_out": {
+            "fuse": 1.1485414505004883,
+            "single_big": 1.131945252418518,
+            "avg": 1.1329469680786133,
+            "trivial": 0.125,
+            "route": [
+              39,
+              232,
+              497
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.09276948124170303,
+            "single_big": 0.0932188555598259,
+            "avg": 0.0975341871380806,
+            "trivial": 0.125,
+            "route": [
+              670,
+              98,
+              0
+            ]
+          },
+          "held_out": {
+            "fuse": 1.2743431329727173,
+            "single_big": 1.3742694854736328,
+            "avg": 1.1435481309890747,
+            "trivial": 0.125,
+            "route": [
+              690,
+              64,
+              14
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        }
+      ]
+    },
+    "S32:L_cond": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.03415503725409508,
+            "single_big": 0.05085707828402519,
+            "avg": 0.04382079839706421,
+            "trivial": 0.125,
+            "route": [
+              96,
+              165,
+              507
+            ]
+          },
+          "held_out": {
+            "fuse": 1.1821917295455933,
+            "single_big": 1.198613166809082,
+            "avg": 1.1778664588928223,
+            "trivial": 0.125,
+            "route": [
+              123,
+              281,
+              364
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 1.2101030349731445,
+            "single_big": 1.229173183441162,
+            "avg": 1.207913875579834,
+            "trivial": 0.125,
+            "route": [
+              132,
+              275,
+              361
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.035404935479164124,
+            "single_big": 0.03783620893955231,
+            "avg": 0.037160906940698624,
+            "trivial": 0.125,
+            "route": [
+              144,
+              52,
+              572
+            ]
+          },
+          "held_out": {
+            "fuse": 1.210513949394226,
+            "single_big": 1.1614965200424194,
+            "avg": 1.1659948825836182,
+            "trivial": 0.125,
+            "route": [
+              105,
+              179,
+              484
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 1.2546085119247437,
+            "single_big": 1.2053006887435913,
+            "avg": 1.2095364332199097,
+            "trivial": 0.125,
+            "route": [
+              104,
+              177,
+              487
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.03457491472363472,
+            "single_big": 0.035201508551836014,
+            "avg": 0.03542487695813179,
+            "trivial": 0.125,
+            "route": [
+              166,
+              49,
+              553
+            ]
+          },
+          "held_out": {
+            "fuse": 1.155726671218872,
+            "single_big": 1.1414304971694946,
+            "avg": 1.143689751625061,
+            "trivial": 0.125,
+            "route": [
+              198,
+              148,
+              422
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 1.179566502571106,
+            "single_big": 1.1657662391662598,
+            "avg": 1.1678601503372192,
+            "trivial": 0.125,
+            "route": [
+              209,
+              149,
+              410
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.04119668900966644,
+            "single_big": 0.04117407649755478,
+            "avg": 0.04383370280265808,
+            "trivial": 0.125,
+            "route": [
+              525,
+              8,
+              235
+            ]
+          },
+          "held_out": {
+            "fuse": 1.1815179586410522,
+            "single_big": 1.2269086837768555,
+            "avg": 1.1516579389572144,
+            "trivial": 0.125,
+            "route": [
+              478,
+              52,
+              238
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 1.2205263376235962,
+            "single_big": 1.2681115865707397,
+            "avg": 1.1932194232940674,
+            "trivial": 0.125,
+            "route": [
+              474,
+              48,
+              246
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.05516114830970764,
+            "single_big": 0.0854405090212822,
+            "avg": 0.0603766143321991,
+            "trivial": 0.125,
+            "route": [
+              34,
+              218,
+              516
+            ]
+          },
+          "held_out": {
+            "fuse": 1.2174229621887207,
+            "single_big": 1.2752588987350464,
+            "avg": 1.1733765602111816,
+            "trivial": 0.125,
+            "route": [
+              83,
+              251,
+              434
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 1.24518620967865,
+            "single_big": 1.3026448488235474,
+            "avg": 1.2018907070159912,
+            "trivial": 0.125,
+            "route": [
+              83,
+              263,
+              422
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        }
+      ]
+    },
+    "S32:NL_static": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.06944961100816727,
+            "single_big": 0.0714610144495964,
+            "avg": 0.07169019430875778,
+            "trivial": 0.125,
+            "route": [
+              609,
+              73,
+              86
+            ]
+          },
+          "held_out": {
+            "fuse": 0.11638852208852768,
+            "single_big": 0.11661086231470108,
+            "avg": 0.11618316918611526,
+            "trivial": 0.125,
+            "route": [
+              740,
+              17,
+              11
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.0533713735640049,
+            "single_big": 0.06144493445754051,
+            "avg": 0.05827433243393898,
+            "trivial": 0.125,
+            "route": [
+              195,
+              74,
+              499
+            ]
+          },
+          "held_out": {
+            "fuse": 0.12336204200983047,
+            "single_big": 0.12423840165138245,
+            "avg": 0.1204274371266365,
+            "trivial": 0.125,
+            "route": [
+              114,
+              102,
+              552
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.07448417693376541,
+            "single_big": 0.07960789650678635,
+            "avg": 0.07578357309103012,
+            "trivial": 0.125,
+            "route": [
+              81,
+              87,
+              600
+            ]
+          },
+          "held_out": {
+            "fuse": 0.1143779531121254,
+            "single_big": 0.1181219220161438,
+            "avg": 0.11391494423151016,
+            "trivial": 0.125,
+            "route": [
+              34,
+              64,
+              670
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.0712115541100502,
+            "single_big": 0.07544519752264023,
+            "avg": 0.07446333765983582,
+            "trivial": 0.125,
+            "route": [
+              0,
+              681,
+              87
+            ]
+          },
+          "held_out": {
+            "fuse": 0.11877448111772537,
+            "single_big": 0.11909415572881699,
+            "avg": 0.11849851161241531,
+            "trivial": 0.125,
+            "route": [
+              1,
+              741,
+              26
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.07464810460805893,
+            "single_big": 0.07758496701717377,
+            "avg": 0.07550188899040222,
+            "trivial": 0.125,
+            "route": [
+              68,
+              670,
+              30
+            ]
+          },
+          "held_out": {
+            "fuse": 0.11776264756917953,
+            "single_big": 0.11904498934745789,
+            "avg": 0.11733374744653702,
+            "trivial": 0.125,
+            "route": [
+              61,
+              699,
+              8
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        }
+      ]
+    },
+    "S32:NL_cond": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.01573171466588974,
+            "single_big": 0.03468113765120506,
+            "avg": 0.028524063527584076,
+            "trivial": 0.125,
+            "route": [
+              352,
+              218,
+              198
+            ]
+          },
+          "held_out": {
+            "fuse": 0.1481117457151413,
+            "single_big": 0.15136481821537018,
+            "avg": 0.14488905668258667,
+            "trivial": 0.125,
+            "route": [
+              387,
+              170,
+              211
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.18455512821674347,
+            "single_big": 0.18329709768295288,
+            "avg": 0.1783490777015686,
+            "trivial": 0.125,
+            "route": [
+              390,
+              146,
+              232
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.009276951663196087,
+            "single_big": 0.04259851574897766,
+            "avg": 0.031495798379182816,
+            "trivial": 0.125,
+            "route": [
+              192,
+              97,
+              479
+            ]
+          },
+          "held_out": {
+            "fuse": 0.15302149951457977,
+            "single_big": 0.15514032542705536,
+            "avg": 0.15350191295146942,
+            "trivial": 0.125,
+            "route": [
+              182,
+              58,
+              528
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.18248045444488525,
+            "single_big": 0.17965680360794067,
+            "avg": 0.1779363602399826,
+            "trivial": 0.125,
+            "route": [
+              163,
+              72,
+              533
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.013800869695842266,
+            "single_big": 0.033829767256975174,
+            "avg": 0.03018128126859665,
+            "trivial": 0.125,
+            "route": [
+              390,
+              191,
+              187
+            ]
+          },
+          "held_out": {
+            "fuse": 0.16014815866947174,
+            "single_big": 0.15784631669521332,
+            "avg": 0.1547233909368515,
+            "trivial": 0.125,
+            "route": [
+              464,
+              85,
+              219
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.19152452051639557,
+            "single_big": 0.18626081943511963,
+            "avg": 0.18310439586639404,
+            "trivial": 0.125,
+            "route": [
+              453,
+              75,
+              240
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.010315932333469391,
+            "single_big": 0.0489252470433712,
+            "avg": 0.031469449400901794,
+            "trivial": 0.125,
+            "route": [
+              179,
+              288,
+              301
+            ]
+          },
+          "held_out": {
+            "fuse": 0.14555811882019043,
+            "single_big": 0.14973598718643188,
+            "avg": 0.13338330388069153,
+            "trivial": 0.125,
+            "route": [
+              158,
+              245,
+              365
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.20472700893878937,
+            "single_big": 0.2013658732175827,
+            "avg": 0.18843145668506622,
+            "trivial": 0.125,
+            "route": [
+              148,
+              242,
+              378
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        },
+        {
+          "in_sample": {
+            "fuse": 0.015329879708588123,
+            "single_big": 0.028049955144524574,
+            "avg": 0.02455904893577099,
+            "trivial": 0.125,
+            "route": [
+              399,
+              189,
+              180
+            ]
+          },
+          "held_out": {
+            "fuse": 0.13179150223731995,
+            "single_big": 0.1316976398229599,
+            "avg": 0.12703706324100494,
+            "trivial": 0.125,
+            "route": [
+              360,
+              221,
+              187
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.15722431242465973,
+            "single_big": 0.15499712526798248,
+            "avg": 0.14997665584087372,
+            "trivial": 0.125,
+            "route": [
+              371,
+              220,
+              177
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 96,
+          "n_heldout": 96
+        }
+      ]
+    },
+    "S256:L_static_frozen": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 4.725779056549072,
+            "single_big": 12.45770263671875,
+            "avg": 8.754189491271973,
+            "trivial": 0.125,
+            "route": [
+              1716,
+              2220,
+              2208
+            ]
+          },
+          "held_out": {
+            "fuse": 4.8518385887146,
+            "single_big": 12.375861167907715,
+            "avg": 8.714987754821777,
+            "trivial": 0.125,
+            "route": [
+              1726,
+              2219,
+              2199
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 4.702408313751221,
+            "single_big": 15.557364463806152,
+            "avg": 8.855565071105957,
+            "trivial": 0.125,
+            "route": [
+              1243,
+              2998,
+              1903
+            ]
+          },
+          "held_out": {
+            "fuse": 4.8033928871154785,
+            "single_big": 15.58413028717041,
+            "avg": 8.800572395324707,
+            "trivial": 0.125,
+            "route": [
+              1192,
+              2897,
+              2055
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 4.59731912612915,
+            "single_big": 10.852578163146973,
+            "avg": 8.833137512207031,
+            "trivial": 0.125,
+            "route": [
+              2972,
+              1821,
+              1351
+            ]
+          },
+          "held_out": {
+            "fuse": 4.748828411102295,
+            "single_big": 10.801048278808594,
+            "avg": 8.812798500061035,
+            "trivial": 0.125,
+            "route": [
+              2945,
+              1833,
+              1366
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 4.599708080291748,
+            "single_big": 15.186718940734863,
+            "avg": 8.807269096374512,
+            "trivial": 0.125,
+            "route": [
+              1245,
+              3046,
+              1853
+            ]
+          },
+          "held_out": {
+            "fuse": 4.742405414581299,
+            "single_big": 15.205666542053223,
+            "avg": 8.769267082214355,
+            "trivial": 0.125,
+            "route": [
+              1196,
+              3049,
+              1899
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 4.429760932922363,
+            "single_big": 15.322253227233887,
+            "avg": 9.144871711730957,
+            "trivial": 0.125,
+            "route": [
+              2742,
+              1499,
+              1903
+            ]
+          },
+          "held_out": {
+            "fuse": 4.564922332763672,
+            "single_big": 15.399116516113281,
+            "avg": 9.102639198303223,
+            "trivial": 0.125,
+            "route": [
+              2644,
+              1448,
+              2052
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        }
+      ]
+    },
+    "S256:L_static": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.09875220060348511,
+            "single_big": 0.1008664146065712,
+            "avg": 0.09939596801996231,
+            "trivial": 0.125,
+            "route": [
+              1694,
+              1058,
+              3392
+            ]
+          },
+          "held_out": {
+            "fuse": 0.5189643502235413,
+            "single_big": 0.520507276058197,
+            "avg": 0.5137038826942444,
+            "trivial": 0.125,
+            "route": [
+              1601,
+              825,
+              3718
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.09422191977500916,
+            "single_big": 0.09644642472267151,
+            "avg": 0.09661338478326797,
+            "trivial": 0.125,
+            "route": [
+              1433,
+              324,
+              4387
+            ]
+          },
+          "held_out": {
+            "fuse": 0.5075954794883728,
+            "single_big": 0.5089030861854553,
+            "avg": 0.5080930590629578,
+            "trivial": 0.125,
+            "route": [
+              1047,
+              531,
+              4566
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.09893224388360977,
+            "single_big": 0.10220759361982346,
+            "avg": 0.0998278483748436,
+            "trivial": 0.125,
+            "route": [
+              2106,
+              1832,
+              2206
+            ]
+          },
+          "held_out": {
+            "fuse": 0.5172301530838013,
+            "single_big": 0.5244196057319641,
+            "avg": 0.5120658278465271,
+            "trivial": 0.125,
+            "route": [
+              2219,
+              2010,
+              1915
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.09464650601148605,
+            "single_big": 0.095682792365551,
+            "avg": 0.09534567594528198,
+            "trivial": 0.125,
+            "route": [
+              185,
+              1334,
+              4625
+            ]
+          },
+          "held_out": {
+            "fuse": 0.5120235085487366,
+            "single_big": 0.508816659450531,
+            "avg": 0.5084112286567688,
+            "trivial": 0.125,
+            "route": [
+              264,
+              1417,
+              4463
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.10126113891601562,
+            "single_big": 0.10484343022108078,
+            "avg": 0.10142115503549576,
+            "trivial": 0.125,
+            "route": [
+              106,
+              1900,
+              4138
+            ]
+          },
+          "held_out": {
+            "fuse": 0.5198851823806763,
+            "single_big": 0.5377466082572937,
+            "avg": 0.513154923915863,
+            "trivial": 0.125,
+            "route": [
+              358,
+              1932,
+              3854
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        }
+      ]
+    },
+    "S256:L_cond": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.06980865448713303,
+            "single_big": 0.07408027350902557,
+            "avg": 0.0702623650431633,
+            "trivial": 0.125,
+            "route": [
+              199,
+              2962,
+              2983
+            ]
+          },
+          "held_out": {
+            "fuse": 0.5029500722885132,
+            "single_big": 0.5154014229774475,
+            "avg": 0.49928414821624756,
+            "trivial": 0.125,
+            "route": [
+              529,
+              2640,
+              2975
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.5368368029594421,
+            "single_big": 0.5492520928382874,
+            "avg": 0.533255398273468,
+            "trivial": 0.125,
+            "route": [
+              524,
+              2613,
+              3007
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.06815493106842041,
+            "single_big": 0.06925223767757416,
+            "avg": 0.06877437978982925,
+            "trivial": 0.125,
+            "route": [
+              3333,
+              836,
+              1975
+            ]
+          },
+          "held_out": {
+            "fuse": 0.49845609068870544,
+            "single_big": 0.4941185414791107,
+            "avg": 0.4936152696609497,
+            "trivial": 0.125,
+            "route": [
+              3374,
+              1050,
+              1720
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.5353314280509949,
+            "single_big": 0.5313550233840942,
+            "avg": 0.5307857990264893,
+            "trivial": 0.125,
+            "route": [
+              3331,
+              1075,
+              1738
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.08460267633199692,
+            "single_big": 0.08621078729629517,
+            "avg": 0.08533322066068649,
+            "trivial": 0.125,
+            "route": [
+              995,
+              1436,
+              3713
+            ]
+          },
+          "held_out": {
+            "fuse": 0.5126271843910217,
+            "single_big": 0.5110302567481995,
+            "avg": 0.509690523147583,
+            "trivial": 0.125,
+            "route": [
+              959,
+              1553,
+              3632
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.5388796925544739,
+            "single_big": 0.5382375717163086,
+            "avg": 0.5367042422294617,
+            "trivial": 0.125,
+            "route": [
+              932,
+              1587,
+              3625
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.07870393246412277,
+            "single_big": 0.08098384737968445,
+            "avg": 0.07893579453229904,
+            "trivial": 0.125,
+            "route": [
+              924,
+              2569,
+              2651
+            ]
+          },
+          "held_out": {
+            "fuse": 0.5063886046409607,
+            "single_big": 0.5159932971000671,
+            "avg": 0.5032992959022522,
+            "trivial": 0.125,
+            "route": [
+              1139,
+              2840,
+              2165
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.5333324074745178,
+            "single_big": 0.5427711009979248,
+            "avg": 0.5302950739860535,
+            "trivial": 0.125,
+            "route": [
+              1055,
+              2913,
+              2176
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.0825420618057251,
+            "single_big": 0.08257424086332321,
+            "avg": 0.08305700868368149,
+            "trivial": 0.125,
+            "route": [
+              4995,
+              1135,
+              14
+            ]
+          },
+          "held_out": {
+            "fuse": 0.5119853615760803,
+            "single_big": 0.5086537003517151,
+            "avg": 0.5088101029396057,
+            "trivial": 0.125,
+            "route": [
+              4825,
+              1081,
+              238
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.5459558963775635,
+            "single_big": 0.5426981449127197,
+            "avg": 0.5429322719573975,
+            "trivial": 0.125,
+            "route": [
+              4834,
+              1068,
+              242
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        }
+      ]
+    },
+    "S256:NL_static": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.07215876877307892,
+            "single_big": 0.07736658304929733,
+            "avg": 0.075627900660038,
+            "trivial": 0.125,
+            "route": [
+              1480,
+              884,
+              3780
+            ]
+          },
+          "held_out": {
+            "fuse": 0.09704315662384033,
+            "single_big": 0.09878692775964737,
+            "avg": 0.09722749143838882,
+            "trivial": 0.125,
+            "route": [
+              1264,
+              1012,
+              3868
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.07428717613220215,
+            "single_big": 0.09522008895874023,
+            "avg": 0.08031275123357773,
+            "trivial": 0.125,
+            "route": [
+              981,
+              1024,
+              4139
+            ]
+          },
+          "held_out": {
+            "fuse": 0.0958283320069313,
+            "single_big": 0.11399974673986435,
+            "avg": 0.09797016531229019,
+            "trivial": 0.125,
+            "route": [
+              863,
+              1026,
+              4255
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.07348722964525223,
+            "single_big": 0.07360262423753738,
+            "avg": 0.07489816844463348,
+            "trivial": 0.125,
+            "route": [
+              5981,
+              0,
+              163
+            ]
+          },
+          "held_out": {
+            "fuse": 0.09582865238189697,
+            "single_big": 0.09584090113639832,
+            "avg": 0.09564872831106186,
+            "trivial": 0.125,
+            "route": [
+              6083,
+              0,
+              61
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.07196420431137085,
+            "single_big": 0.07705134153366089,
+            "avg": 0.07677804678678513,
+            "trivial": 0.125,
+            "route": [
+              370,
+              5240,
+              534
+            ]
+          },
+          "held_out": {
+            "fuse": 0.09886763244867325,
+            "single_big": 0.09876152127981186,
+            "avg": 0.0987432599067688,
+            "trivial": 0.125,
+            "route": [
+              260,
+              5698,
+              186
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.08088286966085434,
+            "single_big": 0.08112037181854248,
+            "avg": 0.08144018799066544,
+            "trivial": 0.125,
+            "route": [
+              5532,
+              269,
+              343
+            ]
+          },
+          "held_out": {
+            "fuse": 0.09958114475011826,
+            "single_big": 0.10077919811010361,
+            "avg": 0.0997995138168335,
+            "trivial": 0.125,
+            "route": [
+              5755,
+              199,
+              190
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        }
+      ]
+    },
+    "S256:NL_cond": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.04023851454257965,
+            "single_big": 0.04627995193004608,
+            "avg": 0.04492483660578728,
+            "trivial": 0.125,
+            "route": [
+              2100,
+              854,
+              3190
+            ]
+          },
+          "held_out": {
+            "fuse": 0.08298458904027939,
+            "single_big": 0.08675333112478256,
+            "avg": 0.08502644300460815,
+            "trivial": 0.125,
+            "route": [
+              2241,
+              1018,
+              2885
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.12016317993402481,
+            "single_big": 0.12090108543634415,
+            "avg": 0.11944728344678879,
+            "trivial": 0.125,
+            "route": [
+              2302,
+              1005,
+              2837
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.037839438766241074,
+            "single_big": 0.052334025502204895,
+            "avg": 0.04490412771701813,
+            "trivial": 0.125,
+            "route": [
+              710,
+              560,
+              4874
+            ]
+          },
+          "held_out": {
+            "fuse": 0.09481680393218994,
+            "single_big": 0.10674694180488586,
+            "avg": 0.10012975335121155,
+            "trivial": 0.125,
+            "route": [
+              654,
+              362,
+              5128
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.1344747394323349,
+            "single_big": 0.14243300259113312,
+            "avg": 0.13785971701145172,
+            "trivial": 0.125,
+            "route": [
+              720,
+              347,
+              5077
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.034214865416288376,
+            "single_big": 0.061054129153490067,
+            "avg": 0.047299280762672424,
+            "trivial": 0.125,
+            "route": [
+              1604,
+              3028,
+              1512
+            ]
+          },
+          "held_out": {
+            "fuse": 0.08509937673807144,
+            "single_big": 0.1038103699684143,
+            "avg": 0.09104549884796143,
+            "trivial": 0.125,
+            "route": [
+              1382,
+              3703,
+              1059
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.13358348608016968,
+            "single_big": 0.14088088274002075,
+            "avg": 0.12895485758781433,
+            "trivial": 0.125,
+            "route": [
+              1291,
+              3880,
+              973
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.034875985234975815,
+            "single_big": 0.05206916108727455,
+            "avg": 0.04814843460917473,
+            "trivial": 0.125,
+            "route": [
+              2617,
+              2827,
+              700
+            ]
+          },
+          "held_out": {
+            "fuse": 0.08410537987947464,
+            "single_big": 0.09292898327112198,
+            "avg": 0.08977288007736206,
+            "trivial": 0.125,
+            "route": [
+              2589,
+              3084,
+              471
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.12829087674617767,
+            "single_big": 0.12799809873104095,
+            "avg": 0.12627160549163818,
+            "trivial": 0.125,
+            "route": [
+              2528,
+              3212,
+              404
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        },
+        {
+          "in_sample": {
+            "fuse": 0.03650326281785965,
+            "single_big": 0.046754032373428345,
+            "avg": 0.04496235027909279,
+            "trivial": 0.125,
+            "route": [
+              4003,
+              647,
+              1494
+            ]
+          },
+          "held_out": {
+            "fuse": 0.08857778459787369,
+            "single_big": 0.09257018566131592,
+            "avg": 0.09067797660827637,
+            "trivial": 0.125,
+            "route": [
+              4258,
+              619,
+              1267
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.12390828877687454,
+            "single_big": 0.12339183688163757,
+            "avg": 0.12124449014663696,
+            "trivial": 0.125,
+            "route": [
+              4408,
+              604,
+              1132
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 768,
+          "n_heldout": 768
+        }
+      ]
+    },
+    "S1024:L_static_frozen": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 4.809471130371094,
+            "single_big": 12.87238597869873,
+            "avg": 8.71423625946045,
+            "trivial": 0.125,
+            "route": [
+              6370,
+              9510,
+              8696
+            ]
+          },
+          "held_out": {
+            "fuse": 4.934603214263916,
+            "single_big": 12.74990177154541,
+            "avg": 8.663524627685547,
+            "trivial": 0.125,
+            "route": [
+              6423,
+              9572,
+              8581
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 4.729057788848877,
+            "single_big": 15.303330421447754,
+            "avg": 8.846793174743652,
+            "trivial": 0.125,
+            "route": [
+              4944,
+              11938,
+              7694
+            ]
+          },
+          "held_out": {
+            "fuse": 4.840370178222656,
+            "single_big": 15.252375602722168,
+            "avg": 8.783077239990234,
+            "trivial": 0.125,
+            "route": [
+              4736,
+              11562,
+              8278
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 4.597501277923584,
+            "single_big": 10.908183097839355,
+            "avg": 8.803223609924316,
+            "trivial": 0.125,
+            "route": [
+              11428,
+              7885,
+              5263
+            ]
+          },
+          "held_out": {
+            "fuse": 4.735476016998291,
+            "single_big": 10.824048042297363,
+            "avg": 8.768174171447754,
+            "trivial": 0.125,
+            "route": [
+              11448,
+              7860,
+              5268
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 4.739990234375,
+            "single_big": 13.014872550964355,
+            "avg": 8.685137748718262,
+            "trivial": 0.125,
+            "route": [
+              5485,
+              10000,
+              9091
+            ]
+          },
+          "held_out": {
+            "fuse": 4.869533538818359,
+            "single_big": 12.988856315612793,
+            "avg": 8.639927864074707,
+            "trivial": 0.125,
+            "route": [
+              5442,
+              10042,
+              9092
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 4.491754531860352,
+            "single_big": 15.493106842041016,
+            "avg": 9.221240997314453,
+            "trivial": 0.125,
+            "route": [
+              10912,
+              6447,
+              7217
+            ]
+          },
+          "held_out": {
+            "fuse": 4.597030162811279,
+            "single_big": 15.459439277648926,
+            "avg": 9.159581184387207,
+            "trivial": 0.125,
+            "route": [
+              10496,
+              6237,
+              7843
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 0,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        }
+      ]
+    },
+    "S1024:L_static": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.11310109496116638,
+            "single_big": 0.11659165471792221,
+            "avg": 0.11443505436182022,
+            "trivial": 0.125,
+            "route": [
+              6203,
+              6606,
+              11767
+            ]
+          },
+          "held_out": {
+            "fuse": 0.4386868178844452,
+            "single_big": 0.44547462463378906,
+            "avg": 0.4381467401981354,
+            "trivial": 0.125,
+            "route": [
+              6738,
+              6171,
+              11667
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.11155730485916138,
+            "single_big": 0.11188057065010071,
+            "avg": 0.11173110455274582,
+            "trivial": 0.125,
+            "route": [
+              13162,
+              1264,
+              10150
+            ]
+          },
+          "held_out": {
+            "fuse": 0.4363625943660736,
+            "single_big": 0.4351913034915924,
+            "avg": 0.4346517026424408,
+            "trivial": 0.125,
+            "route": [
+              13087,
+              2599,
+              8890
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.11882539838552475,
+            "single_big": 0.12262481451034546,
+            "avg": 0.11899501085281372,
+            "trivial": 0.125,
+            "route": [
+              248,
+              235,
+              24093
+            ]
+          },
+          "held_out": {
+            "fuse": 0.44480180740356445,
+            "single_big": 0.4514230191707611,
+            "avg": 0.442877858877182,
+            "trivial": 0.125,
+            "route": [
+              948,
+              1027,
+              22601
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.11561880260705948,
+            "single_big": 0.11700170487165451,
+            "avg": 0.11644262075424194,
+            "trivial": 0.125,
+            "route": [
+              16537,
+              359,
+              7680
+            ]
+          },
+          "held_out": {
+            "fuse": 0.4396229088306427,
+            "single_big": 0.43971002101898193,
+            "avg": 0.43870601058006287,
+            "trivial": 0.125,
+            "route": [
+              15759,
+              1179,
+              7638
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.11143843084573746,
+            "single_big": 0.11510949581861496,
+            "avg": 0.11173037439584732,
+            "trivial": 0.125,
+            "route": [
+              598,
+              12858,
+              11120
+            ]
+          },
+          "held_out": {
+            "fuse": 0.43949899077415466,
+            "single_big": 0.44846561551094055,
+            "avg": 0.43689975142478943,
+            "trivial": 0.125,
+            "route": [
+              1515,
+              12984,
+              10077
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 655360,
+              "trainable": 655360,
+              "hidden": null
+            },
+            "small1": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            },
+            "small2": {
+              "total": 262144,
+              "trainable": 262144,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        }
+      ]
+    },
+    "S1024:L_cond": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.09267476946115494,
+            "single_big": 0.09363224357366562,
+            "avg": 0.09278691560029984,
+            "trivial": 0.125,
+            "route": [
+              10466,
+              1792,
+              12318
+            ]
+          },
+          "held_out": {
+            "fuse": 0.4281504154205322,
+            "single_big": 0.4292512834072113,
+            "avg": 0.42663607001304626,
+            "trivial": 0.125,
+            "route": [
+              9269,
+              3085,
+              12222
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.46394670009613037,
+            "single_big": 0.46505579352378845,
+            "avg": 0.46244049072265625,
+            "trivial": 0.125,
+            "route": [
+              8973,
+              3178,
+              12425
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.1010763868689537,
+            "single_big": 0.10172822326421738,
+            "avg": 0.10182491689920425,
+            "trivial": 0.125,
+            "route": [
+              17671,
+              5941,
+              964
+            ]
+          },
+          "held_out": {
+            "fuse": 0.43519601225852966,
+            "single_big": 0.4350033104419708,
+            "avg": 0.43453216552734375,
+            "trivial": 0.125,
+            "route": [
+              17370,
+              5514,
+              1692
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.4707218110561371,
+            "single_big": 0.4706432521343231,
+            "avg": 0.47007647156715393,
+            "trivial": 0.125,
+            "route": [
+              17302,
+              5551,
+              1723
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.09871520847082138,
+            "single_big": 0.10360469669103622,
+            "avg": 0.0992569848895073,
+            "trivial": 0.125,
+            "route": [
+              1307,
+              7148,
+              16121
+            ]
+          },
+          "held_out": {
+            "fuse": 0.4316685199737549,
+            "single_big": 0.4390226900577545,
+            "avg": 0.42993950843811035,
+            "trivial": 0.125,
+            "route": [
+              1960,
+              6780,
+              15836
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.4604555666446686,
+            "single_big": 0.4675450325012207,
+            "avg": 0.4587942659854889,
+            "trivial": 0.125,
+            "route": [
+              1971,
+              6900,
+              15705
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.11671783775091171,
+            "single_big": 0.12180166691541672,
+            "avg": 0.11699964851140976,
+            "trivial": 0.125,
+            "route": [
+              310,
+              81,
+              24185
+            ]
+          },
+          "held_out": {
+            "fuse": 0.45068708062171936,
+            "single_big": 0.4579004943370819,
+            "avg": 0.4490482807159424,
+            "trivial": 0.125,
+            "route": [
+              1265,
+              411,
+              22900
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.47699427604675293,
+            "single_big": 0.48414692282676697,
+            "avg": 0.47539201378822327,
+            "trivial": 0.125,
+            "route": [
+              1263,
+              410,
+              22903
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.09335827827453613,
+            "single_big": 0.09354463219642639,
+            "avg": 0.09405344724655151,
+            "trivial": 0.125,
+            "route": [
+              20437,
+              3566,
+              573
+            ]
+          },
+          "held_out": {
+            "fuse": 0.4310592710971832,
+            "single_big": 0.43122681975364685,
+            "avg": 0.4305136501789093,
+            "trivial": 0.125,
+            "route": [
+              19784,
+              3647,
+              1145
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.46142467856407166,
+            "single_big": 0.46152856945991516,
+            "avg": 0.46108734607696533,
+            "trivial": 0.125,
+            "route": [
+              19819,
+              3614,
+              1143
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 702000,
+              "trainable": 702000,
+              "hidden": null
+            },
+            "small1": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            },
+            "small2": {
+              "total": 284208,
+              "trainable": 284208,
+              "hidden": null
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        }
+      ]
+    },
+    "S1024:NL_static": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.08415750414133072,
+            "single_big": 0.08499952405691147,
+            "avg": 0.0848199650645256,
+            "trivial": 0.125,
+            "route": [
+              2465,
+              21431,
+              680
+            ]
+          },
+          "held_out": {
+            "fuse": 0.09518015384674072,
+            "single_big": 0.09601148962974548,
+            "avg": 0.09571055322885513,
+            "trivial": 0.125,
+            "route": [
+              2454,
+              21726,
+              396
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.07640331238508224,
+            "single_big": 0.07932210713624954,
+            "avg": 0.07822809368371964,
+            "trivial": 0.125,
+            "route": [
+              6905,
+              5152,
+              12519
+            ]
+          },
+          "held_out": {
+            "fuse": 0.09150177985429764,
+            "single_big": 0.09281107783317566,
+            "avg": 0.0915762186050415,
+            "trivial": 0.125,
+            "route": [
+              5709,
+              6529,
+              12338
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.0770263746380806,
+            "single_big": 0.07721833884716034,
+            "avg": 0.07803037017583847,
+            "trivial": 0.125,
+            "route": [
+              22783,
+              687,
+              1106
+            ]
+          },
+          "held_out": {
+            "fuse": 0.09306033700704575,
+            "single_big": 0.09312561899423599,
+            "avg": 0.09366012364625931,
+            "trivial": 0.125,
+            "route": [
+              24161,
+              104,
+              311
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.0764910951256752,
+            "single_big": 0.07877471297979355,
+            "avg": 0.07869840413331985,
+            "trivial": 0.125,
+            "route": [
+              1662,
+              21621,
+              1293
+            ]
+          },
+          "held_out": {
+            "fuse": 0.09253878146409988,
+            "single_big": 0.09336811304092407,
+            "avg": 0.09339740127325058,
+            "trivial": 0.125,
+            "route": [
+              1437,
+              21972,
+              1167
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.07874759286642075,
+            "single_big": 0.09152662009000778,
+            "avg": 0.08352899551391602,
+            "trivial": 0.125,
+            "route": [
+              4943,
+              1597,
+              18036
+            ]
+          },
+          "held_out": {
+            "fuse": 0.09303394705057144,
+            "single_big": 0.10265251249074936,
+            "avg": 0.09492495656013489,
+            "trivial": 0.125,
+            "route": [
+              4691,
+              569,
+              19316
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 656617,
+              "trainable": 656617,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 262861,
+              "trainable": 262861,
+              "hidden": 205
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        }
+      ]
+    },
+    "S1024:NL_cond": {
+      "rows": [
+        {
+          "in_sample": {
+            "fuse": 0.03936443477869034,
+            "single_big": 0.04518931731581688,
+            "avg": 0.04587249830365181,
+            "trivial": 0.125,
+            "route": [
+              12364,
+              7090,
+              5122
+            ]
+          },
+          "held_out": {
+            "fuse": 0.07710076123476028,
+            "single_big": 0.08074057847261429,
+            "avg": 0.0810813382267952,
+            "trivial": 0.125,
+            "route": [
+              12361,
+              7060,
+              5155
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.1204107403755188,
+            "single_big": 0.120053231716156,
+            "avg": 0.11952343583106995,
+            "trivial": 0.125,
+            "route": [
+              12904,
+              6548,
+              5124
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.04072418808937073,
+            "single_big": 0.0667560026049614,
+            "avg": 0.049530208110809326,
+            "trivial": 0.125,
+            "route": [
+              2977,
+              2180,
+              19419
+            ]
+          },
+          "held_out": {
+            "fuse": 0.08240159600973129,
+            "single_big": 0.10220523923635483,
+            "avg": 0.08596064895391464,
+            "trivial": 0.125,
+            "route": [
+              3322,
+              1237,
+              20017
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.1172669529914856,
+            "single_big": 0.13206946849822998,
+            "avg": 0.11706725507974625,
+            "trivial": 0.125,
+            "route": [
+              3474,
+              1160,
+              19942
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.0373770035803318,
+            "single_big": 0.053008515387773514,
+            "avg": 0.046643588691949844,
+            "trivial": 0.125,
+            "route": [
+              7598,
+              14191,
+              2787
+            ]
+          },
+          "held_out": {
+            "fuse": 0.07865333557128906,
+            "single_big": 0.08645164221525192,
+            "avg": 0.08108237385749817,
+            "trivial": 0.125,
+            "route": [
+              6336,
+              16264,
+              1976
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.12066905945539474,
+            "single_big": 0.12024841457605362,
+            "avg": 0.11597373336553574,
+            "trivial": 0.125,
+            "route": [
+              5868,
+              16906,
+              1802
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.03759574517607689,
+            "single_big": 0.05486699938774109,
+            "avg": 0.046891096979379654,
+            "trivial": 0.125,
+            "route": [
+              10178,
+              8806,
+              5592
+            ]
+          },
+          "held_out": {
+            "fuse": 0.07936333864927292,
+            "single_big": 0.09133350849151611,
+            "avg": 0.08391299098730087,
+            "trivial": 0.125,
+            "route": [
+              10156,
+              9691,
+              4729
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.12428490072488785,
+            "single_big": 0.12659846246242523,
+            "avg": 0.12055233120918274,
+            "trivial": 0.125,
+            "route": [
+              10404,
+              10236,
+              3936
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        },
+        {
+          "in_sample": {
+            "fuse": 0.04262026771903038,
+            "single_big": 0.048426926136016846,
+            "avg": 0.04699702188372612,
+            "trivial": 0.125,
+            "route": [
+              19192,
+              138,
+              5246
+            ]
+          },
+          "held_out": {
+            "fuse": 0.08132345229387283,
+            "single_big": 0.0844891369342804,
+            "avg": 0.08315951377153397,
+            "trivial": 0.125,
+            "route": [
+              19412,
+              177,
+              4987
+            ]
+          },
+          "held_out_shuffled_cond": {
+            "fuse": 0.11678502708673477,
+            "single_big": 0.1173674687743187,
+            "avg": 0.11588916927576065,
+            "trivial": 0.125,
+            "route": [
+              19409,
+              186,
+              4981
+            ]
+          },
+          "params": {
+            "big": {
+              "total": 703257,
+              "trainable": 703257,
+              "hidden": 233
+            },
+            "small1": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            },
+            "small2": {
+              "total": 284925,
+              "trainable": 284925,
+              "hidden": 205
+            }
+          },
+          "n_train": 3072,
+          "n_heldout": 3072
+        }
+      ]
+    }
+  },
+  "notes": {
+    "task": "跨底座同目标 (8 类块): 同一文本在三个底座上目标相同 → 要求对齐",
+    "capacity": "线性臂 d_shared×D_m vs 非线性臂 D_m·h+h·d_shared (h 反解, 参数差 <0.3%)",
+    "compute": "固定 minibatch 288 + 固定步数 → 样本量轴测数据多样性, 不是算力",
+    "cond_control": "shuffle-c: 打乱条件后必须退化, 否则条件是装饰"
+  }
+}

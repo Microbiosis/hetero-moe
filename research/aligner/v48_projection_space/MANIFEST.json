@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "version": "48.0",
+  "package": "v48_projection_space",
+  "line": "aligner",
+  "title": "投影空间: 该多大 / 可不可训练 (v33 随机正交冻结投影的首次量化)",
+  "generation": {
+    "one_mechanism_added": "把 v33 的冻结随机正交投影变成可训练的三臂对照 (A/B/C), 并加 training-free 的空间尺寸诊断 (谱 / 有效维数 / CKA+零分布 / K 网格三指标)",
+    "parent": "33.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线的第 4 个成员; 与 v10/v13/v15 的区别: v10-v15 比的是**对齐器设计** (在 v6 的跨架构底座上), v48 问的是**投影空间本身**: 多大、能不能学、会不会随条件变 (在 v33 的规模异构底座上)"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "space.py",
+      "mechanism.py"
+    ]
+  },
+  "claim": {
+    "asserts": "v33 旗舰结果的投影空间是随机正交且冻结的 (从未被训练); 让投影可训练在留出集上把绝对误差降 52%-77%, 但过拟合间隙 95%-99.9%, 且『融合 vs 单专家』的相对增益归零 —— 收益来自拟合能力而非融合机制",
+    "metric": "held_out_fuse_mse",
+    "direction": "lower_is_better",
+    "value": 2.0507,
+    "baseline": {
+      "ref": "A_frozen (v33 现状复现, P1/Task-T, HF 远端 5 seeds)",
+      "value": 8.8234
+    },
+    "delta_pct": -76.8,
+    "seeds": 5,
+    "outcome_label": "mixed",
+    "note": "outcome_label=mixed: 绝对误差改善成立 (B 2.05 vs A 8.82, 5 seeds), 但 (a) 过拟合间隙 +99.3% (训练集 MSE 0.0153), (b) 相对增益 (vs 单大) 从 A 的 +22.8% 降到 B 的 +0.0%, (c) 所有臂的绝对 MSE 远高于『预测全零』平凡基线 0.3320, 故该数字只应作相对比较引用。权威数字来自 HF Space 远端复跑; 本地 CPU 跑出同组数字 (A 8.40 / B 2.07) 逐组一致到 ~1%。"
+  },
+  "protocol": {
+    "eval_set": "held-out (6 条手工改写文本, 每底座 6 样本, S=16) + in-sample 双口径; HF Space redmingwei/hetero-moe 远端 5 seeds",
+    "input": "3 底座真实前向: MSA-4B 浅层1层(D=2560) + embedding-0.6b(D=1024) + reranker-0.6b(D=1024); 阶段2 沿用 v33 构造 (小1/小2 共用 backbone) 以与已发布数字可比",
+    "caveat": "诊断的统计量很弱 (48-96 token 行, 四个维数估计彼此可差 5 倍), 结论只取数量级意义; **canonical_correlations 字段的旧值 (白化矩阵写错) 已作废, 现以 linear CKA + 置换零分布为准 (CKA 均值 0.481 vs 零分布上限 0.253)**"
+  },
+  "acceptance": {
+    "criterion": "A 臂必须复现 v33 (fuse 5-seed 均值与已发布 8.3 附近一致, 5/5 vs 单大), 否则后续对照无效",
+    "outcome": "A 臂 P1/Task-T: fuse(in-sample) 8.3992 (已发布 8.3154-8.7387 区间内), vs 单大 +22.6% (已发布 +25.6%), 5/5 PASS —— 复现通过",
+    "note": "本代结论为 mixed, 完整裁决待 v48 的条件依赖臂 (L2/L3) 与扩样本协议补齐"
+  },
+  "leakage_audit": {
+    "status": "pending",
+    "audits": [],
+    "note": "本代自带双口径 (in-sample / held-out) 与置换零分布对照, 但尚未由独立审计包结清; B 臂的过拟合 (95%-99.9%) 属于**协议层面**的泄漏风险 (18-36 训练样本 vs 1.18M 可训练投影参数), 需 v48-audit 独立复算"
+  },
+  "falsified": [
+    {
+      "hypothesis": "『让投影可训练会提升融合机制本身 (融合 vs 单专家的相对增益)』",
+      "verdict": "证伪 —— B 臂相对增益 +0.0% (A 臂 +7.5%~+22.6%); 投影一变, 单专家基线同步变好, 增益被摊平",
+      "evidence": "results/metrics.json → results.P1_v33parity:T:B_train_proj vs A_frozen"
+    },
+    {
+      "hypothesis": "『Task-S (要求跨底座对齐) 会比 Task-T (只考路由) 更能显出投影空间的价值』",
+      "verdict": "未证实 —— 两任务结果几乎相同 (A: 8.94 vs 9.11; B: 2.07 vs 2.29), 说明该任务仍未真正要求对齐",
+      "evidence": "results/metrics.json → P1_v33parity 的 T/S 两组"
+    },
+    {
+      "hypothesis": "『三个底座的原始表征之间不存在可共享的线性结构 (并集维数远小于各底座维数之和)』",
+      "verdict": "**已证伪 (本代自查推翻前一版结论)**: CKA 口径显示三底座共享大量几何结构 (CKA 0.318~0.588, 全部超置换零分布上限 0.143~0.406); 但联合 PCA 共享空间里的足迹重叠仍 <0.06 → 冗余存在却**线性抓不到**, 要靠非线性映射 (如 v10 的注意力对齐器, +67%) 才能利用",
+      "evidence": "diagnostics.canonical_correlations (CKA 口径, HF 远端) + diagnostics.k_grid 重叠度列"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v48_projection_space.py",
+    "forwarder_spec": "docs/V48_0_PROJECTION_SPACE.md"
+  },
+  "_needs_human": [
+    "claim.outcome_label",
+    "leakage_audit.status",
+    "protocol.caveat"
+  ],
+  "_extracted_from": [
+    "research/aligner/README.md"
+  ]
+}

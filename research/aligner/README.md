@@ -12,6 +12,9 @@
 | v10 | attn aligner (跨底座共享 K/V 注意力) | `aligner.SemanticAligner`, `CrossArchAttnAligner`, `AlignedFusionLayer` |
 | v13 | MixtureAligner (跨底座 + 跨专家注意力) + 蒸馏入口 | `aligner.MixtureAligner`, `student.StudentModel`, `distill.distill_loss` |
 | v15 | 嵌套对齐器 (MoM: mixture of mixtures) — 天花板验证 | `aligner.MoMAligner` |
+| v48 | 投影空间 (该多大 / 可不可训练) — 谱诊断 + 等参数三臂 A/B | `space.py` (诊断), `mechanism.py` (三臂) |
+| v49 | 投影空间三重检验 (非线性 x 条件依赖 x 样本量) — 2×2 析因, 15 格 | `data.py` (槽位组合生成器), `mechanism.py` (三轴机制) |
+| v50 | 「融合收益从哪来」审计 — 双探针 (源专家 vs 目标类别) + proxy 对齐对照 | `mechanism.py` (proxy 对齐, 线性探针) |
 
 ## 对齐器能力严格排序
 

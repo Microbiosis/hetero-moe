@@ -1,0 +1,79 @@
+\subsection{The projection space is load-bearing: its size, its nonlinearity, and its conditioning}
+\label{sec:projection-space}
+
+Everything above treats the rectangular projection $P_m$ as fixed plumbing: a
+$d_{\text{shared}}\times D_m$ matrix carrying each base into the shared routing space. That
+assumption turned out to be the largest untested surface in the study, and testing it changes what
+the headline numbers mean. We report it as a separate line of work because it does not merely
+refine an existing claim---it relocates the mechanism.
+
+\paragraph{The projection in every fusion experiment was frozen and random.}
+In the scale-heterogeneous configuration of \S\ref{sec:scale-hetero-exp} and in the
+architectural configuration of \S\ref{sec:fusion-exp}, every $P_m$ is orthogonally initialized and
+then \emph{frozen}, the per-expert feed-forward blocks are frozen as well, and the only trainable
+tensors are the shared router and three per-expert affine pairs ($\approx 2.3$K parameters in
+total). The margins reported for both lines were therefore obtained inside a shared space whose
+geometry was random. Any claim of the form ``fusion beats its parts'' must be read against that
+fact.
+
+\paragraph{How large does the space need to be?}
+A training-free diagnostic (no gradients) stacks the bases' token representations, takes the
+covariance spectrum, and measures cross-base redundancy with linear centered kernel alignment
+(CKA) against a row-permutation null. On a controlled corpus of $8$ semantic classes built from
+slot combinations---so that the training and held-out splits share no sentence at all---the union of
+the three bases occupies $4$--$19$ dimensions at the $95$--$99\%$ variance level, against the
+$d_{\text{shared}}{=}256$ actually used; the pairwise CKA is far above its permutation null. Two
+things follow. The space is provisioned for roughly an order of magnitude more directions than the
+data occupy, and the redundancy that would justify a small space is real---but it is invisible to
+a linear method: the joint principal subspace of the union, which is the best a linear
+construction can do, leaves the three bases in nearly disjoint directions (footprint overlap
+$<0.06$).
+
+\paragraph{Nonlinearity, not capacity, closes the gap.}
+We then run a $2\times2$ factorial over the two axes that the diagnosis implicates---nonlinear
+versus linear lifting, and static versus content-conditioned lifting---crossed with a sample-size
+axis ($32$, $256$, $1024$ examples per base), with the hidden width of the nonlinear lift solved
+so that the two arms differ in fewer than $0.3\%$ of parameters, and with a fixed minibatch and
+step count so that the sample-size axis measures data diversity rather than compute. The
+nonlinear arm reduces held-out fusion error by $4.7$--$9.9\times$ relative to the
+parameter-matched linear arm, and does so with roughly half the overfitting gap; the linear arm's
+advantage instead comes from sample size, and shrinks as the nonlinear arm saturates. A
+random-projection construction is $38\times$ worse than the trivial zero predictor in absolute
+error. The redundancy the diagnostic located is therefore recoverable, but only through a nonlinear
+map.
+
+\paragraph{Conditioning needs a nonlinear base, and needs data.}
+Conditioning the projection on a content-derived vector (a hypernetwork emitting a rank-16
+modulation) is useless on a linear base---the conditioned and static linear arms agree to within
+noise at all three sample sizes---and becomes useful on top of the nonlinear lift
+($@NL_COND_S1024@$ versus $@NL_S1024@$ at $1024$ examples). Permuting the conditions across samples
+degrades held-out error by $+24.6\%$, $+47.0\%$ and $+50.3\%$ as the sample size grows, so the
+conditioning is used rather than decorative. It also requires data: at $32$ examples the
+conditioned nonlinear arm is \emph{worse} than the unconditioned one.
+
+\paragraph{Auditing the margin itself.}
+The finding above makes the headline margin suspect, and we test it directly rather than by
+argument. If the frozen random space inflates the fused-over-single-expert margin, then in that
+configuration the fused output should carry the \emph{identity of its source base} rather than the
+semantics of the input. We test this with two linear probes on the held-out fused output: one
+predicts which of the three bases produced the sample, the other predicts the target class. In the
+frozen random configuration the margin over the best single expert is $@A_GAIN@$ (held-out fusion
+error $@A_HELD@$, against a trivial zero-predictor error of $0.125$), and the probes return
+$@A_SRC@$ for source identity and only $@A_CLS@$ for the target class, while the projected inputs
+themselves identify their source with probability $@A_IDENT@$. The fused output is, in effect, a
+source detector: the router's task is trivial in that space, and the margin over a single expert
+measures source detection and dispatch rather than semantic fusion. Across the audited arms the
+margin over the best single expert is $@A_GAIN@$ (frozen random), $@B_GAIN@$ (nonlinear, frozen
+random), $@C_GAIN@$ (nonlinear, trained), $@D_GAIN@$ (nonlinear, proxy-aligned, frozen) and
+$@E_GAIN@$ (nonlinear, proxy-aligned, trained), with held-out errors of $@A_HELD@$, $@C_HELD@$ and
+$@E_HELD@$ respectively.
+
+\paragraph{What we therefore claim.}
+We cannot attribute the earlier margins to fusion. They are attributable to a shared space that
+was never optimized, and they do not persist once the space is learned: with a meaningful
+(nonlinear, trained) space, a single expert with the same space solves the task about as well as
+the fused model does. The defensible claim is the weaker and more useful one: \emph{a shared space
+must be meaningful for sublayer fusion to work at all}---in a random space the fused output is
+$38\times$ worse than predicting zeros---and once it is meaningful, fusing heterogeneous bases
+adds little over using one of them well. We report the negative result with the same prominence
+as the positive ones, and we mark the audit as pending a fully independent re-derivation.

@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "version": "50.0",
+  "package": "v50_fusion_gain_audit",
+  "line": "aligner",
+  "title": "「融合收益从哪来」审计: 双探针 + proxy 对齐对照 (审计论文的 '+26.7% survives' 主张)",
+  "generation": {
+    "one_mechanism_added": "两个新仪器: (a) 无标签 proxy 跨底座对齐预训练 (给出'语义对齐但不自适应'的对照空间); (b) 融合输出上的双线性探针 (源专家身份 vs 目标类别)",
+    "parent": "49.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线的第 6 个成员; v48 问空间多大/能不能学, v49 问怎么学, v50 问'我们之前的头条主张经不经得起审计'"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": ["mechanism.py"],
+    "note": "协议/数据/机制复用 v49_projection_space; runner 在 examples/run_v50_fusion_gain_audit.py"
+  },
+  "claim": {
+    "asserts": "论文的'融合优于单专家'margin 主要不是融合的功劳: 在论文自己的 v33 配置下 (随机线性投影 + 冻结), 融合输出对**源专家身份**的 held-out 可解码性 = 1.000 而目标类别只有 0.279 (随机基线 0.125), 投影后的输入 100% 可识别 → 该空间里路由的任务是平凡的'认出这是哪个底座的'; 而一旦空间有意义 (非线性可训练 / proxy 对齐), margin 塌到 +4.1%~+12.0%, 绝对误差同时降到平凡基线以下 (0.097/0.111 < 0.125)",
+    "metric": "held_out_fuse_mse",
+    "direction": "lower_is_better",
+    "value": 0.0974,
+    "baseline": {
+      "ref": "A_linear_random_frozen (论文 v33 原配置)",
+      "value": 4.7423
+    },
+    "delta_pct": -97.9,
+    "seeds": 5,
+    "outcome_label": "mixed",
+    "note": "outcome_label=mixed: (a) margin 的成因已定位 (源识别假象) → 论文必须改写主张; (b) 但审计**只覆盖** v33 配置与 v6/v7 的同构冻结结构, 架构异构线 (+20.3% / attention 通路 +82.7%) **未用同样探针重做**; (c) 探针是线性的; (d) 单一合成协议, 真实语料未验证。故 leakage_audit 保持 pending, 结论不得直接作为终稿主张。"
+  },
+  "protocol": {
+    "eval_set": "held-out = 每类后 128 个槽位组合 (与训练池文本零交集); 探针在 held-out 上评估",
+    "input": "v49 协议: 8 类组合式槽位文本, MSA-4B 浅层1层 + embedding-0.6b + reranker-0.6b 三个真正不同的底座, S256 档, 5 seeds, 300 步, 固定 minibatch 288",
+    "caveat": "probe 是线性探针; 结论基于单一合成协议; proxy 对齐虽无标签, 但它改变了输入的**可识别性** (输入可识别 1.000 → 0.524), 这本身是结论的一部分而非缺陷"
+  },
+  "acceptance": {
+    "criterion": "A 臂必须复现 v33 的形态: 冻结随机投影下 held-out 远高于平凡基线且 vs 单专家有大幅 margin; 探针必须能区分'源专家'与'目标类别'两个可解码性 (否则探针无效)",
+    "outcome": "通过: A 臂 held=4.7423 (平凡基线 0.125 → 38 倍), vs 单专家 +65.8%; 探针分离清楚: 源专家 1.000 vs 类别 0.279; 对照臂 C/D 的绝对误差降到平凡基线以下 (0.097/0.111) 且 margin 塌到 +4.1%/+12.0%",
+    "note": "探针自身的有效性由 4 项单元测试保证 (可分数据上 train acc 0.98; 噪声上接近随机 0.44)"
+  },
+  "leakage_audit": {
+    "status": "pending",
+    "audits": [],
+    "note": "本代自带双口径 + 文本零交集 + 置换零分布 + 探针自检 (可分/噪声对照), 但尚未由独立审计包结清。⚠️ 论文改写基于本代结论 → 在独立复算前, 论文里应把该改写标为 'pending independent audit'"
+  },
+  "falsified": [
+    {
+      "hypothesis": "『+26.7% (以及架构线的 +20.3%) 的 margin 度量的是异构子层融合的收益』",
+      "verdict": "**证伪 (本代)**: 在论文自己的配置下, 融合输出对源专家身份的可解码性 = 1.000 而目标类别仅 0.279 → 该 margin 度量的是源识别与分派; 空间有意义后 margin 塌到 +4%~+12%",
+      "evidence": "results/metrics.json → probe.source_te / probe.class_te / held_out.fuse"
+    },
+    {
+      "hypothesis": "『margin 需要一个'对齐过但不自适应'的空间才能保留 (即它度量的是真实融合)』",
+      "verdict": "证伪 —— D 臂 (proxy 对齐后冻结) 的 margin 仍有 +12.0%, 但其目标类别可解码性降到随机水平 (0.126) → 它依然没在解语义任务, 只是退化得没那么厉害",
+      "evidence": "results/metrics.json → S256:D_nl_proxy_frozen 的 probe 列"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v50_fusion_gain_audit.py",
+    "forwarder_spec": "docs/V50_0_FUSION_GAIN_AUDIT.md"
+  },
+  "_needs_human": [
+    "claim.outcome_label",
+    "leakage_audit.status"
+  ],
+  "_extracted_from": ["research/aligner/README.md"]
+}

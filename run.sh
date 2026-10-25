@@ -137,6 +137,20 @@ PYEOFCHK
         # V39.0 γ2 add 模式 (复现 v38/γ 旧加性框架, 供对照)
         V39_FUSION=add V39_BIG_LAYERS=1 python3 examples/run_v39_g2_interaction.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
         ;;
+    v48)
+        # V48.0 投影空间: 空间尺寸诊断 + 三臂可训练性 A/B (A 冻结 / B 只解冻 P_m / C 全解冻)
+        # 分批跑: V48_PROTOCOLS=P1_v33parity V48_TASKS=T bash run.sh v48
+        python3 examples/run_v48_projection_space.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
+    v49)
+        # V49.0 投影空间三重检验: 非线性 x 条件依赖 x 样本量 (2x2 析因, 15 格)
+        # 分批跑 (每格一跑, 便于远端续跑): V49_SIZES=S32 V49_ARMS=NL_cond bash run.sh v49
+        python3 examples/run_v49_projection_space.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
+    v50)
+        # V50.0 「融合收益从哪来」审计: 双探针 (源专家身份 vs 目标类别) + proxy 对齐对照
+        python3 examples/run_v50_fusion_gain_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
     e2e)
         # §8.1-8.3 端到端仿真
         python3 examples/run_e2e_simulation.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
