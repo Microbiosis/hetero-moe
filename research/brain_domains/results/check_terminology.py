@@ -84,6 +84,37 @@ def main():
         if "左右轴" not in mf.read_text(encoding="utf-8"):
             problems.append("[轴表] MODEL_FORM.md 的轴清单缺「左右轴」")
 
+    # --- R4（读出同口径）：规则本身要在，且台账里被限定过的结论不能把限定词删掉 ---
+    term = ROOT / "TERMINOLOGY.md"
+    if term.exists():
+        ttext = term.read_text(encoding="utf-8")
+        if "### R4" not in ttext:
+            problems.append("[R4] TERMINOLOGY.md 缺「### R4 · 跨模型/跨配置的对比：读出必须同口径」")
+        else:
+            for need in ("读出类型相同", "还有哪个因子也变了", "同一批被试"):
+                if need not in ttext:
+                    problems.append(f"[R4] TERMINOLOGY.md 的 R4 缺要素「{need}」")
+    else:
+        problems.append("缺文件 TERMINOLOGY.md")
+
+    # A18 / A13 这两条是**被口径限定过**的结论 ⇒ 限定词被删掉就要报错
+    # ⚠️ 检查点必须选**在该行里只出现一次**的特征串：
+    #    否则自测的「只替换第一处」会命中不到 ⇒ 守卫形同虚设。
+    integ = ROOT / "INTEGRATION.md"
+    if integ.exists():
+        itext = integ.read_text(encoding="utf-8")
+        for aid, need, label in (("**A18**", "读出口径", "A18 必须带「读出口径」限定"),
+                                 ("**A13**", "n_train=16540", "A13 必须带「n_train=16540」限定")):
+            line = next((l for l in itext.splitlines() if aid in l), "")
+            if not line:
+                problems.append(f"[台账] INTEGRATION.md 里找不到 {aid} 那一行")
+            elif need not in line:
+                problems.append(f"[台账] {label}")
+            elif line.count(need) != 1:
+                problems.append(
+                    f"[台账] {aid} 行的检查点「{need}」出现 {line.count(need)} 次"
+                    f"（自测会命中不到 ⇒ 请换成单次出现的串）")
+
     if problems:
         print("✗ 措辞限定词问题：")
         for p in problems:
