@@ -242,6 +242,45 @@ def main():
             for need in ("三组切分", "CENT 运动 14", "FRONT 执行 15", "3×3 矩阵"):
                 if need not in sec42:
                     problems.append(f"[规格] §4.2 缺「{need}」")
+        # ③ 的落位必须已定（且带「弱代理」与 exp96 这两个限定）
+        # ⚠️ **检查点必须唯一**（本行只出现一次）⇒ 逐行/逐短语查，不做整节包含判断
+        i44 = stext.find("### 4.4 ")
+        j44 = stext.find("## 5. ", i44 + 1) if i44 >= 0 else -1
+        sec44 = stext[i44: j44 if j44 > 0 else len(stext)]
+        if not sec44:
+            problems.append("[规格] BRAIN_STRUCTURE_SPEC.md 里找不到「### 4.4」小节")
+        else:
+            l44 = sec44.splitlines()
+            h44 = next((l for l in l44 if l.startswith("### 4.4")), "")
+            for need in ("单开一条线", "形状共享，权重不共享"):
+                if need not in h44:
+                    problems.append(f"[规格] §4.4 标题缺「{need}」")
+            row_fr = next((l for l in l44
+                           if l.startswith("| **③-FRONT（执行）**")), "")
+            if not row_fr:
+                problems.append("[规格] §4.4 里找不到「③-FRONT（执行）」那一行")
+            elif "弱代理" not in row_fr:
+                problems.append(
+                    "[规格] §4.4 的 ③-FRONT 行缺「弱代理」"
+                    "（DMFC 只有 3 段，只能给弱代理，不得说成执行控制）")
+            if "exp96 决定要不要开这条线" not in sec44:
+                problems.append("[规格] §4.4 缺「exp96 决定要不要开这条线」")
+        # 台账 §4.1 第 7 条必须已定（不再是待决）
+        row7 = next((l for l in itext.splitlines()
+                     if l.startswith("| 7 |") and "③" in l), "")
+        if not row7:
+            problems.append("[规格] INTEGRATION.md §4.1 里找不到第 7 条（③ 的落位）")
+        else:
+            if "待决" in row7:
+                problems.append("[规格] INTEGRATION.md §4.1 第 7 条仍是「待决」⇒ ③ 的落位必须已定")
+            if "单开一条线" not in row7:
+                problems.append(
+                    "[规格] INTEGRATION.md §4.1 第 7 条缺「单开一条线」"
+                    "（③ 的功能证据必须单开一条线，不并入 exp90）")
+        # 「还没测的」表里必须留着这两条（别被悄悄测掉）
+        for need in ("③-FRONT 的「执行控制」真判据", "NLB 功能线"):
+            if need not in itext:
+                problems.append(f"[规格] INTEGRATION.md 的「还没测的」表缺「{need}」")
 
     if problems:
         print("✗ 措辞限定词问题：")
