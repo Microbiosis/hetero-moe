@@ -151,6 +151,10 @@ PYEOFCHK
         # V50.0 「融合收益从哪来」审计: 双探针 (源专家身份 vs 目标类别) + proxy 对齐对照
         python3 examples/run_v50_fusion_gain_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
         ;;
+    v51)
+        # V51.0 架构异构线 (v6/v7) 融合收益审计: 目标置换对照 + 有意义空间 + 探针
+        python3 examples/run_v51_arch_fusion_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
     e2e)
         # §8.1-8.3 端到端仿真
         python3 examples/run_e2e_simulation.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"

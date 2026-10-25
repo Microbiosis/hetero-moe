@@ -12,6 +12,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PAPER = os.path.join(ROOT, "docs/research_paper")
 METRICS = os.path.join(ROOT, "research/aligner/v50_fusion_gain_audit/results/metrics.json")
 V49 = os.path.join(ROOT, "research/aligner/v49_projection_space/results/metrics.json")
+V51 = os.path.join(ROOT, "research/aligner/v51_arch_fusion_audit/results/metrics.json")
 
 
 def load(path):
@@ -121,14 +122,53 @@ def main():
         section = section.replace("@L_S1024@", fmt(g.get("S1024:L_static", {}).get("held", 0)))
         section = section.replace("@FROZEN_S1024@", fmt(g.get("S1024:L_static_frozen", {}).get("held", 0)))
 
+    m51 = load(V51)
+    if m51:
+        R51 = m51["results"]
+
+        def c51(key):
+            rows = R51[key]["rows"]
+            n = len(rows)
+            g = lambda k: sum(r["held_out"][k] for r in rows) / n
+            ps = sum(r["probe"]["source_te"] for r in rows) / n
+            pc = sum(r["probe"]["class_te"] for r in rows) / n
+            return dict(fuse=g("fuse"), attn=g("attn_only"), ffn=g("ffn_only"), avg=g("avg"),
+                        single=g("best_single"),
+                        gain=(g("best_single") - g("fuse")) / max(g("best_single"), 1e-9) * 100,
+                        vsavg=(g("avg") - g("fuse")) / max(g("avg"), 1e-9) * 100,
+                        pathgap=(g("ffn_only") - g("attn_only")) / max(g("ffn_only"), 1e-9) * 100,
+                        src=ps, cls=pc)
+        A51 = c51("A_frozen_aligned")
+        B51 = c51("B_frozen_permuted")
+        C51 = c51("C_trainable_aligned")
+        D51 = c51("D_trainable_permuted")
+        PCT = chr(92) + "%"   # LaTeX 里的百分号要转义
+        PLACEHOLDERS = (
+            ("@A51_GAIN@", f"{A51['gain']:+.1f}" + PCT), ("@B51_GAIN@", f"{B51['gain']:+.1f}" + PCT),
+            ("@C51_GAIN@", f"{C51['gain']:+.1f}" + PCT), ("@D51_GAIN@", f"{D51['gain']:+.1f}" + PCT),
+            ("@A51_FUSE@", fmt(A51["fuse"])), ("@C51_FUSE@", fmt(C51["fuse"])),
+            ("@A51_PATHGAP@", f"{A51['pathgap']:.0f}" + PCT),
+            ("@C51_PATHGAP@", f"{C51['pathgap']:.0f}" + PCT),
+            ("@A51_SRC@", fmt(A51["src"], 3)), ("@A51_CLS@", fmt(A51["cls"], 3)),
+            ("@C51_SRC@", fmt(C51["src"], 3)))
+        # v51 段落追加到新章节末尾
+        if "@@V51@@" in section:
+            section = section.replace("@@@V51@@", "")
+        # ⚠️ 占位符替换必须在 v51 段落插入**之后** (v51 段里也带占位符)
+        for k, v in PLACEHOLDERS:
+            section = section.replace(k, str(v))
     for fn in ("reconstruct.tex", "reconstruct_tmlr.tex"):
         path = os.path.join(PAPER, fn)
         if not os.path.exists(path):
             continue
         s = open(path, encoding="utf-8").read()
-        # 1) 插入新章节 (放在 scale-hetero 小节之后)
-        if "\\label{sec:projection-space}" not in s:
-            anchor = "\\subsection{The alignment ladder and its ceiling}"
+        # 1) 插入/整段替换新章节 (放在 scale-hetero 小节之后)
+        anchor = "\\subsection{The alignment ladder and its ceiling}"
+        if "\\label{sec:projection-space}" in s:
+            i = s.index("\\subsection{The projection space is load-bearing")
+            j = s.index(anchor, i)
+            s = s[:i] + section + "\n" + s[j:]
+        else:
             s = s.replace(anchor, section + "\n" + anchor, 1)
         # 2) 摘要: 改写 "survives" 那句
         old_abs = ("What survives held-out evaluation is the alignment-ladder ceiling, the attention-path "
@@ -177,6 +217,52 @@ def main():
             anchor2 = "Two results deserve to be read together with the rest of this section rather than on their own."
             if anchor2 in s:
                 s = s.replace(anchor2, verdict + anchor2, 1)
+        # 4) 架构异构线: 六处主张按 v51 裁决改写
+        reps = [
+            # 摘要
+            ("What survives held-out evaluation is the alignment-ladder ceiling and the attention-path advantage.",
+             "What survives held-out evaluation is the alignment-ladder ceiling. The attention-path advantage does not: "
+             "a projection-space audit (\\S\\ref{sec:projection-space}) shows it to be a property of a frozen "
+             "random shared space rather than of architectural heterogeneity, and it disappears once that space is learned."),
+            # §1
+            ("On the positive side, the alignment-ladder ceiling and the attention-path advantage survive held-out evaluation intact.",
+             "On the positive side, the alignment-ladder ceiling survives held-out evaluation intact. The attention-path "
+             "advantage does not: an audit of the projection space (\\S\\ref{sec:projection-space}) shows that the "
+             "attention path's lead over the FFN path belongs to a frozen random shared space, not to architectural "
+             "heterogeneity, and that it disappears once the space is learned."),
+            # §1 贡献列表
+            ("FFN-only routing beats the best single expert by $20.3\\%$ and equal-weight averaging by $17.3\\%$; "
+             "dual-path routing raises the margin over averaging to $84.8\\%$. A path decomposition shows the "
+             "cross-architecture gain concentrates in the attention path---a claim that survives held-out evaluation "
+             "($+82.7\\%$ in-sample, $+70.6\\%$ held-out).",
+             "FFN-only routing beats the best single expert by $20.3\\%$ and equal-weight averaging by $17.3\\%$; "
+             "dual-path routing raises the margin over averaging to $84.8\\%$. A path decomposition shows the "
+             "cross-architecture gain concentrating in the attention path ($+82.7\\%$ in-sample, $+70.6\\%$ held-out). "
+             "Both margins are later re-examined under a projection-space audit (\\S\\ref{sec:projection-space}): "
+             "the target block in this configuration is the modality index, the margin is unchanged when the target "
+             "blocks are permuted across modalities, and it collapses when the frozen random projection is replaced "
+             "by a learned one."),
+            # §6.2 路径分解段: 补 v51 裁决
+            ("The path decomposition is the interesting part, and it is one of the findings that survives held-out evaluation.",
+             "The path decomposition is the interesting part, and it is one of the findings that survives held-out "
+             "evaluation---but a later projection-space audit (\\S\\ref{sec:projection-space}) qualifies what it "
+             "measures: the attention path's lead is a property of the frozen random shared space, and it largely "
+             "disappears once that space is learned."),
+            # 结论
+            ("the cross-architecture fusion gain concentrates in the attention path, a claim that survives held-out evaluation.",
+             "the cross-architecture fusion gain concentrates in the attention path, a concentration we later show to "
+             "belong to a frozen random shared space rather than to architectural heterogeneity "
+             "(\\S\\ref{sec:projection-space})."),
+            # 可迁移性段落
+            ("the attention-path advantage reflects a structural property of transformers (attention patterns vary more across architectures than FFN activations), and the alignment-ladder ceiling is a matched-capacity design statement.",
+             "the alignment-ladder ceiling is a matched-capacity design statement, and the attention-path advantage, "
+             "once the projection space is audited (\\S\\ref{sec:projection-space}), turns out to belong to the "
+             "frozen random space rather than to a structural property of transformers."),
+        ]
+        for old, new in reps:
+            if old in s:
+                s = s.replace(old, new)
+                print(f"  · 改写: {old[:52]}...")
         open(path, "w", encoding="utf-8").write(s)
         print(f"✓ {fn} 已改写")
     return 0

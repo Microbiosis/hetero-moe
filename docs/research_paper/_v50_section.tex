@@ -68,6 +68,10 @@ random), $@C_GAIN@$ (nonlinear, trained), $@D_GAIN@$ (nonlinear, proxy-aligned, 
 $@E_GAIN@$ (nonlinear, proxy-aligned, trained), with held-out errors of $@A_HELD@$, $@C_HELD@$ and
 $@E_HELD@$ respectively.
 
+\paragraph{The architectural line, and why its target is the problem.} The same audit applied to the architectural-heterogeneity line (\S\ref{sec:fusion-exp}) turns up a more basic issue. In that configuration the target block \emph{is} the modality index---the task is literally to identify which base produced the token---so a ``fusion beats its parts'' margin there measures modality recognition. Two controls make this explicit. Permuting the target blocks across modalities, with the task's difficulty unchanged, leaves the margin untouched ($@A51_GAIN@$ versus $@B51_GAIN@$), so the margin depends on nothing but the ability to tell the modalities apart. Replacing the frozen random projection with a meaningful (nonlinear, trained) space collapses it ($@C51_GAIN@$ versus $@A51_GAIN@$) while the absolute error falls by more than an order of magnitude ($@C51_FUSE@$ versus $@A51_FUSE@$). The attention-path advantage falls with it: the attention path's lead over the FFN path is $@A51_PATHGAP@$ in the frozen random space and $@C51_PATHGAP@$ in the learned one. In every arm the probes recover both the source modality and the target block with probability $@A51_SRC@$, because the target block is the modality: the benchmark measures detection, and the margin is what detection is worth.
+
+
+
 \paragraph{What we therefore claim.}
 We cannot attribute the earlier margins to fusion. They are attributable to a shared space that
 was never optimized, and they do not persist once the space is learned: with a meaningful
