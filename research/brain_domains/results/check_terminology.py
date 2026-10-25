@@ -7,13 +7,22 @@
 以及把「两个原语」当成了脑的**部件清单**。
 ⇒ 这类错误靠人记不住 ⇒ 写成规则（`TERMINOLOGY.md`）⇒ 再写成**机械检查**。
 
-## 机械检查三条
+## 机械检查六条
 
 1. **限定词不得丢失**：凡出现「两原语 / 两个原语 / 一对原语 / 分原语」的行，
    **同一行**必须出现「位置轴」；否则报错并给出 文件:行号。
 2. **左右轴的引用必须带轴标签**：凡出现「裂脑」的行，同一行必须出现「左右轴」。
 3. **轴表不能少行**：`BRAIN_STRUCTURE_SPEC.md` §1.4 的轴表必须同时有
    「谱系轴 / 位置轴 / 左右轴 / 功能轴」；`MODEL_FORM.md` 的轴清单必须有「左右轴」。
+4. **R4 / R5 规则要素齐全**（读出同口径 / 速度同 flavor 争用口径）。
+5. **被口径限定过的结论不能把限定词删掉**（A13 的 `n_train=16540`、A18 的「读出口径」）。
+6. **奥卡姆结构守卫**（2026-10-25 新增）：
+   - **G1 帧一致**：§二十九 的标题与正文必须说的是同一套四个杠杆
+     （拟合图数 / 训练目标 / 读出口径 / 特征窗口）—— 防止「标题四层、正文五项」式失配；
+   - **G2 窗口限定**：`INTEGRATION.md` 的 A14/A15 必须带「0–250 ms 窗口」
+     —— 兑现 §二十九·六 的承诺（位置轴读数随窗口系统性变化）；
+   - **G3 状态不互斥**：台账 §1 已标 ✅ 的结论不得又出现在未测表 §4.2
+     （台账状态格自带「未定」的除外，如 A16）。
 
 ## 豁免
 
@@ -136,6 +145,67 @@ def main():
                 problems.append(
                     f"[台账] FINDINGS 的 A18 行有 {len(hits)} 处含「要加读出限定」"
                     f"（自测会命中不到 ⇒ 请用单次出现的串）")
+
+    # --- G1：exp93 的「杠杆帧」必须与标题一致（奥卡姆：同一套框不许在标题与正文各说各的）---
+    if fnd.exists():
+        ftext2 = fnd.read_text(encoding="utf-8")
+        h29 = next((l for l in ftext2.splitlines()
+                    if l.startswith("## 二十九、exp93")), "")
+        if not h29:
+            problems.append("[帧] FINDINGS 里找不到「## 二十九、exp93」标题")
+        else:
+            i = ftext2.find("## 二十九、exp93")
+            j = ftext2.find("\n## ", i + 1)
+            sec29 = ftext2[i: j if j > 0 else len(ftext2)]
+            for lever in ("拟合图数", "训练目标", "读出口径", "特征窗口"):
+                if lever not in h29:
+                    problems.append(
+                        f"[帧] §二十九 的标题里没有「{lever}」"
+                        f"⇒ 标题说的杠杆集合与正文不一致")
+                if lever not in sec29:
+                    problems.append(f"[帧] §二十九 的正文里没有「{lever}」")
+
+    # --- G2：位置轴读数的**窗口限定**必须落在台账上（兑现 §二十九·六 的承诺）---
+    integ_text = (ROOT / "INTEGRATION.md").read_text(encoding="utf-8") if (
+        ROOT / "INTEGRATION.md").exists() else ""
+    if integ_text:
+        for aid in ("**A14**", "**A15**"):
+            ln = next((l for l in integ_text.splitlines() if aid in l), "")
+            if not ln:
+                problems.append(f"[窗口] INTEGRATION.md 里找不到 {aid} 那一行")
+            elif "0–250 ms 窗口" not in ln:
+                problems.append(
+                    f"[窗口] {aid} 行缺「0–250 ms 窗口」限定"
+                    f"（§二十九·六 已承诺补上：位置轴读数会随窗口系统性变化）")
+
+        # --- G3：未测表（§4.2）不得与台账（§1）矛盾 ---
+        #     「已结案（✅）」的结论再作为**未测表的行** = 两个状态互斥。
+        #     只看**首格（行的主语）**：在说明格里**引用**一条已结案的结论是合法的
+        #     （例：「整体形态是否更优 | 未测（……底座已兑现（A19）⇒ 现在可开工）」）。
+        #     豁免：台账状态格本身带「未定」的（如 A16「✅ 成立（限定：归因未定）」）。
+        ledger = {}
+        for l in integ_text.splitlines():
+            m = re.match(r"^\|\s*\*\*(A\d+)\*\*\s*\|", l)
+            if m:
+                cells = [c.strip() for c in l.strip().strip("|").split("|")]
+                ledger[m.group(1)] = cells[-1] if cells else ""
+        i42 = integ_text.find("### 4.2 还没测的")
+        if i42 < 0:
+            problems.append("[状态] INTEGRATION.md 里找不到「### 4.2 还没测的」小节")
+        else:
+            j42 = integ_text.find("\n## ", i42)
+            sec42 = integ_text[i42: j42 if j42 > 0 else len(integ_text)]
+            for l in sec42.splitlines():
+                if not l.startswith("|"):
+                    continue
+                first = l.strip().strip("|").split("|")[0]
+                for aid in sorted(set(re.findall(r"A\d+", first))):
+                    st = ledger.get(aid, "")
+                    if st.startswith("✅") and "未定" not in st:
+                        problems.append(
+                            f"[状态] §4.2 未测表有一行以 {aid} 为主语，"
+                            f"但台账 §1 已把它标为「{st[:24]}…」"
+                            f"⇒ 两个状态互斥（改台账，或从未测表移除）")
 
     if problems:
         print("✗ 措辞限定词问题：")

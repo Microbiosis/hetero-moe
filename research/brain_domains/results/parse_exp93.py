@@ -253,8 +253,10 @@ def write_md_contrastive(s, path):
                  else f"| {name} | {v['median_up']:.4f} | {v['mean']:.4f} | — |")
     if s["rsa"]["median_up"] is not None:
         L.append(f"| RSA | {s['rsa']['median_up']:+.4f} | {s['rsa']['mean']:+.4f} | — |")
-    L += ["", f"**对照**：A13（630-d + ridge，跨集）1.1%；"
-          f"NICE-EEG（跨集零样本）{LIT_TOP1}%。", ""]
+    # ⚠️ 对照行必须写**全量 n_train=16540** 的数（A13 的 0.0321），
+    #    不能引用基线表里 n_train=2000 那一行的 0.0111 —— 那正是 A13 引用错行的教训。
+    L += ["", f"**对照**：A13（630-d + ridge，跨集，n_train=16540）0.0321（6.4× 随机）；"
+          f"NICE-EEG（跨集零样本）{LIT_TOP1}%（依赖被试 + 试次平均口径，见 C13）。", ""]
     path.write_text("\n".join(L), encoding="utf-8")
 
 
