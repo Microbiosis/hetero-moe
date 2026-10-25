@@ -137,6 +137,11 @@ PYEOFCHK
         # V39.0 γ2 add 模式 (复现 v38/γ 旧加性框架, 供对照)
         V39_FUSION=add V39_BIG_LAYERS=1 python3 examples/run_v39_g2_interaction.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
         ;;
+    v48)
+        # V48.0 投影空间: 空间尺寸诊断 + 三臂可训练性 A/B (A 冻结 / B 只解冻 P_m / C 全解冻)
+        # 分批跑: V48_PROTOCOLS=P1_v33parity V48_TASKS=T bash run.sh v48
+        python3 examples/run_v48_projection_space.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
     e2e)
         # §8.1-8.3 端到端仿真
         python3 examples/run_e2e_simulation.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"

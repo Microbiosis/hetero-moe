@@ -12,6 +12,7 @@
 | v10 | attn aligner (跨底座共享 K/V 注意力) | `aligner.SemanticAligner`, `CrossArchAttnAligner`, `AlignedFusionLayer` |
 | v13 | MixtureAligner (跨底座 + 跨专家注意力) + 蒸馏入口 | `aligner.MixtureAligner`, `student.StudentModel`, `distill.distill_loss` |
 | v15 | 嵌套对齐器 (MoM: mixture of mixtures) — 天花板验证 | `aligner.MoMAligner` |
+| v48 | 投影空间 (该多大 / 可不可训练) — 谱诊断 + 等参数三臂 A/B | `space.py` (诊断), `mechanism.py` (三臂) |
 
 ## 对齐器能力严格排序
 

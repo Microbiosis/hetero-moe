@@ -49,8 +49,19 @@ def load_msa_big(msa_dir=None, n_layers=None, env_key="V33_BIG_LAYERS"):
     # 选择性加载: 只取 embed_tokens + 前 N 层 + norm (省内存)
     want_prefixes = {f"model.layers.{li}." for li in range(n_layers)}
     state = {}
-    for shard in ["model-00001-of-00002.safetensors", "model-00002-of-00002.safetensors"]:
-        with safe_open(f"{msa_dir}/{shard}", framework="pt") as f:
+    # 不再硬编码两个分片文件名: 改为扫描目录里实际存在的 *.safetensors。
+    # 硬编码在两种情况下会坏:
+    #   (a) 上游换分片数/改名 → FileNotFoundError;
+    #   (b) 容器里只下载了浅层加载真正需要的那个分片 → 同样报错。
+    # 全部分片都在时, 行为与原来完全一致 (同样的文件、同样的键筛选)。
+    import glob as _glob
+    shards = sorted(_glob.glob(f"{msa_dir}/*.safetensors"))
+    if not shards:
+        raise RuntimeError(
+            f"{msa_dir} 下没有 *.safetensors —— MSA-4B 权重未就位。"
+            f"请先下载 EverMind-AI/MSA-4B (或设 V36_MSA_DIR 指向本地目录)")
+    for shard in shards:
+        with safe_open(shard, framework="pt") as f:
             for k in f.keys():
                 if k == "model.embed_tokens.weight" or k == "model.norm.weight" \
                    or any(k.startswith(p) for p in want_prefixes):
