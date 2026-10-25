@@ -157,12 +157,36 @@ CASES = [
      "③：台账 §4.1 第 7 条的落位被改"),
     (G_TERM, "INTEGRATION.md", "③-FRONT 的「执行控制」真判据", "③-FRONT 的真判据",
      "③：「还没测的」表里那条空白被删"),
+    # --- G5：组件设计书不许退化成空话 ---
+    (G_TERM, "COMPONENT_DESIGN.md",
+     "**跨通道注意力**（保留通道身份 ⇒ 63 个通道 token ⇒ Transformer 跨通道交互）",
+     "**跨通道池化**（保留通道身份 ⇒ 63 个通道 token ⇒ Transformer 跨通道交互）",
+     "设计书：我们自写的连接「跨通道注意力」被改"),
+    (G_TERM, "COMPONENT_DESIGN.md", "10.1162/0899766053630332", "10.1162/00000000",
+     "设计书：包装范式的外部出处（Eliasmith 2005）被改"),
+    (G_TERM, "COMPONENT_DESIGN.md", "| **运动**<br>（CENT 14ch）|", "| **动作**<br>（CENT 14ch）|",
+     "设计书：组件行「运动」被改"),
 ]
 
 
 def run(guard):
     r = subprocess.run([sys.executable, guard], capture_output=True, text=True)
     return r.returncode, r.stdout
+
+
+def write_retry(p, text, tries=5, wait=0.4):
+    """**写盘要重试**：Windows 上偶发 `OSError: [Errno 22]`（文件句柄竞争），
+    而这个脚本的写入是**破坏性**的（篡改）⇒ 写失败 ⇒ 文件可能停在坏状态 ⇒ 必须重试。"""
+    import time
+    last = None
+    for _ in range(tries):
+        try:
+            p.write_text(text, encoding="utf-8")
+            return True
+        except OSError as e:      # 瞬时占用/句柄竞争
+            last = e
+            time.sleep(wait)
+    raise RuntimeError(f"写 {p} 连续 {tries} 次失败：{last}")
 
 
 def main():
@@ -186,7 +210,7 @@ def main():
             bad += 1
             continue
         try:
-            p.write_text(orig.replace(old, new, 1), encoding="utf-8")
+            write_retry(p, orig.replace(old, new, 1))
             code, out = run(guard)
             caught = code != 0
             print(f"{'✓' if caught else '✗'} {label}：篡改后退出码 {code}"
@@ -194,7 +218,13 @@ def main():
             if not caught:
                 bad += 1
         finally:
-            p.write_text(orig, encoding="utf-8")
+            # ⚠️ **还原必须重试且必须成功**（写失败 ⇒ 文件停在篡改状态 ⇒ 整份文档是坏的）
+            try:
+                write_retry(p, orig)
+            except Exception as e:
+                print(f"✗✗ {label}：**还原失败** ⇒ {fname} 可能停在篡改状态！"
+                      f" 请 `git checkout -- {fname}` 恢复。原错误：{e}")
+                return 1
         code2, _ = run(guard)
         if code2 != 0:
             print(f"✗ {label}：还原后守卫没过（退出码 {code2}）")

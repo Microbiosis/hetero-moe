@@ -282,6 +282,34 @@ def main():
             if need not in itext:
                 problems.append(f"[规格] INTEGRATION.md 的「还没测的」表缺「{need}」")
 
+    # --- G5：组件设计书必须是真的「按脑科学选组件 + 连接我们自己写」---
+    cd_f = ROOT / "COMPONENT_DESIGN.md"
+    if not cd_f.exists():
+        problems.append("[设计书] 缺 COMPONENT_DESIGN.md（按脑科学选组件的蓝图）")
+    else:
+        cdtext = cd_f.read_text(encoding="utf-8")
+        # 四个动词都要在
+        for need in ("选型", "拆分", "连接", "包装", "重组"):
+            if need not in cdtext:
+                problems.append(f"[设计书] 缺动词「{need}」")
+        # 三行组件（脑科学定义）都要在
+        for need in ("**感觉 / 语义**", "**运动**", "**执行**"):
+            if need not in cdtext:
+                problems.append(f"[设计书] 缺组件行「{need}」")
+        # 我们自写的连接（每个都必须带判据）——**不许只剩空话**
+        # ⚠️ 用**唯一的长短语**做检查点（短词在文档里出现多次 ⇒ 存在性检查抓不到篡改）
+        for need in ("**跨通道注意力**（保留通道身份 ⇒ 63 个通道 token ⇒ Transformer 跨通道交互）",
+                     "**单损失对比学习**（InfoNCE ↔ 图像特征，批次内图像互不相同）"):
+            if need not in cdtext:
+                problems.append(f"[设计书] 缺自写连接「{need[:18]}…」")
+        # 关键的外部出处（连接/包装范式）
+        for need in ("10.1162/0899766053630332", "1803.10122"):
+            if need not in cdtext:
+                problems.append(f"[设计书] 缺外部出处「{need}」")
+        # R2 的警告要在
+        if "R2" not in cdtext:
+            problems.append("[设计书] 缺 R2 的轴标注警告")
+
     if problems:
         print("✗ 措辞限定词问题：")
         for p in problems:
