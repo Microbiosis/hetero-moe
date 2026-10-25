@@ -34,9 +34,23 @@ CN = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八
       "二十六": 26, "二十七": 27, "二十八": 28, "二十九": 29, "三十": 30}
 
 
+def _num(s):
+    """中文数字 → int。**三十一/三十二/三十三… 由规则推出**，不再靠硬编码表。
+
+    ⚠️ 为什么要改：原来的表只到「三十」⇒ `CN.get("三十一")` 返回 None ⇒
+    **§三十一（exp95）与 §三十二（exp96）从来没被这个守卫检查过**（被静默跳过）
+    ⇒ 守卫出现了「看起来在管、实际不管」的洞。
+    """
+    if s in CN:
+        return CN[s]
+    if s.startswith("三十") and len(s) == 3 and s[2] in "一二三四五六七八九":
+        return 30 + "一二三四五六七八九".index(s[2]) + 1
+    return None
+
+
 def num(title):
     m = re.match(r"^(二十[一二三四五六七八九]|[一二三四五六七八九十]+)、", title)
-    return CN.get(m.group(1)) if m else None
+    return _num(m.group(1)) if m else None
 
 
 def main():
@@ -45,10 +59,21 @@ def main():
         return 1
     text = FINDINGS.read_text(encoding="utf-8")
     seq = []
+    unmapped = []
     for m in re.finditer(r"^## (.*)$", text, re.M):
         n = num(m.group(1))
-        if n is not None:
-            seq.append((n, m.group(1)[:40]))
+        if n is None:
+            # ⚠️ **「有编号却解析不出来」必须报错** ⇒ 不许静默跳过
+            #    （原来就是这样把 §三十一/§三十二 漏在检查之外 ⇒ 洞）
+            if re.match(r"^([一二三四五六七八九十]+)、", m.group(1)):
+                unmapped.append(m.group(1)[:40])
+            continue
+        seq.append((n, m.group(1)[:40]))
+    if unmapped:
+        print("✗ 有章节编号**解析不出来**（它们等于没被检查）：")
+        for u in unmapped:
+            print("   -", u)
+        return 1
     bad = []
     for i in range(1, len(seq)):
         if seq[i][0] <= seq[i - 1][0]:

@@ -1355,6 +1355,92 @@ def main():
         else:
             print(f"（缺 {pos89} 或 {specf}，跳过三组切分比对）")
 
+        # --- 14. exp96：三组模型层剖面 —— 数字绑定 + **两份判决都必须留痕** ---
+        e96 = HERE / "exp96-results" / "exp96_summary.json"
+        if e96.exists():
+            d96 = json.loads(e96.read_text(encoding="utf-8"))
+            sec32 = find_section(text, "三十二·三、结果")
+            sec32d = find_section(text, "三十二·四、判决")
+            if not sec32 or not sec32d:
+                problems.append("FINDINGS 里找不到「三十二·三」或「三十二·四」小节")
+            else:
+                bb = d96.get("per_backbone") or {}
+                # (a) 逐骨干的 B / C：数字 + 计数 + p 必须与文档一致
+                for tag, info in bb.items():
+                    b = info.get("B") or {}
+                    c = info.get("C") or {}
+                    row = next((ln for ln in sec32.splitlines()
+                                if ln.startswith(f"| **{tag}**")), "")
+                    if not row:
+                        problems.append(f"[exp96] §三十二·三 找不到骨干行「{tag}」")
+                        continue
+                    # ⚠️ 文档里负号是 Unicode「−」⇒ 查找前归一化（与 exp95 那块同一处理）
+                    row = row.replace("−", "-")
+                    for val, what in ((b.get("median"), "B 中位差"),
+                                      (c.get("median"), "C 中位差")):
+                        if val is None:
+                            continue
+                        if f"{float(val):+.4f}" not in row:
+                            problems.append(
+                                f"[exp96] §三十二·三 {tag} 行缺{what} {float(val):+.4f}")
+                    for d, what in ((b, "B"), (c, "C")):
+                        n_eff = d.get("n_eff")
+                        n_pos = d.get("n_pos")
+                        n_neg = d.get("n_neg")
+                        if n_eff is None or n_pos is None or n_neg is None:
+                            continue
+                        # ⚠️ 规范写法：「n_pos/n_eff 正、n_neg/n_eff 负」
+                        #    （两个计数都查 ⇒ 「0/10」不能被「10/10」的子串糊弄过去）
+                        for cnt in (f"{n_pos}/{n_eff} 正", f"{n_neg}/{n_eff} 负"):
+                            if cnt not in row:
+                                problems.append(
+                                    f"[exp96] §三十二·三 {tag} 行缺{what} 计数「{cnt}」")
+                        p = d.get("p_sign")
+                        if p is not None and f"{float(p):.4f}" not in row:
+                            problems.append(
+                                f"[exp96] §三十二·三 {tag} 行缺{what} p {float(p):.4f}")
+                # (b) **两份判决都必须出现在文档里**（预登记的 ANCHOR_FAIL 不能被删掉）
+                # ⚠️ 必须查**唯一的判决句**（①/② 编号 + 完整短语）⇒
+                #    只查判决字符串会漏（同一个字符串出现两次时，改第一处抓不到）。
+                v_job = (d96.get("job_verdict") or {}).get("verdict")
+                v_s1a = (d96.get("s1a_only_verdict_post_hoc") or {}).get("verdict")
+                if v_job:
+                    sent = f"① 预登记判决 = `{v_job}`"
+                    if sent not in sec32d:
+                        problems.append(
+                            f"[exp96] §三十二·四 里找不到预登记判决句「{sent}」"
+                            "（预登记的那份判决不能被改成事后的那份）")
+                if v_s1a:
+                    sent = f"② 事后只看 s1a（**非预登记**）= `{v_s1a}`"
+                    if sent not in sec32d:
+                        problems.append(
+                            f"[exp96] §三十二·四 里找不到事后判决句「{sent}」")
+                v_rec = (d96.get("recomputed_verdict") or {}).get("verdict")
+                if v_rec and v_rec not in sec32d:
+                    problems.append(
+                        f"[exp96] §三十二·四 里找不到离线重算判决字符串「{v_rec}」")
+                # (c) 判据 A 的漂移量
+                mdiff = d96.get("criterion_A_max_abs_diff")
+                if mdiff is not None and f"{float(mdiff):.2e}" not in text:
+                    problems.append(
+                        f"[exp96] FINDINGS 里找不到判据 A 的最大漂移 {float(mdiff):.2e}")
+                # (d) 台账 A21 必须带**骨干限定**与**两份判决**
+                itext96 = (ROOT / "INTEGRATION.md").read_text(encoding="utf-8")
+                a21 = next((l for l in itext96.splitlines()
+                            if l.startswith("| **A21**")), "")
+                if not a21:
+                    problems.append("[台账] INTEGRATION.md 里找不到 A21 那一行")
+                else:
+                    a21 = a21.replace("−", "-")
+                    for need in ("ANCHOR_FAIL", "THREE_GROUPS_HOLD", "s1a",
+                                 "10/10", "0.0020", "两份判决", "骨干限定"):
+                        if need not in a21:
+                            problems.append(
+                                f"[exp96] 台账 A21 缺「{need}」"
+                                "（两份判决 / 骨干限定 / 关键数字都不能丢）")
+        else:
+            print(f"（缺 {e96}，跳过 exp96 比对）")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:
