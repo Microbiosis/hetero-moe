@@ -31,7 +31,7 @@
    - **G6 算子表 ⇄ 代码类名绑定**：`COMPONENT_DESIGN.md` §3 的算子表必须与
      `arch/ops_brain.py` 里的类**双向一致**，性质测试的**项数**必须与
      `arch/test_ops_brain.py` 里的 `check()` 调用数一致，
-     且 §3 必须写明「只有性质测试，没有判据实验」（不许把实现正确说成有用）。
+     且 §3 必须写明「exp90 的判据实验因模型塌缩而全实验作废」（不许把实现正确说成有用）。
 
 ## 豁免
 
@@ -307,6 +307,9 @@ def main():
                 problems.append(f"[设计书] 缺组件行「{need}」")
         # 我们自写的连接（每个都必须带判据）——**不许只剩空话**
         # ⚠️ 用**唯一的长短语**做检查点（短词在文档里出现多次 ⇒ 存在性检查抓不到篡改）
+        for need in ("因模型塌缩而全实验作废",):
+            if need not in cdtext:
+                problems.append(f"[设计书] §3 缺状态句「{need}」")
         for need in ("**跨通道注意力**（保留通道身份 ⇒ 63 个通道 token ⇒ Transformer 跨通道交互）",
                      "**单损失对比学习**（InfoNCE ↔ 图像特征，批次内图像互不相同）"):
             if need not in cdtext:
@@ -368,7 +371,7 @@ def main():
                 f"[设计书] §3 声明 {mc.group(1)} 项性质测试，"
                 f"测试文件里实际有 {n_checks} 项（项数变了 ⇒ 文档要同步）")
         # 诚实状态：算子目前**只有性质测试，没有判据实验**
-        for need in ("只有性质测试，没有判据实验", "区内混、区间不混"):
+        for need in ("因模型塌缩而全实验作废", "区内混、区间不混"):
             if need not in sec3:
                 problems.append(f"[设计书] §3 缺「{need}」")
 

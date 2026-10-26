@@ -171,8 +171,9 @@ CASES = [
      "设计书：§3 的算子名与代码类名脱钩"),
     (G_TERM, "COMPONENT_DESIGN.md", "**33 项全绿**", "**34 项全绿**",
      "设计书：§3 的性质测试项数与测试文件脱钩"),
-    (G_TERM, "COMPONENT_DESIGN.md", "只有性质测试，没有判据实验", "已通过判据实验",
-     "设计书：§3 把「只有性质测试」说成「已通过判据实验」"),
+    (G_TERM, "COMPONENT_DESIGN.md", "exp90 的判据实验因模型塌缩而全实验作废",
+     "exp90 的判据实验全部通过",
+     "设计书：§3 把「因模型塌缩而全实验作废」说成「全部通过」"),
     # --- exp96：数字绑定 + **两份判决都要留痕** ---
     (G_NUM, "FINDINGS_TIER0_RSA.md", "中位 **−0.0348** ✅", "中位 **−0.0349** ✅",
      "exp96：§三十二·三 的 C 中位差被改"),
@@ -184,6 +185,18 @@ CASES = [
      "exp96：预登记判决被改成事后判决（篡改留痕）"),
     (G_NUM, "INTEGRATION.md", "两份判决都在", "都在",
      "exp96：台账 A21 的「两份判决」留痕被删"),
+    # --- exp90：判决 / 根因 / 「C2 假阳性」留痕 ---
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "预登记判决 = `PIPELINE_SELFCHECK_FAIL`",
+     "预登记判决 = `THREE_GROUPS_HOLD`",
+     "exp90：预登记判决被改成别的"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "（实测：**ln(256) = 5.5452**，30 个 epoch 一动不动）",
+     "（实测：**ln(512) = 5.5452**，30 个 epoch 一动不动）",
+     "exp90：根因里的具体数字被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**C2（置换敏感性）会给出假阳性**",
+     "**C2（置换敏感性）没问题**",
+     "exp90：C2 假阳性那条留痕被删"),
+    (G_NUM, "INTEGRATION.md", "PIPELINE_SELFCHECK_FAIL", "THREE_GROUPS_HOLD",
+     "exp90：台账 A22 的判决字符串被改"),
 ]
 
 

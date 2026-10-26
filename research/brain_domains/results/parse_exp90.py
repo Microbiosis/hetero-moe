@@ -82,21 +82,36 @@ def main():
 
     ok = [r for r in records if "error" not in r]
 
-    # ---- 3×3 转分化矩阵（逐被试中位）----
+    # ---- 3×3 转分化矩阵（逐被试中位 + **逐被试配对检验**）----
+    # ⚠️ **不能依赖 decide() 的 C2 明细**：判决在 C0 就早退时，C2 根本没算
+    #    ⇒ 这里**自己**算配对检验（每个被试一个 d 值 ⇒ 10 个配对样本）。
     mat_rows = []
     for A in E90.GROUPS:
         for B in E90.GROUPS:
             if A == B:
                 continue
-            vals = [r["transdiff"][f"{A}->{B}"] for r in ok
-                    if "transdiff" in r and f"{A}->{B}" in r["transdiff"]]
+            key = f"{A}->{B}"
+            vals = [r["transdiff"][key] for r in ok
+                    if "transdiff" in r and key in r["transdiff"]]
             if not vals:
                 continue
-            v = recomputed.get("C2", {}).get(f"{A}->{B}", {})
-            mat_rows.append((f"{A}→{B}", len(vals), f"{E90.med_up(vals):+.4f}",
-                             f"{v.get('n_pos', '-')}/{v.get('n_eff', '-')} 正",
-                             f"{v.get('p_sign', float('nan')):.4f}",
-                             "✅" if v.get("pass") else "—"))
+            n_eff, n_pos, n_neg, p, n_zero = E90.sign_test_nonzero(vals)
+            mat_rows.append((key, len(vals), f"{E90.med_up(vals):+.4f}",
+                             f"{n_pos}/{n_eff} 正", f"{p:.4f}",
+                             "✅" if (n_eff >= 8 and p <= 0.05 and (E90.med_up(vals) or 0) > 0) else "—",
+                             f"零差 {n_zero}"))
+    # ---- 潜变量是否塌缩（**退化检查**：被试内的 d 若几乎相同 ⇒ 模型没学到东西）----
+    spread = {}
+    for A in E90.GROUPS:
+        for B in E90.GROUPS:
+            if A == B:
+                continue
+            key = f"{A}->{B}"
+            vals = [r["transdiff"][key] for r in ok
+                    if "transdiff" in r and key in r["transdiff"]]
+            if len(vals) > 1:
+                spread[key] = {"min": min(vals), "max": max(vals),
+                               "spread": max(vals) - min(vals)}
     # ---- 接口切断代价 ----
     iface_rows = []
     for key in sorted({k for r in ok for k in r.get("iface", {})}):
@@ -124,6 +139,10 @@ def main():
 
     summary = {
         "job_verdict": job_verdict,
+        "transdiff_pairing": {r[0]: {"n": r[1], "median": r[2], "n_pos": r[3],
+                                     "p": r[4], "sensitive": r[5], "n_zero": r[6]}
+                              for r in mat_rows},
+        "transdiff_spread": spread,
         "recomputed_verdict": recomputed,
         "recompute_matches_job": same,
         "per_backbone": recomputed.get("C2"),
@@ -147,7 +166,11 @@ def main():
     md.append(f"**理由**：{recomputed.get('why', '')}\n")
     md.append(f"**原语个数**：{recomputed.get('n_primitives')}\n")
     md.append("## 3×3 转分化矩阵（d(A→B)：用 A 的原型集解释 B 的潜变量的残差增量）\n")
-    md.append(fmt_table(mat_rows, ["方向", "n", "中位 d", "正数", "p", "敏感"]))
+    md.append(fmt_table(mat_rows, ["方向", "n", "中位 d", "正数", "p", "敏感", "零差"]))
+    md.append("\n## 转分化 d 的**被试间离散度**（**退化检查**：塌缩后 d 仍显著但几乎常数 ⇒ 指标失效）\n")
+    md.append(fmt_table([(k, f"{v['min']:+.4f}", f"{v['max']:+.4f}", f"{v['spread']:.2e}")
+                         for k, v in spread.items()],
+                        ["方向", "最小 d", "最大 d", "离散度"]))
     md.append("\n## 接口切断代价（切断后该分支的验证残差增量）\n")
     md.append(fmt_table(iface_rows, ["接口|分支", "n", "中位", "正数", "p", "结论"]))
     md.append("\n## 逐分支的图像 RSA（位置轴第三次确认）\n")

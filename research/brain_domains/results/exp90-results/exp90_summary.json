@@ -1,0 +1,119 @@
+{
+  "job_verdict": {
+    "verdict": "PIPELINE_SELFCHECK_FAIL",
+    "C0": {
+      "acc1_median": 0.005,
+      "acc1_above_chance3": false,
+      "rsa_median": -0.010371694294337985,
+      "rsa_positive": false
+    },
+    "why": "POST 分支没学到东西（200-way 不显著高于随机水平或 RSA ≤ 0）⇒ 全实验作废"
+  },
+  "transdiff_pairing": {
+    "POST->CENT": {
+      "n": 10,
+      "median": "+0.0954",
+      "n_pos": "10/10 正",
+      "p": "0.0020",
+      "sensitive": "✅",
+      "n_zero": "零差 0"
+    },
+    "POST->FRONT": {
+      "n": 10,
+      "median": "+0.3855",
+      "n_pos": "10/10 正",
+      "p": "0.0020",
+      "sensitive": "✅",
+      "n_zero": "零差 0"
+    },
+    "CENT->POST": {
+      "n": 10,
+      "median": "+4.4972",
+      "n_pos": "10/10 正",
+      "p": "0.0020",
+      "sensitive": "✅",
+      "n_zero": "零差 0"
+    },
+    "CENT->FRONT": {
+      "n": 10,
+      "median": "+0.8862",
+      "n_pos": "10/10 正",
+      "p": "0.0020",
+      "sensitive": "✅",
+      "n_zero": "零差 0"
+    },
+    "FRONT->POST": {
+      "n": 10,
+      "median": "+5.6451",
+      "n_pos": "10/10 正",
+      "p": "0.0020",
+      "sensitive": "✅",
+      "n_zero": "零差 0"
+    },
+    "FRONT->CENT": {
+      "n": 10,
+      "median": "+0.1484",
+      "n_pos": "10/10 正",
+      "p": "0.0020",
+      "sensitive": "✅",
+      "n_zero": "零差 0"
+    }
+  },
+  "transdiff_spread": {
+    "POST->CENT": {
+      "min": 0.08761310577392578,
+      "max": 0.10381698608398438,
+      "spread": 0.016203880310058594
+    },
+    "POST->FRONT": {
+      "min": 0.361602783203125,
+      "max": 0.3984375,
+      "spread": 0.036834716796875
+    },
+    "CENT->POST": {
+      "min": 4.450435638427734,
+      "max": 4.552852630615234,
+      "spread": 0.1024169921875
+    },
+    "CENT->FRONT": {
+      "min": 0.8647727966308594,
+      "max": 0.9047603607177734,
+      "spread": 0.03998756408691406
+    },
+    "FRONT->POST": {
+      "min": 5.609363555908203,
+      "max": 5.694232940673828,
+      "spread": 0.084869384765625
+    },
+    "FRONT->CENT": {
+      "min": 0.1406545639038086,
+      "max": 0.15767574310302734,
+      "spread": 0.01702117919921875
+    }
+  },
+  "recomputed_verdict": {
+    "verdict": "PIPELINE_SELFCHECK_FAIL",
+    "C0": {
+      "acc1_median": 0.005,
+      "acc1_above_chance3": false,
+      "rsa_median": -0.010371694294337985,
+      "rsa_positive": false
+    },
+    "why": "POST 分支没学到东西（200-way 不显著高于随机水平或 RSA ≤ 0）⇒ 全实验作废"
+  },
+  "recompute_matches_job": true,
+  "per_backbone": null,
+  "criterion_C0": {
+    "acc1_median": 0.005,
+    "acc1_above_chance3": false,
+    "rsa_median": -0.010371694294337985,
+    "rsa_positive": false
+  },
+  "criterion_C1": null,
+  "criterion_C3": null,
+  "criterion_C4": null,
+  "n_primitives": null,
+  "interfaces_keep": null,
+  "interfaces_drop": null,
+  "comparable_to_exp94": null
+}

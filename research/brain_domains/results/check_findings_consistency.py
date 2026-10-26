@@ -1441,6 +1441,71 @@ def main():
         else:
             print(f"（缺 {e96}，跳过 exp96 比对）")
 
+        # --- 15. exp90（位置轴形态判据）：判决 + 数字 + **留痕**（根因与假阳性那条）---
+        e90 = HERE / "exp90-results" / "exp90_summary.json"
+        if e90.exists():
+            d90 = json.loads(e90.read_text(encoding="utf-8"))
+            sec33 = find_section(text, "三十三·二、判决")
+            sec33c = find_section(text, "三十三·三、根因")
+            sec33d = find_section(text, "三十三·四、")
+            if not (sec33 and sec33c and sec33d):
+                problems.append("FINDINGS 里找不到「三十三·二/三/四」小节")
+            else:
+                # ① 预登记判决字符串必须出现
+                # ⚠️ 文档里负号是 Unicode「−」⇒ 查找前归一化（与 exp96 那块同一处理）
+                sec33 = sec33.replace("−", "-")
+                sec33c = sec33c.replace("−", "-")
+                sec33d = sec33d.replace("−", "-")
+                v90 = (d90.get("job_verdict") or {}).get("verdict")
+                if v90 and v90 not in sec33:
+                    problems.append(f"[exp90] §三十三·二 里找不到判决字符串「{v90}」")
+                # ② 关键数字：POST 的 200-way（在随机水平）与 RSA（0/10 显著）
+                c0 = d90.get("criterion_C0") or {}
+                acc1 = c0.get("acc1_median")
+                if acc1 is not None and f"{float(acc1):.3f}" not in sec33:
+                    problems.append(
+                        f"[exp90] §三十三·二 缺 POST 的 200-way 中位 {float(acc1):.3f}")
+                rsa = c0.get("rsa_median")
+                if rsa is not None and f"{float(rsa):+.4f}" not in sec33:
+                    problems.append(
+                        f"[exp90] §三十三·二 缺 POST 的图像 RSA 中位 {float(rsa):+.4f}")
+                # ③ **两条根因**必须在（这是本轮最贵的产出，不许被改掉后消失）
+                for need in ("softmax", "ln(256)"):
+                    if need not in sec33c:
+                        problems.append(
+                            f"[exp90] §三十三·三 缺根因线索「{need}」"
+                            "（读出有平凡解 ⇒ 模型塌缩）")
+                # ④ **C2 假阳性**那条必须在（判据层面的产出）
+                for need in ("假阳性", "退化"):
+                    if need not in sec33d:
+                        problems.append(
+                            f"[exp90] §三十三·四 缺「{need}」"
+                            "（塌缩后置换代价仍显著 ⇒ 只看显著性会误判）")
+                # ⑤ 转分化矩阵：6 个元素的「10/10 正、p=0.0020」必须与数据一致
+                pairing = d90.get("transdiff_pairing") or {}
+                for key, v in pairing.items():
+                    cnt = v.get("n_pos")
+                    ps = v.get("p")
+                    if cnt and cnt not in sec33:
+                        problems.append(
+                            f"[exp90] §三十三·二 转分化 {key} 缺计数「{cnt}」")
+                    if ps and ps not in sec33:
+                        problems.append(
+                            f"[exp90] §三十三·二 转分化 {key} 缺 p「{ps}」")
+                # ⑥ 台账 A22 必须带判决 + 「换到 NLB 线」
+                it90 = (ROOT / "INTEGRATION.md").read_text(encoding="utf-8")
+                a22 = next((l for l in it90.splitlines()
+                            if l.startswith("| **A22**")), "")
+                if not a22:
+                    problems.append("[台账] INTEGRATION.md 里找不到 A22 那一行")
+                else:
+                    for need in ("PIPELINE_SELFCHECK_FAIL", "NLB"):
+                        if need not in a22:
+                            problems.append(
+                                f"[exp90] 台账 A22 缺「{need}」")
+        else:
+            print(f"（缺 {e90}，跳过 exp90 比对）")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:
