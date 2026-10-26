@@ -287,6 +287,113 @@ def run_churchland(files, args, rng):
     return per_session, all_correct, all_correct_shu
 
 
+def decide(per_session, mcnemar_counts=None):
+    """从**逐 session 原始记录**重算判决（阈值的**唯一出处** ⇒ 可离线重算）。
+
+    ⚠️ **纯重构**：本函数是从 `main()` 原样搬出来的（**阈值一字未改**：
+    `n_eff >= 4 and p_sign <= 0.05 and median_upper(diffs) > 0`），
+    目的只是让 `results/parse_exp90b.py` 能用原始记录**离线重算判决**。
+
+    `mcnemar_counts` = (解码正确, 地板正确) 两个 trial 级布尔数组；
+    离线重算拿不到 ⇒ 该字段为 `None`（它是**描述性**的，**不进判决**）。
+    """
+    diffs = [s["diff"] for s in per_session]
+    n_eff, n_pos, n_neg, p_sign, n_zero = sign_test_nonzero(diffs)
+    C0 = all(d > 0 for d in diffs)
+    C1 = bool(n_eff >= 4 and p_sign <= 0.05 and median_upper(diffs) > 0)
+    if mcnemar_counts is not None:
+        ca, cs = mcnemar_counts
+        b, c, p_mc = mcnemar(ca, cs)
+        mc = {"b": b, "c": c, "p": p_mc, "n_trials": int(len(ca)),
+              "note": "**描述性**：trial 不独立 ⇒ p 偏乐观 ⇒ 主证据用 session 级符号检验"}
+    else:
+        mc = None
+    return {
+        "verdict": ("C1_CENT_OK" if (C0 and C1) else
+                    ("C0_FAIL" if not C0 else "C1_FAIL")),
+        "C0_pipeline_selfcheck": C0,
+        "C1_CENT_reachdir": {
+            "pass": C1, "median_diff": median_upper(diffs),
+            "sign_test": {"n_eff": n_eff, "n_pos": n_pos, "n_neg": n_neg,
+                          "p": p_sign, "n_zero": n_zero},
+            "mcnemar_trial_level": mc,
+        },
+    }
+
+
+def self_test():
+    """判据实现的**自测**（exp90 的教训：**判据 bug 会伪装成结论** ⇒ 判据本身也要被测）。
+
+    覆盖：① 上中位；② 符号检验的**零差剔除**（全 0 不得被数成「全负」）；
+    ③ McNemar 的**大 n 不溢出**；④ `decide()` 的三条分支
+    （`C1_CENT_OK` / `C1_FAIL` / `C0_FAIL`）。
+    """
+    ok = 0
+    bad = []
+
+    def chk(name, cond):
+        nonlocal ok
+        if cond:
+            ok += 1
+            print(f"  ✓ {name}")
+        else:
+            bad.append(name)
+            print(f"  ✗ {name}")
+
+    # ① 中位 = 上中位（偶数取偏大）
+    chk("上中位(偶数 4 个取偏大)", median_upper([1.0, 2.0, 3.0, 4.0]) == 3.0)
+    chk("上中位(奇数)", median_upper([1.0, 2.0, 3.0]) == 2.0)
+    chk("上中位(空)=nan", math.isnan(median_upper([])))
+
+    # ② 符号检验：全正 / 零差剔除 / 全零
+    n, k, m, p, nz = sign_test_nonzero([0.1] * 6)
+    chk("符号检验 6/6 正 ⇒ p=0.03125", (n, k, m) == (6, 6, 0) and abs(p - 0.03125) < 1e-12)
+    n, k, m, p, nz = sign_test_nonzero([1.0, 0.0, -1.0])
+    chk("符号检验 零差单独计数", (n, k, m, nz) == (2, 1, 1, 1))
+    n, k, m, p, nz = sign_test_nonzero([0.0] * 6)
+    chk("符号检验 全零 ⇒ n_eff=0 且 **n_neg=0**（不得被数成全负）",
+        (n, k, m, nz) == (0, 0, 0, 6) and math.isnan(p))
+
+    # ③ McNemar：大 n 不溢出（exp90b 的真实量级）
+    a = [True] * 9558 + [False] * 328
+    b = [False] * 9558 + [True] * 328
+    bb, cc, pp = mcnemar(a, b)
+    chk("McNemar 大 n 不溢出 ⇒ b/c 正确且 p∈[0,1]",
+        (bb, cc) == (9558, 328) and 0.0 <= pp <= 1.0)
+    chk("McNemar 无不一致对 ⇒ p=nan", math.isnan(mcnemar([True] * 5, [True] * 5)[2]))
+
+    # ④ decide()：三条分支
+    def sess(vals):
+        return [{"session": f"s{i}", "n_trials": 100, "acc": 0.9, "acc_floor": 0.2,
+                 "diff": v} for i, v in enumerate(vals)]
+
+    v = decide(sess([0.7] * 6))
+    chk("decide 6/6 正 ⇒ C1_CENT_OK", v["verdict"] == "C1_CENT_OK"
+        and v["C0_pipeline_selfcheck"] and v["C1_CENT_reachdir"]["pass"]
+        and abs(v["C1_CENT_reachdir"]["median_diff"] - 0.7) < 1e-12)
+    v = decide(sess([0.7] * 4))
+    chk("decide 4/4 正但 p=0.125 ⇒ C1_FAIL", v["verdict"] == "C1_FAIL"
+        and v["C0_pipeline_selfcheck"] and not v["C1_CENT_reachdir"]["pass"])
+    v = decide(sess([0.7, 0.7, 0.7, 0.7, 0.7, 0.0]))
+    chk("decide 有一个持平 ⇒ C0_FAIL", v["verdict"] == "C0_FAIL"
+        and not v["C0_pipeline_selfcheck"])
+    v = decide(sess([0.0] * 6))
+    chk("decide 全零 ⇒ C0_FAIL 且 sign_test 的 n_neg=0",
+        v["verdict"] == "C0_FAIL" and v["C1_CENT_reachdir"]["sign_test"]["n_neg"] == 0)
+
+    # ⑤ 特征抽取的形状（小合成数组）
+    counts = np.zeros((3, 100), dtype=np.float32)
+    counts[:, 10:20] = 1.0
+    X = trial_features(counts, np.array([0.0]), np.array([0.4]))
+    chk("trial_features 形状与窗内均值", X.shape == (1, 3) and abs(float(X[0, 0]) - 0.5) < 1e-5)
+    Z = center_and_scale(np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32))
+    chk("center_and_scale 均值≈0", abs(float(Z.mean())) < 1e-5)
+
+    print(f"\n{'✓ 全部通过' if not bad else '✗ 有失败'}：{ok} 项检查"
+          f"{'，失败：' + ', '.join(bad) if bad else ''}")
+    return 0 if not bad else 1
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-dir", default=str(DATA_DIR))
@@ -294,7 +401,11 @@ def main():
     ap.add_argument("--n-folds", type=int, default=5)
     ap.add_argument("--need-success", type=int, default=1,
                     help="只留 task_success 且未 discard 的 trial")
+    ap.add_argument("--self-test", action="store_true",
+                    help="只跑判据实现的自测（不需要数据）")
     args = ap.parse_args()
+    if args.self_test:
+        return self_test()
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -318,16 +429,17 @@ def main():
                        indent=2, ensure_ascii=False, default=str), encoding="utf-8")
         return 1
 
-    diffs = [s["diff"] for s in per_session]
-    n_eff, n_pos, n_neg, p_sign, n_zero = sign_test_nonzero(diffs)
     ca = np.concatenate(all_correct) if all_correct else np.zeros(0, dtype=bool)
     cs = np.concatenate(all_correct_shu) if all_correct_shu else np.zeros(0, dtype=bool)
-    b, c, p_mc = mcnemar(ca, cs)
-    C0 = all(d > 0 for d in diffs)
-    C1 = bool(n_eff >= 4 and p_sign <= 0.05 and median_upper(diffs) > 0)
-    log(f"\n  逐 session 差值中位 {median_upper(diffs):+.4f}；符号检验 "
-        f"{n_pos}/{n_eff} 正 p={p_sign:.4f}（零差 {n_zero}）")
-    log(f"  trial 级 McNemar（**描述性**：trial 不独立 ⇒ p 偏乐观）��解码独对 {b} / "
+    verdict = decide(per_session, mcnemar_counts=(ca, cs))
+    _st = verdict["C1_CENT_reachdir"]["sign_test"]
+    _mc = verdict["C1_CENT_reachdir"]["mcnemar_trial_level"]
+    b, c, p_mc = _mc["b"], _mc["c"], _mc["p"]
+    C0 = verdict["C0_pipeline_selfcheck"]
+    C1 = verdict["C1_CENT_reachdir"]["pass"]
+    log(f"\n  逐 session 差值中位 {verdict['C1_CENT_reachdir']['median_diff']:+.4f}；符号检验 "
+        f"{_st['n_pos']}/{_st['n_eff']} 正 p={_st['p']:.4f}（零差 {_st['n_zero']}）")
+    log(f"  trial 级 McNemar（**描述性**：trial 不独立 ⇒ p 偏乐观）⇒解码独对 {b} / "
         f"地板独对 {c} ⇒ p={p_mc:.3g}")
     log(f"  C0 管线自检（每个 session 都高于地板）：{C0}")
     log(f"  C1 ③-CENT 成立：{C1}")
@@ -355,21 +467,8 @@ def main():
         log(f"  ✓ {sess}: trial {len(keep)}  go_offset 预测 r={r:+.4f}  "
             f"早/晚准确率 {acc:.4f} vs 地板 {acc_s:.4f}")
 
-    verdict = {
-        "verdict": ("C1_CENT_OK" if (C0 and C1) else
-                    ("C0_FAIL" if not C0 else "C1_FAIL")),
-        "C0_pipeline_selfcheck": C0,
-        "C1_CENT_reachdir": {
-            "pass": C1, "median_diff": median_upper(diffs),
-            "sign_test": {"n_eff": n_eff, "n_pos": n_pos, "n_neg": n_neg,
-                          "p": p_sign, "n_zero": n_zero},
-            "mcnemar_trial_level": {"b": b, "c": c, "p": p_mc,
-                                    "n_trials": int(len(ca)),
-                                    "note": "**描述性**：trial 不独立 ⇒ p 偏乐观 ⇒ 主证据用 session 级符号检验"},
-        },
-        "C3_FRONT_decision": {"report_only": True, "per_session": per_dmfc},
-        "note": "C3 只报（n=2–3 session ⇒ 证据极弱 ⇒ 不是「执行控制」的证明）",
-    }
+    verdict["C3_FRONT_decision"] = {"report_only": True, "per_session": per_dmfc}
+    verdict["note"] = "C3 只报（n=2–3 session ⇒ 证据极弱 ⇒ 不是「执行控制」的证明）"
     log(f"\n=== 判决：{verdict['verdict']} ===")
     (out_dir / "exp90b_nlb_function.json").write_text(
         json.dumps({"config": vars(args), "criteria": CRITERIA,

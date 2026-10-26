@@ -1492,19 +1492,71 @@ def main():
                     if ps and ps not in sec33:
                         problems.append(
                             f"[exp90] §三十三·二 转分化 {key} 缺 p「{ps}」")
-                # ⑥ 台账 A22 必须带判决 + 「换到 NLB 线」
+                # ⑥ 台账 A22 必须带判决 + **更正后的结论**
+                #    ⚠️ 2026-10-26 更正：原写「形态判据移到 NLB 线」**已被 exp90b 证伪**
+                #    ⇒ A22 现在必须写「现有数据上不可测 ⇒ 需要新数据」（见 §三十四）
                 it90 = (ROOT / "INTEGRATION.md").read_text(encoding="utf-8")
                 a22 = next((l for l in it90.splitlines()
                             if l.startswith("| **A22**")), "")
                 if not a22:
                     problems.append("[台账] INTEGRATION.md 里找不到 A22 那一行")
                 else:
-                    for need in ("PIPELINE_SELFCHECK_FAIL", "NLB"):
+                    for need in ("PIPELINE_SELFCHECK_FAIL", "NLB",
+                                 "更正", "需要新数据"):
                         if need not in a22:
                             problems.append(
-                                f"[exp90] 台账 A22 缺「{need}」")
+                                f"[exp90] 台账 A22 缺「{need}」"
+                                "（**更正后的结论**：判据① 在现有数据上不可测 ⇒ 需要新数据）")
         else:
             print(f"（缺 {e90}，跳过 exp90 比对）")
+
+        # --- 16. exp90b（NLB 功能判据③）：判决 + 数字 + **「形态判据①需要新数据」这条** ---
+        e90b = HERE / "exp90b-results" / "exp90b_summary.json"
+        if e90b.exists():
+            db = json.loads(e90b.read_text(encoding="utf-8"))
+            if not db.get("recompute_matches_job"):
+                problems.append("[exp90b] 离线重算与 Job 判决**不一致**"
+                                "⇒ 判决不可信，先查 decide() 与原始记录")
+            sec34 = find_section_h2(text, "三十四、exp90b")
+            sec34d = find_section(text, "三十四·四、")
+            if not sec34:
+                problems.append("FINDINGS 里找不到「三十四、exp90b」小节")
+            else:
+                v = (db.get("job_verdict") or {}).get("verdict")
+                if v and v not in sec34:
+                    problems.append(f"[exp90b] §三十四 里找不到判决字符串「{v}」")
+                med = db.get("median_diff")
+                if med is not None and f"{float(med):+.4f}" not in sec34:
+                    problems.append(f"[exp90b] §三十四 缺差值中位 {float(med):+.4f}")
+                st = db.get("sign_test") or {}
+                p = st.get("p")
+                if p is not None and f"{float(p):.4f}" not in sec34:
+                    problems.append(f"[exp90b] §三十四 缺符号检验 p {float(p):.4f}")
+                if st.get("n_pos") and st.get("n_eff") and \
+                        f"{st['n_pos']}/{st['n_eff']}" not in sec34:
+                    problems.append(
+                        f"[exp90b] §三十四 缺符号检验计数「{st['n_pos']}/{st['n_eff']}」")
+            if not sec34d:
+                problems.append("FINDINGS 里找不到「三十四·四、」小节")
+            else:
+                for need in ("新数据", "共同坐标系", "各缺一半"):
+                    if need not in sec34d:
+                        problems.append(
+                            f"[exp90b] §三十四·四 缺「{need}」"
+                            "（形态判据① 在现有数据上不可测 ⇒ 需要新数据）")
+            # 台账 A22 与组件设计书必须带**更正后的结论**
+            itx = (ROOT / "INTEGRATION.md").read_text(encoding="utf-8")
+            a22x = next((l for l in itx.splitlines()
+                         if l.startswith("| **A22**")), "")
+            for need in ("C1_CENT_OK", "需要新数据"):
+                if need not in a22x:
+                    problems.append(f"[exp90b] 台账 A22 缺「{need}」")
+            cd = (ROOT / "COMPONENT_DESIGN.md").read_text(encoding="utf-8")
+            if "需要新数据" not in cd:
+                problems.append("[exp90b] COMPONENT_DESIGN.md 缺「需要新数据」"
+                                "（§5 的「改在 NLB 线做」必须留更正痕迹）")
+        else:
+            print(f"（缺 {e90b}，跳过 exp90b 比对）")
 
     if problems:
         print("✗ 文档与数据不一致：")

@@ -197,6 +197,13 @@ CASES = [
      "exp90：C2 假阳性那条留痕被删"),
     (G_NUM, "INTEGRATION.md", "PIPELINE_SELFCHECK_FAIL", "THREE_GROUPS_HOLD",
      "exp90：台账 A22 的判决字符串被改"),
+    # --- exp90b：NLB 功能判据③ 的判决 + 「形态判据①需要新数据」这条留痕 ---
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "C1_CENT_OK", "C1_CENT_FAIL",
+     "exp90b：§三十四 的判决字符串被改"),
+    (G_NUM, "INTEGRATION.md", "`C1_CENT_OK`", "`C1_CENT_FAIL`",
+     "exp90b：台账 A22 的 exp90b 判决被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "两个数据集各缺一半", "两个数据集互不缺口",
+     "exp90b：「各缺一半」这条留痕被删"),
 ]
 
 
