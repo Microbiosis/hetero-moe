@@ -1,14 +1,14 @@
-"""parse_exp92.py — exp92（判据① 可测性自检**第二版**，鼠·Steinmetz 2019）的结果重建与**判决离线重算**。
+"""parse_exp92.py — exp97b（判据① 可测性自检**第二版**，鼠·Steinmetz 2019）的结果重建与**判决离线重算**。
 
 ## 做什么
 
-exp92 在一个 Job 里跑完了「判据① 在同记录多区数据上有没有判别力」的移植版（码本 = 类条件均值），
-判决 JSON 落在桶里（`runs/illusionbrain-align/exp92/exp92_transdiff_mouse.json`）。本脚本：
+exp97b 在一个 Job 里跑完了「判据① 在同记录多区数据上有没有判别力」的移植版（码本 = 类条件均值），
+判决 JSON 落在桶里（`runs/illusionbrain-align/exp97b/exp97b_transdiff_mouse.json`）。本脚本：
 
 1. **取回 JSON** —— ⚠️ **桶的读通道不稳**（`hf buckets cp` 报 `xet-read-token`）⇒
-   **三条通道依次试**：① 本地已有；② 从 `results/exp92-results/job_log.txt` 里**抽出**
+   **三条通道依次试**：① 本地已有；② 从 `results/exp97b-results/job_log.txt` 里**抽出**
    （Job 在云端把文件内容回显到 stdout ⇒ 不依赖桶的读权限）；③ `hf buckets cp`（带重试）。
-2. **用 exp92 脚本里的 `decide()` 从逐 session 原始记录重算判决**
+2. **用 exp97b 脚本里的 `decide()` 从逐 session 原始记录重算判决**
    （不依赖 Job 写下的 `verdict` 字段 ⇒ 判决可审计、可复现）。
 3. **把 C0 的失败分成两类**（⚠️ 关键，否则会误读判决）：
    - **「不适用」**：该 session 只有一个带（或 trial 不够）⇒ **它不进入分析**（不是自检失败）；
@@ -23,8 +23,8 @@ exp92 在一个 Job 里跑完了「判据① 在同记录多区数据上有没�
 
 ## 输出
 
-- `results/exp92-results/exp92_transdiff_mouse.json`（原始）
-- `results/exp91b-results/exp92_summary.{json,md}`
+- `results/exp97b-results/exp97b_transdiff_mouse.json`（原始）
+- `results/exp91b-results/exp97b_summary.{json,md}`
 """
 from __future__ import annotations
 
@@ -35,15 +35,15 @@ import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-OUT = HERE / "exp92-results"
+OUT = HERE / "exp97b-results"
 EXP = HERE.parent / "exp"
 for _p in (str(EXP), str(HERE)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
 BUCKET = "hf://buckets/illusion-brain/brain-domains/runs/illusionbrain-align"
-REL = "exp92/exp92_transdiff_mouse.json"
-RAW = OUT / "exp92_transdiff_mouse.json"
+REL = "exp97b/exp97b_transdiff_mouse.json"
+RAW = OUT / "exp97b_transdiff_mouse.json"
 LOG = OUT / "job_log.txt"
 
 SKIP_MARK = "带不足两个或 trial 不够"
@@ -92,7 +92,7 @@ def fetch(force=False):
             return RAW
         print(f"  ✗ 第 {i+1} 次取回失败")
         time.sleep(6)
-    raise RuntimeError("取不回 exp92 的原始 JSON（日志里也没有）")
+    raise RuntimeError("取不回 exp97b 的原始 JSON（日志里也没有）")
 
 
 def fmt_table(rows, header):
@@ -110,7 +110,7 @@ def main():
     per_session = data.get("per_session") or []
     job_verdict = data.get("verdict") or {}
 
-    import exp92_transdiff_mouse as E92
+    import exp97b_transdiff_mouse as E92
     recomputed = E92.decide(per_session)
 
     checks = {
@@ -194,11 +194,11 @@ def main():
         "note": "**鼠 ≠ 人**：本实验只回答「判据① 有没有判别力」，"
                 "**不回填**「三个原语还是两个」（人 EEG 的问题）",
     }
-    (OUT / "exp92_summary.json").write_text(
+    (OUT / "exp97b_summary.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
 
     md = []
-    md.append("# exp92 结果重建（判据① 的**可测性自检 第二版**：鼠·Steinmetz 2019）\n")
+    md.append("# exp97b 结果重建（判据① 的**可测性自检 第二版**：鼠·Steinmetz 2019）\n")
     md.append(f"**预登记判决（Job 写的）**：`{job_verdict.get('verdict')}`\n")
     md.append(f"**离线重算（逐 session 原始记录）**：`{recomputed.get('verdict')}` ⇒ "
               f"与 Job 一致：**{same}**\n")
@@ -221,9 +221,9 @@ def main():
     md.append("- 移植引入的新环节（**共同空间** = 两带联合 PCA；**码本** = 行为类条件均值）⇒ "
               "靠**同带自对照**定标。\n")
     md.append("- **C0 判死 ⇒ 按预登记「全实验作废」** ⇒ C1 的数字**只作描述性**。\n")
-    (OUT / "exp92_summary.md").write_text("\n".join(md) + "\n", encoding="utf-8")
+    (OUT / "exp97b_summary.md").write_text("\n".join(md) + "\n", encoding="utf-8")
 
-    print(f"输出：{OUT / 'exp92_summary.json'} / {OUT / 'exp92_summary.md'}")
+    print(f"输出：{OUT / 'exp97b_summary.json'} / {OUT / 'exp97b_summary.md'}")
     return 0 if same else 1
 
 

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """exp93a_perband_labels.py — 判据① 的可测性自检**第三版**：**C0 的可读性判据改成「每带用它自己相关的二值行为变量」**（鼠 · Steinmetz 2019）。
 
-## 为什么有 exp93a（**exp92 的 C0 判死，可能是我们的设计错**，2026-10-26）
+## 为什么有 exp97c（**exp97b 的 C0 判死，可能是我们的设计错**，2026-10-26）
 
-exp92 的判决是 `C0_FAIL`（管线自检）⇒ 8 个「同记录多带」的 session 全被自检判死
+exp97b 的判决是 `C0_FAIL`（管线自检）⇒ 8 个「同记录多带」的 session 全被自检判死
 ⇒ ⇒ §三十七·四 指出：**这很可能不是数据的问题，是 C0 的设计问题** ——
-exp92 的 C0 用**同一个 4 类标签（刺激侧 × 选择）+ 同一个时间窗**去要求**所有带**，
+exp97b 的 C0 用**同一个 4 类标签（刺激侧 × 选择）+ 同一个时间窗**去要求**所有带**，
 而**不同带编码的本来就不是同一个变量**（视觉带编码刺激侧、运动带编码选择、执行带编码决策/选择）。
 
-⇒ ⇒ **exp93a 只改这一件事**：C0 的可读性判据改成 **「每个带用它自己相关的二值行为变量」**：
+⇒ ⇒ **exp97c 只改这一件事**：C0 的可读性判据改成 **「每个带用它自己相关的二值行为变量」**：
 - `visual` → **刺激侧**（side）
 - `motor` → **选择**（choice）
 - `prefrontal` → **选择**（choice）
@@ -17,9 +17,9 @@ exp92 的 C0 用**同一个 4 类标签（刺激侧 × 选择）+ 同一个时�
 
 ⇒ ⇒ **其余一律不动**：码本（类条件均值，K=1/类）、共同空间（两带联合 PCA）+ 同带自对照、
 主对（CENT↔FRONT = motor↔prefrontal）、阈值、统计口径、train/test 切分
-⇒ ⇒ **单一改动 ⇒ 可归因**（这正是 exp92 缺的东西）。
+⇒ ⇒ **单一改动 ⇒ 可归因**（这正是 exp97b 缺的东西）。
 
-⚠️ **与 exp92 的判决不可直接比**（C0 的口径变了）⇒ ⇒ 故 exp93a **同时把 exp92 的旧口径算一遍**
+⚠️ **与 exp97b 的判决不可直接比**（C0 的口径变了）⇒ ⇒ 故 exp97c **同时把 exp97b 的旧口径算一遍**
 （4 类联合标签）⇒ 作为**对照报告**（`C0_legacy_jointlabel`）⇒ ⇒ 这样能直接回答
 「**可用 session 从 2 个回到几个**」。
 
@@ -28,17 +28,17 @@ exp92 的 C0 用**同一个 4 类标签（刺激侧 × 选择）+ 同一个时�
 ⇒ ⇒ **必须同时报出**：进入主判据的 session 数、被剔除的 session 数与原因
 ⇒ ⇒ **不因为「结果好看」而保留 session**（排除规则与 Δ 无关）。
 
-## 为什么有 exp92（**exp91 的实测结果 ⇒ 工具无效**，2026-10-26）
+## 为什么有 exp97b（**exp97a 的实测结果 ⇒ 工具无效**，2026-10-26）
 
-exp91（第一版移植，码本 = 每类 **4** 个原型）跑完 ⇒ **测量本身无效**：逐 session 的 Δ
+exp97a（第一版移植，码本 = 每类 **4** 个原型）跑完 ⇒ **测量本身无效**：逐 session 的 Δ
 **符号在各方向间不一致**（实测一例：−68.9 / +61.3 / +21.9 / +51.0 / +110.9 / +253.4）⇒
 **测到的不是「区差异」，而是移植引入的两个不对称**：
 ① **码本过拟合**：每类 4 个原型、每类只 ~25 个 trial ⇒ 自有码本**记住了训练集**
 ⇒ 在 test 上自有码本反而比外来码本**更差** ⇒ Δ 被过拟合不对称污染；
 ② **共同空间投影**：两带联合 PCA 的成分可能偏向某一带 ⇒ 两带的可比性被人为改变。
 
-⇒ ⇒ **exp91 的结果不得读作「判据① 原理上没判别力」**（那是**工具无效**，不是**原理无效**）⇒
-⇒ ⇒ **exp92 只改一件事：码本从「每类 4 个原型」改成「每类 1 个原型」**
+⇒ ⇒ **exp97a 的结果不得读作「判据① 原理上没判别力」**（那是**工具无效**，不是**原理无效**）⇒
+⇒ ⇒ **exp97b 只改一件事：码本从「每类 4 个原型」改成「每类 1 个原型」**
 ⇒ 码本 = **类条件均值向量**（⇒ 与 exp90 的「语义原型 = 类条件均值」**同构** ⇒ 不过拟合）
 ⇒ **判据、阈值、统计口径一字不改**。
 
@@ -59,7 +59,7 @@ exp91（第一版移植，码本 = 每类 **4** 个原型）跑完 ⇒ **测量�
 
 ## 移植了什么（**逐条对照 exp90**）
 
-| exp90（人 EEG：一个模型、三个分支）| exp91（鼠：多区同记录）| 为什么这么改 |
+| exp90（人 EEG：一个模型、三个分支）| exp97a（鼠：多区同记录）| 为什么这么改 |
 |---|---|---|
 | 三分支的潜变量 `a` 落在**同一模型**的同一空间 ⇒ 码本天然可跨分支比 | 用**两带联合 PCA**（train split 的 trial 特征，前 16 维）⇒ 共同空间 | 鼠上没有共享模型 ⇒ 必须自造共同空间 ⇒ **这是移植引入的新环节** ⇒ 靠**同带自对照**定标，不假装它不存在 |
 | 每分支一个软原型集 `proto`（K=64），**被对比学习损失锚在图像原型上** | 每带一个**行为锚定**的原型集：按行为类分层 k-means（**每类 1 个原型 ⇒ 码本 = 类条件均值**）| exp90 的码本锚在**语义**上 ⇒ 鼠上锚在**行为**上 ⇒ ⚠️ **不锚在行为上就退化成「结构相似度」，而那不是判据** |
@@ -112,7 +112,7 @@ exp91（第一版移植，码本 = 每类 **4** 个原型）跑完 ⇒ **测量�
   `response_choice` = ±1；`included` 为真且两值皆有限）；
 - **train/test = 按时间前 70% / 后 30%**（不跨时间泄漏）；
 - 共同空间 = **两带联合 PCA**（train trial，前 16 维）；码本 = **按行为类分层 k-means**
-  （**每类 1 个原型 ⇒ 4 个原型 ⇒ 类条件均值**；exp91 用的是每类 4 个 ⇒ 过拟合 ⇒ 无效）。
+  （**每类 1 个原型 ⇒ 4 个原型 ⇒ 类条件均值**；exp97a 用的是每类 4 个 ⇒ 过拟合 ⇒ 无效）。
 
 ## 行为标签（码本的锚）
 
@@ -125,7 +125,7 @@ Steinmetz 任务 = 视觉对比辨别 + 转轮选择 ⇒ 行为类 = **（刺激
 
 | # | 判据 | 通过 ⇒ |
 |---|---|---|
-| **C0\u2032** | **逐带可读性**（**exp93a 改的就是这一条**）：**每个带用它自己相关的**二值行为变量（`visual`→刺激侧、`motor`→选择、`prefrontal`→选择）解码，须 **acc > 0.5**（二类机会水平）且**置换 p < 0.05**；主对涉及的两个带里**任一带**不过 ⇒ **该 session 被剔除**（不进入主判据）⇒ ⇒ 报告进入/剔除的 session 数与原因 | 可读性是**数据属性**、排除规则与 Δ 无关（预登记）|
+| **C0\u2032** | **逐带可读性**（**exp97c 改的就是这一条**）：**每个带用它自己相关的**二值行为变量（`visual`→刺激侧、`motor`→选择、`prefrontal`→选择）解码，须 **acc > 0.5**（二类机会水平）且**置换 p < 0.05**；主对涉及的两个带里**任一带**不过 ⇒ **该 session 被剔除**（不进入主判据）⇒ ⇒ 报告进入/剔除的 session 数与原因 | 可读性是**数据属性**、排除规则与 Δ 无关（预登记）|
 | **C1** | **判据① 有没有判别力（主方向 = CENT↔FRONT）**：逐 session 配对差 `Δ(X→Y) = d_跨带(X→Y) − d_同带(Y)`（同带自对照作地板）；**主对 = `motor`↔`prefrontal`**，每个 session 取**两个方向 Δ 的均值**作统计量（不把同 session 当两个独立样本）；证据 = **session 级符号检验**（≥ 8 个 session ⇒ p ≤ 0.05）**且**中位 > 0 | 判据① **有判别力** ⇒ 为人 EEG 收 3×3 数据才有意义 |
 | **C2** | **退化守卫**（exp90 的教训：塌缩后 d 仍是**非零常数** ⇒ 只看显著性会假阳性）：主判据的逐 session 统计量不得是**非零常数**（离散度 > 0；**恒为 0 不算退化** —— 那是没有信号 ⇒ 归 C1_FAIL）| 不退化 ⇒ 判决有效；退化 ⇒ 判决作废（只报） |
 | **C3** | **只报，不作判决**：① **所有**可得方向的转分化（逐方向中位 + 符号检验；只有 3 个 session 的方向**只报**）② 3×3 矩阵（n=3 ⇒ 只报）③ 逐带可解码准确率 | — |
@@ -146,7 +146,7 @@ Steinmetz 任务 = 视觉对比辨别 + 转轮选择 ⇒ 行为类 = **（刺激
 ## 用法（云端）
 
     python -u /domains/scripts/exp91_transdiff_mouse.py --data /domains/steinmetz_trials \
-        --out /domains/runs/illusionbrain-align/exp93a
+        --out /domains/runs/illusionbrain-align/exp97c
 """
 from __future__ import annotations
 
@@ -161,7 +161,7 @@ import numpy as np
 
 TAU = 0.1                # exp90 的 proto_temp
 N_PC = 16                # 共同空间维数
-K_PROTO_PER_CLASS = 1    # 每行为类几个原型（**exp92：4 → 1** ⇒ 码本 = 类条件均值 ⇒ 不过拟合）
+K_PROTO_PER_CLASS = 1    # 每行为类几个原型（**exp97b：4 → 1** ⇒ 码本 = 类条件均值 ⇒ 不过拟合）
 N_CLASSES_MIN = 4       # 行为类至少这么多（刺激侧 × 选择 = 4）
 MIN_TRIALS_PER_CLASS = 8
 MIN_UNITS_PER_BAND = 20
@@ -173,7 +173,7 @@ BANDS = ("visual", "motor", "prefrontal")   # Neuromatch 自己的 functional_do
 BAND_LABEL = {"visual": "POST(感觉/视觉侧)", "motor": "CENT(运动侧)",
                "prefrontal": "FRONT(执行侧)"}
 
-# ⚠️ **exp93a 的唯一改动**：每个带的「可读性」用**它自己相关的**二值行为变量来判
+# ⚠️ **exp97c 的唯一改动**：每个带的「可读性」用**它自己相关的**二值行为变量来判
 BAND_LABEL_VAR = {"visual": "side",        # 刺激侧（视觉带编码的是感知）
                   "motor": "choice",       # 选择（运动带编码的是动作/选择）
                   "prefrontal": "choice"}  # 选择（执行带编码的是决策）
@@ -408,7 +408,7 @@ def session_transdiff(z, seed=0):
             continue
         acc, p = perm_p(Xtr, ytr, Xte, yte, seed=seed)
         out["decode"][b] = {"acc": acc, "p": p}
-    # ⚠️ **exp93a 的核心**：每带用**自己相关的**二值行为变量判「可读性」
+    # ⚠️ **exp97c 的核心**：每带用**自己相关的**二值行为变量判「可读性」
     #    （二值标签由 4 类 cls 推出：side = cls>=2，choice = cls%2==1；cls<0 的 trial 无效）
     for b in bands:
         var = BAND_LABEL_VAR[b]
@@ -509,7 +509,7 @@ def session_transdiff(z, seed=0):
 def decide(per_session, min_sessions=8, alpha=0.05):
     """从逐 session 原始记录重算判决（阈值的唯一出处 ⇒ 可离线重算）。"""
     problems = []
-    # ---- C0（exp93a 口径）：**主对涉及的两个带**用**各自的行为变量**过可读性门槛；
+    # ---- C0（exp97c 口径）：**主对涉及的两个带**用**各自的行为变量**过可读性门槛；
     #      不过 ⇒ 该 session **被剔除**（不进入主判据）⇒ 排除规则与 Δ 无关（预登记）
     c0_detail = {}
     prim_ok, prim_excluded = [], []
@@ -530,7 +530,7 @@ def decide(per_session, min_sessions=8, alpha=0.05):
                 c0_detail.setdefault(r["session"], []).extend(bad)
             else:
                 prim_ok.append(r)
-    # ---- 对照：exp92 的旧口径（4 类联合标签，所有带同一套）⇒ 只作报告
+    # ---- 对照：exp97b 的旧口径（4 类联合标签，所有带同一套）⇒ 只作报告
     legacy_fail = []
     for r in per_session:
         if r.get("skip"):
@@ -644,7 +644,7 @@ def self_test():
     cls = np.repeat(np.arange(4), 50)
     tr = np.ones(200, dtype=bool)
     P, used = build_codebook(z, cls, tr)
-    chk("码本形状 = 类数×每类原型数（exp92：每类 1 个 ⇒ 类条件均值）", P is not None and P.shape == (4 * K_PROTO_PER_CLASS, 8)
+    chk("码本形状 = 类数×每类原型数（exp97b：每类 1 个 ⇒ 类条件均值）", P is not None and P.shape == (4 * K_PROTO_PER_CLASS, 8)
         and len(used) == 4)
     # 岭回归解码：可分的二类 ⇒ 准确率 ≈ 1
     X = np.vstack([rng.normal(-1, 0.3, (60, 5)), rng.normal(1, 0.3, (60, 5))])
@@ -712,7 +712,7 @@ def self_test():
         return {"feat": feat,
                 "unit_band": np.array(["motor"] * n_per + ["prefrontal"] * n_per,
                                        dtype=object),
-                # ⚠️ 类编码必须与 exp91 的 `cls = (side>0)*2 + (choice>0)` **一致**
+                # ⚠️ 类编码必须与 exp97a 的 `cls = (side>0)*2 + (choice>0)` **一致**
                 #    ⇒ side: c≥2 为 +1；choice: c 为奇数时 +1（否则解码器看不到结构）
                 "trial_choice": np.where(cls % 2 == 1, 1.0, -1.0),
                 "trial_stim_side": np.where(cls >= 2, 1.0, -1.0),
@@ -742,7 +742,7 @@ def self_test():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="/domains/steinmetz_trials")
-    ap.add_argument("--out", default="/domains/runs/illusionbrain-align/exp91")
+    ap.add_argument("--out", default="/domains/runs/illusionbrain-align/exp97a")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
     if args.self_test:
@@ -783,7 +783,7 @@ def main():
                    "C3": "只报：3×3 矩阵 / 跨带解码迁移 / 逐带可解码准确率",
                },
                "per_session": per_session, "verdict": verdict}
-    (out_dir / "exp93a_perband_labels.json").write_text(
+    (out_dir / "exp97c_perband_labels.json").write_text(
         json.dumps(payload, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     print(f"\n=== 判决：{verdict['verdict']} ===")
     print(f"  C0 自检：{verdict['C0_pipeline_selfcheck']}")
@@ -793,7 +793,7 @@ def main():
     print(f"  C2 退化守卫：{verdict['C2_degenerate_guard']}")
     for k, v in verdict["per_pair"].items():
         print(f"    {k}: n={v['n']} 中位 Δ={v['median']:+.4f}")
-    print(f"结果写入 {out_dir}/exp91_transdiff_mouse.json")
+    print(f"结果写入 {out_dir}/exp97a_transdiff_mouse.json")
     return 0
 
 

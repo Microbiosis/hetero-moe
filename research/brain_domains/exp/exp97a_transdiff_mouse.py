@@ -1,24 +1,6 @@
 #!/usr/bin/env python3
-"""exp92_transdiff_mouse.py — 判据①（转分化代价）在「**同记录 + 多脑区 + 各有行为标签**」
-数据上的**可测性自检**（鼠 · Steinmetz 2019）—— **exp91 工具无效后的第二版**。
-
-## 为什么有 exp92（**exp91 的实测结果 ⇒ 工具无效**，2026-10-26）
-
-exp91（第一版移植，码本 = 每类 **4** 个原型）跑完 ⇒ **测量本身无效**：逐 session 的 Δ
-**符号在各方向间不一致**（实测一例：−68.9 / +61.3 / +21.9 / +51.0 / +110.9 / +253.4）⇒
-**测到的不是「区差异」，而是移植引入的两个不对称**：
-① **码本过拟合**：每类 4 个原型、每类只 ~25 个 trial ⇒ 自有码本**记住了训练集**
-⇒ 在 test 上自有码本反而比外来码本**更差** ⇒ Δ 被过拟合不对称污染；
-② **共同空间投影**：两带联合 PCA 的成分可能偏向某一带 ⇒ 两带的可比性被人为改变。
-
-⇒ ⇒ **exp91 的结果不得读作「判据① 原理上没判别力」**（那是**工具无效**，不是**原理无效**）⇒
-⇒ ⇒ **exp92 只改一件事：码本从「每类 4 个原型」改成「每类 1 个原型」**
-⇒ 码本 = **类条件均值向量**（⇒ 与 exp90 的「语义原型 = 类条件均值」**同构** ⇒ 不过拟合）
-⇒ **判据、阈值、统计口径一字不改**。
-
-⚠️ **预登记的解释规则（防过度解读）**：若 Δ 的符号**系统性为负**（n_neg > n_pos）⇒
-结论**只能**读作「这版移植仍无效」，**不得**读作「判据① 原理上没判别力」
-⇒ ⇒ **「工具无效」与「原理无效」必须分开记**（exp90 的教训：把失败的工具说成失败的原理）。
+"""exp91_transdiff_mouse.py — 判据①（转分化代价）在「**同记录 + 多脑区 + 各有行为标签**」
+数据上的**可测性自检**（鼠 · Steinmetz 2019）。
 
 ## 为什么做这个（**不是新判据，是移植 + 自标定**）
 
@@ -33,10 +15,10 @@ exp91（第一版移植，码本 = 每类 **4** 个原型）跑完 ⇒ **测量�
 
 ## 移植了什么（**逐条对照 exp90**）
 
-| exp90（人 EEG：一个模型、三个分支）| exp91（鼠：多区同记录）| 为什么这么改 |
+| exp90（人 EEG：一个模型、三个分支）| exp97a（鼠：多区同记录）| 为什么这么改 |
 |---|---|---|
 | 三分支的潜变量 `a` 落在**同一模型**的同一空间 ⇒ 码本天然可跨分支比 | 用**两带联合 PCA**（train split 的 trial 特征，前 16 维）⇒ 共同空间 | 鼠上没有共享模型 ⇒ 必须自造共同空间 ⇒ **这是移植引入的新环节** ⇒ 靠**同带自对照**定标，不假装它不存在 |
-| 每分支一个软原型集 `proto`（K=64），**被对比学习损失锚在图像原型上** | 每带一个**行为锚定**的原型集：按行为类分层 k-means（**每类 1 个原型 ⇒ 码本 = 类条件均值**）| exp90 的码本锚在**语义**上 ⇒ 鼠上锚在**行为**上 ⇒ ⚠️ **不锚在行为上就退化成「结构相似度」，而那不是判据** |
+| 每分支一个软原型集 `proto`（K=64），**被对比学习损失锚在图像原型上** | 每带一个**行为锚定**的原型集：按行为类分层 k-means（4 类 × 每类 4 原型 = 16）| exp90 的码本锚在**语义**上 ⇒ 鼠上锚在**行为**上 ⇒ ⚠️ **不锚在行为上就退化成「结构相似度」，而那不是判据** |
 | `proto_read(a,P) = mean‖a − softmax(a·Pᵀ/τ)P‖²`（τ=0.1）| **同式逐字搬**（τ=0.1 固定）| — |
 | `d(A→B) = proto_read(a_B, proto_A) − proto_read(a_B, proto_B)` | **同式逐字搬**（a = 该带在共同空间里的 trial 特征）| — |
 | 「**自有原型必须先拟合到自己的潜变量上**」才是训练后的性质（exp90 自测 3 的教训）| 码本在 **train split** 上拟合、残差在 **test split** 上算 | 既守住那条前提，又避免 in-sample 偏袒 |
@@ -86,7 +68,7 @@ exp91（第一版移植，码本 = 每类 **4** 个原型）跑完 ⇒ **测量�
   `response_choice` = ±1；`included` 为真且两值皆有限）；
 - **train/test = 按时间前 70% / 后 30%**（不跨时间泄漏）；
 - 共同空间 = **两带联合 PCA**（train trial，前 16 维）；码本 = **按行为类分层 k-means**
-  （**每类 1 个原型 ⇒ 4 个原型 ⇒ 类条件均值**；exp91 用的是每类 4 个 ⇒ 过拟合 ⇒ 无效）。
+  （每类 4 原型 ⇒ 16 个原型）。
 
 ## 行为标签（码本的锚）
 
@@ -120,7 +102,7 @@ Steinmetz 任务 = 视觉对比辨别 + 转轮选择 ⇒ 行为类 = **（刺激
 ## 用法（云端）
 
     python -u /domains/scripts/exp91_transdiff_mouse.py --data /domains/steinmetz_trials \
-        --out /domains/runs/illusionbrain-align/exp92
+        --out /domains/runs/illusionbrain-align/exp97a
 """
 from __future__ import annotations
 
@@ -135,7 +117,7 @@ import numpy as np
 
 TAU = 0.1                # exp90 的 proto_temp
 N_PC = 16                # 共同空间维数
-K_PROTO_PER_CLASS = 1    # 每行为类几个原型（**exp92：4 → 1** ⇒ 码本 = 类条件均值 ⇒ 不过拟合）
+K_PROTO_PER_CLASS = 4    # 每行为类几个原型
 N_CLASSES_MIN = 4       # 行为类至少这么多（刺激侧 × 选择 = 4）
 MIN_TRIALS_PER_CLASS = 8
 MIN_UNITS_PER_BAND = 20
@@ -519,10 +501,6 @@ def decide(per_session, min_sessions=8, alpha=0.05):
                "n_zero": n_zero, "median_delta": med, "min_sessions": min_sessions,
                "alpha": alpha, "primary_pair": "motor<->prefrontal",
                "primary_stats": prim},
-        "C1_direction": {"n_pos": n_pos, "n_neg": n_neg,
-                         "systematically_negative": bool(n_neg > n_pos),
-                         "rule": "系统性为负 ⇒ 只能读作「这版移植无效」，"
-                                 "**不得**读作「判据① 原理上没判别力」"},
         "C2_degenerate_guard": c2,
         "C2_spread": spread,
         "per_pair": deltas,
@@ -565,7 +543,7 @@ def self_test():
     cls = np.repeat(np.arange(4), 50)
     tr = np.ones(200, dtype=bool)
     P, used = build_codebook(z, cls, tr)
-    chk("码本形状 = 类数×每类原型数（exp92：每类 1 个 ⇒ 类条件均值）", P is not None and P.shape == (4 * K_PROTO_PER_CLASS, 8)
+    chk("码本形状 = 类数×每类原型数", P is not None and P.shape == (4 * K_PROTO_PER_CLASS, 8)
         and len(used) == 4)
     # 岭回归解码：可分的二类 ⇒ 准确率 ≈ 1
     X = np.vstack([rng.normal(-1, 0.3, (60, 5)), rng.normal(1, 0.3, (60, 5))])
@@ -621,7 +599,7 @@ def self_test():
         return {"feat": feat,
                 "unit_band": np.array(["motor"] * n_per + ["prefrontal"] * n_per,
                                        dtype=object),
-                # ⚠️ 类编码必须与 exp91 的 `cls = (side>0)*2 + (choice>0)` **一致**
+                # ⚠️ 类编码必须与 exp97a 的 `cls = (side>0)*2 + (choice>0)` **一致**
                 #    ⇒ side: c≥2 为 +1；choice: c 为奇数时 +1（否则解码器看不到结构）
                 "trial_choice": np.where(cls % 2 == 1, 1.0, -1.0),
                 "trial_stim_side": np.where(cls >= 2, 1.0, -1.0),
@@ -651,7 +629,7 @@ def self_test():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="/domains/steinmetz_trials")
-    ap.add_argument("--out", default="/domains/runs/illusionbrain-align/exp91")
+    ap.add_argument("--out", default="/domains/runs/illusionbrain-align/exp97a")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
     if args.self_test:
@@ -692,7 +670,7 @@ def main():
                    "C3": "只报：3×3 矩阵 / 跨带解码迁移 / 逐带可解码准确率",
                },
                "per_session": per_session, "verdict": verdict}
-    (out_dir / "exp92_transdiff_mouse.json").write_text(
+    (out_dir / "exp97a_transdiff_mouse.json").write_text(
         json.dumps(payload, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     print(f"\n=== 判决：{verdict['verdict']} ===")
     print(f"  C0 自检：{verdict['C0_pipeline_selfcheck']}")
@@ -702,7 +680,7 @@ def main():
     print(f"  C2 退化守卫：{verdict['C2_degenerate_guard']}")
     for k, v in verdict["per_pair"].items():
         print(f"    {k}: n={v['n']} 中位 Δ={v['median']:+.4f}")
-    print(f"结果写入 {out_dir}/exp91_transdiff_mouse.json")
+    print(f"结果写入 {out_dir}/exp97a_transdiff_mouse.json")
     return 0
 
 

@@ -733,7 +733,7 @@ def main():
     else:
         print(f"（缺 {rdf}，跳过读出强度检验比对）")
 
-    # --- 9. exp92 三支线（§二十八·二）---
+    # --- 9. exp97b 三支线（§二十八·二）---
     cvf = HERE / "cross-validation" / "cross_validation.json"
     if cvf.exists():
         cv = json.loads(cvf.read_text(encoding="utf-8"))
@@ -753,11 +753,11 @@ def main():
             e = A.get(tag) or {}
             ln = row28(marker)
             if not e or not ln:
-                problems.append(f"[exp92-A] 找不到 {tag} 的行或结果")
+                problems.append(f"[exp97b-A] 找不到 {tag} 的行或结果")
                 continue
             for g in ("POST", "ANT"):
                 if g in e and f"{e[g]['median']:+.4f}" not in ln:
-                    problems.append(f"[exp92-A] §二十八 {tag}/{g} 行缺数字 "
+                    problems.append(f"[exp97b-A] §二十八 {tag}/{g} 行缺数字 "
                                     f"{e[g]['median']:+.4f}")
             d = e.get("_POST_minus_ANT")
             if d:
@@ -765,7 +765,7 @@ def main():
                                 (f"{d['p_sign']:.4f}", "后−前 p"),
                                 (f"{d['n_pos']}/{d['n']}", "后−前正向数")):
                     if s not in ln:
-                        problems.append(f"[exp92-A] §二十八 {tag} 行缺 {what} 的数字 {s}")
+                        problems.append(f"[exp97b-A] §二十八 {tag} 行缺 {what} 的数字 {s}")
         # B 支线
         for key, marker in (("post_RL", "| 后部 R−L（原始）"),
                             ("ant_RL", "| 前部 R−L（全局增益差的代理）"),
@@ -773,13 +773,13 @@ def main():
             e = B.get(key) or {}
             ln = row28(marker)
             if not e or not ln:
-                problems.append(f"[exp92-B] 找不到 {key} 的行或结果")
+                problems.append(f"[exp97b-B] 找不到 {key} 的行或结果")
                 continue
             for s, what in ((f"{e['median']:+.4f}", "中位"),
                             (f"{e.get('n_pos','-')}/{e.get('n','-')}", "正向数"),
                             (f"{e.get('p_sign', 0):.4f}", "p")):
                 if s not in ln:
-                    problems.append(f"[exp92-B] §二十八 {key} 行缺 {what} 的数字 {s}")
+                    problems.append(f"[exp97b-B] §二十八 {key} 行缺 {what} 的数字 {s}")
         # C 支线
         for tag, marker in (("raw630", "| **630-d 手工特征**"),
                             ("s1a_recon", "| S1a 重建层（我们自训）"),
@@ -788,13 +788,13 @@ def main():
             e = C.get(tag) or {}
             ln = row28(marker)
             if not e or not ln:
-                problems.append(f"[exp92-C] 找不到 {tag} 的行或结果")
+                problems.append(f"[exp97b-C] 找不到 {tag} 的行或结果")
                 continue
             s = f"{e['median']:.4f}"
             if s not in ln:
-                problems.append(f"[exp92-C] §二十八 {tag} 行缺数字 {s}")
+                problems.append(f"[exp97b-C] §二十八 {tag} 行缺数字 {s}")
     else:
-        print(f"（缺 {cvf}，跳过 exp92 三支线比对）")
+        print(f"（缺 {cvf}，跳过 exp97b 三支线比对）")
 
     # --- 10. exp93：档位归因 / 对比学习 encoder / 模型层地板 ---
     R93 = HERE / "exp93-results"
@@ -858,26 +858,26 @@ def main():
         else:
             print(f"（缺 {e93b}，跳过 exp93b 比对）")
 
-        # (b) exp93a 的因子表（**合并后的 10 被试版**：s1-5 来自 Job 日志、s6-10 来自桶内 JSON）
+        # (b) exp97c 的因子表（**合并后的 10 被试版**：s1-5 来自 Job 日志、s6-10 来自桶内 JSON）
         m93 = R93 / "exp93a_merged.json"
         if m93.exists():
             merged = json.loads(m93.read_text(encoding="utf-8"))
             for marker, cellname, label in (
-                    ("| 拟合集 1000 张、单试次 |", "P1/ridge/1000", "exp93a n_train=1000"),
-                    ("| 拟合集 4000 张、单试次 |", "P1/ridge/4000", "exp93a n_train=4000"),
+                    ("| 拟合集 1000 张、单试次 |", "P1/ridge/1000", "exp97c n_train=1000"),
+                    ("| 拟合集 4000 张、单试次 |", "P1/ridge/4000", "exp97c n_train=4000"),
                     ("| **拟合集 16540 张、单试次** |", "P1/ridge/16540",
-                     "exp93a 全量单试次"),
+                     "exp97c 全量单试次"),
                     ("| **拟合集 16540 张、试次平均** |", "P1/ridge/16540/试次平均",
-                     "exp93a 全量试次平均")):
+                     "exp97c 全量试次平均")):
                 ln = row29(marker)
                 e = merged.get(cellname)
                 if not ln or not e:
                     continue
                 if f"{e['median_up']:.4f}" not in ln:
                     problems.append(
-                        f"[exp93a] §二十九·二「{label}」行缺数字 {e['median_up']:.4f}")
+                        f"[exp97c] §二十九·二「{label}」行缺数字 {e['median_up']:.4f}")
         else:
-            print(f"（缺 {m93}，跳过 exp93a 比对）")
+            print(f"（缺 {m93}，跳过 exp97c 比对）")
 
         # (c) 模型层地板：POST/ANT 相对全部随机组的被试数
         fl = [CV / "posaxis_model_floor_s1-5.json",
@@ -921,7 +921,7 @@ def main():
                         problems.append(
                             f"[地板] §二十九·五 {tag} 行缺{what}的数字 {s}")
         else:
-            print(f"（缺地板结果，跳过 exp92-A 地板比对）")
+            print(f"（缺地板结果，跳过 exp97b-A 地板比对）")
 
         # (d) exp93c 剂量-反应表（§二十九·五）
         dosf = R93 / "exp93c_dose.summary.json"
@@ -1571,59 +1571,59 @@ def main():
                     f"[摸底] §三十五 缺「{need}」"
                     "（「同记录 + 多脑区 + 行为标签」规格**已满足** ⇒ 收新数据先缓）")
 
-    # --- 18. §三十六（exp91/exp92：判据① 的可测性自检）---
-    sec36 = find_section_h2(text, "三十六、exp91 / exp92")
+    # --- 18. §三十六（exp97a/exp97b：判据① 的可测性自检）---
+    sec36 = find_section_h2(text, "三十六、exp97a / exp97b")
     if not sec36:
-        problems.append("FINDINGS 里找不到「三十六、exp91 / exp92」小节")
+        problems.append("FINDINGS 里找不到「三十六、exp97a / exp97b」小节")
     else:
         for need in ("工具无效", "C0_FAIL", "exp93"):
             if need not in sec36:
-                problems.append(f"[exp92] §三十六 缺「{need}」")
-        e92 = HERE / "exp92-results" / "exp92_summary.json"
+                problems.append(f"[exp97b] §三十六 缺「{need}」")
+        e92 = HERE / "exp97b-results" / "exp97b_summary.json"
         if e92.exists():
             d92 = json.loads(e92.read_text(encoding="utf-8"))
             if not d92.get("recompute_matches_job"):
-                problems.append("[exp92] 离线重算与 Job 判决**不一致**")
+                problems.append("[exp97b] 离线重算与 Job 判决**不一致**")
             v92 = d92.get("job_verdict") or {}
             c192 = v92.get("C1") or {}
             # ⚠️ 检查**文中的精确写法**（不是裸数字）⇒ 否则同一数字在别处出现时，
             #    篡改一处仍会被判「通过」（这个坑踩过一次）
             if v92.get("verdict") and f"**判决 = `{v92['verdict']}`**" not in sec36:
-                problems.append(f"[exp92] §三十六 里找不到判决写法「判决 = `{v92['verdict']}`」")
+                problems.append(f"[exp97b] §三十六 里找不到判决写法「判决 = `{v92['verdict']}`」")
             med = c192.get("median_delta")
             if med is not None and f"**中位 Δ = {float(med):+.4f}**" not in sec36:
-                problems.append(f"[exp92] §三十六 缺中位 Δ 写法「{float(med):+.4f}」")
+                problems.append(f"[exp97b] §三十六 缺中位 Δ 写法「{float(med):+.4f}」")
             p92 = c192.get("p")
             if p92 is not None and f"**p = {float(p92):.4f}**" not in sec36:
-                problems.append(f"[exp92] §三十六 缺符号检验 p 写法「{float(p92):.4f}」")
+                problems.append(f"[exp97b] §三十六 缺符号检验 p 写法「{float(p92):.4f}」")
             np92, ne92 = c192.get("n_pos"), c192.get("n_eff")
             if np92 and ne92 and f"**{np92}/{ne92} 正**" not in sec36:
-                problems.append(f"[exp92] §三十六 缺符号检验计数写法「{np92}/{ne92} 正」")
+                problems.append(f"[exp97b] §三十六 缺符号检验计数写法「{np92}/{ne92} 正」")
         else:
-            problems.append("缺 exp92-results/exp92_summary.json")
+            problems.append("缺 exp97b-results/exp97b_summary.json")
 
-        # --- 19. exp91（第一版：工具无效）的数字也要绑 ---
-        e91 = HERE / "exp91-results" / "exp91_summary.json"
+        # --- 19. exp97a（第一版：工具无效）的数字也要绑 ---
+        e91 = HERE / "exp97a-results" / "exp97a_summary.json"
         if e91.exists():
             d91 = json.loads(e91.read_text(encoding="utf-8"))
             if not d91.get("recompute_matches_job"):
-                problems.append("[exp91] 离线重算与 Job 判决**不一致**")
+                problems.append("[exp97a] 离线重算与 Job 判决**不一致**")
             v91 = d91.get("job_verdict") or {}
             c191 = v91.get("C1") or {}
             s36 = sec36.replace("−", "-")
             if v91.get("verdict") and f"**判决 `{v91['verdict']}`**" not in s36:
-                problems.append(f"[exp91] §三十六 里找不到判决写法「判决 `{v91['verdict']}`」")
+                problems.append(f"[exp97a] §三十六 里找不到判决写法「判决 `{v91['verdict']}`」")
             med91 = c191.get("median_delta")
             if med91 is not None and f"中位 Δ = {float(med91):+.4f}" not in s36:
-                problems.append(f"[exp91] §三十六 缺中位 Δ {float(med91):+.4f}")
+                problems.append(f"[exp97a] §三十六 缺中位 Δ {float(med91):+.4f}")
             p91 = c191.get("p")
             if p91 is not None and f"p={float(p91):.4f}" not in s36:
-                problems.append(f"[exp91] §三十六 缺符号检验 p {float(p91):.4f}")
+                problems.append(f"[exp97a] §三十六 缺符号检验 p {float(p91):.4f}")
             np91, ne91 = c191.get("n_pos"), c191.get("n_eff")
             if np91 and ne91 and f"{np91}/{ne91} 正" not in s36:
-                problems.append(f"[exp91] §三十六 缺符号检验计数「{np91}/{ne91} 正」")
+                problems.append(f"[exp97a] §三十六 缺符号检验计数「{np91}/{ne91} 正」")
         else:
-            problems.append("缺 exp91-results/exp91_summary.json")
+            problems.append("缺 exp97a-results/exp97a_summary.json")
 
     # --- 20. §三十七（公开数据候选清单）：关键来源与「拆两笔」的结论 ---
     sec37 = find_section_h2(text, "三十七、继续挖公开数据")
@@ -1631,7 +1631,7 @@ def main():
         problems.append("FINDINGS 里找不到「三十七、继续挖公开数据」小节")
     else:
         for need in ("Allen", "Sabes", "000688", "Brain Treebank",
-                     "exp93a（零新数据）", "甲", "乙"):
+                     "exp97c（零新数据）", "甲", "乙"):
             if need not in sec37:
                 problems.append(f"[挖底] §三十七 缺「{need}」"
                                 "（候选清单 + 「收数据拆两笔」的结论）")

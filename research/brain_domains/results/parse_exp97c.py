@@ -1,26 +1,26 @@
-"""parse_exp93a.py — exp93a（判据① 可测性自检**第三版**：C0 改成「每带用它自己相关的
+"""parse_exp93a.py — exp97c（判据① 可测性自检**第三版**：C0 改成「每带用它自己相关的
 二值行为变量」）的结果重建与**判决离线重算**。
 
 ## 做什么
 
-exp93a 在一个 Job 里跑完了「C0 口径修正后，判据① 的测量在 Steinmetz 上还剩多少可用 session、
+exp97c 在一个 Job 里跑完了「C0 口径修正后，判据① 的测量在 Steinmetz 上还剩多少可用 session、
 以及跨带转分化代价是否显著为正」。判决 JSON 在桶里
-（`runs/illusionbrain-align/exp93a/exp93a_perband_labels.json`）。本脚本：
+（`runs/illusionbrain-align/exp97c/exp97c_perband_labels.json`）。本脚本：
 
 1. **取回 JSON** —— 桶的读通道不稳（`hf buckets cp` 报 `xet-read-token`）⇒ 依次试：
-   ① 本地已有；② 从 `results/exp93a-results/job_log.txt` 里**抽出**（Job 回显通道，
+   ① 本地已有；② 从 `results/exp97c-results/job_log.txt` 里**抽出**（Job 回显通道，
    **不依赖桶的读权限**）；③ `hf buckets cp`（带重试）。
-2. **用 exp93a 脚本里的 `decide()` 从逐 session 原始记录重算判决**（可审计、可复现）。
+2. **用 exp97c 脚本里的 `decide()` 从逐 session 原始记录重算判决**（可审计、可复现）。
 3. 报告**两个口径的对照**（这是这一轮的核心产出）：
    - **新口径**（C0′）：每带用它自己相关的二值行为变量；不可读的 session **被剔除**；
-   - **旧口径**（exp92）：所有带用同一个 4 类联合标签，不过则**全实验作废**；
+   - **旧口径**（exp97b）：所有带用同一个 4 类联合标签，不过则**全实验作废**；
    ⇒ ⇒ 直接回答「**可用 session 从 2 个回到几个**」。
 4. 把逐 session 的跨带/同带代价、两套口径下的可解码性整理成表。
 
 ## 输出
 
-- `results/exp93a-results/exp93a_perband_labels.json`（原始）
-- `results/exp93a-results/exp93a_summary.{json,md}`
+- `results/exp97c-results/exp97c_perband_labels.json`（原始）
+- `results/exp97c-results/exp93a_summary.{json,md}`
 """
 from __future__ import annotations
 
@@ -31,15 +31,15 @@ import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-OUT = HERE / "exp93a-results"
+OUT = HERE / "exp97c-results"
 EXP = HERE.parent / "exp"
 for _p in (str(EXP), str(HERE)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
 BUCKET = "hf://buckets/illusion-brain/brain-domains/runs/illusionbrain-align"
-REL = "exp93a/exp93a_perband_labels.json"
-RAW = OUT / "exp93a_perband_labels.json"
+REL = "exp97c/exp97c_perband_labels.json"
+RAW = OUT / "exp97c_perband_labels.json"
 LOG = OUT / "job_log.txt"
 
 
@@ -86,7 +86,7 @@ def fetch(force=False):
             return RAW
         print(f"  ✗ 第 {i+1} 次取回失败")
         time.sleep(6)
-    raise RuntimeError("取不回 exp93a 的原始 JSON（日志里也没有）")
+    raise RuntimeError("取不回 exp97c 的原始 JSON（日志里也没有）")
 
 
 def fmt_table(rows, header):
@@ -104,7 +104,7 @@ def main():
     per_session = data.get("per_session") or []
     job_verdict = data.get("verdict") or {}
 
-    import exp93a_perband_labels as E93
+    import exp97c_perband_labels as E93
     recomputed = E93.decide(per_session)
 
     checks = {
@@ -143,7 +143,7 @@ def main():
           f"{recomputed.get('n_sessions_primary_total')} ⇒ 可用 "
           f"**{recomputed.get('n_sessions_primary_used')}**"
           f"（剔除 {len(recomputed.get('sessions_excluded_by_readability') or [])}）")
-    print(f"旧口径（exp92 4 类联合）：主对可用 **{legacy.get('n_primary_used')}**"
+    print(f"旧口径（exp97b 4 类联合）：主对可用 **{legacy.get('n_primary_used')}**"
           f"（判死 {legacy.get('n_failing')}）")
     print(f"符号检验：{c1.get('n_pos')}/{c1.get('n_eff')} 正，p={c1.get('p')}，"
           f"中位 Δ={c1.get('median_delta')}")
@@ -181,7 +181,7 @@ def main():
         json.dumps(summary, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
 
     md = []
-    md.append("# exp93a 结果重建（C0 改成「每带用它自己相关的二值行为变量」）\n")
+    md.append("# exp97c 结果重建（C0 改成「每带用它自己相关的二值行为变量」）\n")
     md.append(f"**预登记判决（Job 写的）**：`{job_verdict.get('verdict')}`\n")
     md.append(f"**离线重算（逐 session 原始记录）**：`{recomputed.get('verdict')}` ⇒ "
               f"与 Job 一致：**{same}**\n")
@@ -190,7 +190,7 @@ def main():
               f"**{recomputed.get('n_sessions_primary_total')}** ⇒ 可用 "
               f"**{recomputed.get('n_sessions_primary_used')}**"
               f"（因可读性被剔除 {len(recomputed.get('sessions_excluded_by_readability') or [])}）")
-    md.append(f"- **旧口径**（exp92：所有带用同一个 4 类联合标签）：主对可用 "
+    md.append(f"- **旧口径**（exp97b：所有带用同一个 4 类联合标签）：主对可用 "
               f"**{legacy.get('n_primary_used')}**（判死 {legacy.get('n_failing')}）\n")
     md.append(f"**符号检验**：{c1.get('n_pos')}/{c1.get('n_eff')} 正，p={c1.get('p')}，"
               f"中位 Δ={c1.get('median_delta')}（零差 {c1.get('n_zero')}）\n")
