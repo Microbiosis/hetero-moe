@@ -1672,6 +1672,53 @@ def main():
         else:
             problems.append("缺 exp97c-results/exp97c_summary.json")
 
+    # --- 22. §三十九（exp98：Allen VC-NP 上判据① 的正/负对照）---
+    sec39 = find_section_h2(text, "三十九、exp98")
+    if not sec39:
+        problems.append("FINDINGS 里找不到「三十九、exp98」小节")
+    else:
+        for need in ("C1_FAIL", "exp98_posneg_control.py", "exp98_extract.py",
+                     "exp98_run_shard.py", "exp98_aggregate.py", "parse_exp98.py",
+                     "exp98_posthoc_ladder.py", "DANDI", "000021", "CC-BY-4.0",
+                     "exp99", "higher visual areas", "事后观察"):
+            if need not in sec39:
+                problems.append(f"[exp98] §三十九 缺「{need}」")
+        e98 = HERE / "exp98-results" / "exp98_summary.json"
+        if e98.exists():
+            d98 = json.loads(e98.read_text(encoding="utf-8"))
+            if not d98.get("recompute_matches_job"):
+                problems.append("[exp98] 离线重算与 Job 判决**不一致**")
+            v98 = d98.get("job_verdict") or {}
+            c198 = v98.get("C1") or {}
+            # ⚠️ 检查**文中的精确写法**（不是裸数字）⇒ 且这些串在**全文唯一**
+            #    （否则篡改一处仍会判「通过」——这个坑踩过一次）
+            if v98.get("verdict") and f"**判决 = `{v98['verdict']}`**" not in sec39:
+                problems.append(f"[exp98] §三十九 里找不到判决写法「判决 = `{v98['verdict']}`」")
+            med98 = c198.get("median_delta")
+            if med98 is not None and f"**中位 Δ = {float(med98):+.4f}**" not in sec39:
+                problems.append(f"[exp98] §三十九 缺中位 Δ 写法「{float(med98):+.4f}」")
+            p98 = c198.get("p")
+            if p98 is not None and f"**p = {float(p98):.4f}**" not in sec39:
+                problems.append(f"[exp98] §三十九 缺符号检验 p 写法「{float(p98):.4f}」")
+            np98, ne98 = c198.get("n_pos"), c198.get("n_eff")
+            if np98 and ne98 and f"**{np98}/{ne98} 正**" not in sec39:
+                problems.append(f"[exp98] §三十九 缺符号检验计数写法「{np98}/{ne98} 正」")
+            # **核心产出**：进入主判据的 session 数（这一轮要回答的那个数）
+            n98 = v98.get("n_sessions_primary_used")
+            tot98 = v98.get("n_sessions_total")
+            if n98 is not None and tot98 is not None:
+                if f"**进入主判据 = {n98} 个（共 {tot98}）**" not in sec39:
+                    problems.append(f"[exp98] §三十九 缺进入主判据写法「进入主判据 = {n98} 个（共 {tot98}）」")
+            # ⚠️ **检查串必须在全文唯一**（否则篡改自测会假通过）
+            for s in (f"**判决 = `{v98.get('verdict')}`**" if v98.get("verdict") else "",
+                      f"**p = {float(p98):.4f}**" if p98 is not None else "",
+                      f"**{np98}/{ne98} 正**" if np98 and ne98 else ""):
+                if s and text.count(s) != 1:
+                    problems.append(f"[exp98] 检查串「{s}」在全文出现 {text.count(s)} 次"
+                                    "（必须唯一，否则篡改一处仍会判通过）")
+        else:
+            problems.append("缺 exp98-results/exp98_summary.json")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:

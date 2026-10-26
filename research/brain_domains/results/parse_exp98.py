@@ -33,7 +33,7 @@ for _p in (str(EXP), str(HERE)):
         sys.path.insert(0, _p)
 
 BUCKET = "hf://buckets/illusion-brain/brain-domains/runs/illusionbrain-align"
-REL = "exp98/exp98_posneg_control.json"
+REL = "exp98b/exp98_posneg_control.json"
 RAW = OUT / "exp98_posneg_control.json"
 LOG = OUT / "judge_log.txt"
 

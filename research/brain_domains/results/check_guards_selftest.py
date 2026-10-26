@@ -232,6 +232,19 @@ CASES = [
      "exp97c：中位 Δ 被改"),
     (G_NUM, "FINDINGS_TIER0_RSA.md", "**3/3 正**", "**1/3 正**",
      "exp97c：符号检验的正向计数被改"),
+    # --- §三十九（exp98：Allen VC-NP 正/负对照）：判决 + 核心数字 ---
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**判决 = `C1_FAIL`**",
+     "**判决 = `C1_OK`**",
+     "exp98：判决字符串被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**p = 0.0963**", "**p = 0.0063**",
+     "exp98：符号检验的 p 被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**5/18 正**", "**18/5 正**",
+     "exp98：符号检验的正向计数被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**中位 Δ = -2.0845**", "**中位 Δ = +2.0845**",
+     "exp98：中位 Δ 被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**进入主判据 = 18 个（共 32）**",
+     "**进入主判据 = 28 个（共 32）**",
+     "exp98：进入主判据的 session 数被改（这一轮的核心产出）"),
 ]
 
 

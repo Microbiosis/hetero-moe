@@ -24,11 +24,16 @@ for _p in (str(HERE),):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-RUN = pathlib.Path("/domains/runs/illusionbrain-align/exp98")
+RUN = pathlib.Path("/domains/runs/illusionbrain-align/exp98b")
 JUDGE = "/domains/scripts/exp98_posneg_control.py"
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--run", default="/domains/runs/illusionbrain-align/exp98b")
+    args = ap.parse_args()
+    RUN = pathlib.Path(args.run)
     if JUDGE not in sys.path:
         sys.path.insert(0, str(pathlib.Path(JUDGE).parent))
     import exp98_posneg_control as E98
