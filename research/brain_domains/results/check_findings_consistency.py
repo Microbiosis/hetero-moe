@@ -1558,6 +1558,19 @@ def main():
         else:
             print(f"（缺 {e90b}，跳过 exp90b 比对）")
 
+    # --- 17. §三十五（收新数据摸底）：规格已满足 + 「收新数据先缓」+ 注册源 ---
+    #     ⚠️ 这一段**不挂在任何 if 里** ⇒ §二十九 缺失时也得查
+    sec35 = find_section_h2(text, "三十五、收新数据之前先摸底")
+    if not sec35:
+        problems.append("FINDINGS 里找不到「三十五、收新数据之前先摸底」小节")
+    else:
+        for need in ("DANDI:000017", "14.7 GB", "12 个脑区",
+                     "收新数据先缓", "可测性自检"):
+            if need not in sec35:
+                problems.append(
+                    f"[摸底] §三十五 缺「{need}」"
+                    "（「同记录 + 多脑区 + 行为标签」规格**已满足** ⇒ 收新数据先缓）")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:

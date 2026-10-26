@@ -204,6 +204,11 @@ CASES = [
      "exp90b：台账 A22 的 exp90b 判决被改"),
     (G_NUM, "FINDINGS_TIER0_RSA.md", "两个数据集各缺一半", "两个数据集互不缺口",
      "exp90b：「各缺一半」这条留痕被删"),
+    # --- §三十五（收新数据摸底）：注册源 id + 「收新数据先缓」这条结论 ---
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "DANDI:000017", "DANDI:000999",
+     "摸底：Steinmetz 的注册源 id 被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**收新数据先缓**", "**立即收新数据**",
+     "摸底：「收新数据先缓」这条结论被改"),
 ]
 
 
