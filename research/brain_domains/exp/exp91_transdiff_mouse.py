@@ -24,12 +24,51 @@
 | 「**自有原型必须先拟合到自己的潜变量上**」才是训练后的性质（exp90 自测 3 的教训）| 码本在 **train split** 上拟合、残差在 **test split** 上算 | 既守住那条前提，又避免 in-sample 偏袒 |
 | （exp90 没有）| **同带自对照**：把 B 的单元**随机劈两半** ⇒ `d(B1→B2)` = 「同一带内部」的代价 = **地板** | 移植引入的新环节 ⇒ 必须有地板，否则「跨带代价大」可能只是「换个单元集就变大」 |
 
-## 三个带（**不自己发明**）
+## 三个带（**按解剖，不自造聚类**）
 
-用 Neuromatch 自己给的 `functional_domain`（他们的聚类，不是我们的）：
-**`visual`（感觉侧 ≈ POST）/ `motor`（运动侧 ≈ CENT）/ `prefrontal`（执行侧 ≈ FRONT）**。
+用 NWB 自带的**标准解剖标签**（`general/extracellular_ephys/electrodes/location`，Allen CCF）：
+**`VIS*`（感觉/视觉侧 ≈ POST）/ `MO*`（运动侧 ≈ CENT）/ `PL`·`ACA`·`ILA`·`ORB*`（执行侧 ≈ FRONT）**。
+
+⚠️ **留痕（2026-10-26，**出结果前**的正当修订）**：原写「用 Neuromatch 的 `functional_domain`
+（他们的聚类，不是我们的）」⇒ 实测**桶里那份与 DANDI 的 NWB 对不上**（Neuromatch 版是原始数据的
+**子集**：总放电 255 万 vs NWB 1328 万、单元 771 vs 2072；`orig_unit_idx` 直连匹配率仅 **0.02**）
+⇒ ⇒ 改用 **NWB 自带的解剖标签** ⇒ 反而更好：**不借用任何外部聚类标准**
+（分区标准就在数据里 ⇒ 一条事实只写一处）。
 ⚠️ 鼠 ≠ 人：这是**位置轴**在另一个系统上的对应，**只**用来回答「判据① 有没有判别力」，
 **不回填**「三个原语还是两个」（人 EEG 的问题）。
+
+## 数据可得性实测 ⇒ 主判据定在 **CENT↔FRONT 这一对**（⚠️ **出结果前**的正当修订，2026-10-26）
+
+抽完 39 个 session 后的**数据事实**（不是结果，是可得性）：
+
+| 每 session 覆盖（各带 ≥ 20 单元）| session 数 |
+|---|---:|
+| **三带齐全**（visual+motor+prefrontal）| **3**（Hench 20170615、Lederberg 20171205/1207）|
+| **motor + prefrontal** | **5** |
+| prefrontal + visual | 1 |
+| 只有一带 | 30 |
+| 一个带都没有 | 11 |
+
+⇒ ⇒ **三带同记录只有 3 个 session** ⇒ 做不了 3×3 的 session 级统计（n=3 ≪ 8）⇒ 3×3 **只报不判**。
+⇒ ⇒ 但 **motor↔prefrontal 这一对共 8 个 session**（5 + 3）⇒ 够做 session 级符号检验
+（n=8 ⇒ 最低 p = 2/2⁸ = **0.0078**）。
+
+⇒ ⇒ **主判据 = CENT↔FRONT 这一对**（`motor` ↔ `prefrontal`），理由有两条，**都留痕**：
+① **实质性**：位置轴「三个原语还是两个」的关键分界**恰恰是 CENT 与 FRONT 的分界**
+（C19：前部要再切成 CENT 运动 / FRONT 执行）⇒ 这一对最有信息量；
+② **可行性**：只有这一对有足够的同记录 session（8 个）。
+⇒ ⚠️ **诚实边界**：方向的选择是**实质性优先 + 可得性约束**，不是「哪个显著算哪个」
+（判据在出结果前定死，且判决只认这一对）。
+⇒ ⇒ 逐 session 的统计量 = **该 session 两个方向 Δ 的均值**（避免把同 session 当两个独立样本）。
+
+## 数据制备（**预登记参数**）
+
+- **bin = 10 ms**；**trial 窗 = 刺激后 [50 ms, 450 ms]**（400 ms）；
+- 行为类 = **（刺激侧 × 选择）** ∈ 4 类（`visual_stimulus_left/right_contrast` 哪一侧非零；
+  `response_choice` = ±1；`included` 为真且两值皆有限）；
+- **train/test = 按时间前 70% / 后 30%**（不跨时间泄漏）；
+- 共同空间 = **两带联合 PCA**（train trial，前 16 维）；码本 = **按行为类分层 k-means**
+  （每类 4 原型 ⇒ 16 个原型）。
 
 ## 行为标签（码本的锚）
 
@@ -42,16 +81,17 @@ Steinmetz 任务 = 视觉对比辨别 + 转轮选择 ⇒ 行为类 = **（刺激
 
 | # | 判据 | 通过 ⇒ |
 |---|---|---|
-| **C0** | **管线自检**（前置，不过 ⇒ 全实验作废）：① session 对齐质量达标（单元级相关中位 ≥ 0.3、>0.5 的单元占 ≥ 0.5）② 三个带齐全（各 ≥ 20 单元）③ 行为类 ≥ 4 个、每类 ≥ 8 trial ④ **每个带的行为可解码性**：该带活动解码 4 类行为的准确率 > 机会水平 0.25，且置换检验（50 次）p < 0.05（**这是 exp90「没有可读输出 ⇒ 3×3 退化成 1×1」的移植版守卫**）| 数据/标签/对齐没问题 ⇒ 继续；**不过 ⇒ 全实验作废** |
-| **C1** | **判据① 有没有判别力**：逐 session 配对差 `Δ(X→Y) = d_跨带(X→Y) − d_同带(Y)`（同带自对照作地板）> 0；证据 = **session 级符号检验**（≥ 8 个 session ⇒ p ≤ 0.05）**且**中位 > 0 | 判据① **有判别力** ⇒ 为人 EEG 收 3×3 数据才有意义 |
-| **C2** | **退化守卫**（exp90 的教训：塌缩后 d 仍是**非零常数** ⇒ 只看显著性会假阳性）：`d` 不得是**非零常数**（会话间离散度 > 0；**d ≡ 0 不算退化** —— 那是没有信号 ⇒ 归 C1_FAIL）| 不退化 ⇒ 判决有效；退化 ⇒ 判决作废（只报） |
-| **C3** | **只报，不作判决**：① 3×3 转分化矩阵（6 个方向，逐 session 中位 + 符号检验）② 跨带**行为解码迁移**（用 X 带的解码器解 Y 带）③ 逐带可解码准确率 | — |
+| **C0** | **管线自检**（前置，不过 ⇒ 全实验作废）：① **每 session 至少两个带**（各 ≥ 20 单元；脑区标签直接来自 NWB 的电极表 ⇒ **没有对齐问题**）② 行为类 ≥ 2 个、每类 ≥ 8 trial（且两带共有）③ **每个带的行为可解码性**：该带活动解码 4 类行为的准确率 > 机会水平 0.25，且置换检验（50 次）p < 0.05（**这是 exp90「没有可读输出 ⇒ 3×3 退化成 1×1」的移植版守卫**）| 数据/标签/特征没问题 ⇒ 继续；**不过 ⇒ 全实验作废** |
+| **C1** | **判据① 有没有判别力（主方向 = CENT↔FRONT）**：逐 session 配对差 `Δ(X→Y) = d_跨带(X→Y) − d_同带(Y)`（同带自对照作地板）；**主对 = `motor`↔`prefrontal`**，每个 session 取**两个方向 Δ 的均值**作统计量（不把同 session 当两个独立样本）；证据 = **session 级符号检验**（≥ 8 个 session ⇒ p ≤ 0.05）**且**中位 > 0 | 判据① **有判别力** ⇒ 为人 EEG 收 3×3 数据才有意义 |
+| **C2** | **退化守卫**（exp90 的教训：塌缩后 d 仍是**非零常数** ⇒ 只看显著性会假阳性）：主判据的逐 session 统计量不得是**非零常数**（离散度 > 0；**恒为 0 不算退化** —— 那是没有信号 ⇒ 归 C1_FAIL）| 不退化 ⇒ 判决有效；退化 ⇒ 判决作废（只报） |
+| **C3** | **只报，不作判决**：① **所有**可得方向的转分化（逐方向中位 + 符号检验；只有 3 个 session 的方向**只报**）② 3×3 矩阵（n=3 ⇒ 只报）③ 逐带可解码准确率 | — |
 
 ## 判决
 
 - `C1_OK`：判据① 在这个数据上**有判别力**（⇒ 收数据这件事才成立）
 - `C1_FAIL`：判据① **没判别力**（⇒ 收新数据无用 ⇒ 换判据）
-- `C0_FAIL`：管线自检不过（⇒ 数据/标签/对齐的问题，**不是**关于判据的结论）
+- `C0_FAIL`：管线自检不过（⇒ 数据/标签/特征的问题，**不是**关于判据的结论）
+- `DEGENERATE`：退化守卫不过（判决作废，只报）
 
 ## 统计口径（与 exp89/exp90/exp96 逐字一致）
 
@@ -164,7 +204,7 @@ def kmeans(X, k, seed=0, iters=50):
 def prep_session(z):
     """取出：带→单元索引、行为类、train/test 划分。"""
     feat = np.asarray(z["feat"], dtype=np.float32)
-    dom = np.asarray(z["unit_domain"], dtype=object)
+    dom = np.asarray(z["unit_band"], dtype=object)
     choice = np.asarray(z["trial_choice"], dtype=np.float64)
     side = np.asarray(z["trial_stim_side"], dtype=np.float64)
     inc = np.asarray(z["trial_included"], dtype=bool)
@@ -257,8 +297,8 @@ def session_transdiff(z, seed=0):
     out = {"session": sess, "bands": {b: int(len(v)) for b, v in bands.items()},
            "n_trials": int(feat.shape[0]), "n_train": int(tr.sum()), "n_test": int(te.sum()),
            "decode": {}, "pairs": {}}
-    if len(bands) < 3 or tr.sum() < 40 or te.sum() < 20:
-        out["skip"] = "带不全或 trial 不够"
+    if len(bands) < 2 or tr.sum() < 40 or te.sum() < 20:
+        out["skip"] = "带不足两个或 trial 不够"
         return out
     # 每带标准化（按 train 的均值方差）
     Z = {}
@@ -276,10 +316,11 @@ def session_transdiff(z, seed=0):
             continue
         acc, p = perm_p(Xtr, ytr, Xte, yte, seed=seed)
         out["decode"][b] = {"acc": acc, "p": p}
-    # 每个带对：共同空间 + 码本 + 转分化
-    for A in BANDS:
-        for B in BANDS:
-            if A == B or A not in bands or B not in bands:
+    # 每个带对：共同空间 + 码本 + 转分化（**只算实际存在的带对**）
+    avail = [b for b in BANDS if b in bands]
+    for A in avail:
+        for B in avail:
+            if A == B:
                 continue
             mu, W = joint_pca(Z[A][tr], Z[B][tr])
             zA = (Z[A] - mu) @ W
@@ -332,6 +373,12 @@ def session_transdiff(z, seed=0):
                 "r_own": r_own, "r_other": r_other,
                 "n_classes": len(used), "n_units_B": int(len(idxB)),
             }
+    # **主对（CENT↔FRONT）的逐 session 统计量 = 两个方向 Δ 的均值**
+    #（不把同一个 session 当成两个独立样本 ⇒ session 级检验才成立）
+    pm = [out["pairs"][k]["delta"] for k in ("motor->prefrontal", "prefrontal->motor")
+          if k in out["pairs"]]
+    if pm:
+        out["primary_stat"] = float(np.mean(pm))
     return out
 
 
@@ -355,28 +402,31 @@ def decide(per_session, min_sessions=8, alpha=0.05):
                 c0_ok = False
                 c0_detail.setdefault(r["session"], []).append(
                     f"{b}: acc={a:.3f} p={p:.3f}")
-    # C1：判据① 有没有判别力
+    # C1：判据① 有没有判别力（**主方向 = CENT↔FRONT**：motor↔prefrontal）
+    #     逐 session 统计量 = 该 session 两个方向 Δ 的均值（不把同 session 当两个独立样本）
+    prim = [r["primary_stat"] for r in per_session
+            if r.get("primary_stat") is not None]
+    n_eff, n_pos, n_neg, p_sign, n_zero = sign_test_nonzero(prim)
+    med = median_upper(prim)
+    c1 = bool(n_eff >= min_sessions and p_sign <= alpha and med > 0)
+    # C2：退化守卫（exp90 的教训：塌缩后 d 仍是**非零常数** ⇒ 只看显著性会假阳性）
+    if len(prim) > 1:
+        spread = {"primary": {"spread": float(max(prim) - min(prim)),
+                               "max_abs": float(max(abs(x) for x in prim))}}
+    else:
+        spread = {"primary": {"spread": 0.0, "max_abs": 0.0}}
+    # 退化 = 统计量是**非零常数**（恒为 0 不算退化：那是没有信号 ⇒ 归 C1_FAIL）
+    degenerate = (spread["primary"]["spread"] <= 1e-12
+                  and spread["primary"]["max_abs"] > 1e-9)
+    c2 = not degenerate
+    # C3（只报）：所有可得方向的逐方向统计
     deltas = {}
     for key in sorted({k for r in per_session for k in r.get("pairs", {})}):
         vals = [r["pairs"][key]["delta"] for r in per_session if key in r.get("pairs", {})]
         if vals:
-            deltas[key] = {"n": len(vals), "median": median_upper(vals), "vals": vals}
-    pooled = []
-    for key, v in deltas.items():
-        pooled.extend(v["vals"])
-    n_eff, n_pos, n_neg, p_sign, n_zero = sign_test_nonzero(pooled)
-    med = median_upper(pooled)
-    c1 = bool(n_eff >= min_sessions and p_sign <= alpha and med > 0)
-    # C2：退化守卫（exp90 的教训：塌缩后 d 仍是**非零常数** ⇒ 只看显著性会假阳性）
-    spread = {}
-    for key, v in deltas.items():
-        if len(v["vals"]) > 1:
-            spread[key] = {"spread": float(max(v["vals"]) - min(v["vals"])),
-                           "max_abs": float(max(abs(x) for x in v["vals"]))}
-    # 退化 = d 是**非零常数**（d ≡ 0 不算退化：那是没有信号 ⇒ 归 C1_FAIL）
-    degenerate = any(s["spread"] <= 1e-12 and s["max_abs"] > 1e-9
-                     for s in spread.values())
-    c2 = not degenerate
+            ne, np_, nn, ps, nz = sign_test_nonzero(vals)
+            deltas[key] = {"n": len(vals), "median": median_upper(vals),
+                           "n_pos": np_, "p_sign": ps, "n_zero": nz}
     if not c0_ok:
         verdict = "C0_FAIL"
     elif not c2:
@@ -386,7 +436,9 @@ def decide(per_session, min_sessions=8, alpha=0.05):
     else:
         verdict = "C1_FAIL"
     if not c2:
-        problems.append("退化守卫不过（d 的会话间离散度为 0）⇒ 判决作废")
+        problems.append("退化守卫不过（主判据统计量是非零常数）⇒ 判决作废")
+    if n_eff < min_sessions:
+        problems.append(f"进入主判据的 session 只有 {n_eff} 个（要求 ≥ {min_sessions}）")
     return {
         "verdict": verdict,
         "C0_pipeline_selfcheck": c0_ok,
@@ -394,10 +446,13 @@ def decide(per_session, min_sessions=8, alpha=0.05):
         "C1_has_discriminative_power": c1,
         "C1": {"n_eff": n_eff, "n_pos": n_pos, "n_neg": n_neg, "p": p_sign,
                "n_zero": n_zero, "median_delta": med, "min_sessions": min_sessions,
-               "alpha": alpha},
+               "alpha": alpha, "primary_pair": "motor<->prefrontal",
+               "primary_stats": prim},
         "C2_degenerate_guard": c2,
         "C2_spread": spread,
-        "per_pair": {k: {"n": v["n"], "median": v["median"]} for k, v in deltas.items()},
+        "per_pair": deltas,
+        "n_sessions_total": len(per_session),
+        "n_sessions_primary": len(prim),
         "problems": problems,
     }
 
@@ -450,6 +505,7 @@ def self_test():
             d = delta + (float(rng.normal(0, jitter)) if jitter else 0.0)
             ps.append({"session": f"s{i}", "skip": None if ok0 else "x",
                        "decode": {"visual": {"acc": 0.9, "p": 0.001}},
+                       "primary_stat": d,
                        "pairs": {"visual->motor": {"delta": d, "d_cross": 1.0,
                                                    "d_ctrl": 0.1, "r_own": 1.0,
                                                    "r_other": 2.0, "n_classes": 4,
