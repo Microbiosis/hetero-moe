@@ -323,8 +323,15 @@ def session_transdiff(z, seed=0):
             if A == B:
                 continue
             mu, W = joint_pca(Z[A][tr], Z[B][tr])
-            zA = (Z[A] - mu) @ W
-            zB = (Z[B] - mu) @ W
+            # ⚠️ **两次踩坑**（都只测零件时抓不到）：
+            #    ① `mu` 是**拼接后**的均值（1, n_A+n_B）⇒ 必须按带切分再减
+            #       （直接减单带矩阵 ⇒ ValueError: (214,381) vs (1,658)）
+            #    ② `W` 的行对应**拼接后的单元** ⇒ 每带要用**属于自己那段**的行来投影
+            #       （用整块 W ⇒ matmul 维度不匹配：120 vs 60）
+            nA = Z[A].shape[1]
+            k = W.shape[1]
+            zA = (Z[A] - mu[:, :nA]) @ W[:nA, :]
+            zB = (Z[B] - mu[:, nA:]) @ W[nA:, :]
             PA, usedA = build_codebook(zA, cls, tr, seed=seed)
             PB, usedB = build_codebook(zB, cls, tr, seed=seed + 100)
             if PA is None or PB is None:
@@ -344,14 +351,20 @@ def session_transdiff(z, seed=0):
             r_other = proto_read(zB[te], PAu)
             d_cross = r_other - r_own
             # 同带自对照：B 的单元随机劈两半
+            # ⚠️ **第四个踩坑**：劈出来的下标必须是**带内局部下标**（用来索引 Z[B] 的列），
+            #    全局单元下标（bands[B]）不能直接去索引局部列 ⇒ 之前 index 76 out of bounds
             rng = np.random.default_rng(seed + 7)
             idxB = bands[B]
             perm = rng.permutation(len(idxB))
             h = len(idxB) // 2
-            B1, B2 = idxB[perm[:h]], idxB[perm[h:]]
+            loc1, loc2 = perm[:h], perm[h:]        # 局部下标
             mu2, W2 = joint_pca(Z[B][tr], Z[B][tr])
-            z1 = (Z[B][:, B1] - mu2) @ W2
-            z2 = (Z[B][:, B2] - mu2) @ W2
+            # joint_pca([B,B]) 的行按**整带**排 ⇒ 用「第一份」的均值/PC 行，再按子集取行
+            nB = Z[B].shape[1]
+            muB = mu2[:, :nB]
+            WB = W2[:nB, :]
+            z1 = (Z[B][:, loc1] - muB[:, loc1]) @ WB[loc1, :]
+            z2 = (Z[B][:, loc2] - muB[:, loc2]) @ WB[loc2, :]
             P1, u1 = build_codebook(z1, cls, tr, seed=seed + 11)
             P2, u2 = build_codebook(z2, cls, tr, seed=seed + 13)
             if P1 is None or P2 is None:
@@ -523,6 +536,41 @@ def self_test():
     v = decide(fake(0.5, jitter=0))
     chk("decide d 是**非零常数** ⇒ DEGENERATE（exp90 塌缩那个坑）",
         v["verdict"] == "DEGENERATE" and not v["C2_degenerate_guard"])
+
+    # ⑥ **端到端**（合成 session ⇒ 整条管线跑通）
+    #    ⚠️ 这条是补的：前面的自测只测零件（统计小工具/decide）⇒ **漏掉了**
+    #    「联合 PCA 的拼接均值没按带切分」这个真 bug（多带 session 全部崩）。
+    def fake_session(seed=0, n_tri=200, n_per=60):
+        rng = np.random.default_rng(seed)
+        # ⚠️ **类必须在时间上打散**（真实 Steinmetz 的 trial 是交错的）：
+        #    若类连续排布 ⇒ 时间切分（70/30）会把类劈开 ⇒ 解码必然随机水平
+        cls = rng.permutation(np.repeat(np.arange(4), n_tri // 4))
+        pat_m = rng.normal(size=(4, n_per))
+        pat_p = rng.normal(size=(4, n_per))
+        feat = np.zeros((n_tri, 2 * n_per), dtype=np.float32)
+        feat[:, :n_per] = pat_m[cls] + 0.6 * rng.normal(size=(n_tri, n_per))
+        feat[:, n_per:] = pat_p[cls] + 0.6 * rng.normal(size=(n_tri, n_per))
+        return {"feat": feat,
+                "unit_band": np.array(["motor"] * n_per + ["prefrontal"] * n_per,
+                                       dtype=object),
+                # ⚠️ 类编码必须与 exp91 的 `cls = (side>0)*2 + (choice>0)` **一致**
+                #    ⇒ side: c≥2 为 +1；choice: c 为奇数时 +1（否则解码器看不到结构）
+                "trial_choice": np.where(cls % 2 == 1, 1.0, -1.0),
+                "trial_stim_side": np.where(cls >= 2, 1.0, -1.0),
+                "trial_included": np.ones(n_tri, dtype=bool),
+                "trial_stim_time": np.arange(n_tri, dtype=np.float64),
+                "session": f"syn{seed}"}
+
+    rec = session_transdiff(fake_session(0))
+    chk("端到端：合成 session 产出两个方向且有主对统计量",
+        len(rec.get("pairs", {})) == 2 and rec.get("primary_stat") is not None)
+    chk("端到端：两带行为都可解码且高于机会",
+        bool(rec.get("decode")) and all(v["acc"] > CHANCE for v in rec["decode"].values()))
+    chk("端到端：两带模式不同 ⇒ 跨带 Δ > 0",
+        rec["pairs"]["motor->prefrontal"]["delta"] > 0)
+    v = decide([session_transdiff(fake_session(i)) for i in range(10)])
+    chk("端到端：10 个合成 session ⇒ decide ⇒ C1_OK", v["verdict"] == "C1_OK")
+
     print(f"\n{'✓ 全部通过' if not bad else '✗ 有失败'}：{ok} 项检查"
           f"{'，失败：' + ', '.join(bad) if bad else ''}")
     return 0 if not bad else 1
