@@ -1,0 +1,33 @@
+<string>:33: SyntaxWarning: invalid escape sequence '\e'
+  judged script ok cdn.jsdelivr.net 9411765b9730
+shard w1: 4 session
+  → [1/4] sub-Cori_ses-20161214T120000
+  ✓ sub-Cori/sub-Cori_ses-20161214T120000.nwb 带 {'motor': 381, 'prefrontal': 277} 解码 {'motor': 0.6, 'prefrontal': 0.48} 可读 {'motor': False, 'prefrontal': False} 主统计 6.257125177814675
+      motor->prefrontal: 跨带 +11.3763 同带 +1.1669 Δ +10.2094
+      prefrontal->motor: 跨带 +2.7472 同带 +0.4424 Δ +2.3049
+  💾 已落盘
+  → [2/4] sub-Hench_ses-20170615T120000
+  ✓ sub-Hench/sub-Hench_ses-20170615T120000.nwb 带 {'visual': 80, 'motor': 224, 'prefrontal': 504} 解码 {'visual': 0.708, 'motor': 0.458, 'prefrontal': 0.708} 可读 {'visual': False, 'motor': False, 'prefrontal': True} 主统计 -1.9528513893238708
+      visual->motor: 跨带 +1.2653 同带 +0.3386 Δ +0.9266
+      visual->prefrontal: 跨带 -4.3027 同带 +1.8311 Δ -6.1338
+      motor->visual: 跨带 +3.9698 同带 +0.2877 Δ +3.6821
+      motor->prefrontal: 跨带 -5.8231 同带 +1.8311 Δ -7.6542
+      prefrontal->visual: 跨带 +5.7288 同带 +0.2877 Δ +5.4411
+      prefrontal->motor: 跨带 +4.0871 同带 +0.3386 Δ +3.7485
+  💾 已落盘
+  → [3/4] sub-Lederberg_ses-20171207T120000
+  ✓ sub-Lederberg/sub-Lederberg_ses-20171207T120000.nwb 带 {'visual': 96, 'motor': 374, 'prefrontal': 335} 解码 {'visual': 0.458, 'motor': 0.562, 'prefrontal': 0.562} 可读 {'visual': False, 'motor': True, 'prefrontal': True} 主统计 3.5439097534671458
+      visual->motor: 跨带 +7.3047 同带 -0.2578 Δ +7.5625
+      visual->prefrontal: 跨带 +6.2493 同带 +0.4980 Δ +5.7513
+      motor->visual: 跨带 +8.3709 同带 +0.0460 Δ +8.3249
+      motor->prefrontal: 跨带 +5.4127 同带 +0.4980 Δ +4.9147
+      prefrontal->visual: 跨带 +3.8646 同带 +0.0460 Δ +3.8186
+      prefrontal->motor: 跨带 +1.9153 同带 -0.2578 Δ +2.1731
+  💾 已落盘
+  → [4/4] sub-Radnitz_ses-20170108T120000
+  ✓ sub-Radnitz/sub-Radnitz_ses-20170108T120000.nwb 带 {'motor': 336, 'prefrontal': 560} 解码 {'motor': 0.809, 'prefrontal': 0.66} 可读 {'motor': True, 'prefrontal': True} 主统计 2.6647664890234353
+      motor->prefrontal: 跨带 +0.9616 同带 +0.0939 Δ +0.8677
+      prefrontal->motor: 跨带 +4.4714 同带 +0.0095 Δ +4.4618
+  💾 已落盘
+WORKER DONE w1
+Hint: If the job is still running, use `hf jobs logs -f 6adf086a046eb82b1ececc20` to stream new logs until it completes.

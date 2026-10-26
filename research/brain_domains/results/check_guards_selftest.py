@@ -220,6 +220,18 @@ CASES = [
      "exp97a：符号检验的 p 被改"),
     (G_NUM, "FINDINGS_TIER0_RSA.md", "**exp97c（零新数据）**", "**exp93z（零新数据）**",
      "挖底：下一步的实验编号被改"),
+    # --- §三十八（exp97c：C0′ 逐带各自标签）：判决 + 核心数字 ---
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**判决 = `INSUFFICIENT_SESSIONS`**",
+     "**判决 = `C1_OK`**",
+     "exp97c：判决字符串被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**p = 0.2500**", "**p = 0.0500**",
+     "exp97c：符号检验的 p 被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**可用 session = 3 个**", "**可用 session = 8 个**",
+     "exp97c：可用 session 数被改（这一轮的核心产出）"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**中位 Δ = +3.2523**", "**中位 Δ = -3.2523**",
+     "exp97c：中位 Δ 被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**3/3 正**", "**1/3 正**",
+     "exp97c：符号检验的正向计数被改"),
 ]
 
 

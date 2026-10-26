@@ -1636,6 +1636,42 @@ def main():
                 problems.append(f"[挖底] §三十七 缺「{need}」"
                                 "（候选清单 + 「收数据拆两笔」的结论）")
 
+    # --- 21. §三十八（exp97c：C0′ 逐带各自标签）---
+    sec38 = find_section_h2(text, "三十八、exp97c")
+    if not sec38:
+        problems.append("FINDINGS 里找不到「三十八、exp97c」小节")
+    else:
+        for need in ("INSUFFICIENT_SESSIONS", "exp97c_worker.py", "exp97c_aggregate.py",
+                     "parse_exp97c.py", "Steinmetz", "可归因"):
+            if need not in sec38:
+                problems.append(f"[exp97c] §三十八 缺「{need}」")
+        e93 = HERE / "exp97c-results" / "exp97c_summary.json"
+        if e93.exists():
+            d93 = json.loads(e93.read_text(encoding="utf-8"))
+            if not d93.get("recompute_matches_job"):
+                problems.append("[exp97c] 离线重算与 Job 判决**不一致**")
+            v93 = d93.get("job_verdict") or {}
+            c193 = v93.get("C1") or {}
+            # ⚠️ 检查**文中的精确写法**（不是裸数字）⇒ 否则同一数字在别处出现时，
+            #    篡改一处仍会被判「通过」（这个坑踩过一次）
+            if v93.get("verdict") and f"**判决 = `{v93['verdict']}`**" not in sec38:
+                problems.append(f"[exp97c] §三十八 里找不到判决写法「判决 = `{v93['verdict']}`」")
+            med93 = c193.get("median_delta")
+            if med93 is not None and f"**中位 Δ = {float(med93):+.4f}**" not in sec38:
+                problems.append(f"[exp97c] §三十八 缺中位 Δ 写法「{float(med93):+.4f}」")
+            p93 = c193.get("p")
+            if p93 is not None and f"**p = {float(p93):.4f}**" not in sec38:
+                problems.append(f"[exp97c] §三十八 缺符号检验 p 写法「{float(p93):.4f}」")
+            np93, ne93 = c193.get("n_pos"), c193.get("n_eff")
+            if np93 and ne93 and f"**{np93}/{ne93} 正**" not in sec38:
+                problems.append(f"[exp97c] §三十八 缺符号检验计数写法「{np93}/{ne93} 正」")
+            # **核心产出**：进入主判据的 session 数（这一轮要回答的那个数）
+            n93 = d93.get("n_primary_used_new")
+            if n93 is not None and f"**可用 session = {n93} 个**" not in sec38:
+                problems.append(f"[exp97c] §三十八 缺可用 session 写法「可用 session = {n93} 个」")
+        else:
+            problems.append("缺 exp97c-results/exp97c_summary.json")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:
