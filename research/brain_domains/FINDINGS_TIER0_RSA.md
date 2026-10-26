@@ -4581,3 +4581,5 @@ Allen Institute 官方 *Visual Coding* 页原文：
 - 仍是**分片 + 聚合**（Job 超时上限 60 min、判据脚本只在整轮末尾写盘 ⇒ 超时全丢）
   ⇒ `exp98_run_shard.py` / `exp98_aggregate.py` 加 `--judge/--out-name` 参数（**默认行为不变** ⇒ exp98 的运行方式不受影响）。
 - ⇒ ⇒ **这一轮是「换口径」而不是「换数据」**：统计层改了就重跑，抽取层零成本。
+- **离线重算**：`results/parse_exp100.py`（取回逐 session 原始记录 ⇒ 用判据脚本的 `decide()` 重算 ⇒ 与云端判决逐字比对）
+  ⇒ 与 exp98 同款纪律（exp97c/exp98 都有这一步）。

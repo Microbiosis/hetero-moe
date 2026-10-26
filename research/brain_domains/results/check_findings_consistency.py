@@ -1719,6 +1719,49 @@ def main():
         else:
             problems.append("缺 exp98-results/exp98_summary.json")
 
+    # --- 23. §四十（exp100：组内 vs 跨组）---
+    sec40 = find_section_h2(text, "四十、exp100")
+    if not sec40:
+        problems.append("FINDINGS 里找不到「四十、exp100」小节")
+    else:
+        for need in ("exp100_group_ladder.py", "parse_exp100.py", "组内", "跨组",
+                     "higher visual areas", "事后观察", "exp98"):
+            if need not in sec40:
+                problems.append(f"[exp100] §四十 缺「{need}」")
+        e100 = HERE / "exp100-results" / "exp100_summary.json"
+        if e100.exists():
+            d100 = json.loads(e100.read_text(encoding="utf-8"))
+            if not d100.get("recompute_matches_job"):
+                problems.append("[exp100] 离线重算与 Job 判决**不一致**")
+            v100 = d100.get("job_verdict") or {}
+            c1x = v100.get("C1") or {}
+            # ⚠️ 写法带「（组内 vs 跨组）」后缀 ⇒ **与 §三十九 的写法不撞**（否则检查串不唯一）
+            suf = "（组内 vs 跨组）"
+            if v100.get("verdict") and f"**判决 = `{v100['verdict']}`{suf}**" not in sec40:
+                problems.append(f"[exp100] §四十 里找不到判决写法「判决 = `{v100['verdict']}`{suf}」")
+            medx = c1x.get("median_delta")
+            if medx is not None and f"**中位 Δ = {float(medx):+.4f}**{suf}" not in sec40:
+                problems.append(f"[exp100] §四十 缺中位 Δ 写法「{float(medx):+.4f}」")
+            px = c1x.get("p")
+            if px is not None and f"**p = {float(px):.4f}**{suf}" not in sec40:
+                problems.append(f"[exp100] §四十 缺符号检验 p 写法「{float(px):.4f}」")
+            npx, nex = c1x.get("n_pos"), c1x.get("n_eff")
+            if npx and nex and f"**{npx}/{nex} 正**{suf}" not in sec40:
+                problems.append(f"[exp100] §四十 缺符号检验计数写法「{npx}/{nex} 正」")
+            nx = v100.get("n_sessions_primary_used")
+            totx = v100.get("n_sessions_total")
+            if nx is not None and totx is not None:
+                if f"**进入主判据 = {nx} 个（共 {totx}）**{suf}" not in sec40:
+                    problems.append(f"[exp100] §四十 缺进入主判据写法「进入主判据 = {nx} 个（共 {totx}）」")
+            for s in (f"**判决 = `{v100.get('verdict')}`{suf}**" if v100.get("verdict") else "",
+                      f"**p = {float(px):.4f}**{suf}" if px is not None else "",
+                      f"**{npx}/{nex} 正**{suf}" if npx and nex else ""):
+                if s and text.count(s) != 1:
+                    problems.append(f"[exp100] 检查串「{s}」在全文出现 {text.count(s)} 次"
+                                    "（必须唯一，否则篡改一处仍会判通过）")
+        else:
+            problems.append("缺 exp100-results/exp100_summary.json")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:
