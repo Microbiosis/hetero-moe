@@ -161,13 +161,35 @@ def proto_read(a, P, tau=TAU):
     return float(((a - rec) ** 2).sum(axis=1).mean())
 
 
-def ridge_fit(X, Y, lam=1.0):
-    """岭回归（多输出）⇒ 系数与截距。"""
+def _ridge_fit_ref(X, Y, lam=1.0):
+    """**参考实现**（原始形式：显式加截距列、截距不惩罚）⇒ 只用于自测比对。"""
     X1 = np.hstack([X, np.ones((X.shape[0], 1))])
     A = X1.T @ X1 + lam * np.eye(X1.shape[1])
     A[-1, -1] -= lam
     W = np.linalg.solve(A, X1.T @ Y)
     return W[:-1], W[-1]
+
+
+def ridge_fit(X, Y, lam=1.0):
+    """岭回归（多输出，**截距不惩罚**）⇒ 与 `_ridge_fit_ref` **数学等价**，但快很多。
+
+    ⚠️ **为什么换实现（纯提速，不动判据）**：带上有上千单元时，直接在**单元空间**求解是
+    O(n_units³)，再乘 50 次置换 ⇒ 实测**一个 session 跑了 8 分钟都没出来**（39 个必超时）。
+    ⇒ 中心化 ⇒ 截距可分离；**样本数 < 特征数**时改在**样本空间**求解（O(n_trials³)）
+    ⇒ 快几个数量级（自测里与参考实现逐位比对 ⇒ 数值不变）。
+    """
+    xm = X.mean(axis=0, keepdims=True)
+    Xc = X - xm
+    n, d = Xc.shape
+    ym = Y.mean(axis=0, keepdims=True)
+    if n < d:
+        A = Xc @ Xc.T + lam * np.eye(n)
+        W = Xc.T @ np.linalg.solve(A, Y - ym)
+    else:
+        A = Xc.T @ Xc + lam * np.eye(d)
+        W = np.linalg.solve(A, Xc.T @ (Y - ym))
+    b = ym - xm @ W
+    return W, b
 
 
 def ridge_predict(X, W, b):
@@ -275,14 +297,32 @@ def decode_acc(Xtr, ytr, Xte, yte, lam=1.0):
 
 
 def perm_p(Xtr, ytr, Xte, yte, n_perm=N_PERM, lam=1.0, seed=0):
-    """置换检验：打乱训练标签重拟合 ⇒ 准确率的零分布。"""
+    """置换检验：打乱训练标签重拟合 ⇒ 准确率的零分布。
+
+    ⚠️ **加速**：Gram/核矩阵只算一次（置换只改标签、不改 X）⇒ 50 次置换只做矩阵乘。
+    """
     rng = np.random.default_rng(seed)
-    null = []
-    for _ in range(n_perm):
-        yp = rng.permutation(ytr)
-        null.append(decode_acc(Xtr, yp, Xte, yte, lam))
-    obs = decode_acc(Xtr, ytr, Xte, yte, lam)
-    null = np.asarray(null)
+    xm = Xtr.mean(axis=0, keepdims=True)
+    Xc = Xtr - xm
+    n, d = Xc.shape
+    if n < d:
+        A = Xc @ Xc.T + lam * np.eye(n)
+    else:
+        A = Xc.T @ Xc + lam * np.eye(d)
+
+    def acc_of(y):
+        Y = np.eye(int(y.max()) + 1)[y]
+        ym = Y.mean(axis=0, keepdims=True)
+        if n < d:
+            W = Xc.T @ np.linalg.solve(A, Y - ym)
+        else:
+            W = np.linalg.solve(A, Xc.T @ (Y - ym))
+        b = ym - xm @ W
+        pred = (Xte @ W + b).argmax(axis=1)
+        return float((pred == yte).mean())
+
+    obs = acc_of(ytr)
+    null = np.asarray([acc_of(rng.permutation(ytr)) for _ in range(n_perm)])
     p = float((np.sum(null >= obs) + 1) / (n_perm + 1))
     return obs, p
 
@@ -510,6 +550,12 @@ def self_test():
     y = np.array([0] * 60 + [1] * 60)
     acc = decode_acc(X[:100], y[:100], X[100:], y[100:])
     chk("岭回归解码 可分二类 ⇒ 准确率 > 0.9", acc > 0.9)
+    # ⚠️ **加速版 ridge_fit 必须与参考实现等价**（否则「提速」偷偷改了判据）
+    W1, b1 = _ridge_fit_ref(X, np.eye(2)[y], 1.0)
+    W2, b2 = ridge_fit(X, np.eye(2)[y], 1.0)
+    chk("加速版 ridge_fit ≡ 参考实现（数值一致）",
+        float(np.abs(W1 - W2).max()) < 1e-6
+        and float(np.abs(np.asarray(b1).ravel() - np.asarray(b2).ravel()).max()) < 1e-6)
     # decide：四条分支
     def fake(delta, ok0=True, jitter=0.05):
         rng = np.random.default_rng(7)
@@ -599,8 +645,9 @@ def main():
         return 1
 
     per_session = []
-    for fp in files:
+    for i, fp in enumerate(files):
         try:
+            print(f"  → [{i+1}/{len(files)}] {fp.stem}", flush=True)
             z = np.load(fp, allow_pickle=True)
             rec = session_transdiff(z)
             per_session.append(rec)
