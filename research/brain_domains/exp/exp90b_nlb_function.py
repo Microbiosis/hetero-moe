@@ -95,7 +95,9 @@ def sign_test_nonzero(diffs):
 def mcnemar(correct_a, correct_b):
     """配对二项（正确/错误）的 McNemar 检验（精确）⇒ (b, c, p)。
 
-    b = A 对 B 错；c = A 错 B 对 ⇒ p 用二项精确检验。
+    ⚠️ **n 很大（上千 trial）⇒ `2.0 ** n` 会 OverflowError** ⇒ 用对数域算 p。
+    ⚠️ **trial 之间不独立**（同一 session、同一动物）⇒ 这个 p **偏乐观**
+    ⇒ 因此它只作**描述性**证据；**主证据用 session 级符号检验**（见 CRITERIA C1）。
     """
     b = sum(1 for x, y in zip(correct_a, correct_b) if x and not y)
     c = sum(1 for x, y in zip(correct_a, correct_b) if y and not x)
@@ -103,7 +105,11 @@ def mcnemar(correct_a, correct_b):
     if n == 0:
         return b, c, float("nan")
     lo = min(b, c)
-    p = 2.0 * sum(math.comb(n, i) for i in range(lo + 1)) / (2.0 ** n)
+    s = sum(math.comb(n, i) for i in range(lo + 1))
+    # p = 2 * s / 2^n ⇒ 对数域（避免 float 溢出）
+    log2s = math.log2(s) if s > 0 else -math.inf
+    expo = log2s - n + 1.0
+    p = 2.0 ** expo if expo < 0 else 1.0
     return b, c, float(min(1.0, p))
 
 
@@ -321,7 +327,8 @@ def main():
     C1 = bool(n_eff >= 4 and p_sign <= 0.05 and median_upper(diffs) > 0)
     log(f"\n  逐 session 差值中位 {median_upper(diffs):+.4f}；符号检验 "
         f"{n_pos}/{n_eff} 正 p={p_sign:.4f}（零差 {n_zero}）")
-    log(f"  trial 级 McNemar：解码独对 {b} / 地板独对 {c} ⇒ p={p_mc:.3g}")
+    log(f"  trial 级 McNemar（**描述性**：trial 不独立 ⇒ p 偏乐观）��解码独对 {b} / "
+        f"地板独对 {c} ⇒ p={p_mc:.3g}")
     log(f"  C0 管线自检（每个 session 都高于地板）：{C0}")
     log(f"  C1 ③-CENT 成立：{C1}")
 
@@ -357,7 +364,8 @@ def main():
             "sign_test": {"n_eff": n_eff, "n_pos": n_pos, "n_neg": n_neg,
                           "p": p_sign, "n_zero": n_zero},
             "mcnemar_trial_level": {"b": b, "c": c, "p": p_mc,
-                                    "n_trials": int(len(ca))},
+                                    "n_trials": int(len(ca)),
+                                    "note": "**描述性**：trial 不独立 ⇒ p 偏乐观 ⇒ 主证据用 session 级符号检验"},
         },
         "C3_FRONT_decision": {"report_only": True, "per_session": per_dmfc},
         "note": "C3 只报（n=2–3 session ⇒ 证据极弱 ⇒ 不是「执行控制」的证明）",
