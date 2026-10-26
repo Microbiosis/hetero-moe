@@ -1579,7 +1579,7 @@ def main():
         for need in ("工具无效", "C0_FAIL", "exp93"):
             if need not in sec36:
                 problems.append(f"[exp92] §三十六 缺「{need}」")
-        e92 = HERE / "exp91b-results" / "exp92_summary.json"
+        e92 = HERE / "exp92-results" / "exp92_summary.json"
         if e92.exists():
             d92 = json.loads(e92.read_text(encoding="utf-8"))
             if not d92.get("recompute_matches_job"):
@@ -1600,7 +1600,7 @@ def main():
             if np92 and ne92 and f"**{np92}/{ne92} 正**" not in sec36:
                 problems.append(f"[exp92] §三十六 缺符号检验计数写法「{np92}/{ne92} 正」")
         else:
-            problems.append("缺 exp91b-results/exp92_summary.json")
+            problems.append("缺 exp92-results/exp92_summary.json")
 
         # --- 19. exp91（第一版：工具无效）的数字也要绑 ---
         e91 = HERE / "exp91-results" / "exp91_summary.json"
@@ -1624,6 +1624,17 @@ def main():
                 problems.append(f"[exp91] §三十六 缺符号检验计数「{np91}/{ne91} 正」")
         else:
             problems.append("缺 exp91-results/exp91_summary.json")
+
+    # --- 20. §三十七（公开数据候选清单）：关键来源与「拆两笔」的结论 ---
+    sec37 = find_section_h2(text, "三十七、继续挖公开数据")
+    if not sec37:
+        problems.append("FINDINGS 里找不到「三十七、继续挖公开数据」小节")
+    else:
+        for need in ("Allen", "Sabes", "000688", "Brain Treebank",
+                     "exp93a（零新数据）", "甲", "乙"):
+            if need not in sec37:
+                problems.append(f"[挖底] §三十七 缺「{need}」"
+                                "（候选清单 + 「收数据拆两笔」的结论）")
 
     if problems:
         print("✗ 文档与数据不一致：")

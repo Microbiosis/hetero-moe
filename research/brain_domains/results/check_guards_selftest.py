@@ -218,6 +218,8 @@ CASES = [
      "exp91：判决字符串被改"),
     (G_NUM, "FINDINGS_TIER0_RSA.md", "p=0.7266", "p=0.0266",
      "exp91：符号检验的 p 被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**exp93a（零新数据）**", "**exp93z（零新数据）**",
+     "挖底：下一步的实验编号被改"),
 ]
 
 
