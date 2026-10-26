@@ -4,7 +4,10 @@
 >
 > **Authors:** Anonymous (with AI-assisted drafting and pre-submission review)
 >
-> **Target venue:** **待决** — 合并后 23(英)/ 24(中)页,已远超 NeurIPS 9 页正文限制。投期刊长文,还是把审计细节全下沉附录以压到会议篇幅,尚未决定。
+> **Target venue:** **arXiv 预印本** (2026-10-26 决定) — 不做会议/期刊正式投稿, 以 arXiv 公开。
+> 合并后 23(英)/ 24(中)页远超 NeurIPS 9 页正文限制, 故不做会议投稿; arXiv 版用 TMLR 模板的
+> `[preprint]` 选项 (显示作者、去掉 TMLR 字样), 见 `reconstruct_arxiv.tex` 与 `ARXIV_SUBMISSION.md`。
+> TMLR/JMLR 版式仍保留 (`reconstruct_tmlr.tex`), 以后若要投随时可用。
 >
 > **Status:** 合并稿已成型(2026-10-11 由 `microfusion` + `paper` 合并重构);2026-10-12 补入 §6.3 规模异构实验并消除一处无支撑主张。中英文 PDF 均编译通过。
 
@@ -215,7 +218,7 @@ The disclosure is also stated in §AI-assistance disclosure of the paper itself.
 ```
 
 ⚠️ **2026-10-12**:条目已随合并稿改标题 —— 旧标题 *Heterogeneous Micro-Fusion: … at the
-Feed-Forward Sublayer* 属 `microfusion` 稿,不要再用。**venue 仍是待决项**(NeurIPS 9 页装不下 23/24 页)。
+Feed-Forward Sublayer* 属 `microfusion` 稿,不要再用。**venue 已定为 arXiv 预印本**(不做会议/期刊投稿; NeurIPS 9 页装不下 23/24 页)。
 
 ---
 

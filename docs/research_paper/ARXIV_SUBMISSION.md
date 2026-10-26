@@ -1,65 +1,102 @@
-# arXiv 投稿包 (hetero-moe 论文)
+# arXiv 提交清单（预印本，不做会议/期刊投稿）
 
-> 准备日期: 2026-10-26 · 对应 commit: 见 git log
-> 目标: arXiv 预印本 (TMLR/JMLR 类期刊在审)
+> **决定（2026-10-26）**: 本工作**不做 TMLR/JMLR 正式投稿**, 以 **arXiv 预印本**形式公开。
+> 因此 TMLR 的 TL;DR / 伦理声明 / 审稿清单**不再需要**; 只需源包 + 元数据。
+> TMLR 版式仍保留在 `reconstruct_tmlr.tex`（万一以后要投, 随时可用）。
+
+---
 
 ## 1. 上传物
 
 | 文件 | 说明 |
 |---|---|
-| `arxiv_submission.tar.gz` | **上传这个** (源码包, main.tex 在根目录) |
-| `arxiv/` | 同样的内容, 便于直接查看 |
+| `arxiv_package.tar.gz` | **上传这个**（0.28 MB, 10 个文件）。arXiv 收 LaTeX 源并用自己的 TeX Live 重编译 → 源必须自包含。 |
+| `reconstruct_tmlr.pdf` | 预览用（21 页, 全矢量, 四张图齐全）。arXiv 会用自己的编译器重新生成 PDF, 这里的 PDF 只是核对用。 |
 
-包内:
-```
-main.tex                      ← 由 reconstruct_tmlr.tex 改名 (arXiv 要求主文件在顶层)
-reconstruct.bib               ← 参考文献
-tmlr.sty / tmlr.bst / fancyhdr.sty   ← TMLR 官方样式 (作者块自动匿名)
-main.bbl                      ← 已生成的参考文献 (arXiv 也会自己跑 bibtex, 双保险)
-figs/fig_alignment.pdf
-figs/fig_distill.pdf
-figs/mermaid/alignment_ladder.pdf
-figs/mermaid/heterogeneity_spectrum.pdf
+包内: `reconstruct_arxiv.tex` · `reconstruct.bib` · `tmlr.sty/.bst` · `fancyhdr.sty` ·
+`math_commands.tex` · `figs/{fig_alignment,fig_distill}.pdf` · `figs/mermaid/{heterogeneity_spectrum,alignment_ladder}.pdf`
+
+**打包/自检**（会复制到一个只含包内文件的干净目录里真编译一遍）:
+```bash
+python3 tools/make_arxiv_package.py        # 重新打包 + 试编译
+# → "干净目录试编译: 通过 ✓, 21 页"
 ```
 
-**已在干净目录做过完整构建** (pdflatex → bibtex → pdflatex ×2): 24 页,
-**0 错误 / 0 缺文件 / 0 未定义引用 / 0 绝对路径**, 全部宏包都在 arXiv 的 TeX Live 里。
-页眉会自带 "Under review as submission to TMLR" (tmlr 宏包自动加)。
+---
 
-## 2. arXiv 表单要填的元数据
+## 2. 表单要填的
 
 **Title**
+> Reconstructing Frozen Heterogeneous Pretrained Models: Sublayer Fusion, Coordinated Routing, and Chimera Distillation
 
-Reconstructing Frozen Heterogeneous Pretrained Models: Sublayer Fusion, Coordinated Routing, and Chimera Distillation
+**Abstract**（arXiv 上限 1920 字符; 下面这版 1914 字符, 论文正文里的长版 2815 字符保留不动）
 
-**Abstract**
+> Combining heterogeneous pretrained models---bidirectional encoders, causal decoders and
+> vision transformers that differ in architecture, hidden width and modality---usually requires
+> joint retraining, surgery or lossy ensembling. We study how such models can be reconstructed
+> while every base stays frozen, in three steps. (i) Sublayer fusion: a shared sparse Top-K router
+> selects one of M frozen architectural experts per token; semantic aligners map mismatched hidden
+> spaces into one shared routing space; experts are fused residually with per-expert gates. Across
+> four aligner designs we measure a strict but saturating ladder (linear < mean <
+> cross-architecture attention < mixture), and a capacity-matched control shows the ceiling is a
+> matter of design, not parameter count. (ii) Coordinated routing: we prove that modulating
+> the softmax temperature (gate-style) is the only one of four hub modes satisfying perfect
+> degeneration, order preservation, boundedness and low overhead at once, and diagnose tanh
+> saturation severing the hub's gradient. (iii) Independent-model reconstruction: chimera
+> distillation collapses the ensemble into a single-base student, and a weight scan shows the
+> apparent "student beats teacher" margin is a direct-target term. A uniform out-of-sample
+> discipline overturns several of our own earlier findings. Auditing the projection space itself,
+> we find the advertised fusion margin is largely a source-identification effect inside a
+> never-optimized shared space: it is unchanged when the targets are permuted, collapses once the
+> space is learned, and in a learned space the bases' outputs for the same text agree far more
+> (cosine +0.54) than in a random space (+0.01). The defensible claim is weaker: a shared space
+> must be meaningful for heterogeneous fusion to work at all; once it is, fusing heterogeneous
+> bases adds little over using one well.
 
-Combining heterogeneous pretrained models---bidirectional encoders, causal decoders, and vision transformers that differ in architecture, hidden width, and modality---usually requires joint retraining, architecture surgery, or lossy output-level ensembling. We study how such models can be \emph{reconstructed} while every base stays frozen, in three steps. \textbf{(i) Sublayer fusion.} A shared sparse Top-$K$ router selects one of $M$ frozen architectural experts per token; semantic aligners map mismatched hidden spaces into one shared routing space; experts are fused residually with per-expert gates. Across four aligner designs we measure a strict but \emph{saturating} ladder (linear $<$ mean $<$ cross-architecture attention $<$ mixture), and a capacity-matched control shows the ceiling is a matter of design rather than of parameter count. \textbf{(ii) Coordinated routing.} We ask how a global hub should influence the shared router, and prove that modulating the softmax temperature (gate-style) is the only one of four hub modes satisfying perfect degeneration, order preservation, boundedness, and low overhead at once; we also diagnose a hidden failure mode in which tanh saturation severs the gradient to the hub during long training. \textbf{(iii) Independent-model reconstruction.} Chimera distillation collapses the ensemble into a single-base student, and a weight scan over the loss shows that the apparent ``student beats teacher'' margin is entirely attributable to a direct-target term rather than to concept-direction transfer or variance averaging. Because fused inference keeps every base alive and distillation is a deployment device, the study is only as trustworthy as its evaluation. We therefore apply a uniform \emph{out-of-sample discipline} across the whole stack, and it overturns several of our own in-sample findings: the in-sample best hub mode is not the out-of-sample best, an advertised corpus-scale boundary is not established, and long-training and repair gains shrink to noise. What survives held-out evaluation is the alignment-ladder ceiling. The attention-path advantage does not: a projection-space audit (\S\ref{sec:projection-space}) shows it to be a property of a frozen random shared space rather than of architectural heterogeneity, and it disappears once that space is learned. The scale-heterogeneous fusion margin does not: a projection-space audit (\S\ref{sec:projection-space}) shows it to be a source-identification effect inside a shared space that was never optimized, and it does not persist once that space is learned. We report the negative results that bound the method---component composition, nested aligners, multi-teacher distillation, and toy multimodal benchmarks---from hundreds of seeded end-to-end runs across 41 versioned engineering generations and 430 unit and integration tests.
+**Categories**: Primary `cs.LG` (Machine Learning) · 也可选 `cs.CL` (Computational Linguistics)、
+`cs.AI`（多模态/异构模型协作）
 
-**Categories** (按主题, 建议)
-- 主: `cs.LG` (Machine Learning)
-- 次: `cs.CL` (Computation and Language) · `stat.ML` (Machine Learning Statistics)
+**License**: `CC BY 4.0`（arXiv 永久许可的默认值）
 
-**License**: 选 `CC BY 4.0` (与仓库的 Apache-2.0 并存即可) 或 arXiv 默认的
-perpetual non-exclusive license。
+**Comments**（可选, 建议写）:
+> 21 pages, 4 figures. Includes three independent re-derivations of the projection-space audit
+> (independent data splits, three probe families, three lifting architectures, disjoint seeds and
+> widths) and the associated negative results.
 
-## 3. 两个还没定的决定 (需要你拍板)
+**Subjects / Report number**: 留空; 若之前有旧编号（v1→v2）填旧的。
 
-| 决定 | 选项 | 影响 |
-|---|---|---|
-| **署名** | (a) **匿名投稿** (保留 `Anonymous Author(s)`, 在 arXiv 勾选 anonymous submission) · (b) **填真名与单位** | (a) 符合双盲惯例, 但 arXiv 上的论文没有作者, 引用不便; (b) 现在就可被引用, 但**等于提前公开作者身份** (TMLR 通常也是双盲评审, 提前公开不违规但会暴露身份) |
-| **公告** | (a) **立即公开** (announce) · (b) **暂不公告** (withhold announcement, 等录用后再公开) | (a) 马上可被检索引用; (b) 保留"首发在期刊"的位置, 但 preprint 记录会一直存在 |
+---
 
-## 4. 上传步骤 (5 分钟)
+## 3. 唯一还没填的: 作者
 
-1. 打开 <https://arxiv.org/submit> → `Start a new submission`
-2. 选 **Submit a paper**; 若走匿名路径, 在作者栏勾选匿名选项
-3. 上传 `docs/research_paper/arxiv_submission.tar.gz`
-4. arXiv 会在它的 TeX Live 里编译 (我们的包已在同样环境验证过) → 检查预览 PDF
-5. 填上面第 2 节的 Title / Abstract / Categories / License
-6. 确认 **announce 或 withhold** (见第 3 节)
-7. 提交 → arXiv 会给一封确认邮件 (announce 的话会有发布时间安排)
+arXiv **会显示作者**, 所以 `reconstruct_arxiv.tex` 里的占位必须替换:
 
-> ⚠️ 上传的是 **tar.gz 源码包**, 不要只传 PDF —— 只传 PDF 会得到 arXiv 的
-> "no source available" 标记, 无法编译。
+```latex
+\\author{
+    \\name <真实姓名>\\\\
+    \\addr <单位/机构>\\\\
+    \\email <邮箱>
+}
+```
+(改完重新 `python3 tools/make_arxiv_package.py` 重新打包, 并重编译一次核对首页。)
 
+TMLR 匿名评审版 (`reconstruct_tmlr.tex`) 里的作者块是宏包自动隐藏的, 不用动。
+
+---
+
+## 4. 提交步骤
+
+1. 登录 arxiv.org → "Submit a new paper" → 选 **LaTeX** 上传。
+2. 上传 `docs/research_paper/arxiv_package.tar.gz`（或网页版直接把 .tex 与 figs 拖进去）。
+3. 填上面的 Title / Abstract / Categories / License。
+4. 提交后 arXiv 会用它自己的 TeX 编译并给出预览; **逐页核对**: 首页作者、四张图、表 3 的数字、有没有 overfull 警告。
+5. 拿到编号后 (e.g. `arXiv:2606.xxxxx`), 在仓库里补一行引用。
+
+## 5. 现状
+
+- ✅ 源包自包含, 干净目录试编译通过, 21 页 0 错
+- ✅ arXiv 版已去掉 "Under review as submission to TMLR" 页眉与全部 TMLR 字样
+- ✅ 图全部矢量 (内嵌位图 0 个)
+- ✅ 摘要已压到 1868 字符 (arXiv 上限 1920)
+- ⛔ **作者真名/单位/邮箱待填**
+- ⛔ 需要你的 arXiv 账号完成最后上传
