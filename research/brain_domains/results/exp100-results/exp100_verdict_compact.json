@@ -1,0 +1,29 @@
+{
+  "verdict": "C1_OK",
+  "recompute_matches_job": true,
+  "mismatches": [],
+  "n_sessions_total": 32,
+  "n_sessions_primary_used": 30,
+  "C1": {
+    "n_eff": 30,
+    "n_pos": 26,
+    "n_neg": 4,
+    "p": 5.947612226009369e-05,
+    "n_zero": 0,
+    "median_delta": 7.402069400872961,
+    "same_median_pooled": 6.849585352782604,
+    "cross_median_pooled": 14.722937335046634
+  },
+  "C2_degenerate_guard": true,
+  "C1_interpretation": "判据① **有判别力**（能把 primary 与 higher 视觉区分开）",
+  "sessions_excluded": [
+    {
+      "session": "sub-719828686",
+      "reason": "同组/跨组可用的带对不够（各需 ≥2 对；实际 同组 0、跨组 1）"
+    },
+    {
+      "session": "sub-744915196",
+      "reason": "同组/跨组可用的带对不够（各需 ≥2 对；实际 同组 1、跨组 2）"
+    }
+  ]
+}

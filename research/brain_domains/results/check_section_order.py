@@ -45,6 +45,12 @@ def _num(s):
         return CN[s]
     if s.startswith("三十") and len(s) == 3 and s[2] in "一二三四五六七八九":
         return 30 + "一二三四五六七八九".index(s[2]) + 1
+    for base, val in (("四十", 40), ("五十", 50)):
+        if s.startswith(base):
+            if len(s) == 2:
+                return val
+            if len(s) == 3 and s[2] in "一二三四五六七八九":
+                return val + "一二三四五六七八九".index(s[2]) + 1
     return None
 
 

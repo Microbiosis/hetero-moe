@@ -188,6 +188,23 @@ def main():
     }
     (OUT / "exp100_summary.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
+    # **紧凑判决文件**（给守卫读）⇒ 只含守卫要绑的字段 ⇒ **几 KB**
+    # （完整的 per_session 原始记录太大，留在桶里 + results 里另存，git 不必背）
+    compact = {
+        "verdict": recomputed.get("verdict"),
+        "recompute_matches_job": same,
+        "mismatches": mismatches,
+        "n_sessions_total": recomputed.get("n_sessions_total"),
+        "n_sessions_primary_used": recomputed.get("n_sessions_primary_used"),
+        "C1": {k: (recomputed.get("C1") or {}).get(k)
+               for k in ("n_eff", "n_pos", "n_neg", "p", "n_zero", "median_delta",
+                         "same_median_pooled", "cross_median_pooled")},
+        "C2_degenerate_guard": recomputed.get("C2_degenerate_guard"),
+        "C1_interpretation": recomputed.get("C1_interpretation"),
+        "sessions_excluded": recomputed.get("sessions_excluded"),
+    }
+    (OUT / "exp100_verdict_compact.json").write_text(
+        json.dumps(compact, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
 
     md = []
     md.append("# exp100 结果重建（判据① 的「组内 vs 跨组」验收）\n")

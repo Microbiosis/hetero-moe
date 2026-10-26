@@ -1725,37 +1725,42 @@ def main():
         problems.append("FINDINGS 里找不到「四十、exp100」小节")
     else:
         for need in ("exp100_group_ladder.py", "parse_exp100.py", "组内", "跨组",
-                     "higher visual areas", "事后观察", "exp98"):
+                     "higher visual areas", "OMP_NUM_THREADS", "exp98"):
             if need not in sec40:
                 problems.append(f"[exp100] §四十 缺「{need}」")
-        e100 = HERE / "exp100-results" / "exp100_summary.json"
+        e100 = HERE / "exp100-results" / "exp100_verdict_compact.json"
+        if not e100.exists():
+            # 退化：紧凑文件不在 ⇒ 退回完整 summary
+            e100 = HERE / "exp100-results" / "exp100_summary.json"
         if e100.exists():
             d100 = json.loads(e100.read_text(encoding="utf-8"))
             if not d100.get("recompute_matches_job"):
                 problems.append("[exp100] 离线重算与 Job 判决**不一致**")
             v100 = d100.get("job_verdict") or {}
             c1x = v100.get("C1") or {}
-            # ⚠️ 写法带「（组内 vs 跨组）」后缀 ⇒ **与 §三十九 的写法不撞**（否则检查串不唯一）
-            suf = "（组内 vs 跨组）"
-            if v100.get("verdict") and f"**判决 = `{v100['verdict']}`{suf}**" not in sec40:
-                problems.append(f"[exp100] §四十 里找不到判决写法「判决 = `{v100['verdict']}`{suf}」")
+            # ⚠️ 检查**文中的精确写法**（裸数字串）⇒ 且要求它在**全文唯一**
+            #    （否则篡改一处仍会判「通过」——这个坑踩过一次）
+            if v100.get("verdict") and f"**判决 = `{v100['verdict']}`**" not in sec40:
+                problems.append(f"[exp100] §四十 里找不到判决写法「判决 = `{v100['verdict']}`」")
             medx = c1x.get("median_delta")
-            if medx is not None and f"**中位 Δ = {float(medx):+.4f}**{suf}" not in sec40:
+            if medx is not None and f"**中位 Δ = {float(medx):+.4f}**" not in sec40:
                 problems.append(f"[exp100] §四十 缺中位 Δ 写法「{float(medx):+.4f}」")
             px = c1x.get("p")
-            if px is not None and f"**p = {float(px):.4f}**{suf}" not in sec40:
+            if px is not None and f"**p = {float(px):.4f}**" not in sec40:
                 problems.append(f"[exp100] §四十 缺符号检验 p 写法「{float(px):.4f}」")
             npx, nex = c1x.get("n_pos"), c1x.get("n_eff")
-            if npx and nex and f"**{npx}/{nex} 正**{suf}" not in sec40:
+            if npx and nex and f"**{npx}/{nex} 正**" not in sec40:
                 problems.append(f"[exp100] §四十 缺符号检验计数写法「{npx}/{nex} 正」")
             nx = v100.get("n_sessions_primary_used")
             totx = v100.get("n_sessions_total")
             if nx is not None and totx is not None:
-                if f"**进入主判据 = {nx} 个（共 {totx}）**{suf}" not in sec40:
+                if f"**进入主判据 = {nx} 个（共 {totx}）**" not in sec40:
                     problems.append(f"[exp100] §四十 缺进入主判据写法「进入主判据 = {nx} 个（共 {totx}）」")
-            for s in (f"**判决 = `{v100.get('verdict')}`{suf}**" if v100.get("verdict") else "",
-                      f"**p = {float(px):.4f}**{suf}" if px is not None else "",
-                      f"**{npx}/{nex} 正**{suf}" if npx and nex else ""):
+            for s in (f"**判决 = `{v100.get('verdict')}`**" if v100.get("verdict") else "",
+                      f"**p = {float(px):.4f}**" if px is not None else "",
+                      f"**{npx}/{nex} 正**" if npx and nex else "",
+                      f"**中位 Δ = {float(medx):+.4f}**" if medx is not None else "",
+                      f"**进入主判据 = {nx} 个（共 {totx}）**" if nx is not None and totx is not None else ""):
                 if s and text.count(s) != 1:
                     problems.append(f"[exp100] 检查串「{s}」在全文出现 {text.count(s)} 次"
                                     "（必须唯一，否则篡改一处仍会判通过）")
