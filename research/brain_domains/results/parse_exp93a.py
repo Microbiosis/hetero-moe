@@ -1,0 +1,210 @@
+"""parse_exp93a.py — exp93a（判据① 可测性自检**第三版**：C0 改成「每带用它自己相关的
+二值行为变量」）的结果重建与**判决离线重算**。
+
+## 做什么
+
+exp93a 在一个 Job 里跑完了「C0 口径修正后，判据① 的测量在 Steinmetz 上还剩多少可用 session、
+以及跨带转分化代价是否显著为正」。判决 JSON 在桶里
+（`runs/illusionbrain-align/exp93a/exp93a_perband_labels.json`）。本脚本：
+
+1. **取回 JSON** —— 桶的读通道不稳（`hf buckets cp` 报 `xet-read-token`）⇒ 依次试：
+   ① 本地已有；② 从 `results/exp93a-results/job_log.txt` 里**抽出**（Job 回显通道，
+   **不依赖桶的读权限**）；③ `hf buckets cp`（带重试）。
+2. **用 exp93a 脚本里的 `decide()` 从逐 session 原始记录重算判决**（可审计、可复现）。
+3. 报告**两个口径的对照**（这是这一轮的核心产出）：
+   - **新口径**（C0′）：每带用它自己相关的二值行为变量；不可读的 session **被剔除**；
+   - **旧口径**（exp92）：所有带用同一个 4 类联合标签，不过则**全实验作废**；
+   ⇒ ⇒ 直接回答「**可用 session 从 2 个回到几个**」。
+4. 把逐 session 的跨带/同带代价、两套口径下的可解码性整理成表。
+
+## 输出
+
+- `results/exp93a-results/exp93a_perband_labels.json`（原始）
+- `results/exp93a-results/exp93a_summary.{json,md}`
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+OUT = HERE / "exp93a-results"
+EXP = HERE.parent / "exp"
+for _p in (str(EXP), str(HERE)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+BUCKET = "hf://buckets/illusion-brain/brain-domains/runs/illusionbrain-align"
+REL = "exp93a/exp93a_perband_labels.json"
+RAW = OUT / "exp93a_perband_labels.json"
+LOG = OUT / "job_log.txt"
+
+
+def _extract_from_log(log_path: Path):
+    """从 Job 日志里抽出 JSON（按 `===FILE=== <name>` 分块，只取目标文件那一块）。"""
+    if not log_path.exists():
+        return None
+    text = log_path.read_text(encoding="utf-8", errors="replace")
+    cur, buf = None, []
+    for ln in text.splitlines():
+        if ln.startswith("===FILE==="):
+            parts = ln.split()
+            name = parts[1] if len(parts) > 1 else ""
+            if cur and name == RAW.name:
+                return "\n".join(buf)
+            cur, buf = name, []
+        else:
+            buf.append(ln)
+    if cur == RAW.name:
+        return "\n".join(buf)
+    return None
+
+
+def fetch(force=False):
+    OUT.mkdir(parents=True, exist_ok=True)
+    if RAW.exists() and not force:
+        return RAW
+    txt = _extract_from_log(LOG)
+    if txt:
+        i, j = txt.find("{"), txt.rfind("}")
+        if i >= 0 and j > i:
+            try:
+                json.loads(txt[i:j + 1])
+                RAW.write_text(txt[i:j + 1] + "\n", encoding="utf-8")
+                print(f"✓ 从 Job 日志抽出 {RAW}（{RAW.stat().st_size} 字节）")
+                return RAW
+            except Exception:
+                pass
+    for i in range(4):
+        subprocess.run(["hf", "buckets", "cp", f"{BUCKET}/{REL}", str(RAW)],
+                       capture_output=True, text=True)
+        if RAW.exists() and RAW.stat().st_size > 0:
+            print(f"✓ 取回 {RAW}（第 {i+1} 次）")
+            return RAW
+        print(f"  ✗ 第 {i+1} 次取回失败")
+        time.sleep(6)
+    raise RuntimeError("取不回 exp93a 的原始 JSON（日志里也没有）")
+
+
+def fmt_table(rows, header):
+    lines = ["| " + " | ".join(header) + " |",
+             "|" + "|".join(["---"] * len(header)) + "|"]
+    for r in rows:
+        lines.append("| " + " | ".join(str(x) for x in r) + " |")
+    return "\n".join(lines)
+
+
+def main():
+    force = "--force" in sys.argv
+    raw = fetch(force=force)
+    data = json.loads(raw.read_text(encoding="utf-8"))
+    per_session = data.get("per_session") or []
+    job_verdict = data.get("verdict") or {}
+
+    import exp93a_perband_labels as E93
+    recomputed = E93.decide(per_session)
+
+    checks = {
+        "verdict": (job_verdict.get("verdict"), recomputed.get("verdict")),
+        "n_sessions_primary_used": (job_verdict.get("n_sessions_primary_used"),
+                                    recomputed.get("n_sessions_primary_used")),
+        "n_sessions_primary_total": (job_verdict.get("n_sessions_primary_total"),
+                                     recomputed.get("n_sessions_primary_total")),
+        "C1.n_eff": ((job_verdict.get("C1") or {}).get("n_eff"),
+                     (recomputed.get("C1") or {}).get("n_eff")),
+        "C1.n_pos": ((job_verdict.get("C1") or {}).get("n_pos"),
+                     (recomputed.get("C1") or {}).get("n_pos")),
+        "C1.p": ((job_verdict.get("C1") or {}).get("p"),
+                 (recomputed.get("C1") or {}).get("p")),
+        "C1.median_delta": ((job_verdict.get("C1") or {}).get("median_delta"),
+                            (recomputed.get("C1") or {}).get("median_delta")),
+    }
+    mismatches = []
+    for k, (a, b) in checks.items():
+        if isinstance(a, float) or isinstance(b, float):
+            ok = (a is not None and b is not None
+                  and (abs(float(a) - float(b)) < 1e-9 or (a != a and b != b)))
+        else:
+            ok = (a == b)
+        if not ok:
+            mismatches.append(f"{k}: Job={a!r} 离线={b!r}")
+    same = not mismatches
+
+    print(f"\n预登记判决（Job 写的）  : {job_verdict.get('verdict')}")
+    print(f"离线重算（逐 session）   : {recomputed.get('verdict')}  ⇒ 一致：{same}")
+    for m in mismatches:
+        print("   ✗ " + m)
+    c1 = recomputed.get("C1") or {}
+    legacy = recomputed.get("C0_legacy_jointlabel") or {}
+    print(f"新口径（C0′ 逐带各自标签）：主对 session 总数 "
+          f"{recomputed.get('n_sessions_primary_total')} ⇒ 可用 "
+          f"**{recomputed.get('n_sessions_primary_used')}**"
+          f"（剔除 {len(recomputed.get('sessions_excluded_by_readability') or [])}）")
+    print(f"旧口径（exp92 4 类联合）：主对可用 **{legacy.get('n_primary_used')}**"
+          f"（判死 {legacy.get('n_failing')}）")
+    print(f"符号检验：{c1.get('n_pos')}/{c1.get('n_eff')} 正，p={c1.get('p')}，"
+          f"中位 Δ={c1.get('median_delta')}")
+
+    prim_rows = []
+    for r in per_session:
+        ps = r.get("pairs") or {}
+        if "motor->prefrontal" in ps and "prefrontal->motor" in ps:
+            rd = r.get("readable") or {}
+            dec = r.get("decode") or {}
+            prim_rows.append((
+                r.get("session", "").split("/")[-1],
+                f"{r.get('primary_stat'):+.4f}" if r.get("primary_stat") is not None else "—",
+                "✓" if all(rd.get(b, {}).get("ok") for b in ("motor", "prefrontal")) else "✗",
+                ", ".join(f"{b}[{v.get('var')}]:{v.get('acc', float('nan')):.2f}/p{v.get('p', float('nan')):.3f}"
+                          for b, v in sorted(rd.items())),
+                ", ".join(f"{b}:{dec[b]['acc']:.2f}/p{dec[b]['p']:.3f}" for b in sorted(dec)),
+            ))
+    prim_rows.sort(key=lambda x: x[1])
+
+    summary = {
+        "job_verdict": job_verdict,
+        "recomputed_verdict": recomputed,
+        "recompute_matches_job": same,
+        "mismatches": mismatches,
+        "per_session": per_session,
+        "n_primary_total": recomputed.get("n_sessions_primary_total"),
+        "n_primary_used_new": recomputed.get("n_sessions_primary_used"),
+        "n_primary_used_legacy": legacy.get("n_primary_used"),
+        "sessions_excluded": recomputed.get("sessions_excluded_by_readability"),
+        "note": "**鼠 ≠ 人**：本实验只回答「判据① 有没有判别力」，"
+                "**不回填**「三个原语还是两个」（人 EEG 的问题）",
+    }
+    (OUT / "exp93a_summary.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
+
+    md = []
+    md.append("# exp93a 结果重建（C0 改成「每带用它自己相关的二值行为变量」）\n")
+    md.append(f"**预登记判决（Job 写的）**：`{job_verdict.get('verdict')}`\n")
+    md.append(f"**离线重算（逐 session 原始记录）**：`{recomputed.get('verdict')}` ⇒ "
+              f"与 Job 一致：**{same}**\n")
+    md.append("## 两个口径的对照（这一轮的核心产出）\n")
+    md.append(f"- **新口径 C0′**（每带用它自己相关的二值行为变量）：主对 session 总数 "
+              f"**{recomputed.get('n_sessions_primary_total')}** ⇒ 可用 "
+              f"**{recomputed.get('n_sessions_primary_used')}**"
+              f"（因可读性被剔除 {len(recomputed.get('sessions_excluded_by_readability') or [])}）")
+    md.append(f"- **旧口径**（exp92：所有带用同一个 4 类联合标签）：主对可用 "
+              f"**{legacy.get('n_primary_used')}**（判死 {legacy.get('n_failing')}）\n")
+    md.append(f"**符号检验**：{c1.get('n_pos')}/{c1.get('n_eff')} 正，p={c1.get('p')}，"
+              f"中位 Δ={c1.get('median_delta')}（零差 {c1.get('n_zero')}）\n")
+    md.append("## 进入主判据（CENT↔FRONT）的 session\n")
+    md.append(fmt_table(prim_rows,
+                        ["session", "统计量", "C0′", "新口径（各带自己的标签）", "旧口径（4 类）"]))
+    md.append("\n## 诚实边界\n")
+    md.append("- 排除规则**与 Δ 无关**（可读性是数据属性）⇒ 报出进入/剔除数与原因。\n")
+    md.append("- **鼠 ≠ 人**：只回答「判据① 有没有判别力」，**不回填**「三个原语还是两个」。\n")
+    (OUT / "exp93a_summary.md").write_text("\n".join(md) + "\n", encoding="utf-8")
+
+    print(f"输出：{OUT / 'exp93a_summary.json'} / {OUT / 'exp93a_summary.md'}")
+    return 0 if same else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
