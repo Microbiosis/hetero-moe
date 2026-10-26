@@ -189,7 +189,57 @@ def ridge_predict(X, W, b):
 
 
 def perm_p(Xtr, ytr, Xte, yte, n_perm=N_PERM, lam=1.0, seed=0):
-    """置换检验：打乱训练标签重拟合 ⇒ 准确率零分布（Gram 只算一次）。"""
+    """置换检验：打乱训练标签重拟合 ⇒ 准确率零分布。
+
+    ⚠️ **实现修订（出结果前做的；判据一字未动）**：
+    原版每个置换都做一次 `np.linalg.solve(A, ·)`（d×d 分解），
+    而本平台的 LAPACK 在**小矩阵 + 多线程**下极慢（实测 280×280 的 solve ≈ 78 ms）
+    ⇒ 单 session 要几十分钟 ⇒ 8 个分片 Job 21 分钟连一个 session 都没算完。
+
+    ⇒ 改成**一次分解 + 矩阵乘**：`Ainv = inv(A)` 只算一次，
+    每个置换改成 `W = Ainv @ (Xcᵀ(Y−ym))` ⇒ **数学上等价**（`inv` 与 `solve` 只差舍入），
+    **判据不变**：置换次数、seed、阈值、准确率定义全同。
+    ⇒ 等价性由 `--self-test` 的**对拍用例**保证（与参考实现 `perm_p_ref` 逐项比对）。
+    """
+    rng = np.random.default_rng(seed)
+    xm = Xtr.mean(axis=0, keepdims=True)
+    Xc = Xtr - xm
+    n, d = Xc.shape
+    if n < d:
+        # 对偶形式（本实验走不到：n_train=4130 > d ≤ 559）⇒ 保持原样
+        A = Xc @ Xc.T + lam * np.eye(n)
+
+        def acc_of(y):
+            Y = np.eye(K)[y]
+            ym = Y.mean(axis=0, keepdims=True)
+            W = Xc.T @ np.linalg.solve(A, Y - ym)
+            b = ym - xm @ W
+            pred = (Xte @ W + b).argmax(axis=1)
+            return float((pred == yte).mean())
+
+        obs = acc_of(ytr)
+        null = np.asarray([acc_of(rng.permutation(ytr)) for _ in range(n_perm)])
+    else:
+        A = Xc.T @ Xc + lam * np.eye(d)
+        Ainv = np.linalg.inv(A)
+        K = int(ytr.max()) + 1
+
+        def acc_of(y):
+            Y = np.eye(K)[y]
+            ym = Y.mean(axis=0, keepdims=True)
+            W = Ainv @ (Xc.T @ (Y - ym))
+            b = ym - xm @ W
+            pred = (Xte @ W + b).argmax(axis=1)
+            return float((pred == yte).mean())
+
+        obs = acc_of(ytr)
+        null = np.asarray([acc_of(rng.permutation(ytr)) for _ in range(n_perm)])
+    p = float((np.sum(null >= obs) + 1) / (n_perm + 1))
+    return obs, p
+
+
+def perm_p_ref(Xtr, ytr, Xte, yte, n_perm=N_PERM, lam=1.0, seed=0):
+    """**参考实现**（原版，慢）⇒ 只给 `--self-test` 做**对拍**用；不参与任何判决路径。"""
     rng = np.random.default_rng(seed)
     xm = Xtr.mean(axis=0, keepdims=True)
     Xc = Xtr - xm
@@ -545,6 +595,21 @@ def self_test():
     a = cent[cls4] + 0.1 * rng.normal(size=(8, 8))
     chk("proto_read：真原型残差 < 乱原型残差",
         proto_read(a, cent) < proto_read(a, rng.normal(size=(4, 8))))
+    # ⑦ **perm_p 优化版 vs 参考实现**（对拍 ⇒ 等价性必须机器可判）
+    Xr = rng.normal(size=(240, 14))
+    yr = rng.integers(0, 5, 240)
+    Xs = rng.normal(size=(80, 14))
+    ys = rng.integers(0, 5, 80)
+    o1, p1 = perm_p(Xr, yr, Xs, ys, n_perm=30)
+    o2, p2 = perm_p_ref(Xr, yr, Xs, ys, n_perm=30)
+    chk("perm_p 优化版与参考实现**逐位一致**（准确率）", o1 == o2)
+    chk("perm_p 优化版与参考实现**置换 p 一致**", p1 == p2)
+    # 信号更强时两者也要一致（准确率更高 ⇒ 不许因为实现差异翻面）
+    ysig = rng.integers(0, 3, 240)
+    Xsig = rng.normal(size=(240, 14)) + np.eye(3, 14)[ysig] * 1.5
+    o3, p3 = perm_p(Xsig, ysig, Xs, ys, n_perm=30)
+    o4, p4 = perm_p_ref(Xsig, ysig, Xs, ys, n_perm=30)
+    chk("perm_p 优化版在**有信号**时也与参考实现一致", o3 == o4 and p3 == p4)
 
     # ③ decide() 的判决分支（**判决口径逐条测**）
     def fake_rec(stat=1.0, pos=None, neg=None, ok=True, jitter=0.3, seed=0):
