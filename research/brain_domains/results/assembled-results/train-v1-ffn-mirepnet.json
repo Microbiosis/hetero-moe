@@ -1,0 +1,138 @@
+{
+  "source": "job-logs",
+  "job": "t86-assembled-mirepnet",
+  "job_id": "6adb6048046eb82b1ecd4898",
+  "args": {},
+  "hist": [
+    {
+      "step": 1,
+      "loss": 31.4705,
+      "nce_z": 4.247,
+      "nce_q": 4.268,
+      "utilization": 0.15,
+      "entropy": 2.65,
+      "rec_mse": 1.2755,
+      "retrieval_acc_q": 0.016
+    },
+    {
+      "step": 500,
+      "loss": 5.2574,
+      "nce_z": 4.165,
+      "nce_q": 4.166,
+      "utilization": 0.5920000000000001,
+      "entropy": 6.08,
+      "rec_mse": 1.0479,
+      "retrieval_acc_q": 0.0
+    },
+    {
+      "step": 1000,
+      "loss": 5.4353,
+      "nce_z": 4.188,
+      "nce_q": 4.179,
+      "utilization": 0.5770000000000001,
+      "entropy": 6.09,
+      "rec_mse": 1.165,
+      "retrieval_acc_q": 0.016
+    },
+    {
+      "step": 1500,
+      "loss": 5.1192,
+      "nce_z": 4.179,
+      "nce_q": 4.172,
+      "utilization": 0.5820000000000001,
+      "entropy": 6.1,
+      "rec_mse": 0.8799,
+      "retrieval_acc_q": 0.016
+    },
+    {
+      "step": 2000,
+      "loss": 5.4629,
+      "nce_z": 4.152,
+      "nce_q": 4.154,
+      "utilization": 0.547,
+      "entropy": 6.06,
+      "rec_mse": 1.2296,
+      "retrieval_acc_q": 0.031
+    },
+    {
+      "step": 2500,
+      "loss": 5.1483,
+      "nce_z": 4.143,
+      "nce_q": 4.135,
+      "utilization": 0.556,
+      "entropy": 6.03,
+      "rec_mse": 0.918,
+      "retrieval_acc_q": 0.016
+    },
+    {
+      "step": 3000,
+      "loss": 5.1953,
+      "nce_z": 4.103,
+      "nce_q": 4.116,
+      "utilization": 0.585,
+      "entropy": 6.09,
+      "rec_mse": 0.974,
+      "retrieval_acc_q": 0.0
+    },
+    {
+      "step": 3500,
+      "loss": 5.168,
+      "nce_z": 4.113,
+      "nce_q": 4.116,
+      "utilization": 0.5710000000000001,
+      "entropy": 6.09,
+      "rec_mse": 0.9714,
+      "retrieval_acc_q": 0.031
+    },
+    {
+      "step": 4000,
+      "loss": 5.342,
+      "nce_z": 4.157,
+      "nce_q": 4.147,
+      "utilization": 0.585,
+      "entropy": 6.09,
+      "rec_mse": 1.0575,
+      "retrieval_acc_q": 0.062
+    },
+    {
+      "step": 4500,
+      "loss": 5.2763,
+      "nce_z": 4.133,
+      "nce_q": 4.133,
+      "utilization": 0.557,
+      "entropy": 6.02,
+      "rec_mse": 1.0157,
+      "retrieval_acc_q": 0.047
+    },
+    {
+      "step": 5000,
+      "loss": 5.0331,
+      "nce_z": 4.106,
+      "nce_q": 4.124,
+      "utilization": 0.591,
+      "entropy": 6.08,
+      "rec_mse": 0.816,
+      "retrieval_acc_q": 0.031
+    },
+    {
+      "step": 5500,
+      "loss": 5.3142,
+      "nce_z": 4.119,
+      "nce_q": 4.147,
+      "utilization": 0.564,
+      "entropy": 6.07,
+      "rec_mse": 1.0457,
+      "retrieval_acc_q": 0.062
+    },
+    {
+      "step": 6000,
+      "loss": 5.2508,
+      "nce_z": 4.107,
+      "nce_q": 4.101,
+      "utilization": 0.5489999999999999,
+      "entropy": 5.97,
+      "rec_mse": 0.994,
+      "retrieval_acc_q": 0.047
+    }
+  ]
+}

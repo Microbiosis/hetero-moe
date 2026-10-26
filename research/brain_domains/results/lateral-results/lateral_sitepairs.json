@@ -1,0 +1,397 @@
+{
+  "n_pairs": 28,
+  "n_subjects": 10,
+  "per_pair": {
+    "Fp1/Fp2": {
+      "median_diff": 0.0034999999999999996,
+      "n_pos": 6,
+      "n_neg": 4,
+      "p_sign": 0.75390625,
+      "left_median": 0.0089,
+      "right_median": 0.0075
+    },
+    "AF7/AF8": {
+      "median_diff": 0.006700000000000001,
+      "n_pos": 8,
+      "n_neg": 2,
+      "p_sign": 0.109375,
+      "left_median": 0.0119,
+      "right_median": 0.0049
+    },
+    "AF3/AF4": {
+      "median_diff": -0.0034000000000000002,
+      "n_pos": 3,
+      "n_neg": 7,
+      "p_sign": 0.34375,
+      "left_median": 0.0009,
+      "right_median": 0.003
+    },
+    "F7/F8": {
+      "median_diff": -0.0005999999999999998,
+      "n_pos": 2,
+      "n_neg": 8,
+      "p_sign": 0.109375,
+      "left_median": 0.0169,
+      "right_median": 0.0199
+    },
+    "F5/F6": {
+      "median_diff": -0.0013,
+      "n_pos": 3,
+      "n_neg": 7,
+      "p_sign": 0.34375,
+      "left_median": 0.0059,
+      "right_median": 0.0116
+    },
+    "F3/F4": {
+      "median_diff": -0.0036,
+      "n_pos": 4,
+      "n_neg": 6,
+      "p_sign": 0.75390625,
+      "left_median": 0.0014,
+      "right_median": 0.0068
+    },
+    "F1/F2": {
+      "median_diff": -0.0026999999999999997,
+      "n_pos": 3,
+      "n_neg": 7,
+      "p_sign": 0.34375,
+      "left_median": -0.0012,
+      "right_median": 0.0024
+    },
+    "FT9/FT10": {
+      "median_diff": -0.0082,
+      "n_pos": 1,
+      "n_neg": 9,
+      "p_sign": 0.021484375,
+      "left_median": 0.0232,
+      "right_median": 0.0335
+    },
+    "FT7/FT8": {
+      "median_diff": -0.0010999999999999994,
+      "n_pos": 3,
+      "n_neg": 7,
+      "p_sign": 0.34375,
+      "left_median": 0.0113,
+      "right_median": 0.0179
+    },
+    "FC5/FC6": {
+      "median_diff": -0.0023999999999999994,
+      "n_pos": 4,
+      "n_neg": 6,
+      "p_sign": 0.75390625,
+      "left_median": 0.0107,
+      "right_median": 0.0185
+    },
+    "FC3/FC4": {
+      "median_diff": 0.0051,
+      "n_pos": 5,
+      "n_neg": 5,
+      "p_sign": 1.0,
+      "left_median": 0.0055,
+      "right_median": 0.0013
+    },
+    "FC1/FC2": {
+      "median_diff": 0.0059,
+      "n_pos": 7,
+      "n_neg": 3,
+      "p_sign": 0.34375,
+      "left_median": 0.0076,
+      "right_median": 0.0028
+    },
+    "T7/T8": {
+      "median_diff": 0.007300000000000001,
+      "n_pos": 6,
+      "n_neg": 4,
+      "p_sign": 0.75390625,
+      "left_median": 0.0162,
+      "right_median": 0.03
+    },
+    "C5/C6": {
+      "median_diff": -0.0025000000000000005,
+      "n_pos": 4,
+      "n_neg": 6,
+      "p_sign": 0.75390625,
+      "left_median": 0.0139,
+      "right_median": 0.015
+    },
+    "C3/C4": {
+      "median_diff": -0.0021999999999999997,
+      "n_pos": 4,
+      "n_neg": 6,
+      "p_sign": 0.75390625,
+      "left_median": 0.0061,
+      "right_median": 0.0076
+    },
+    "C1/C2": {
+      "median_diff": -0.0046,
+      "n_pos": 2,
+      "n_neg": 8,
+      "p_sign": 0.109375,
+      "left_median": 0.0017,
+      "right_median": 0.0077
+    },
+    "TP9/TP10": {
+      "median_diff": 0.002600000000000005,
+      "n_pos": 5,
+      "n_neg": 5,
+      "p_sign": 1.0,
+      "left_median": 0.0565,
+      "right_median": 0.0662
+    },
+    "TP7/TP8": {
+      "median_diff": -0.0030000000000000027,
+      "n_pos": 4,
+      "n_neg": 6,
+      "p_sign": 0.75390625,
+      "left_median": 0.0456,
+      "right_median": 0.0527
+    },
+    "CP5/CP6": {
+      "median_diff": -0.006700000000000001,
+      "n_pos": 2,
+      "n_neg": 8,
+      "p_sign": 0.109375,
+      "left_median": 0.0191,
+      "right_median": 0.0339
+    },
+    "CP3/CP4": {
+      "median_diff": -0.0007999999999999986,
+      "n_pos": 4,
+      "n_neg": 6,
+      "p_sign": 0.75390625,
+      "left_median": 0.0175,
+      "right_median": 0.0118
+    },
+    "CP1/CP2": {
+      "median_diff": -0.0021,
+      "n_pos": 3,
+      "n_neg": 7,
+      "p_sign": 0.34375,
+      "left_median": 0.0077,
+      "right_median": 0.0097
+    },
+    "P7/P8": {
+      "median_diff": -0.0195,
+      "n_pos": 1,
+      "n_neg": 9,
+      "p_sign": 0.021484375,
+      "left_median": 0.0421,
+      "right_median": 0.0626
+    },
+    "P5/P6": {
+      "median_diff": -0.0303,
+      "n_pos": 1,
+      "n_neg": 9,
+      "p_sign": 0.021484375,
+      "left_median": 0.0376,
+      "right_median": 0.0612
+    },
+    "P3/P4": {
+      "median_diff": 0.0026000000000000016,
+      "n_pos": 6,
+      "n_neg": 4,
+      "p_sign": 0.75390625,
+      "left_median": 0.0258,
+      "right_median": 0.0333
+    },
+    "P1/P2": {
+      "median_diff": 0.003499999999999996,
+      "n_pos": 6,
+      "n_neg": 4,
+      "p_sign": 0.75390625,
+      "left_median": 0.0309,
+      "right_median": 0.033
+    },
+    "PO7/PO8": {
+      "median_diff": -0.0191,
+      "n_pos": 1,
+      "n_neg": 9,
+      "p_sign": 0.021484375,
+      "left_median": 0.0352,
+      "right_median": 0.0518
+    },
+    "PO3/PO4": {
+      "median_diff": 0.0013000000000000025,
+      "n_pos": 5,
+      "n_neg": 5,
+      "p_sign": 1.0,
+      "left_median": 0.035,
+      "right_median": 0.0392
+    },
+    "O1/O2": {
+      "median_diff": -0.0133,
+      "n_pos": 2,
+      "n_neg": 8,
+      "p_sign": 0.109375,
+      "left_median": 0.0285,
+      "right_median": 0.0414
+    }
+  },
+  "per_family": {
+    "FP": {
+      "label": "FP",
+      "n_pairs": 1,
+      "n_pos": 6,
+      "n_neg": 4,
+      "p_sign": 0.75390625,
+      "median_diff": 0.0034999999999999996
+    },
+    "AF": {
+      "label": "额极（AF3/AF4, AF7/AF8）",
+      "n_pairs": 2,
+      "n_pos": 11,
+      "n_neg": 9,
+      "p_sign": 0.8238029479980469,
+      "median_diff": 0.0049
+    },
+    "F": {
+      "label": "额（F1/F2, F3/F4, F5/F6, F7/F8）",
+      "n_pairs": 4,
+      "n_pos": 12,
+      "n_neg": 28,
+      "p_sign": 0.01658900337497471,
+      "median_diff": -0.0036
+    },
+    "FT": {
+      "label": "额颞（FT7/FT8, FT9/FT10）",
+      "n_pairs": 2,
+      "n_pos": 4,
+      "n_neg": 16,
+      "p_sign": 0.01181793212890625,
+      "median_diff": -0.004399999999999999
+    },
+    "FC": {
+      "label": "额中央（FC1/FC2…）",
+      "n_pairs": 3,
+      "n_pos": 16,
+      "n_neg": 14,
+      "p_sign": 0.855535551905632,
+      "median_diff": 0.0011000000000000003
+    },
+    "T": {
+      "label": "颞（T7/T8）",
+      "n_pairs": 1,
+      "n_pos": 6,
+      "n_neg": 4,
+      "p_sign": 0.75390625,
+      "median_diff": 0.007300000000000001
+    },
+    "C": {
+      "label": "中央（C1/C2, C3/C4, C5/C6）",
+      "n_pairs": 3,
+      "n_pos": 10,
+      "n_neg": 20,
+      "p_sign": 0.09873714670538902,
+      "median_diff": -0.0030999999999999995
+    },
+    "TP": {
+      "label": "顶颞（TP7/TP8, TP9/TP10）",
+      "n_pairs": 2,
+      "n_pos": 9,
+      "n_neg": 11,
+      "p_sign": 0.8238029479980469,
+      "median_diff": -0.0030000000000000027
+    },
+    "CP": {
+      "label": "中央顶（CP1/CP2…）",
+      "n_pairs": 3,
+      "n_pos": 9,
+      "n_neg": 21,
+      "p_sign": 0.04277394525706768,
+      "median_diff": -0.0016000000000000003
+    },
+    "P": {
+      "label": "顶（P1/P2, P3/P4, P5/P6, P7/P8）",
+      "n_pairs": 4,
+      "n_pos": 14,
+      "n_neg": 26,
+      "p_sign": 0.0806904677519924,
+      "median_diff": -0.015199999999999998
+    },
+    "PO": {
+      "label": "枕顶（PO3/PO4, PO7/PO8）",
+      "n_pairs": 2,
+      "n_pos": 6,
+      "n_neg": 14,
+      "p_sign": 0.11531829833984375,
+      "median_diff": -0.012
+    },
+    "O": {
+      "label": "枕（O1/O2）",
+      "n_pairs": 1,
+      "n_pos": 2,
+      "n_neg": 8,
+      "p_sign": 0.109375,
+      "median_diff": -0.0133
+    }
+  },
+  "overall": {
+    "n": 280,
+    "n_pos": 105,
+    "n_neg": 175,
+    "p_sign": 3.41861240719696e-05,
+    "median_diff": -0.0031
+  },
+  "per_subject_aggregate": {
+    "posterior_O_PO_P_T": {
+      "n_pairs": 8,
+      "n_subjects": 10,
+      "n_pos": 2,
+      "n_neg": 8,
+      "p_sign": 0.109375,
+      "median_of_subject_means": -0.009187500000000001,
+      "per_subject": [
+        -0.0082125,
+        -0.0112375,
+        0.0008500000000000005,
+        0.003475000000000002,
+        -0.0140875,
+        -0.018237499999999997,
+        -0.010087500000000001,
+        -0.0404875,
+        -0.009187500000000001,
+        -0.008100000000000001
+      ]
+    },
+    "all_pairs": {
+      "n_pairs": 28,
+      "n_subjects": 10,
+      "n_pos": 0,
+      "n_neg": 10,
+      "p_sign": 0.001953125,
+      "median_of_subject_means": -0.0038107142857142858,
+      "per_subject": [
+        -0.002014285714285714,
+        -0.0038107142857142858,
+        -0.008017857142857143,
+        -0.000974999999999999,
+        -0.004407142857142858,
+        -0.010096428571428572,
+        -0.009014285714285714,
+        -0.021125,
+        -0.0011785714285714288,
+        -0.0017892857142857153
+      ]
+    },
+    "anterior_F_FC_AF_FT_C_CP": {
+      "n_pairs": 17,
+      "n_subjects": 10,
+      "n_pos": 3,
+      "n_neg": 7,
+      "p_sign": 0.34375,
+      "median_of_subject_means": -0.0026294117647058836,
+      "per_subject": [
+        0.00014705882352941164,
+        0.0014705882352941176,
+        -0.008452941176470588,
+        -0.0028058823529411763,
+        -0.0026294117647058836,
+        -0.007735294117647059,
+        -0.008358823529411766,
+        -0.01512941176470588,
+        -0.00258235294117647,
+        2.9411764705882405e-05
+      ]
+    }
+  }
+}

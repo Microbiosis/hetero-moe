@@ -1,0 +1,406 @@
+{
+  "config": {
+    "subjects": "6,7,8,9,10",
+    "train_sizes": [
+      1000,
+      4000
+    ],
+    "rrr_ks": [
+      64,
+      256
+    ],
+    "cca_ks": [
+      32,
+      128
+    ],
+    "n_null": 4,
+    "p2_candidates": 2000,
+    "align_check_subject": 1,
+    "align_check_perm": 100,
+    "align_check_images": 1500,
+    "out_dir": "/domains/runs/illusionbrain-align/exp93a",
+    "self_test": false
+  },
+  "per_subject": [
+    {
+      "subject": "sub-06",
+      "n_train_images": 16540,
+      "n_test_images": 200,
+      "n_feat": 630,
+      "baseline_ridge": {
+        "acc1_cos": 0.0291875,
+        "acc5_cos": 0.111625,
+        "acc1_featavg_cos": 0.1,
+        "alpha": 0.1,
+        "null_acc1_cos_median": 0.0053437499999999995,
+        "ratio_to_chance": 5.8375
+      },
+      "F1_train_size": {
+        "1000": {
+          "acc1_cos": 0.0081875,
+          "alpha": 100.0,
+          "ratio_to_chance": 1.6375
+        },
+        "4000": {
+          "acc1_cos": 0.0176875,
+          "alpha": 1.0,
+          "ratio_to_chance": 3.5374999999999996
+        }
+      },
+      "F2_decoder": {
+        "ridge": {
+          "acc1_cos": 0.0291875,
+          "acc5_cos": 0.111625,
+          "acc1_featavg_cos": 0.1
+        },
+        "rrr_k64": {
+          "acc1_cos": 0.02875,
+          "acc5_cos": 0.1130625,
+          "acc1_featavg_cos": 0.09
+        },
+        "rrr_k256": {
+          "acc1_cos": 0.0295625,
+          "acc5_cos": 0.1115,
+          "acc1_featavg_cos": 0.095
+        },
+        "cca_k32": {
+          "acc1_cos": 0.0215,
+          "acc5_cos": 0.0795
+        },
+        "cca_k128": {
+          "acc1_cos": 0.012625,
+          "acc5_cos": 0.0491875
+        },
+        "ridge_unit_target": {
+          "acc1_cos": 0.0291875,
+          "acc5_cos": 0.111625,
+          "acc1_featavg_cos": 0.1
+        }
+      },
+      "F3_trial_agg": {
+        "trial_level_acc1": 0.0291875,
+        "feature_avg_acc1": 0.1
+      },
+      "F4_target_pca128": {
+        "acc1_cos": 0.0291875,
+        "acc5_cos": 0.113625,
+        "acc1_featavg_cos": 0.085
+      },
+      "F5_protocol": {
+        "P1_cross_set": 0.0291875,
+        "P3_same_set_identity": 0.037125,
+        "P3_ratio_to_chance": 7.425
+      },
+      "self_check_S2_same_set_retrieval": {
+        "acc1_cos": 0.00375,
+        "acc5_cos": 0.0135,
+        "acc1_featavg_cos": 0.0045
+      },
+      "elapsed_s": 446.2
+    },
+    {
+      "subject": "sub-07",
+      "n_train_images": 16540,
+      "n_test_images": 200,
+      "n_feat": 630,
+      "baseline_ridge": {
+        "acc1_cos": 0.034,
+        "acc5_cos": 0.1314375,
+        "acc1_featavg_cos": 0.07,
+        "alpha": 0.1,
+        "null_acc1_cos_median": 0.005,
+        "ratio_to_chance": 6.800000000000001
+      },
+      "F1_train_size": {
+        "1000": {
+          "acc1_cos": 0.012,
+          "alpha": 10.0,
+          "ratio_to_chance": 2.4
+        },
+        "4000": {
+          "acc1_cos": 0.023625,
+          "alpha": 1.0,
+          "ratio_to_chance": 4.725
+        }
+      },
+      "F2_decoder": {
+        "ridge": {
+          "acc1_cos": 0.034,
+          "acc5_cos": 0.1314375,
+          "acc1_featavg_cos": 0.07
+        },
+        "rrr_k64": {
+          "acc1_cos": 0.0341875,
+          "acc5_cos": 0.13325,
+          "acc1_featavg_cos": 0.065
+        },
+        "rrr_k256": {
+          "acc1_cos": 0.0344375,
+          "acc5_cos": 0.13125,
+          "acc1_featavg_cos": 0.07
+        },
+        "cca_k32": {
+          "acc1_cos": 0.0260625,
+          "acc5_cos": 0.1049375
+        },
+        "cca_k128": {
+          "acc1_cos": 0.015375,
+          "acc5_cos": 0.062875
+        },
+        "ridge_unit_target": {
+          "acc1_cos": 0.034,
+          "acc5_cos": 0.1314375,
+          "acc1_featavg_cos": 0.07
+        }
+      },
+      "F3_trial_agg": {
+        "trial_level_acc1": 0.034,
+        "feature_avg_acc1": 0.07
+      },
+      "F4_target_pca128": {
+        "acc1_cos": 0.0344375,
+        "acc5_cos": 0.13125,
+        "acc1_featavg_cos": 0.08
+      },
+      "F5_protocol": {
+        "P1_cross_set": 0.034,
+        "P3_same_set_identity": 0.06625,
+        "P3_ratio_to_chance": 13.25
+      },
+      "self_check_S2_same_set_retrieval": {
+        "acc1_cos": 0.00375,
+        "acc5_cos": 0.01975,
+        "acc1_featavg_cos": 0.006
+      },
+      "elapsed_s": 341.6
+    },
+    {
+      "subject": "sub-08",
+      "n_train_images": 16540,
+      "n_test_images": 200,
+      "n_feat": 630,
+      "baseline_ridge": {
+        "acc1_cos": 0.0444375,
+        "acc5_cos": 0.1599375,
+        "acc1_featavg_cos": 0.115,
+        "alpha": 0.1,
+        "null_acc1_cos_median": 0.0055625,
+        "ratio_to_chance": 8.8875
+      },
+      "F1_train_size": {
+        "1000": {
+          "acc1_cos": 0.0126875,
+          "alpha": 10.0,
+          "ratio_to_chance": 2.5375
+        },
+        "4000": {
+          "acc1_cos": 0.0279375,
+          "alpha": 1.0,
+          "ratio_to_chance": 5.5875
+        }
+      },
+      "F2_decoder": {
+        "ridge": {
+          "acc1_cos": 0.0444375,
+          "acc5_cos": 0.1599375,
+          "acc1_featavg_cos": 0.115
+        },
+        "rrr_k64": {
+          "acc1_cos": 0.04225,
+          "acc5_cos": 0.16125,
+          "acc1_featavg_cos": 0.125
+        },
+        "rrr_k256": {
+          "acc1_cos": 0.0443125,
+          "acc5_cos": 0.160125,
+          "acc1_featavg_cos": 0.12
+        },
+        "cca_k32": {
+          "acc1_cos": 0.0395625,
+          "acc5_cos": 0.137
+        },
+        "cca_k128": {
+          "acc1_cos": 0.0180625,
+          "acc5_cos": 0.0735625
+        },
+        "ridge_unit_target": {
+          "acc1_cos": 0.0444375,
+          "acc5_cos": 0.1599375,
+          "acc1_featavg_cos": 0.115
+        }
+      },
+      "F3_trial_agg": {
+        "trial_level_acc1": 0.0444375,
+        "feature_avg_acc1": 0.115
+      },
+      "F4_target_pca128": {
+        "acc1_cos": 0.0460625,
+        "acc5_cos": 0.1608125,
+        "acc1_featavg_cos": 0.13
+      },
+      "F5_protocol": {
+        "P1_cross_set": 0.0444375,
+        "P3_same_set_identity": 0.112875,
+        "P3_ratio_to_chance": 22.575
+      },
+      "self_check_S2_same_set_retrieval": {
+        "acc1_cos": 0.0065,
+        "acc5_cos": 0.02325,
+        "acc1_featavg_cos": 0.0105
+      },
+      "elapsed_s": 150.5
+    },
+    {
+      "subject": "sub-09",
+      "n_train_images": 16540,
+      "n_test_images": 200,
+      "n_feat": 630,
+      "baseline_ridge": {
+        "acc1_cos": 0.0260625,
+        "acc5_cos": 0.10125,
+        "acc1_featavg_cos": 0.11,
+        "alpha": 0.1,
+        "null_acc1_cos_median": 0.0051875,
+        "ratio_to_chance": 5.2124999999999995
+      },
+      "F1_train_size": {
+        "1000": {
+          "acc1_cos": 0.0065625,
+          "alpha": 100.0,
+          "ratio_to_chance": 1.3125
+        },
+        "4000": {
+          "acc1_cos": 0.016,
+          "alpha": 1.0,
+          "ratio_to_chance": 3.2
+        }
+      },
+      "F2_decoder": {
+        "ridge": {
+          "acc1_cos": 0.0260625,
+          "acc5_cos": 0.10125,
+          "acc1_featavg_cos": 0.11
+        },
+        "rrr_k64": {
+          "acc1_cos": 0.026,
+          "acc5_cos": 0.1019375,
+          "acc1_featavg_cos": 0.115
+        },
+        "rrr_k256": {
+          "acc1_cos": 0.0249375,
+          "acc5_cos": 0.1014375,
+          "acc1_featavg_cos": 0.105
+        },
+        "cca_k32": {
+          "acc1_cos": 0.0166875,
+          "acc5_cos": 0.0724375
+        },
+        "cca_k128": {
+          "acc1_cos": 0.012,
+          "acc5_cos": 0.0506875
+        },
+        "ridge_unit_target": {
+          "acc1_cos": 0.0260625,
+          "acc5_cos": 0.10125,
+          "acc1_featavg_cos": 0.11
+        }
+      },
+      "F3_trial_agg": {
+        "trial_level_acc1": 0.0260625,
+        "feature_avg_acc1": 0.11
+      },
+      "F4_target_pca128": {
+        "acc1_cos": 0.024875,
+        "acc5_cos": 0.1016875,
+        "acc1_featavg_cos": 0.11
+      },
+      "F5_protocol": {
+        "P1_cross_set": 0.0260625,
+        "P3_same_set_identity": 0.025375,
+        "P3_ratio_to_chance": 5.075
+      },
+      "self_check_S2_same_set_retrieval": {
+        "acc1_cos": 0.0025,
+        "acc5_cos": 0.01325,
+        "acc1_featavg_cos": 0.004
+      },
+      "elapsed_s": 145.0
+    },
+    {
+      "subject": "sub-10",
+      "n_train_images": 16540,
+      "n_test_images": 200,
+      "n_feat": 630,
+      "baseline_ridge": {
+        "acc1_cos": 0.0410625,
+        "acc5_cos": 0.1515625,
+        "acc1_featavg_cos": 0.11,
+        "alpha": 0.1,
+        "null_acc1_cos_median": 0.0045312500000000006,
+        "ratio_to_chance": 8.2125
+      },
+      "F1_train_size": {
+        "1000": {
+          "acc1_cos": 0.011625,
+          "alpha": 10.0,
+          "ratio_to_chance": 2.3249999999999997
+        },
+        "4000": {
+          "acc1_cos": 0.024625,
+          "alpha": 1.0,
+          "ratio_to_chance": 4.925
+        }
+      },
+      "F2_decoder": {
+        "ridge": {
+          "acc1_cos": 0.0410625,
+          "acc5_cos": 0.1515625,
+          "acc1_featavg_cos": 0.11
+        },
+        "rrr_k64": {
+          "acc1_cos": 0.0415625,
+          "acc5_cos": 0.1538125,
+          "acc1_featavg_cos": 0.105
+        },
+        "rrr_k256": {
+          "acc1_cos": 0.0409375,
+          "acc5_cos": 0.1523125,
+          "acc1_featavg_cos": 0.11
+        },
+        "cca_k32": {
+          "acc1_cos": 0.0355,
+          "acc5_cos": 0.125875
+        },
+        "cca_k128": {
+          "acc1_cos": 0.016875,
+          "acc5_cos": 0.0700625
+        },
+        "ridge_unit_target": {
+          "acc1_cos": 0.0410625,
+          "acc5_cos": 0.1515625,
+          "acc1_featavg_cos": 0.11
+        }
+      },
+      "F3_trial_agg": {
+        "trial_level_acc1": 0.0410625,
+        "feature_avg_acc1": 0.11
+      },
+      "F4_target_pca128": {
+        "acc1_cos": 0.0448125,
+        "acc5_cos": 0.15525,
+        "acc1_featavg_cos": 0.12
+      },
+      "F5_protocol": {
+        "P1_cross_set": 0.0410625,
+        "P3_same_set_identity": 0.065125,
+        "P3_ratio_to_chance": 13.025
+      },
+      "self_check_S2_same_set_retrieval": {
+        "acc1_cos": 0.00375,
+        "acc5_cos": 0.0195,
+        "acc1_featavg_cos": 0.005
+      },
+      "elapsed_s": 144.5
+    }
+  ]
+}

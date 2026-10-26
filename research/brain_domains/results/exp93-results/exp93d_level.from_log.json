@@ -1,0 +1,35 @@
+{
+  "n_ok": 7,
+  "source": "job_log",
+  "subjects": [
+    "sub-01",
+    "sub-02",
+    "sub-03",
+    "sub-04",
+    "sub-05",
+    "sub-06",
+    "sub-07"
+  ],
+  "tags": {
+    "raw630": {
+      "median_up": 0.0297,
+      "mean": 0.030342857142857144,
+      "n": 7
+    },
+    "s1a_recon": {
+      "median_up": 0.0099,
+      "mean": 0.009533333333333333,
+      "n": 6
+    },
+    "s1a_onehot_mean": {
+      "median_up": 0.0051,
+      "mean": 0.005200000000000001,
+      "n": 6
+    },
+    "s1b_onehot_mean": {
+      "median_up": 0.0071,
+      "mean": 0.00765,
+      "n": 6
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "config": {
+    "subjects": "1",
+    "train_images": 16540,
+    "n_null": 2,
+    "batch_size": 256,
+    "device": "cuda",
+    "out_dir": "/domains/runs/illusionbrain-align/bench-A-a10g-cuda",
+    "self_test": false
+  },
+  "per_subject": [
+    {
+      "subject": "sub-01",
+      "device": "cuda",
+      "n_train_images": 16540,
+      "level": {
+        "raw630": {
+          "acc1_cos": 0.0296875,
+          "null_acc1_cos": 0.004625
+        },
+        "s1a_recon": {
+          "acc1_cos": 0.0076875,
+          "null_acc1_cos": 0.005625
+        },
+        "s1a_onehot_mean": {
+          "acc1_cos": 0.0053125,
+          "null_acc1_cos": 0.0049375
+        },
+        "s1b_recon": {
+          "acc1_cos": 0.0311875,
+          "null_acc1_cos": 0.005187499999999999
+        },
+        "s1b_onehot_mean": {
+          "acc1_cos": 0.0106875,
+          "null_acc1_cos": 0.00425
+        }
+      },
+      "timing": {
+        "encode_s": 3.2,
+        "decode_s": 465.5,
+        "total_s": 484.3
+      }
+    }
+  ]
+}

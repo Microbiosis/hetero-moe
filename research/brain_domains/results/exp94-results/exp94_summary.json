@@ -1,0 +1,199 @@
+{
+  "decision": {
+    "self_consistency": {
+      "zeroshot_acc1": {
+        "published": 0.0589,
+        "got": 0.05725,
+        "tol": 0.02,
+        "ok": true
+      },
+      "zeroshot_acc1_featavg": {
+        "published": 0.23,
+        "got": 0.21,
+        "tol": 0.06,
+        "ok": true
+      },
+      "rsa": {
+        "published": 0.1273,
+        "got": 0.12008312877506573,
+        "tol": 0.045,
+        "ok": true
+      },
+      "zeroshot_acc5": {
+        "published": 0.1875,
+        "got": 0.1830625,
+        "tol": 0.04,
+        "ok": true
+      }
+    },
+    "self_consistency_pass": true,
+    "paired": {
+      "zeroshot_acc1": {
+        "n": 10,
+        "diffs": [
+          0.004250000000000004,
+          0.004124999999999997,
+          0.004312499999999997,
+          0.005437499999999991,
+          0.008375,
+          0.009062499999999994,
+          0.004687499999999997,
+          0.007625000000000007,
+          0.004687500000000004,
+          0.0007500000000000007
+        ],
+        "median_diff": 0.004687500000000004,
+        "n_pos": 10,
+        "p_sign": 0.001953125
+      },
+      "zeroshot_acc1_featavg": {
+        "n": 10,
+        "diffs": [
+          0.0050000000000000044,
+          0.0050000000000000044,
+          0.04000000000000001,
+          0.0050000000000000044,
+          0.035,
+          0.015000000000000013,
+          -0.020000000000000018,
+          0.025000000000000022,
+          -0.03999999999999998,
+          -0.01999999999999999
+        ],
+        "median_diff": 0.0050000000000000044,
+        "n_pos": 7,
+        "p_sign": 0.34375
+      },
+      "rsa": {
+        "n": 10,
+        "diffs": [
+          -0.0060474997796925445,
+          0.0017617748862820415,
+          -0.007890990901710734,
+          -0.004224016652548596,
+          -0.003292449841124992,
+          0.0002470675121163668,
+          0.00835919070597907,
+          -0.005604142328206593,
+          -0.00665828461776824,
+          0.0030070157844396955
+        ],
+        "median_diff": -0.003292449841124992,
+        "n_pos": 4,
+        "p_sign": 0.75390625
+      }
+    },
+    "H1_channel_identity_helps": true,
+    "H1_detail": {
+      "C1_single_trial": {
+        "v0": 0.05725,
+        "v1": 0.0626875,
+        "median_diff": 0.004687500000000004,
+        "n_pos": 10,
+        "n": 10,
+        "p": 0.001953125
+      },
+      "C2_trial_avg": {
+        "v0": 0.21,
+        "v1": 0.215,
+        "median_diff": 0.0050000000000000044,
+        "n_pos": 7,
+        "n": 10,
+        "p": 0.34375
+      },
+      "C3_rsa": {
+        "v0": 0.12008312877506573,
+        "v1": 0.11921705748210504,
+        "median_diff": -0.003292449841124992,
+        "n_pos": 4,
+        "n": 10,
+        "p": 0.75390625
+      }
+    },
+    "readout_consistent": false,
+    "R4_note": "⚠️ 三条读出方向**不一致** ⇒ 不得下「谁更强」的单句结论",
+    "posaxis": {
+      "v0": {
+        "post_above_all_rand34": 10,
+        "ant_below_all_rand29": 9,
+        "post_minus_ant_median": 0.05,
+        "post_acc1_median": 0.055,
+        "ant_acc1_median": 0.005,
+        "post_rsa_median": 0.107835832389636,
+        "n": 10
+      },
+      "v1": {
+        "post_above_all_rand34": 10,
+        "ant_below_all_rand29": 10,
+        "post_minus_ant_median": 0.059500000000000004,
+        "post_acc1_median": 0.065,
+        "ant_acc1_median": 0.00575,
+        "post_rsa_median": 0.10286214471653192,
+        "n": 10
+      }
+    },
+    "H2_posaxis_backbone_independent": true,
+    "H2_note": "两个骨干上都 POST>ANT ⇒ 位置轴结论**不是单一骨干的产物**",
+    "verdict": "MIXED_READOUTS"
+  },
+  "decision_recomputed": true,
+  "decision_raw_job": "H1_NOT_SUPPORTED_TRUNK_NOT_BOTTLENECK",
+  "summaries": {
+    "v0": {
+      "zeroshot_acc1": 0.05725,
+      "zeroshot_acc1_featavg": 0.21,
+      "zeroshot_acc5": 0.1830625,
+      "ridge_feat_acc1": 0.027875,
+      "rsa": 0.12008312877506573,
+      "n_ok": 10,
+      "n_err": 0
+    },
+    "v1": {
+      "zeroshot_acc1": 0.0626875,
+      "zeroshot_acc1_featavg": 0.215,
+      "zeroshot_acc5": 0.1943125,
+      "ridge_feat_acc1": 0.029875,
+      "rsa": 0.11921705748210504,
+      "n_ok": 10,
+      "n_err": 0
+    }
+  },
+  "self_consistency": {
+    "zeroshot_acc1": {
+      "published": 0.0589,
+      "got": 0.05725,
+      "tol": 0.02,
+      "ok": true
+    },
+    "zeroshot_acc1_featavg": {
+      "published": 0.23,
+      "got": 0.21,
+      "tol": 0.06,
+      "ok": true
+    },
+    "rsa": {
+      "published": 0.1273,
+      "got": 0.12008312877506573,
+      "tol": 0.045,
+      "ok": true
+    },
+    "zeroshot_acc5": {
+      "published": 0.1875,
+      "got": 0.1830625,
+      "tol": 0.04,
+      "ok": true
+    }
+  },
+  "published_v0": {
+    "zeroshot_acc1": 0.0589,
+    "zeroshot_acc1_featavg": 0.23,
+    "rsa": 0.1273,
+    "zeroshot_acc5": 0.1875
+  },
+  "tol": {
+    "zeroshot_acc1": 0.02,
+    "zeroshot_acc1_featavg": 0.06,
+    "rsa": 0.045,
+    "zeroshot_acc5": 0.04
+  }
+}

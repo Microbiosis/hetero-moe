@@ -1,0 +1,23 @@
+数据：8 个 session（/domains/steinmetz_trials_primary）
+  → [1/8] sub-Cori_ses-20161214T120000
+  ✓ sub-Cori/sub-Cori_ses-20161214T120000.nwb：带 {'motor': 381, 'prefrontal': 277}；train 109 / test 25；解码 {'motor': 0.6, 'prefrontal': 0.48}；对 2
+      motor->prefrontal: 跨带 +11.3763  同带 +1.1669  Δ +10.2094
+      prefrontal->motor: 跨带 +2.7472  同带 +0.4424  Δ +2.3049
+  → [2/8] sub-Hench_ses-20170615T120000
+  ✓ sub-Hench/sub-Hench_ses-20170615T120000.nwb：带 {'visual': 80, 'motor': 224, 'prefrontal': 504}；train 133 / test 24；解码 {'visual': 0.708, 'motor': 0.458, 'prefrontal': 0.708}；对 6
+      visual->motor: 跨带 +1.2653  同带 +0.3386  Δ +0.9266
+      visual->prefrontal: 跨带 -4.3027  同带 +1.8311  Δ -6.1338
+      motor->visual: 跨带 +3.9698  同带 +0.2877  Δ +3.6821
+      motor->prefrontal: 跨带 -5.8231  同带 +1.8311  Δ -7.6542
+      prefrontal->visual: 跨带 +5.7288  同带 +0.2877  Δ +5.4411
+      prefrontal->motor: 跨带 +4.0871  同带 +0.3386  Δ +3.7485
+  → [3/8] sub-Lederberg_ses-20171205T120000
+  ✓ sub-Lederberg/sub-Lederberg_ses-20171205T120000.nwb：带 {'visual': 228, 'motor': 72, 'prefrontal': 151}；train 194 / test 82；解码 {'visual': 0.329, 'motor': 0.476, 'prefrontal': 0.329}；对 6
+      visual->motor: 跨带 +1.4293  同带 +0.4904  Δ +0.9389
+      visual->prefrontal: 跨带 +1.5221  同带 +0.5143  Δ +1.0077
+      motor->visual: 跨带 +3.3438  同带 -0.0213  Δ +3.3652
+      motor->prefrontal: 跨带 +1.2516  同带 +0.5143  Δ +0.7372
+      prefrontal->visual: 跨带 +3.1326  同带 -0.0213  Δ +3.1540
+      prefrontal->motor: 跨带 +0.8206  同带 +0.4904  Δ +0.3302
+  → [4/8] sub-Lederberg_ses-20171207T120000
+Hint: If the job is still running, use `hf jobs logs -f 6adf014a1e112550ce7f4437` to stream new logs until it completes.

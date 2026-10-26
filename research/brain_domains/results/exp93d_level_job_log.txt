@@ -1,0 +1,106 @@
+设备 cuda｜torch 2.14.1+cu130
+图像特征 test (200, 1024) | train (16540, 1024)
+
+=== sub-01 ===
+  LEVEL raw630          acc1=0.0297 (零中位 0.0046)
+  架构：base
+  LEVEL s1a_recon        acc1=0.0077 (零中位 0.0056)
+  LEVEL s1a_onehot_mean  acc1=0.0053 (零中位 0.0049)
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  LEVEL s1b_recon        acc1=0.0312 (零中位 0.0052)
+  LEVEL s1b_onehot_mean  acc1=0.0107 (零中位 0.0043)
+  用时 130s
+
+=== sub-02 ===
+  LEVEL raw630          acc1=0.0250 (零中位 0.0052)
+  架构：base
+  LEVEL s1a_recon        acc1=0.0074 (零中位 0.0052)
+  LEVEL s1a_onehot_mean  acc1=0.0046 (零中位 0.0049)
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  LEVEL s1b_recon        acc1=0.0211 (零中位 0.0050)
+  LEVEL s1b_onehot_mean  acc1=0.0071 (零中位 0.0063)
+  用时 130s
+
+=== sub-03 ===
+  LEVEL raw630          acc1=0.0321 (零中位 0.0052)
+  架构：base
+  LEVEL s1a_recon        acc1=0.0102 (零中位 0.0050)
+  LEVEL s1a_onehot_mean  acc1=0.0052 (零中位 0.0048)
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  LEVEL s1b_recon        acc1=0.0221 (零中位 0.0049)
+  LEVEL s1b_onehot_mean  acc1=0.0056 (零中位 0.0052)
+  用时 132s
+
+=== sub-04 ===
+  LEVEL raw630          acc1=0.0388 (零中位 0.0052)
+  架构：base
+  LEVEL s1a_recon        acc1=0.0093 (零中位 0.0050)
+  LEVEL s1a_onehot_mean  acc1=0.0041 (零中位 0.0048)
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  LEVEL s1b_recon        acc1=0.0257 (零中位 0.0064)
+  LEVEL s1b_onehot_mean  acc1=0.0066 (零中位 0.0049)
+  用时 128s
+
+=== sub-05 ===
+  LEVEL raw630          acc1=0.0236 (零中位 0.0049)
+  架构：base
+  LEVEL s1a_recon        acc1=0.0065 (零中位 0.0055)
+  LEVEL s1a_onehot_mean  acc1=0.0062 (零中位 0.0052)
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  LEVEL s1b_recon        acc1=0.0199 (零中位 0.0042)
+  LEVEL s1b_onehot_mean  acc1=0.0067 (零中位 0.0052)
+  用时 126s
+
+=== sub-06 ===
+  LEVEL raw630          acc1=0.0292 (零中位 0.0054)
+  架构：base
+  LEVEL s1a_recon        acc1=0.0092 (零中位 0.0051)
+  LEVEL s1a_onehot_mean  acc1=0.0057 (零中位 0.0049)
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  LEVEL s1b_recon        acc1=0.0258 (零中位 0.0056)
+  LEVEL s1b_onehot_mean  acc1=0.0069 (零中位 0.0053)
+  用时 131s
+
+=== sub-07 ===
+  LEVEL raw630          acc1=0.0340 (零中位 0.0050)
+  架构：base
+  LEVEL s1a_recon        acc1=0.0084 (零中位 0.0044)
+  LEVEL s1a_onehot_mean  acc1=0.0051 (零中位 0.0055)
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  LEVEL s1b_recon        acc1=0.0253 (零中位 0.0050)
+  LEVEL s1b_onehot_mean  acc1=0.0099 (零中位 0.0041)
+  用时 125s
+
+=== sub-08 ===
+  LEVEL raw630          acc1=0.0444 (零中位 0.0056)
+  架构：base
+  LEVEL s1a_recon        acc1=0.0116 (零中位 0.0055)
+  LEVEL s1a_onehot_mean  acc1=0.0047 (零中位 0.0050)
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  LEVEL s1b_recon        acc1=0.0269 (零中位 0.0042)
+  LEVEL s1b_onehot_mean  acc1=0.0062 (零中位 0.0047)
+  用时 128s
+
+=== sub-09 ===
+  LEVEL raw630          acc1=0.0261 (零中位 0.0052)
+  架构：base
+  LEVEL s1a_recon        acc1=0.0080 (零中位 0.0052)
+  LEVEL s1a_onehot_mean  acc1=0.0047 (零中位 0.0049)
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  LEVEL s1b_recon        acc1=0.0178 (零中位 0.0055)
+  LEVEL s1b_onehot_mean  acc1=0.0059 (零中位 0.0048)
+  用时 127s
+
+=== sub-10 ===
+  LEVEL raw630          acc1=0.0411 (零中位 0.0048)
+  架构：base
+  LEVEL s1a_recon        acc1=0.0099 (零中位 0.0047)
+  LEVEL s1a_onehot_mean  acc1=0.0062 (零中位 0.0049)
+  架构：assembled_v2（注意力 none / FFN none / 码本 ema）
+  LEVEL s1b_recon        acc1=0.0316 (零中位 0.0051)
+  LEVEL s1b_onehot_mean  acc1=0.0071 (零中位 0.0052)
+  用时 127s
+
+完成：10/10 成功
+结果写入 /domains/runs/illusionbrain-align/exp93d-gpu/exp93d_gpu.json
+Hint: If the job is still running, use `hf jobs logs -f 6add7a96046eb82b1ece1f3f` to stream new logs until it completes.

@@ -1,0 +1,45 @@
+{
+  "config": {
+    "subjects": "1",
+    "train_images": 16540,
+    "n_null": 2,
+    "batch_size": 256,
+    "device": "cpu",
+    "out_dir": "/domains/runs/illusionbrain-align/bench-C-cpuup-cpu",
+    "self_test": false
+  },
+  "per_subject": [
+    {
+      "subject": "sub-01",
+      "device": "cpu",
+      "n_train_images": 16540,
+      "level": {
+        "raw630": {
+          "acc1_cos": 0.0296875,
+          "null_acc1_cos": 0.004625
+        },
+        "s1a_recon": {
+          "acc1_cos": 0.0081875,
+          "null_acc1_cos": 0.0053437499999999995
+        },
+        "s1a_onehot_mean": {
+          "acc1_cos": 0.00525,
+          "null_acc1_cos": 0.004781250000000001
+        },
+        "s1b_recon": {
+          "acc1_cos": 0.031625,
+          "null_acc1_cos": 0.005187499999999999
+        },
+        "s1b_onehot_mean": {
+          "acc1_cos": 0.01075,
+          "null_acc1_cos": 0.0041875
+        }
+      },
+      "timing": {
+        "encode_s": 47.7,
+        "decode_s": 1161.4,
+        "total_s": 1233.5
+      }
+    }
+  ]
+}

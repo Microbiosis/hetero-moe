@@ -1,0 +1,123 @@
+FILES ['exp90b_nlb_function.json']
+===FILE=== exp90b_nlb_function.json 
+ {
+  "config": {
+    "data_dir": "/domains/primate/nlb_trials",
+    "out": "/domains/runs/illusionbrain-align/exp90b",
+    "n_folds": 5,
+    "need_success": 1
+  },
+  "criteria": {
+    "C0_pipeline_selfcheck": "每个 session 的解码准确率 > 同 session 随机基线（否则全实验作废）",
+    "C1_CENT_reachdir": "跨 trial 泛化的伸手方向解码 − 随机基线 > 0；证据 = session 级符号检验 + trial 级 McNemar",
+    "C2_cross_session": "零样本跨 session 解码（方向按各 session 目标角度对齐）⇒ 只报，不作判决",
+    "C3_FRONT_decision": "go_offset 预测 / 早-晚二分类 − 随机基线 ⇒ 只报（n=2–3 session），不作判决"
+  },
+  "per_session_cent": [
+    {
+      "session": "sub-Jenkins_ses-20090912_behavior+ecephys",
+      "n_trials": 1573,
+      "acc": 0.901462174189447,
+      "acc_floor": 0.19198982835346473,
+      "diff": 0.7094723458359822
+    },
+    {
+      "session": "sub-Jenkins_ses-20090916_behavior+ecephys",
+      "n_trials": 2241,
+      "acc": 0.8697010263275323,
+      "acc_floor": 0.25167336010709507,
+      "diff": 0.6180276662204373
+    },
+    {
+      "session": "sub-Jenkins_ses-20090918_behavior+ecephys",
+      "n_trials": 2570,
+      "acc": 0.8381322957198444,
+      "acc_floor": 0.1688715953307393,
+      "diff": 0.6692607003891051
+    },
+    {
+      "session": "sub-Jenkins_ses-20090923_behavior+ecephys",
+      "n_trials": 2298,
+      "acc": 0.8759791122715405,
+      "acc_floor": 0.20017406440382943,
+      "diff": 0.675805047867711
+    },
+    {
+      "session": "sub-Nitschke_ses-20090812_behavior+ecephys",
+      "n_trials": 3004,
+      "acc": 0.7546604527296937,
+      "acc_floor": 0.19607190412782957,
+      "diff": 0.5585885486018641
+    },
+    {
+      "session": "sub-Nitschke_ses-20090819_behavior+ecephys",
+      "n_trials": 3060,
+      "acc": 0.7679738562091504,
+      "acc_floor": 0.1869281045751634,
+      "diff": 0.581045751633987
+    }
+  ],
+  "per_session_frong": [
+    {
+      "session": "sub-Haydn_desc-test_ecephys",
+      "n_trials": 283,
+      "r_pred": NaN,
+      "acc_earlylate": 0.9929328621908127,
+      "acc_floor": 0.9929328621908127,
+      "diff": 0.0
+    },
+    {
+      "session": "sub-Haydn_desc-train_ecephys",
+      "n_trials": 1029,
+      "r_pred": 0.5999850153214517,
+      "acc_earlylate": 0.7346938775510204,
+      "acc_floor": 0.4936831875607386,
+      "diff": 0.24101068999028186
+    }
+  ],
+  "verdict": {
+    "verdict": "C1_CENT_OK",
+    "C0_pipeline_selfcheck": true,
+    "C1_CENT_reachdir": {
+      "pass": true,
+      "median_diff": 0.6692607003891051,
+      "sign_test": {
+        "n_eff": 6,
+        "n_pos": 6,
+        "n_neg": 0,
+        "p": 0.03125,
+        "n_zero": 0
+      },
+      "mcnemar_trial_level": {
+        "b": 9558,
+        "c": 328,
+        "p": 0.0,
+        "n_trials": 14746,
+        "note": "**描述性**：trial 不独立 ⇒ p 偏乐观 ⇒ 主证据用 session 级符号检验"
+      }
+    },
+    "C3_FRONT_decision": {
+      "report_only": true,
+      "per_session": [
+        {
+          "session": "sub-Haydn_desc-test_ecephys",
+          "n_trials": 283,
+          "r_pred": NaN,
+          "acc_earlylate": 0.9929328621908127,
+          "acc_floor": 0.9929328621908127,
+          "diff": 0.0
+        },
+        {
+          "session": "sub-Haydn_desc-train_ecephys",
+          "n_trials": 1029,
+          "r_pred": 0.5999850153214517,
+          "acc_earlylate": 0.7346938775510204,
+          "acc_floor": 0.4936831875607386,
+          "diff": 0.24101068999028186
+        }
+      ]
+    },
+    "note": "C3 只报（n=2–3 session ⇒ 证据极弱 ⇒ 不是「执行控制」的证明）"
+  }
+}
+Hint: If the job is still running, use `hf jobs logs -f redmingwei/6adeb0cf1e112550ce7f11dd` to stream new logs until it completes.

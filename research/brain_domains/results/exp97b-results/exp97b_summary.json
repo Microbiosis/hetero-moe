@@ -1,0 +1,1231 @@
+{
+  "job_verdict": {
+    "verdict": "C0_FAIL",
+    "C0_pipeline_selfcheck": false,
+    "C0_detail": {
+      "sub-Cori/sub-Cori_ses-20161214T120000.nwb": [
+        "prefrontal: acc=0.480 p=0.294"
+      ],
+      "sub-Cori/sub-Cori_ses-20161217T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Cori/sub-Cori_ses-20161218T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Forssmann/sub-Forssmann_ses-20171101T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Forssmann/sub-Forssmann_ses-20171102T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Forssmann/sub-Forssmann_ses-20171104T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Forssmann/sub-Forssmann_ses-20171105T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Hench/sub-Hench_ses-20170615T120000.nwb": [
+        "motor: acc=0.458 p=0.275"
+      ],
+      "sub-Hench/sub-Hench_ses-20170616T120000.nwb": [
+        "visual: acc=0.536 p=0.059"
+      ],
+      "sub-Hench/sub-Hench_ses-20170617T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Hench/sub-Hench_ses-20170618T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Lederberg/sub-Lederberg_ses-20171205T120000.nwb": [
+        "visual: acc=0.329 p=0.686",
+        "motor: acc=0.476 p=0.118",
+        "prefrontal: acc=0.329 p=0.706"
+      ],
+      "sub-Lederberg/sub-Lederberg_ses-20171206T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Lederberg/sub-Lederberg_ses-20171207T120000.nwb": [
+        "visual: acc=0.458 p=0.275"
+      ],
+      "sub-Lederberg/sub-Lederberg_ses-20171208T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Lederberg/sub-Lederberg_ses-20171209T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Lederberg/sub-Lederberg_ses-20171210T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Lederberg/sub-Lederberg_ses-20171211T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Moniz/sub-Moniz_ses-20170515T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Moniz/sub-Moniz_ses-20170516T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Moniz/sub-Moniz_ses-20170518T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Muller/sub-Muller_ses-20170107T120000.nwb": [
+        "motor: acc=0.440 p=0.098"
+      ],
+      "sub-Muller/sub-Muller_ses-20170108T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Muller/sub-Muller_ses-20170109T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Radnitz/sub-Radnitz_ses-20170109T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Radnitz/sub-Radnitz_ses-20170110T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Radnitz/sub-Radnitz_ses-20170111T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Radnitz/sub-Radnitz_ses-20170112T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Richards/sub-Richards_ses-20171029T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Richards/sub-Richards_ses-20171030T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Richards/sub-Richards_ses-20171031T120000.nwb": [
+        "motor: acc=0.511 p=0.137",
+        "prefrontal: acc=0.444 p=0.314"
+      ],
+      "sub-Richards/sub-Richards_ses-20171101T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Richards/sub-Richards_ses-20171102T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Tatum/sub-Tatum_ses-20171206T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Tatum/sub-Tatum_ses-20171207T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Tatum/sub-Tatum_ses-20171208T120000.nwb": [
+        "prefrontal: acc=0.500 p=0.235"
+      ],
+      "sub-Tatum/sub-Tatum_ses-20171209T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Theiler/sub-Theiler_ses-20171011T120000.nwb": "带不足两个或 trial 不够"
+    },
+    "C1_has_discriminative_power": false,
+    "C1": {
+      "n_eff": 8,
+      "n_pos": 7,
+      "n_neg": 1,
+      "p": 0.0703125,
+      "n_zero": 0,
+      "median_delta": 2.6647664890234353,
+      "min_sessions": 8,
+      "alpha": 0.05,
+      "primary_pair": "motor<->prefrontal",
+      "primary_stats": [
+        6.257125177814675,
+        -1.9528513893238708,
+        0.5337050373859653,
+        3.5439097534671458,
+        2.1046386888700006,
+        2.6647664890234353,
+        1.8144886303238472,
+        3.252283407561464
+      ]
+    },
+    "C1_direction": {
+      "n_pos": 7,
+      "n_neg": 1,
+      "systematically_negative": false,
+      "rule": "系统性为负 ⇒ 只能读作「这版移植无效」，**不得**读作「判据① 原理上没判别力」"
+    },
+    "C2_degenerate_guard": true,
+    "C2_spread": {
+      "primary": {
+        "spread": 8.209976567138547,
+        "max_abs": 6.257125177814675
+      }
+    },
+    "per_pair": {
+      "motor->prefrontal": {
+        "n": 8,
+        "median": 3.0284347911704934,
+        "n_pos": 7,
+        "p_sign": 0.0703125,
+        "n_zero": 0
+      },
+      "motor->visual": {
+        "n": 3,
+        "median": 3.682116006273671,
+        "n_pos": 3,
+        "p_sign": 0.25,
+        "n_zero": 0
+      },
+      "prefrontal->motor": {
+        "n": 8,
+        "median": 2.173122448710995,
+        "n_pos": 7,
+        "p_sign": 0.0703125,
+        "n_zero": 0
+      },
+      "prefrontal->visual": {
+        "n": 4,
+        "median": 5.441144669032185,
+        "n_pos": 4,
+        "p_sign": 0.125,
+        "n_zero": 0
+      },
+      "visual->motor": {
+        "n": 3,
+        "median": 0.9388605097239724,
+        "n_pos": 3,
+        "p_sign": 0.25,
+        "n_zero": 0
+      },
+      "visual->prefrontal": {
+        "n": 4,
+        "median": 3.7411554482370892,
+        "n_pos": 3,
+        "p_sign": 0.625,
+        "n_zero": 0
+      }
+    },
+    "n_sessions_total": 39,
+    "n_sessions_primary": 8,
+    "problems": []
+  },
+  "recomputed_verdict": {
+    "verdict": "C0_FAIL",
+    "C0_pipeline_selfcheck": false,
+    "C0_detail": {
+      "sub-Cori/sub-Cori_ses-20161214T120000.nwb": [
+        "prefrontal: acc=0.480 p=0.294"
+      ],
+      "sub-Cori/sub-Cori_ses-20161217T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Cori/sub-Cori_ses-20161218T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Forssmann/sub-Forssmann_ses-20171101T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Forssmann/sub-Forssmann_ses-20171102T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Forssmann/sub-Forssmann_ses-20171104T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Forssmann/sub-Forssmann_ses-20171105T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Hench/sub-Hench_ses-20170615T120000.nwb": [
+        "motor: acc=0.458 p=0.275"
+      ],
+      "sub-Hench/sub-Hench_ses-20170616T120000.nwb": [
+        "visual: acc=0.536 p=0.059"
+      ],
+      "sub-Hench/sub-Hench_ses-20170617T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Hench/sub-Hench_ses-20170618T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Lederberg/sub-Lederberg_ses-20171205T120000.nwb": [
+        "visual: acc=0.329 p=0.686",
+        "motor: acc=0.476 p=0.118",
+        "prefrontal: acc=0.329 p=0.706"
+      ],
+      "sub-Lederberg/sub-Lederberg_ses-20171206T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Lederberg/sub-Lederberg_ses-20171207T120000.nwb": [
+        "visual: acc=0.458 p=0.275"
+      ],
+      "sub-Lederberg/sub-Lederberg_ses-20171208T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Lederberg/sub-Lederberg_ses-20171209T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Lederberg/sub-Lederberg_ses-20171210T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Lederberg/sub-Lederberg_ses-20171211T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Moniz/sub-Moniz_ses-20170515T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Moniz/sub-Moniz_ses-20170516T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Moniz/sub-Moniz_ses-20170518T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Muller/sub-Muller_ses-20170107T120000.nwb": [
+        "motor: acc=0.440 p=0.098"
+      ],
+      "sub-Muller/sub-Muller_ses-20170108T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Muller/sub-Muller_ses-20170109T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Radnitz/sub-Radnitz_ses-20170109T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Radnitz/sub-Radnitz_ses-20170110T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Radnitz/sub-Radnitz_ses-20170111T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Radnitz/sub-Radnitz_ses-20170112T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Richards/sub-Richards_ses-20171029T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Richards/sub-Richards_ses-20171030T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Richards/sub-Richards_ses-20171031T120000.nwb": [
+        "motor: acc=0.511 p=0.137",
+        "prefrontal: acc=0.444 p=0.314"
+      ],
+      "sub-Richards/sub-Richards_ses-20171101T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Richards/sub-Richards_ses-20171102T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Tatum/sub-Tatum_ses-20171206T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Tatum/sub-Tatum_ses-20171207T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Tatum/sub-Tatum_ses-20171208T120000.nwb": [
+        "prefrontal: acc=0.500 p=0.235"
+      ],
+      "sub-Tatum/sub-Tatum_ses-20171209T120000.nwb": "带不足两个或 trial 不够",
+      "sub-Theiler/sub-Theiler_ses-20171011T120000.nwb": "带不足两个或 trial 不够"
+    },
+    "C1_has_discriminative_power": false,
+    "C1": {
+      "n_eff": 8,
+      "n_pos": 7,
+      "n_neg": 1,
+      "p": 0.0703125,
+      "n_zero": 0,
+      "median_delta": 2.6647664890234353,
+      "min_sessions": 8,
+      "alpha": 0.05,
+      "primary_pair": "motor<->prefrontal",
+      "primary_stats": [
+        6.257125177814675,
+        -1.9528513893238708,
+        0.5337050373859653,
+        3.5439097534671458,
+        2.1046386888700006,
+        2.6647664890234353,
+        1.8144886303238472,
+        3.252283407561464
+      ]
+    },
+    "C1_direction": {
+      "n_pos": 7,
+      "n_neg": 1,
+      "systematically_negative": false,
+      "rule": "系统性为负 ⇒ 只能读作「这版移植无效」，**不得**读作「判据① 原理上没判别力」"
+    },
+    "C2_degenerate_guard": true,
+    "C2_spread": {
+      "primary": {
+        "spread": 8.209976567138547,
+        "max_abs": 6.257125177814675
+      }
+    },
+    "per_pair": {
+      "motor->prefrontal": {
+        "n": 8,
+        "median": 3.0284347911704934,
+        "n_pos": 7,
+        "p_sign": 0.0703125,
+        "n_zero": 0
+      },
+      "motor->visual": {
+        "n": 3,
+        "median": 3.682116006273671,
+        "n_pos": 3,
+        "p_sign": 0.25,
+        "n_zero": 0
+      },
+      "prefrontal->motor": {
+        "n": 8,
+        "median": 2.173122448710995,
+        "n_pos": 7,
+        "p_sign": 0.0703125,
+        "n_zero": 0
+      },
+      "prefrontal->visual": {
+        "n": 4,
+        "median": 5.441144669032185,
+        "n_pos": 4,
+        "p_sign": 0.125,
+        "n_zero": 0
+      },
+      "visual->motor": {
+        "n": 3,
+        "median": 0.9388605097239724,
+        "n_pos": 3,
+        "p_sign": 0.25,
+        "n_zero": 0
+      },
+      "visual->prefrontal": {
+        "n": 4,
+        "median": 3.7411554482370892,
+        "n_pos": 3,
+        "p_sign": 0.625,
+        "n_zero": 0
+      }
+    },
+    "n_sessions_total": 39,
+    "n_sessions_primary": 8,
+    "problems": []
+  },
+  "recompute_matches_job": true,
+  "mismatches": [],
+  "per_session": [
+    {
+      "session": "sub-Cori/sub-Cori_ses-20161214T120000.nwb",
+      "bands": {
+        "motor": 381,
+        "prefrontal": 277
+      },
+      "n_trials": 214,
+      "n_train": 109,
+      "n_test": 25,
+      "decode": {
+        "motor": {
+          "acc": 0.6,
+          "p": 0.0196078431372549
+        },
+        "prefrontal": {
+          "acc": 0.48,
+          "p": 0.29411764705882354
+        }
+      },
+      "pairs": {
+        "motor->prefrontal": {
+          "d_cross": 11.376252978781906,
+          "d_ctrl": 1.1668762335935234,
+          "delta": 10.209376745188383,
+          "r_own": 66.55588540987323,
+          "r_other": 77.93213838865513,
+          "n_classes": 3,
+          "n_units_B": 277
+        },
+        "prefrontal->motor": {
+          "d_cross": 2.7472489270288776,
+          "d_ctrl": 0.44237531658790985,
+          "delta": 2.3048736104409677,
+          "r_own": 91.7286253911132,
+          "r_other": 94.47587431814208,
+          "n_classes": 3,
+          "n_units_B": 381
+        }
+      },
+      "primary_stat": 6.257125177814675
+    },
+    {
+      "session": "sub-Cori/sub-Cori_ses-20161217T120000.nwb",
+      "bands": {
+        "visual": 551
+      },
+      "n_trials": 251,
+      "n_train": 119,
+      "n_test": 37,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Cori/sub-Cori_ses-20161218T120000.nwb",
+      "bands": {
+        "visual": 391
+      },
+      "n_trials": 228,
+      "n_train": 118,
+      "n_test": 33,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Forssmann/sub-Forssmann_ses-20171101T120000.nwb",
+      "bands": {
+        "visual": 337
+      },
+      "n_trials": 249,
+      "n_train": 101,
+      "n_test": 22,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Forssmann/sub-Forssmann_ses-20171102T120000.nwb",
+      "bands": {
+        "visual": 321
+      },
+      "n_trials": 254,
+      "n_train": 121,
+      "n_test": 29,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Forssmann/sub-Forssmann_ses-20171104T120000.nwb",
+      "bands": {},
+      "n_trials": 290,
+      "n_train": 145,
+      "n_test": 53,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Forssmann/sub-Forssmann_ses-20171105T120000.nwb",
+      "bands": {},
+      "n_trials": 252,
+      "n_train": 139,
+      "n_test": 51,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Hench/sub-Hench_ses-20170615T120000.nwb",
+      "bands": {
+        "visual": 80,
+        "motor": 224,
+        "prefrontal": 504
+      },
+      "n_trials": 250,
+      "n_train": 133,
+      "n_test": 24,
+      "decode": {
+        "visual": {
+          "acc": 0.7083333333333334,
+          "p": 0.0196078431372549
+        },
+        "motor": {
+          "acc": 0.4583333333333333,
+          "p": 0.27450980392156865
+        },
+        "prefrontal": {
+          "acc": 0.7083333333333334,
+          "p": 0.0196078431372549
+        }
+      },
+      "pairs": {
+        "visual->motor": {
+          "d_cross": 1.2652723648164752,
+          "d_ctrl": 0.33863311256628315,
+          "delta": 0.9266392522501921,
+          "r_own": 35.61010523159569,
+          "r_other": 36.875377596412164,
+          "n_classes": 3,
+          "n_units_B": 224
+        },
+        "visual->prefrontal": {
+          "d_cross": -4.302666907197079,
+          "d_ctrl": 1.831094140143037,
+          "delta": -6.133761047340116,
+          "r_own": 135.35761738580928,
+          "r_other": 131.0549504786122,
+          "n_classes": 3,
+          "n_units_B": 504
+        },
+        "motor->visual": {
+          "d_cross": 3.969814524616485,
+          "d_ctrl": 0.2876985183428138,
+          "delta": 3.682116006273671,
+          "r_own": 11.707836836111662,
+          "r_other": 15.677651360728147,
+          "n_classes": 3,
+          "n_units_B": 80
+        },
+        "motor->prefrontal": {
+          "d_cross": -5.823066985405703,
+          "d_ctrl": 1.831094140143037,
+          "delta": -7.65416112554874,
+          "r_own": 121.08097473559563,
+          "r_other": 115.25790775018993,
+          "n_classes": 3,
+          "n_units_B": 504
+        },
+        "prefrontal->visual": {
+          "d_cross": 5.7288431873749985,
+          "d_ctrl": 0.2876985183428138,
+          "delta": 5.441144669032185,
+          "r_own": 6.371208273648868,
+          "r_other": 12.100051461023867,
+          "n_classes": 3,
+          "n_units_B": 80
+        },
+        "prefrontal->motor": {
+          "d_cross": 4.087091459467281,
+          "d_ctrl": 0.33863311256628315,
+          "delta": 3.748458346900998,
+          "r_own": 17.013456472384636,
+          "r_other": 21.100547931851917,
+          "n_classes": 3,
+          "n_units_B": 224
+        }
+      },
+      "primary_stat": -1.9528513893238708
+    },
+    {
+      "session": "sub-Hench/sub-Hench_ses-20170616T120000.nwb",
+      "bands": {
+        "visual": 67,
+        "prefrontal": 599
+      },
+      "n_trials": 372,
+      "n_train": 182,
+      "n_test": 56,
+      "decode": {
+        "visual": {
+          "acc": 0.5357142857142857,
+          "p": 0.058823529411764705
+        },
+        "prefrontal": {
+          "acc": 0.6607142857142857,
+          "p": 0.0196078431372549
+        }
+      },
+      "pairs": {
+        "visual->prefrontal": {
+          "d_cross": 4.04205721842132,
+          "d_ctrl": 0.3009017701842307,
+          "delta": 3.7411554482370892,
+          "r_own": 83.9327093719884,
+          "r_other": 87.97476659040971,
+          "n_classes": 3,
+          "n_units_B": 599
+        },
+        "prefrontal->visual": {
+          "d_cross": 10.35215033884716,
+          "d_ctrl": 0.3103178146396175,
+          "delta": 10.041832524207543,
+          "r_own": 2.999293692630413,
+          "r_other": 13.351444031477573,
+          "n_classes": 3,
+          "n_units_B": 67
+        }
+      }
+    },
+    {
+      "session": "sub-Hench/sub-Hench_ses-20170617T120000.nwb",
+      "bands": {
+        "visual": 523
+      },
+      "n_trials": 447,
+      "n_train": 214,
+      "n_test": 78,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Hench/sub-Hench_ses-20170618T120000.nwb",
+      "bands": {
+        "motor": 668
+      },
+      "n_trials": 342,
+      "n_train": 180,
+      "n_test": 65,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Lederberg/sub-Lederberg_ses-20171205T120000.nwb",
+      "bands": {
+        "visual": 228,
+        "motor": 72,
+        "prefrontal": 151
+      },
+      "n_trials": 340,
+      "n_train": 194,
+      "n_test": 82,
+      "decode": {
+        "visual": {
+          "acc": 0.32926829268292684,
+          "p": 0.6862745098039216
+        },
+        "motor": {
+          "acc": 0.47560975609756095,
+          "p": 0.11764705882352941
+        },
+        "prefrontal": {
+          "acc": 0.32926829268292684,
+          "p": 0.7058823529411765
+        }
+      },
+      "pairs": {
+        "visual->motor": {
+          "d_cross": 1.4293099194532992,
+          "d_ctrl": 0.4904494097293268,
+          "delta": 0.9388605097239724,
+          "r_own": 11.767697424860327,
+          "r_other": 13.197007344313626,
+          "n_classes": 3,
+          "n_units_B": 72
+        },
+        "visual->prefrontal": {
+          "d_cross": 1.5220509396836732,
+          "d_ctrl": 0.5143300424066304,
+          "delta": 1.0077208972770428,
+          "r_own": 43.281077801637046,
+          "r_other": 44.80312874132072,
+          "n_classes": 3,
+          "n_units_B": 151
+        },
+        "motor->visual": {
+          "d_cross": 3.343833975510357,
+          "d_ctrl": -0.02133975004059785,
+          "delta": 3.365173725550955,
+          "r_own": 38.24519701921257,
+          "r_other": 41.589030994722926,
+          "n_classes": 3,
+          "n_units_B": 228
+        },
+        "motor->prefrontal": {
+          "d_cross": 1.2515769669799397,
+          "d_ctrl": 0.5143300424066304,
+          "delta": 0.7372469245733093,
+          "r_own": 54.53982499618321,
+          "r_other": 55.791401963163146,
+          "n_classes": 3,
+          "n_units_B": 151
+        },
+        "prefrontal->visual": {
+          "d_cross": 3.1326141001140115,
+          "d_ctrl": -0.02133975004059785,
+          "delta": 3.1539538501546094,
+          "r_own": 34.40732115869664,
+          "r_other": 37.53993525881065,
+          "n_classes": 3,
+          "n_units_B": 228
+        },
+        "prefrontal->motor": {
+          "d_cross": 0.8206125599279481,
+          "d_ctrl": 0.4904494097293268,
+          "delta": 0.3301631501986213,
+          "r_own": 14.165593947160756,
+          "r_other": 14.986206507088704,
+          "n_classes": 3,
+          "n_units_B": 72
+        }
+      },
+      "primary_stat": 0.5337050373859653
+    },
+    {
+      "session": "sub-Lederberg/sub-Lederberg_ses-20171206T120000.nwb",
+      "bands": {
+        "visual": 120
+      },
+      "n_trials": 300,
+      "n_train": 177,
+      "n_test": 65,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Lederberg/sub-Lederberg_ses-20171207T120000.nwb",
+      "bands": {
+        "visual": 96,
+        "motor": 374,
+        "prefrontal": 335
+      },
+      "n_trials": 268,
+      "n_train": 159,
+      "n_test": 48,
+      "decode": {
+        "visual": {
+          "acc": 0.4583333333333333,
+          "p": 0.27450980392156865
+        },
+        "motor": {
+          "acc": 0.5625,
+          "p": 0.0392156862745098
+        },
+        "prefrontal": {
+          "acc": 0.5625,
+          "p": 0.0196078431372549
+        }
+      },
+      "pairs": {
+        "visual->motor": {
+          "d_cross": 7.304689173304695,
+          "d_ctrl": -0.2578198798978697,
+          "delta": 7.5625090532025645,
+          "r_own": 71.92086296529337,
+          "r_other": 79.22555213859806,
+          "n_classes": 3,
+          "n_units_B": 374
+        },
+        "visual->prefrontal": {
+          "d_cross": 6.249255902409743,
+          "d_ctrl": 0.4979978335232289,
+          "delta": 5.751258068886514,
+          "r_own": 135.0355031239936,
+          "r_other": 141.28475902640335,
+          "n_classes": 3,
+          "n_units_B": 335
+        },
+        "motor->visual": {
+          "d_cross": 8.370904061563046,
+          "d_ctrl": 0.04600587293733138,
+          "delta": 8.324898188625713,
+          "r_own": 5.493661632328032,
+          "r_other": 13.864565693891079,
+          "n_classes": 3,
+          "n_units_B": 96
+        },
+        "motor->prefrontal": {
+          "d_cross": 5.412694891746526,
+          "d_ctrl": 0.4979978335232289,
+          "delta": 4.914697058223297,
+          "r_own": 78.54159842663333,
+          "r_other": 83.95429331837985,
+          "n_classes": 3,
+          "n_units_B": 335
+        },
+        "prefrontal->visual": {
+          "d_cross": 3.8646405704362325,
+          "d_ctrl": 0.04600587293733138,
+          "delta": 3.818634697498901,
+          "r_own": 3.8560314222782437,
+          "r_other": 7.720671992714476,
+          "n_classes": 3,
+          "n_units_B": 96
+        },
+        "prefrontal->motor": {
+          "d_cross": 1.915302568813125,
+          "d_ctrl": -0.2578198798978697,
+          "delta": 2.173122448710995,
+          "r_own": 45.19024225140644,
+          "r_other": 47.10554482021956,
+          "n_classes": 3,
+          "n_units_B": 374
+        }
+      },
+      "primary_stat": 3.5439097534671458
+    },
+    {
+      "session": "sub-Lederberg/sub-Lederberg_ses-20171208T120000.nwb",
+      "bands": {},
+      "n_trials": 404,
+      "n_train": 230,
+      "n_test": 76,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Lederberg/sub-Lederberg_ses-20171209T120000.nwb",
+      "bands": {},
+      "n_trials": 280,
+      "n_train": 159,
+      "n_test": 47,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Lederberg/sub-Lederberg_ses-20171210T120000.nwb",
+      "bands": {},
+      "n_trials": 224,
+      "n_train": 128,
+      "n_test": 44,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Lederberg/sub-Lederberg_ses-20171211T120000.nwb",
+      "bands": {},
+      "n_trials": 316,
+      "n_train": 178,
+      "n_test": 62,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Moniz/sub-Moniz_ses-20170515T120000.nwb",
+      "bands": {
+        "visual": 256
+      },
+      "n_trials": 247,
+      "n_train": 107,
+      "n_test": 28,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Moniz/sub-Moniz_ses-20170516T120000.nwb",
+      "bands": {
+        "visual": 244
+      },
+      "n_trials": 235,
+      "n_train": 102,
+      "n_test": 38,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Moniz/sub-Moniz_ses-20170518T120000.nwb",
+      "bands": {
+        "motor": 574
+      },
+      "n_trials": 124,
+      "n_train": 61,
+      "n_test": 7,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Muller/sub-Muller_ses-20170107T120000.nwb",
+      "bands": {
+        "motor": 377,
+        "prefrontal": 331
+      },
+      "n_trials": 444,
+      "n_train": 238,
+      "n_test": 91,
+      "decode": {
+        "motor": {
+          "acc": 0.43956043956043955,
+          "p": 0.09803921568627451
+        },
+        "prefrontal": {
+          "acc": 0.4725274725274725,
+          "p": 0.0392156862745098
+        }
+      },
+      "pairs": {
+        "motor->prefrontal": {
+          "d_cross": 2.7588200605456876,
+          "d_ctrl": 0.12391416459590232,
+          "delta": 2.6349058959497853,
+          "r_own": 70.05590122720353,
+          "r_other": 72.81472128774922,
+          "n_classes": 3,
+          "n_units_B": 331
+        },
+        "prefrontal->motor": {
+          "d_cross": 1.5345590347249498,
+          "d_ctrl": -0.0398124470652661,
+          "delta": 1.574371481790216,
+          "r_own": 93.61823138889797,
+          "r_other": 95.15279042362292,
+          "n_classes": 3,
+          "n_units_B": 377
+        }
+      },
+      "primary_stat": 2.1046386888700006
+    },
+    {
+      "session": "sub-Muller/sub-Muller_ses-20170108T120000.nwb",
+      "bands": {
+        "visual": 339
+      },
+      "n_trials": 151,
+      "n_train": 69,
+      "n_test": 17,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Muller/sub-Muller_ses-20170109T120000.nwb",
+      "bands": {
+        "visual": 384
+      },
+      "n_trials": 187,
+      "n_train": 86,
+      "n_test": 18,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Radnitz/sub-Radnitz_ses-20170108T120000.nwb",
+      "bands": {
+        "motor": 336,
+        "prefrontal": 560
+      },
+      "n_trials": 261,
+      "n_train": 138,
+      "n_test": 47,
+      "decode": {
+        "motor": {
+          "acc": 0.8085106382978723,
+          "p": 0.0196078431372549
+        },
+        "prefrontal": {
+          "acc": 0.6595744680851063,
+          "p": 0.0196078431372549
+        }
+      },
+      "pairs": {
+        "motor->prefrontal": {
+          "d_cross": 0.9616380326387173,
+          "d_ctrl": 0.0939365540085717,
+          "delta": 0.8677014786301456,
+          "r_own": 87.72873383481357,
+          "r_other": 88.69037186745228,
+          "n_classes": 3,
+          "n_units_B": 560
+        },
+        "prefrontal->motor": {
+          "d_cross": 4.471371965319712,
+          "d_ctrl": 0.009540465902986739,
+          "delta": 4.461831499416725,
+          "r_own": 35.059489836781275,
+          "r_other": 39.530861802100986,
+          "n_classes": 3,
+          "n_units_B": 336
+        }
+      },
+      "primary_stat": 2.6647664890234353
+    },
+    {
+      "session": "sub-Radnitz/sub-Radnitz_ses-20170109T120000.nwb",
+      "bands": {
+        "motor": 420
+      },
+      "n_trials": 178,
+      "n_train": 96,
+      "n_test": 31,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Radnitz/sub-Radnitz_ses-20170110T120000.nwb",
+      "bands": {
+        "visual": 366
+      },
+      "n_trials": 253,
+      "n_train": 129,
+      "n_test": 43,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Radnitz/sub-Radnitz_ses-20170111T120000.nwb",
+      "bands": {
+        "visual": 233
+      },
+      "n_trials": 142,
+      "n_train": 68,
+      "n_test": 11,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Radnitz/sub-Radnitz_ses-20170112T120000.nwb",
+      "bands": {
+        "motor": 601
+      },
+      "n_trials": 128,
+      "n_train": 53,
+      "n_test": 11,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Richards/sub-Richards_ses-20171029T120000.nwb",
+      "bands": {
+        "visual": 111
+      },
+      "n_trials": 143,
+      "n_train": 53,
+      "n_test": 10,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Richards/sub-Richards_ses-20171030T120000.nwb",
+      "bands": {},
+      "n_trials": 237,
+      "n_train": 123,
+      "n_test": 38,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Richards/sub-Richards_ses-20171031T120000.nwb",
+      "bands": {
+        "motor": 220,
+        "prefrontal": 282
+      },
+      "n_trials": 260,
+      "n_train": 129,
+      "n_test": 45,
+      "decode": {
+        "motor": {
+          "acc": 0.5111111111111111,
+          "p": 0.13725490196078433
+        },
+        "prefrontal": {
+          "acc": 0.4444444444444444,
+          "p": 0.3137254901960784
+        }
+      },
+      "pairs": {
+        "motor->prefrontal": {
+          "d_cross": 3.272745058018085,
+          "d_ctrl": 0.2443102668475916,
+          "delta": 3.0284347911704934,
+          "r_own": 25.787813907170786,
+          "r_other": 29.06055896518887,
+          "n_classes": 3,
+          "n_units_B": 282
+        },
+        "prefrontal->motor": {
+          "d_cross": 1.177759841733323,
+          "d_ctrl": 0.577217372256122,
+          "delta": 0.600542469477201,
+          "r_own": 23.41508414196281,
+          "r_other": 24.592843983696135,
+          "n_classes": 3,
+          "n_units_B": 220
+        }
+      },
+      "primary_stat": 1.8144886303238472
+    },
+    {
+      "session": "sub-Richards/sub-Richards_ses-20171101T120000.nwb",
+      "bands": {},
+      "n_trials": 191,
+      "n_train": 107,
+      "n_test": 26,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Richards/sub-Richards_ses-20171102T120000.nwb",
+      "bands": {},
+      "n_trials": 296,
+      "n_train": 122,
+      "n_test": 33,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Tatum/sub-Tatum_ses-20171206T120000.nwb",
+      "bands": {},
+      "n_trials": 311,
+      "n_train": 174,
+      "n_test": 58,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Tatum/sub-Tatum_ses-20171207T120000.nwb",
+      "bands": {
+        "visual": 238
+      },
+      "n_trials": 258,
+      "n_train": 126,
+      "n_test": 41,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Tatum/sub-Tatum_ses-20171208T120000.nwb",
+      "bands": {
+        "motor": 552,
+        "prefrontal": 506
+      },
+      "n_trials": 181,
+      "n_train": 96,
+      "n_test": 20,
+      "decode": {
+        "motor": {
+          "acc": 0.85,
+          "p": 0.0196078431372549
+        },
+        "prefrontal": {
+          "acc": 0.5,
+          "p": 0.23529411764705882
+        }
+      },
+      "pairs": {
+        "motor->prefrontal": {
+          "d_cross": 10.107840722278326,
+          "d_ctrl": 0.6228680184238193,
+          "delta": 9.484972703854506,
+          "r_own": 128.7501136560659,
+          "r_other": 138.85795437834423,
+          "n_classes": 3,
+          "n_units_B": 506
+        },
+        "prefrontal->motor": {
+          "d_cross": -4.067423263687715,
+          "d_ctrl": -1.0870173749561367,
+          "delta": -2.9804058887315783,
+          "r_own": 78.53041809778526,
+          "r_other": 74.46299483409754,
+          "n_classes": 3,
+          "n_units_B": 552
+        }
+      },
+      "primary_stat": 3.252283407561464
+    },
+    {
+      "session": "sub-Tatum/sub-Tatum_ses-20171209T120000.nwb",
+      "bands": {},
+      "n_trials": 199,
+      "n_train": 96,
+      "n_test": 30,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    },
+    {
+      "session": "sub-Theiler/sub-Theiler_ses-20171011T120000.nwb",
+      "bands": {
+        "visual": 416
+      },
+      "n_trials": 343,
+      "n_train": 174,
+      "n_test": 58,
+      "decode": {},
+      "pairs": {},
+      "skip": "带不足两个或 trial 不够"
+    }
+  ],
+  "per_pair": {
+    "motor->prefrontal": {
+      "n": 8,
+      "median": 3.0284347911704934,
+      "n_pos": 7,
+      "p_sign": 0.0703125,
+      "n_zero": 0
+    },
+    "motor->visual": {
+      "n": 3,
+      "median": 3.682116006273671,
+      "n_pos": 3,
+      "p_sign": 0.25,
+      "n_zero": 0
+    },
+    "prefrontal->motor": {
+      "n": 8,
+      "median": 2.173122448710995,
+      "n_pos": 7,
+      "p_sign": 0.0703125,
+      "n_zero": 0
+    },
+    "prefrontal->visual": {
+      "n": 4,
+      "median": 5.441144669032185,
+      "n_pos": 4,
+      "p_sign": 0.125,
+      "n_zero": 0
+    },
+    "visual->motor": {
+      "n": 3,
+      "median": 0.9388605097239724,
+      "n_pos": 3,
+      "p_sign": 0.25,
+      "n_zero": 0
+    },
+    "visual->prefrontal": {
+      "n": 4,
+      "median": 3.7411554482370892,
+      "n_pos": 3,
+      "p_sign": 0.625,
+      "n_zero": 0
+    }
+  },
+  "c0_not_applicable": [
+    "sub-Cori/sub-Cori_ses-20161217T120000.nwb",
+    "sub-Cori/sub-Cori_ses-20161218T120000.nwb",
+    "sub-Forssmann/sub-Forssmann_ses-20171101T120000.nwb",
+    "sub-Forssmann/sub-Forssmann_ses-20171102T120000.nwb",
+    "sub-Forssmann/sub-Forssmann_ses-20171104T120000.nwb",
+    "sub-Forssmann/sub-Forssmann_ses-20171105T120000.nwb",
+    "sub-Hench/sub-Hench_ses-20170617T120000.nwb",
+    "sub-Hench/sub-Hench_ses-20170618T120000.nwb",
+    "sub-Lederberg/sub-Lederberg_ses-20171206T120000.nwb",
+    "sub-Lederberg/sub-Lederberg_ses-20171208T120000.nwb",
+    "sub-Lederberg/sub-Lederberg_ses-20171209T120000.nwb",
+    "sub-Lederberg/sub-Lederberg_ses-20171210T120000.nwb",
+    "sub-Lederberg/sub-Lederberg_ses-20171211T120000.nwb",
+    "sub-Moniz/sub-Moniz_ses-20170515T120000.nwb",
+    "sub-Moniz/sub-Moniz_ses-20170516T120000.nwb",
+    "sub-Moniz/sub-Moniz_ses-20170518T120000.nwb",
+    "sub-Muller/sub-Muller_ses-20170108T120000.nwb",
+    "sub-Muller/sub-Muller_ses-20170109T120000.nwb",
+    "sub-Radnitz/sub-Radnitz_ses-20170109T120000.nwb",
+    "sub-Radnitz/sub-Radnitz_ses-20170110T120000.nwb",
+    "sub-Radnitz/sub-Radnitz_ses-20170111T120000.nwb",
+    "sub-Radnitz/sub-Radnitz_ses-20170112T120000.nwb",
+    "sub-Richards/sub-Richards_ses-20171029T120000.nwb",
+    "sub-Richards/sub-Richards_ses-20171030T120000.nwb",
+    "sub-Richards/sub-Richards_ses-20171101T120000.nwb",
+    "sub-Richards/sub-Richards_ses-20171102T120000.nwb",
+    "sub-Tatum/sub-Tatum_ses-20171206T120000.nwb",
+    "sub-Tatum/sub-Tatum_ses-20171207T120000.nwb",
+    "sub-Tatum/sub-Tatum_ses-20171209T120000.nwb",
+    "sub-Theiler/sub-Theiler_ses-20171011T120000.nwb"
+  ],
+  "c0_real_failures": {
+    "sub-Cori/sub-Cori_ses-20161214T120000.nwb": [
+      "prefrontal: acc=0.480 p=0.294"
+    ],
+    "sub-Hench/sub-Hench_ses-20170615T120000.nwb": [
+      "motor: acc=0.458 p=0.275"
+    ],
+    "sub-Hench/sub-Hench_ses-20170616T120000.nwb": [
+      "visual: acc=0.536 p=0.059"
+    ],
+    "sub-Lederberg/sub-Lederberg_ses-20171205T120000.nwb": [
+      "visual: acc=0.329 p=0.686",
+      "motor: acc=0.476 p=0.118",
+      "prefrontal: acc=0.329 p=0.706"
+    ],
+    "sub-Lederberg/sub-Lederberg_ses-20171207T120000.nwb": [
+      "visual: acc=0.458 p=0.275"
+    ],
+    "sub-Muller/sub-Muller_ses-20170107T120000.nwb": [
+      "motor: acc=0.440 p=0.098"
+    ],
+    "sub-Richards/sub-Richards_ses-20171031T120000.nwb": [
+      "motor: acc=0.511 p=0.137",
+      "prefrontal: acc=0.444 p=0.314"
+    ],
+    "sub-Tatum/sub-Tatum_ses-20171208T120000.nwb": [
+      "prefrontal: acc=0.500 p=0.235"
+    ]
+  },
+  "note": "**鼠 ≠ 人**：本实验只回答「判据① 有没有判别力」，**不回填**「三个原语还是两个」（人 EEG 的问题）"
+}

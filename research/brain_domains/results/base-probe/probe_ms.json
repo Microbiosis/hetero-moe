@@ -1,0 +1,49 @@
+{
+  "_说明": "2026-10-23 云端实测（探针 v10：预热1次+计时3次取中位，bs=32）",
+  "_来源": "hf jobs bp2-{cpu-upgrade,t4-small,a10g-small,l4x1,a100-large}",
+  "cpu-upgrade": {
+    "cbramod": 24.747,
+    "mirepnet": 9.132,
+    "eegdino-small": 18.798,
+    "biot": 15.692,
+    "labram": 452.711,
+    "signal-jepa": 5.862,
+    "braintokenizer": 49.859
+  },
+  "t4-small": {
+    "cbramod": 14.549,
+    "mirepnet": 6.157,
+    "eegdino-small": 10.278,
+    "biot": 8.999,
+    "labram": 710.195,
+    "signal-jepa": 2.854,
+    "braintokenizer": 41.378
+  },
+  "a10g-small": {
+    "cbramod": 17.179,
+    "mirepnet": 10.953,
+    "eegdino-small": 12.522,
+    "biot": 14.133,
+    "labram": 906.246,
+    "signal-jepa": 3.285,
+    "braintokenizer": 49.237
+  },
+  "l4x1": {
+    "cbramod": 9.076,
+    "mirepnet": 3.791,
+    "eegdino-small": 7.052,
+    "biot": 6.163,
+    "labram": 393.307,
+    "signal-jepa": 1.772,
+    "braintokenizer": 21.667
+  },
+  "a100-large": {
+    "cbramod": 15.85,
+    "mirepnet": 6.113,
+    "eegdino-small": 15.711,
+    "biot": 12.338,
+    "labram": 303.81,
+    "signal-jepa": 3.167,
+    "braintokenizer": 40.441
+  }
+}

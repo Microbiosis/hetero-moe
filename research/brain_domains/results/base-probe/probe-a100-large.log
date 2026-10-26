@@ -1,0 +1,46 @@
+/usr/local/lib/python3.13/site-packages/braindecode/models/eegpt.py:497: FutureWarning: Montage name 'standard_1020' is deprecated and will be removed in MNE 1.14. Use 'colin27_1020' instead.
+  montage = mne.channels.make_standard_montage("standard_1020")
+/usr/local/lib/python3.13/site-packages/braindecode/models/eegpt.py:1452: FutureWarning: Montage name 'standard_1020' is deprecated and will be removed in MNE 1.14. Use 'colin27_1020' instead.
+  montage = make_standard_montage("standard_1020")
+braindecode: {'pip_rc': 0, 'version': '1.8.1', 'ok': True}
+braindecode.models 类数：137
+
+===== 探测 cbramod =====
+Loading weights from local directory
+  ✗ 探测过程异常：ValueError: Attempted to use an uninitialized parameter in <method 'numel' of 'torch._C.TensorBase' objects>. This error happens when you are using a `LazyModule` or explicitly manipulating `torch.nn.parameter.UninitializedParameter` objects. When using LazyModules Call `forward` with a dummy batch to initialize the parameters before calling torch functions
+  ✗ 探测过程异常：ValueError: Attempted to use an uninitialized parameter in <method 'numel' of 'torch._C.TensorBase' objects>. This error happens when you are using a `LazyModule` or explicitly manipulating `torch.nn.parameter.UninitializedParameter` objects. When using LazyModules Call `forward` with a dummy
+
+===== 探测 mirepnet =====
+  ✗ braindecode 里没有候选类 ['MIRepNet', 'MIRepnet']
+
+===== 探测 eegdino-small =====
+Loading weights from local directory
+  ✓ eegdino-small: 参数 4,539,596 | 前向 [8, 2] | bs8 25.242 ms/试次 | bs32 15.84 ms/试次 | 载入 from_pretrained(local)
+
+===== 探测 biot =====
+Loading weights from local directory
+/usr/local/lib/python3.13/site-packages/torch/functional.py:680: UserWarning: A window was not provided. A rectangular window will be applied,which is known to cause spectral leakage. Other windows such as torch.hann_window or torch.hamming_window are recommended to reduce spectral leakage.To suppress this warning and use a rectangular window, explicitly set `window=torch.ones(n_fft, device=<device>)`. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/native/SpectralOps.cpp:854.)
+  return _VF.stft(  # type: ignore[attr-defined]
+  ✓ biot: 参数 3,187,202 | 前向 [8, 2] | bs8 35.606 ms/试次 | bs32 15.584 ms/试次 | 载入 from_pretrained(local)
+
+===== 探测 labram =====
+  ✗ braindecode 里没有候选类 ['LaBraM', 'LabRAM']
+
+===== 探测 signal-jepa =====
+/usr/local/lib/python3.13/site-packages/braindecode/models/base.py:296: UserWarning: Modifying chs_info argument using the _deserialize_chs_info() method
+  warnings.warn(
+Loading weights from local directory
+  ✗ 探测过程异常：ValueError: n_times could not be inferred. Either specify n_times or input_window_seconds and sfreq.
+  ✗ 探测过程异常：ValueError: n_times could not be inferred. Either specify n_times or input_window_seconds and sfreq.
+
+===== 探测 braintokenizer =====
+  ✗ braindecode 里没有候选类 ['BrainTokenizer', 'BrainTok']
+
+===== THINGS-EEG 通道名 =====
+{"path": "/training/eeg/things-eeg/Preprocessed_data_250Hz_whiten/sub-01/test.pt", "keys": ["eeg", "label", "img", "text", "session", "ch_names", "times"], "shape_eeg": [200, 80, 63, 250], "shape_label": [200, 80], "shape_img": [200, 80], "shape_text": [200, 80], "shape_session": [200, 80], "names_ch_names": ["Fp1", "Fp2", "AF7", "AF3", "AFz", "AF4", "AF8", "F7", "F5", "F3", "F1", "F2", "F4", "F6", "F8", "FT9", "FT7", "FC5", "FC3", "FC1", "FCz", "FC2", "FC4", "FC6", "FT8", "FT10", "T7", "C5", "C3", "C1", "Cz", "C2", "C4", "C6", "T8", "TP9", "TP7", "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6", "TP8", "TP10", "P7", "P5", "P3", "P1", "Pz", "P2", "P4", "P6", "P8", "PO7", "PO3", "POz", "PO4", "PO8", "O1", "Oz", "O2"], "shape_times": [300]}
+
+======================================================================
+装载成功 2/7 → ['eegdino-small', 'biot']
+耗时 43s
+Hint: If the job is still running, use `hf jobs logs -f redmingwei/6adacd4ec191903149a79464` to stream new logs until it completes.
+

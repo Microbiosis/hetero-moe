@@ -1,0 +1,254 @@
+{
+  "decision": {
+    "self_consistency_exp93b": {
+      "zeroshot_acc1": {
+        "published": 0.0589,
+        "got": 0.06225,
+        "tol": 0.02,
+        "ok": true
+      },
+      "zeroshot_acc1_featavg": {
+        "published": 0.23,
+        "got": 0.225,
+        "tol": 0.06,
+        "ok": true
+      },
+      "rsa": {
+        "published": 0.1273,
+        "got": 0.12104827713691062,
+        "tol": 0.045,
+        "ok": true
+      },
+      "zeroshot_acc5": {
+        "published": 0.1875,
+        "got": 0.1978125,
+        "tol": 0.04,
+        "ok": true
+      }
+    },
+    "job_drift_vs_exp94": {
+      "zeroshot_acc1": {
+        "exp94": 0.0626875,
+        "got": 0.06225,
+        "tol": 0.01,
+        "ok": true
+      },
+      "zeroshot_acc1_featavg": {
+        "exp94": 0.215,
+        "got": 0.225,
+        "tol": 0.03,
+        "ok": true
+      },
+      "rsa": {
+        "exp94": 0.11921705748210504,
+        "got": 0.12104827713691062,
+        "tol": 0.02,
+        "ok": true
+      },
+      "zeroshot_acc5": {
+        "exp94": 0.1943125,
+        "got": 0.1978125,
+        "tol": 0.025,
+        "ok": true
+      }
+    },
+    "self_consistency_pass": true,
+    "paired_v2_minus_v1": {
+      "zeroshot_acc1": {
+        "n": 10,
+        "diffs": [
+          -0.003375000000000003,
+          -0.004812499999999997,
+          -0.0080625,
+          0.0,
+          -0.005500000000000005,
+          -0.00037500000000000033,
+          -0.007062499999999999,
+          -0.0051250000000000046,
+          -0.0049999999999999975,
+          0.0036874999999999963
+        ],
+        "median_diff": -0.004812499999999997,
+        "n_pos": 1,
+        "p_sign": 0.021484375
+      },
+      "zeroshot_acc1_featavg": {
+        "n": 10,
+        "diffs": [
+          0.0,
+          -0.01999999999999999,
+          -0.044999999999999984,
+          -0.025000000000000022,
+          -0.035,
+          0.0050000000000000044,
+          -0.015000000000000013,
+          0.0,
+          -0.01999999999999999,
+          -0.0050000000000000044
+        ],
+        "median_diff": -0.015000000000000013,
+        "n_pos": 1,
+        "p_sign": 0.021484375
+      },
+      "rsa": {
+        "n": 10,
+        "diffs": [
+          -0.010335618823096929,
+          0.0003665843405171315,
+          -0.004089763275277214,
+          0.0033382807030825634,
+          -0.004557807449243431,
+          0.0035339826125306284,
+          -0.004449898701425231,
+          -0.0017475190790415401,
+          0.003021749118833836,
+          0.003020750887605478
+        ],
+        "median_diff": 0.0003665843405171315,
+        "n_pos": 5,
+        "p_sign": 1.0
+      }
+    },
+    "paired_ok": true,
+    "H1_hybrid_better": false,
+    "H1_detail": {
+      "C1_single_trial": {
+        "v1": 0.06225,
+        "v2": 0.061875,
+        "median_diff": -0.004812499999999997,
+        "n_pos": 1,
+        "n": 10,
+        "p": 0.021484375
+      },
+      "C2_trial_avg": {
+        "v1": 0.225,
+        "v2": 0.23,
+        "median_diff": -0.015000000000000013,
+        "n_pos": 1,
+        "n": 10,
+        "p": 0.021484375
+      },
+      "C3_rsa": {
+        "v1": 0.12104827713691062,
+        "v2": 0.12339261414005623,
+        "median_diff": 0.0003665843405171315,
+        "n_pos": 5,
+        "n": 10,
+        "p": 1.0
+      }
+    },
+    "readout_consistent": false,
+    "R4_note": "⚠️ 三条读出方向**不一致** ⇒ 不得下「V2 全面更强」的单句结论",
+    "posaxis": {
+      "v1": {
+        "post_above_all_rand34": 9,
+        "ant_below_all_rand29": 10,
+        "post_minus_ant_median": 0.05675,
+        "post_acc1_median": 0.0625,
+        "ant_acc1_median": 0.00575,
+        "n": 10
+      },
+      "v2": {
+        "post_above_all_rand34": 9,
+        "ant_below_all_rand29": 10,
+        "post_minus_ant_median": 0.05625,
+        "post_acc1_median": 0.061,
+        "ant_acc1_median": 0.0055,
+        "n": 10
+      }
+    },
+    "H2_posaxis_not_worse": true,
+    "verdict": "HYBRID_WORSE"
+  },
+  "decision_recomputed": true,
+  "decision_raw_job": null,
+  "summaries": {
+    "v1": {
+      "zeroshot_acc1": 0.06225,
+      "zeroshot_acc1_featavg": 0.225,
+      "zeroshot_acc5": 0.1978125,
+      "ridge_feat_acc1": 0.0325625,
+      "rsa": 0.12104827713691062,
+      "n_ok": 10,
+      "n_err": 0
+    },
+    "v2": {
+      "zeroshot_acc1": 0.061875,
+      "zeroshot_acc1_featavg": 0.23,
+      "zeroshot_acc5": 0.196125,
+      "ridge_feat_acc1": 0.031125,
+      "rsa": 0.12339261414005623,
+      "n_ok": 10,
+      "n_err": 0
+    }
+  },
+  "missing_variants": [],
+  "self_consistency_exp93b": {
+    "zeroshot_acc1": {
+      "published": 0.0589,
+      "got": 0.06225,
+      "tol": 0.02,
+      "ok": true
+    },
+    "zeroshot_acc1_featavg": {
+      "published": 0.23,
+      "got": 0.225,
+      "tol": 0.06,
+      "ok": true
+    },
+    "rsa": {
+      "published": 0.1273,
+      "got": 0.12104827713691062,
+      "tol": 0.045,
+      "ok": true
+    },
+    "zeroshot_acc5": {
+      "published": 0.1875,
+      "got": 0.1978125,
+      "tol": 0.04,
+      "ok": true
+    }
+  },
+  "job_drift_vs_exp94": {
+    "zeroshot_acc1": {
+      "exp94": 0.0626875,
+      "got": 0.06225,
+      "tol": 0.01,
+      "ok": true
+    },
+    "zeroshot_acc1_featavg": {
+      "exp94": 0.215,
+      "got": 0.225,
+      "tol": 0.03,
+      "ok": true
+    },
+    "rsa": {
+      "exp94": 0.11921705748210504,
+      "got": 0.12104827713691062,
+      "tol": 0.02,
+      "ok": true
+    },
+    "zeroshot_acc5": {
+      "exp94": 0.1943125,
+      "got": 0.1978125,
+      "tol": 0.025,
+      "ok": true
+    }
+  },
+  "posaxis_v1": {
+    "post_above_all_rand34": 9,
+    "ant_below_all_rand29": 10,
+    "post_minus_ant_median": 0.05675,
+    "post_acc1_median": 0.0625,
+    "ant_acc1_median": 0.00575,
+    "n": 10
+  },
+  "posaxis_v2": {
+    "post_above_all_rand34": 9,
+    "ant_below_all_rand29": 10,
+    "post_minus_ant_median": 0.05625,
+    "post_acc1_median": 0.061,
+    "ant_acc1_median": 0.0055,
+    "n": 10
+  }
+}

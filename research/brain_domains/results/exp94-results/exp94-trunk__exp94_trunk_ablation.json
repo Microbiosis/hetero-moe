@@ -1,0 +1,1752 @@
+{
+  "config": {
+    "train_subjects": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "eval_subjects": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "variants": "v0,v1",
+    "epochs": 30,
+    "steps_per_epoch": 1000,
+    "batch": 256,
+    "lr": 0.001,
+    "temp": 0.07,
+    "val_frac": 0.02,
+    "align_check_images": 1500,
+    "align_check_perm": 100,
+    "ridge_train_images": 4000,
+    "min_val_acc1": 0.008,
+    "guard_epoch": 3,
+    "pa_reps": 20,
+    "pa_rand": 3,
+    "pa_perm": 100,
+    "skip_posaxis": false,
+    "out_dir": "/domains/runs/illusionbrain-align/exp94-trunk",
+    "self_test": false
+  },
+  "align": {
+    "label_match_frac": 1.0,
+    "concept_block_order_ok": true,
+    "nn_same_block_frac": 1.0,
+    "rsa_r": 0.005167476121457357,
+    "rsa_p": 0.009900990099009901
+  },
+  "summaries": {
+    "v0": {
+      "zeroshot_acc1": 0.05725,
+      "zeroshot_acc1_featavg": 0.21,
+      "zeroshot_acc5": 0.1830625,
+      "ridge_feat_acc1": 0.027875,
+      "rsa": 0.12008312877506573,
+      "n_ok": 10,
+      "n_err": 0
+    },
+    "v1": {
+      "zeroshot_acc1": 0.0626875,
+      "zeroshot_acc1_featavg": 0.215,
+      "zeroshot_acc5": 0.1943125,
+      "ridge_feat_acc1": 0.029875,
+      "rsa": 0.11921705748210504,
+      "n_ok": 10,
+      "n_err": 0
+    }
+  },
+  "per_subject": {
+    "v0": [
+      {
+        "subject": "sub-01",
+        "zeroshot": {
+          "acc1_cos": 0.051,
+          "acc5_cos": 0.1751875,
+          "acc1_featavg_cos": 0.21
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.026375,
+          "acc1_featavg_cos": 0.04,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.09154294350489152,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.05225,
+              "acc1_featavg": 0.185,
+              "rsa": 0.09052700491034849,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.055,
+              "acc1_featavg": 0.175,
+              "rsa": 0.08790862193513228,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.005,
+              "acc1_featavg": 0.005,
+              "rsa": 0.00755089355190675,
+              "rsa_p": 0.10891089108910891
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.0305,
+              "acc1_featavg": 0.08
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.01025,
+              "acc1_featavg": 0.01
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.016,
+              "acc1_featavg": 0.01
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.00925,
+              "acc1_featavg": 0.01
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.045,
+              "acc1_featavg": 0.135
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.00575,
+              "acc1_featavg": 0.01
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.05
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-02",
+        "zeroshot": {
+          "acc1_cos": 0.04875,
+          "acc5_cos": 0.171125,
+          "acc1_featavg_cos": 0.195
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.025375,
+          "acc1_featavg_cos": 0.035,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.1074488920243541,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.04825,
+              "acc1_featavg": 0.155,
+              "rsa": 0.09387671527305813,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.0465,
+              "acc1_featavg": 0.14,
+              "rsa": 0.09219390919835647,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.005,
+              "acc1_featavg": 0.005,
+              "rsa": 0.0017024543497110869,
+              "rsa_p": 0.7425742574257426
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.01025,
+              "acc1_featavg": 0.015
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.0355,
+              "acc1_featavg": 0.085
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.012,
+              "acc1_featavg": 0.025
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.006,
+              "acc1_featavg": 0.01
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.028,
+              "acc1_featavg": 0.06
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.008,
+              "acc1_featavg": 0.005
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.0415
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-03",
+        "zeroshot": {
+          "acc1_cos": 0.063875,
+          "acc5_cos": 0.2073125,
+          "acc1_featavg_cos": 0.21
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.0315625,
+          "acc1_featavg_cos": 0.05,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.13126912934362675,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.06225,
+              "acc1_featavg": 0.195,
+              "rsa": 0.1218943326234081,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.06025,
+              "acc1_featavg": 0.195,
+              "rsa": 0.12114228042496913,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.007,
+              "acc1_featavg": 0.005,
+              "rsa": 0.004931555272656044,
+              "rsa_p": 0.4158415841584158
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.0085,
+              "acc1_featavg": 0.005
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.03525,
+              "acc1_featavg": 0.065
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.0155,
+              "acc1_featavg": 0.025
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.02675,
+              "acc1_featavg": 0.075
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.04775,
+              "acc1_featavg": 0.15
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.023,
+              "acc1_featavg": 0.03
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.05325
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-04",
+        "zeroshot": {
+          "acc1_cos": 0.05725,
+          "acc5_cos": 0.1830625,
+          "acc1_featavg_cos": 0.24
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.0300625,
+          "acc1_featavg_cos": 0.06,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.14015586895375615,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.0595,
+              "acc1_featavg": 0.205,
+              "rsa": 0.12976590660409718,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.061,
+              "acc1_featavg": 0.2,
+              "rsa": 0.12960657357685257,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.00575,
+              "acc1_featavg": 0.005,
+              "rsa": 0.003205183482091038,
+              "rsa_p": 0.6138613861386139
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.0385,
+              "acc1_featavg": 0.11
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.05875,
+              "acc1_featavg": 0.205
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.042,
+              "acc1_featavg": 0.115
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.0115,
+              "acc1_featavg": 0.015
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.04525,
+              "acc1_featavg": 0.155
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.01325,
+              "acc1_featavg": 0.025
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.05525
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-05",
+        "zeroshot": {
+          "acc1_cos": 0.0380625,
+          "acc5_cos": 0.138625,
+          "acc1_featavg_cos": 0.13
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.0204375,
+          "acc1_featavg_cos": 0.03,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.11755481068879926,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.036,
+              "acc1_featavg": 0.12,
+              "rsa": 0.10355761884912512,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.036,
+              "acc1_featavg": 0.115,
+              "rsa": 0.10400192644869233,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.005,
+              "acc1_featavg": 0.005,
+              "rsa": 0.005824267502496057,
+              "rsa_p": 0.25742574257425743
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.00625,
+              "acc1_featavg": 0.005
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.00875,
+              "acc1_featavg": 0.005
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.03075,
+              "acc1_featavg": 0.085
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.00875,
+              "acc1_featavg": 0.01
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.00575,
+              "acc1_featavg": 0.005
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.02475,
+              "acc1_featavg": 0.08
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.030999999999999996
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-06",
+        "zeroshot": {
+          "acc1_cos": 0.0616875,
+          "acc5_cos": 0.19875,
+          "acc1_featavg_cos": 0.205
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.027875,
+          "acc1_featavg_cos": 0.045,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.11703125392231249,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.0555,
+              "acc1_featavg": 0.17,
+              "rsa": 0.09796156554767413,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.055,
+              "acc1_featavg": 0.16,
+              "rsa": 0.09687073742335166,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.00575,
+              "acc1_featavg": 0.005,
+              "rsa": 0.006746357367282933,
+              "rsa_p": 0.2376237623762376
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.00675,
+              "acc1_featavg": 0.015
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.045,
+              "acc1_featavg": 0.12
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.03925,
+              "acc1_featavg": 0.06
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.00925,
+              "acc1_featavg": 0.01
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.00575,
+              "acc1_featavg": 0.005
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.00975,
+              "acc1_featavg": 0.02
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": false,
+            "post_minus_ant": 0.04925
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-07",
+        "zeroshot": {
+          "acc1_cos": 0.065375,
+          "acc5_cos": 0.2029375,
+          "acc1_featavg_cos": 0.195
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.02875,
+          "acc1_featavg_cos": 0.045,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.09651816279304548,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.07525,
+              "acc1_featavg": 0.165,
+              "rsa": 0.09415906451803542,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.07125,
+              "acc1_featavg": 0.165,
+              "rsa": 0.09301948182150718,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.004,
+              "acc1_featavg": 0.005,
+              "rsa": 0.012729707109995214,
+              "rsa_p": 0.0297029702970297
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.046,
+              "acc1_featavg": 0.11
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.01,
+              "acc1_featavg": 0.005
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.05975,
+              "acc1_featavg": 0.12
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.009,
+              "acc1_featavg": 0.005
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.009,
+              "acc1_featavg": 0.005
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.0335,
+              "acc1_featavg": 0.055
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.06724999999999999
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-08",
+        "zeroshot": {
+          "acc1_cos": 0.07375,
+          "acc5_cos": 0.2308125,
+          "acc1_featavg_cos": 0.235
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.0365,
+          "acc1_featavg_cos": 0.05,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.12739217897866703,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.07275,
+              "acc1_featavg": 0.195,
+              "rsa": 0.1151970718434502,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.07275,
+              "acc1_featavg": 0.2,
+              "rsa": 0.11229713868028472,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.005,
+              "acc1_featavg": 0.005,
+              "rsa": 0.02435769628840627,
+              "rsa_p": 0.009900990099009901
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.0145,
+              "acc1_featavg": 0.02
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.012,
+              "acc1_featavg": 0.015
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.01125,
+              "acc1_featavg": 0.01
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.0165,
+              "acc1_featavg": 0.025
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.04725,
+              "acc1_featavg": 0.14
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.0345,
+              "acc1_featavg": 0.07
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.06774999999999999
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-09",
+        "zeroshot": {
+          "acc1_cos": 0.04575,
+          "acc5_cos": 0.1523125,
+          "acc1_featavg_cos": 0.235
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.02475,
+          "acc1_featavg_cos": 0.06,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.12587534209987328,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.04975,
+              "acc1_featavg": 0.18,
+              "rsa": 0.10854000782071847,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.05075,
+              "acc1_featavg": 0.17,
+              "rsa": 0.107835832389636,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.00475,
+              "acc1_featavg": 0.005,
+              "rsa": 0.00971306992390935,
+              "rsa_p": 0.039603960396039604
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.01175,
+              "acc1_featavg": 0.015
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.041,
+              "acc1_featavg": 0.16
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.03875,
+              "acc1_featavg": 0.15
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.0345,
+              "acc1_featavg": 0.11
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.029,
+              "acc1_featavg": 0.08
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.008,
+              "acc1_featavg": 0.02
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.046000000000000006
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-10",
+        "zeroshot": {
+          "acc1_cos": 0.038,
+          "acc5_cos": 0.12975,
+          "acc1_featavg_cos": 0.12
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.026875,
+          "acc1_featavg_cos": 0.045,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.12008312877506573,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.03625,
+              "acc1_featavg": 0.08,
+              "rsa": 0.12077723314325052,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.04025,
+              "acc1_featavg": 0.085,
+              "rsa": 0.12081334414251829,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.005,
+              "acc1_featavg": 0.005,
+              "rsa": 0.006761239134049158,
+              "rsa_p": 0.12871287128712872
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.00775,
+              "acc1_featavg": 0.005
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.0355,
+              "acc1_featavg": 0.08
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.0235,
+              "acc1_featavg": 0.05
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.0145,
+              "acc1_featavg": 0.02
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.0095,
+              "acc1_featavg": 0.005
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.0095,
+              "acc1_featavg": 0.01
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.035250000000000004
+          },
+          "flat_dim": 1024
+        }
+      }
+    ],
+    "v1": [
+      {
+        "subject": "sub-01",
+        "zeroshot": {
+          "acc1_cos": 0.05525,
+          "acc5_cos": 0.1785625,
+          "acc1_featavg_cos": 0.215
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.0294375,
+          "acc1_featavg_cos": 0.055,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.08549544372519897,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.06375,
+              "acc1_featavg": 0.17,
+              "rsa": 0.0848871908911055,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.05975,
+              "acc1_featavg": 0.165,
+              "rsa": 0.08308297795501983,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.00575,
+              "acc1_featavg": 0.005,
+              "rsa": 0.012793457289552456,
+              "rsa_p": 0.019801980198019802
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.03775,
+              "acc1_featavg": 0.09
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.02025,
+              "acc1_featavg": 0.02
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.02575,
+              "acc1_featavg": 0.065
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.01475,
+              "acc1_featavg": 0.015
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.04625,
+              "acc1_featavg": 0.12
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.008,
+              "acc1_featavg": 0.01
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.054
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-02",
+        "zeroshot": {
+          "acc1_cos": 0.052875,
+          "acc5_cos": 0.1851875,
+          "acc1_featavg_cos": 0.2
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.0260625,
+          "acc1_featavg_cos": 0.045,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.10921066691063615,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.049,
+              "acc1_featavg": 0.155,
+              "rsa": 0.0950153566472302,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.04725,
+              "acc1_featavg": 0.165,
+              "rsa": 0.09339580308077806,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.00825,
+              "acc1_featavg": 0.015,
+              "rsa": 0.008163737677105303,
+              "rsa_p": 0.06930693069306931
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.01275,
+              "acc1_featavg": 0.015
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.03825,
+              "acc1_featavg": 0.085
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.0175,
+              "acc1_featavg": 0.045
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.012,
+              "acc1_featavg": 0.035
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.0315,
+              "acc1_featavg": 0.08
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.012,
+              "acc1_featavg": 0.015
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.039
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-03",
+        "zeroshot": {
+          "acc1_cos": 0.0681875,
+          "acc5_cos": 0.2235,
+          "acc1_featavg_cos": 0.25
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.0308125,
+          "acc1_featavg_cos": 0.055,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.12337813844191602,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.06975,
+              "acc1_featavg": 0.205,
+              "rsa": 0.11471899992055275,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.06725,
+              "acc1_featavg": 0.205,
+              "rsa": 0.11421426460816797,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.006,
+              "acc1_featavg": 0.01,
+              "rsa": 0.0011914986781729185,
+              "rsa_p": 0.8811881188118812
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.012,
+              "acc1_featavg": 0.015
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.0355,
+              "acc1_featavg": 0.055
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.018,
+              "acc1_featavg": 0.04
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.0345,
+              "acc1_featavg": 0.08
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.0545,
+              "acc1_featavg": 0.115
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.033,
+              "acc1_featavg": 0.06
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.061250000000000006
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-04",
+        "zeroshot": {
+          "acc1_cos": 0.0626875,
+          "acc5_cos": 0.1943125,
+          "acc1_featavg_cos": 0.245
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.0321875,
+          "acc1_featavg_cos": 0.06,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.13593185230120755,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.069,
+              "acc1_featavg": 0.235,
+              "rsa": 0.12761467801413726,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.06925,
+              "acc1_featavg": 0.24,
+              "rsa": 0.12782749660422604,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.00425,
+              "acc1_featavg": 0.005,
+              "rsa": 0.008242963770144246,
+              "rsa_p": 0.04950495049504951
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.04625,
+              "acc1_featavg": 0.105
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.062,
+              "acc1_featavg": 0.19
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.04825,
+              "acc1_featavg": 0.155
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.01475,
+              "acc1_featavg": 0.02
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.047,
+              "acc1_featavg": 0.125
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.015,
+              "acc1_featavg": 0.025
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.065
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-05",
+        "zeroshot": {
+          "acc1_cos": 0.0464375,
+          "acc5_cos": 0.1628125,
+          "acc1_featavg_cos": 0.165
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.0213125,
+          "acc1_featavg_cos": 0.03,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.11426236084767427,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.04575,
+              "acc1_featavg": 0.16,
+              "rsa": 0.10271757674969628,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.0425,
+              "acc1_featavg": 0.145,
+              "rsa": 0.10104958615289102,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.00625,
+              "acc1_featavg": 0.005,
+              "rsa": 0.00012905649768097884,
+              "rsa_p": 1.0
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.00625,
+              "acc1_featavg": 0.005
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.01325,
+              "acc1_featavg": 0.01
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.03225,
+              "acc1_featavg": 0.095
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.016,
+              "acc1_featavg": 0.015
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.01475,
+              "acc1_featavg": 0.01
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.03225,
+              "acc1_featavg": 0.115
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.036250000000000004
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-06",
+        "zeroshot": {
+          "acc1_cos": 0.07075,
+          "acc5_cos": 0.221875,
+          "acc1_featavg_cos": 0.22
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.03225,
+          "acc1_featavg_cos": 0.04,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.11727832143442886,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.0675,
+              "acc1_featavg": 0.185,
+              "rsa": 0.09788537912053627,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.065,
+              "acc1_featavg": 0.18,
+              "rsa": 0.09601285628296223,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.0055,
+              "acc1_featavg": 0.0,
+              "rsa": 0.00920941510502785,
+              "rsa_p": 0.07920792079207921
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.01925,
+              "acc1_featavg": 0.025
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.05325,
+              "acc1_featavg": 0.12
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.04925,
+              "acc1_featavg": 0.115
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.013,
+              "acc1_featavg": 0.015
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.01175,
+              "acc1_featavg": 0.01
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.01625,
+              "acc1_featavg": 0.015
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.059500000000000004
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-07",
+        "zeroshot": {
+          "acc1_cos": 0.0700625,
+          "acc5_cos": 0.224125,
+          "acc1_featavg_cos": 0.175
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.029875,
+          "acc1_featavg_cos": 0.045,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.10487735349902455,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.07225,
+              "acc1_featavg": 0.18,
+              "rsa": 0.10378158510961585,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.07575,
+              "acc1_featavg": 0.15,
+              "rsa": 0.10091529873201446,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.00525,
+              "acc1_featavg": 0.0,
+              "rsa": 0.004878283365144938,
+              "rsa_p": 0.25742574257425743
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.044,
+              "acc1_featavg": 0.085
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.0225,
+              "acc1_featavg": 0.03
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.0595,
+              "acc1_featavg": 0.135
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.00875,
+              "acc1_featavg": 0.01
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.02125,
+              "acc1_featavg": 0.04
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.037,
+              "acc1_featavg": 0.065
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.0705
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-08",
+        "zeroshot": {
+          "acc1_cos": 0.081375,
+          "acc5_cos": 0.242375,
+          "acc1_featavg_cos": 0.26
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.03525,
+          "acc1_featavg_cos": 0.065,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.12178803665046044,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.077,
+              "acc1_featavg": 0.21,
+              "rsa": 0.11082721320872456,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.08075,
+              "acc1_featavg": 0.215,
+              "rsa": 0.10900157607170868,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.00325,
+              "acc1_featavg": 0.005,
+              "rsa": 0.024208030891273595,
+              "rsa_p": 0.009900990099009901
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.01525,
+              "acc1_featavg": 0.015
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.01325,
+              "acc1_featavg": 0.005
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.01975,
+              "acc1_featavg": 0.03
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.0265,
+              "acc1_featavg": 0.025
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.05,
+              "acc1_featavg": 0.13
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.0355,
+              "acc1_featavg": 0.07
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.0775
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-09",
+        "zeroshot": {
+          "acc1_cos": 0.0504375,
+          "acc5_cos": 0.1659375,
+          "acc1_featavg_cos": 0.195
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.02625,
+          "acc1_featavg_cos": 0.055,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.11921705748210504,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.05775,
+              "acc1_featavg": 0.2,
+              "rsa": 0.10470192148586271,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.0565,
+              "acc1_featavg": 0.19,
+              "rsa": 0.10286214471653192,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.0065,
+              "acc1_featavg": 0.01,
+              "rsa": 0.011297861261666459,
+              "rsa_p": 0.0594059405940594
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.01875,
+              "acc1_featavg": 0.045
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.03925,
+              "acc1_featavg": 0.155
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.044,
+              "acc1_featavg": 0.145
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.0395,
+              "acc1_featavg": 0.16
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.02925,
+              "acc1_featavg": 0.085
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.0175,
+              "acc1_featavg": 0.025
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.05
+          },
+          "flat_dim": 1024
+        }
+      },
+      {
+        "subject": "sub-10",
+        "zeroshot": {
+          "acc1_cos": 0.03875,
+          "acc5_cos": 0.133875,
+          "acc1_featavg_cos": 0.1
+        },
+        "ridge_feat": {
+          "acc1_cos": 0.0293125,
+          "acc1_featavg_cos": 0.045,
+          "n_train_images": 4000
+        },
+        "rsa": {
+          "r": 0.12309014455950543,
+          "p": 0.009900990099009901
+        },
+        "posaxis": {
+          "groups": {
+            "ALL": {
+              "n_ch": 63,
+              "acc1": 0.0385,
+              "acc1_featavg": 0.06,
+              "rsa": 0.12247134706551872,
+              "rsa_p": 0.009900990099009901
+            },
+            "POST": {
+              "n_ch": 34,
+              "acc1": 0.03975,
+              "acc1_featavg": 0.055,
+              "rsa": 0.11999099685897237,
+              "rsa_p": 0.009900990099009901
+            },
+            "ANT": {
+              "n_ch": 29,
+              "acc1": 0.00525,
+              "acc1_featavg": 0.01,
+              "rsa": 0.010563959148565076,
+              "rsa_p": 0.0297029702970297
+            },
+            "RND34_0": {
+              "n_ch": 34,
+              "acc1": 0.01075,
+              "acc1_featavg": 0.015
+            },
+            "RND34_1": {
+              "n_ch": 34,
+              "acc1": 0.035,
+              "acc1_featavg": 0.08
+            },
+            "RND34_2": {
+              "n_ch": 34,
+              "acc1": 0.031,
+              "acc1_featavg": 0.09
+            },
+            "RND29_0": {
+              "n_ch": 29,
+              "acc1": 0.0165,
+              "acc1_featavg": 0.05
+            },
+            "RND29_1": {
+              "n_ch": 29,
+              "acc1": 0.0095,
+              "acc1_featavg": 0.015
+            },
+            "RND29_2": {
+              "n_ch": 29,
+              "acc1": 0.00875,
+              "acc1_featavg": 0.015
+            }
+          },
+          "verdict": {
+            "post_above_all_rand34": true,
+            "ant_below_all_rand29": true,
+            "post_minus_ant": 0.0345
+          },
+          "flat_dim": 1024
+        }
+      }
+    ]
+  },
+  "train_best": {
+    "v0": {
+      "val_acc": 0.1,
+      "epoch": 13
+    },
+    "v1": {
+      "val_acc": 0.1175084175084175,
+      "epoch": 10
+    }
+  },
+  "decision": {
+    "self_consistency": {
+      "zeroshot_acc1": {
+        "published": 0.0589,
+        "got": 0.05725,
+        "tol": 0.02,
+        "ok": true
+      },
+      "zeroshot_acc1_featavg": {
+        "published": 0.23,
+        "got": 0.21,
+        "tol": 0.06,
+        "ok": true
+      },
+      "rsa": {
+        "published": 0.1273,
+        "got": 0.12008312877506573,
+        "tol": 0.045,
+        "ok": true
+      },
+      "zeroshot_acc5": {
+        "published": 0.1875,
+        "got": 0.1830625,
+        "tol": 0.04,
+        "ok": true
+      }
+    },
+    "self_consistency_pass": true,
+    "paired": {
+      "zeroshot_acc1": {
+        "n": 0,
+        "diffs": [],
+        "median_diff": null,
+        "n_pos": 0,
+        "p_sign": null
+      },
+      "zeroshot_acc1_featavg": {
+        "n": 0,
+        "diffs": [],
+        "median_diff": null,
+        "n_pos": 0,
+        "p_sign": null
+      },
+      "rsa": {
+        "n": 0,
+        "diffs": [],
+        "median_diff": null,
+        "n_pos": 0,
+        "p_sign": null
+      }
+    },
+    "H1_channel_identity_helps": false,
+    "H1_detail": {
+      "C1_single_trial": {
+        "v0": 0.05725,
+        "v1": 0.0626875,
+        "median_diff": null,
+        "n_pos": 0,
+        "n": 0,
+        "p": null
+      },
+      "C2_trial_avg": {
+        "v0": 0.21,
+        "v1": 0.215,
+        "median_diff": null,
+        "n_pos": 0,
+        "n": 0,
+        "p": null
+      },
+      "C3_rsa": {
+        "v0": 0.12008312877506573,
+        "v1": 0.11921705748210504,
+        "median_diff": null,
+        "n_pos": 0,
+        "n": 0,
+        "p": null
+      }
+    },
+    "readout_consistent": true,
+    "R4_note": "三条读出方向一致",
+    "posaxis": {
+      "v0": {
+        "post_above_all_rand34": 10,
+        "ant_below_all_rand29": 9,
+        "post_minus_ant_median": 0.05,
+        "post_acc1_median": 0.055,
+        "ant_acc1_median": 0.005,
+        "post_rsa_median": 0.107835832389636,
+        "n": 10
+      },
+      "v1": {
+        "post_above_all_rand34": 10,
+        "ant_below_all_rand29": 10,
+        "post_minus_ant_median": 0.059500000000000004,
+        "post_acc1_median": 0.065,
+        "ant_acc1_median": 0.00575,
+        "post_rsa_median": 0.10286214471653192,
+        "n": 10
+      }
+    },
+    "H2_posaxis_backbone_independent": true,
+    "H2_note": "两个骨干上都 POST>ANT ⇒ 位置轴结论**不是单一骨干的产物**",
+    "verdict": "H1_NOT_SUPPORTED_TRUNK_NOT_BOTTLENECK"
+  }
+}

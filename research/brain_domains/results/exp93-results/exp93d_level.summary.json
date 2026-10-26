@@ -1,0 +1,46 @@
+{
+  "n_subjects": 10,
+  "rows": [
+    {
+      "tag": "raw630",
+      "n": 10,
+      "median_up": 0.0320625,
+      "mean": 0.0323875,
+      "null_median": 0.0051875,
+      "ratio_to_chance": 6.4125
+    },
+    {
+      "tag": "s1b_recon",
+      "n": 10,
+      "median_up": 0.0256875,
+      "mean": 0.02471875,
+      "null_median": 0.005124999999999999,
+      "ratio_to_chance": 5.137499999999999
+    },
+    {
+      "tag": "s1a_recon",
+      "n": 10,
+      "median_up": 0.00925,
+      "mean": 0.0088375,
+      "null_median": 0.005187499999999999,
+      "ratio_to_chance": 1.8499999999999999
+    },
+    {
+      "tag": "s1b_onehot_mean",
+      "n": 10,
+      "median_up": 0.006875,
+      "mean": 0.0072625,
+      "null_median": 0.005156249999999999,
+      "ratio_to_chance": 1.375
+    },
+    {
+      "tag": "s1a_onehot_mean",
+      "n": 10,
+      "median_up": 0.0051875,
+      "mean": 0.005200000000000001,
+      "null_median": 0.00490625,
+      "ratio_to_chance": 1.0375
+    }
+  ],
+  "handcraft_baseline": 0.0321
+}

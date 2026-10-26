@@ -1,6 +1,6 @@
 # 脑域研究线（brain_domains）
 
-> 2026-10-14 至 2026-10-19 · 65 个实验脚本 · 26 份文档
+> 2026-10-14 至 2026-10-23 · 89 个实验脚本 · 26 份文档
 >
 > **一句话结论**：脑区/功能域标签在信息论意义上与活动信号**冗余**。
 > 但在这条探索路上，建立了**一个数据集、一套可信度量、32 条方法学教训**。
@@ -74,6 +74,11 @@
 | **exp53–55** | **ACF 的形状** | ❌ 非指数：R(2)>R(1)，无单一 τ |
 | **exp56–61** | **两个时间尺度** | ✅ `A·exp(−τ/t)+c`，τ≈390 ms；物种比 2.5×，对截断稳健 |
 | **exp62** | **小鼠 50 ms 外部检验** | ✅ **τ=497 ms 与猕猴 446 ms 同量级；bin 宽不是原因** |
+| **exp64–66** | **Tier 0 审计：RSA 缺陷定位与顺序对齐** | ✅ 三处实现缺陷结案；去 ERP 后 r=+0.0798 p=0.005，跨被试 10/10 |
+| **exp67–72** | **Tier 0 编码：ViT-H-14 → EEG** | ✅ R² +0.0196（img/BBB=1.03）；标度律；单试次 R² 10/10 显著 |
+| **exp73** | **Tier 0 解码：单试次 200 选 1** | ✅ **top-1 中位 0.0309 = 6.2× 随机，10/10 显著**；概念不相交协议 |
+| **exp74** | **多模型特征对比** | ✅ ViT-H-14 vs ViT-B-32 **打平**（144× 计算量换不来更好的脑解码）|
+| **B′/C/D** | **7 基模脑对齐表 + 逐 block 重组** | ✅ 脑对齐表 10/10 被试跑完（20 Job 全绿）；**阶段 D 完成**（20/20 干净数据）：① 零训练权重级嫁接被判死（648 个可比组合 compatible=0 ⇒ 跨模型重组**必须训练**）；② 供体资格赛：自训 tokenizer 重建层（+0.0177，10/10，p=0.0010）与 signal-jepa 第 0 层（+0.0178，10/10）完全通过，mirepnet 的 FFN **不通过**（接入后拉低宿主）；③ 顺带测出 cbramod 的语义在**空间模式**里而非特征均值里 |
 
 ---
 
@@ -195,6 +200,7 @@ hf://buckets/illusion-brain/brain-domains/
 ### 总览
 | 文件 | 内容 |
 |---|---|
+| `MODEL_FORM.md` | **模型形态判定书**：脑域线自己的形态判定与目标架构（脑原生三模态 born-native + S1–S4 阶梯 + 阶段 C/D 的定位）|
 | `PAPER_DRAFT.md` | **论文草稿**（摘要 + 10 节 + 附录，整合全部结论）|
 | `FINDINGS_SET_THEORY.md` | **集合论审计：标签只解释 0.05% 方差**（统一解释）|
 
@@ -240,6 +246,8 @@ hf://buckets/illusion-brain/brain-domains/
 |---|---|
 | `LITERATURE_ON_TIMESCALES.md` | iSTTC 论文等，解释 τ 为何脆弱 |
 | `ENGRAM_VS_BRAIN.md`（docs/）| DeepSeek Engram 与海马体对照 |
+| `MEMT_VS_HIPPOCAMPUS.md`（docs/）| MemT-1.0 记忆基础模型与海马体对照（可写 + 遗忘 + 读-写隔离）|
+| `FINDINGS_TIER0_RSA.md`（本目录）| **Tier 0 编码对齐全记录**：RSA 审计 → 7 基模脑对齐表 → 跨模型重组（零件资格赛）→ **自训 EEG 离散 tokenizer（S1a/S1b，§二十三：组件级组装，S1b 达成）**（含 23 节方法学失误与自我纠错留痕）|
 
 ---
 
@@ -275,6 +283,7 @@ hf://buckets/illusion-brain/brain-domains/
 ```
 research/brain_domains/
 ├── README.md                    本文件（索引）
+├── MODEL_FORM.md                模型形态判定书（脑域线自己的形态判定 + 目标架构 + S1–S4）
 ├── FINDINGS*.md                 17 份实验记录
 ├── LITERATURE_ON_TIMESCALES.md  文献核查
 ├── data/
@@ -287,5 +296,19 @@ research/brain_domains/
 │   ├── fast_scan.py             块并行扫描
 │   ├── domain_control.py        三臂对照
 │   └── trace_nan.py             NaN 诊断
-└── exp/                         65 个实验脚本（exp0–exp61）
+├── models/                      基模装配层（阶段 B′/C/D 的工具链）
+│   ├── probe_base_models.py     braindecode 装载探针（逐基模前向 + 吞吐 + 通道名）
+│   ├── registry.py              装载 → token 抽取 → 布局推断 → 池化（统一口径）
+│   ├── domain_adapters.py       THINGS-EEG → 各基模期望域（通道/采样率/窗口）
+│   ├── interfaces.py            统一组件接口（mixer 家族 / FFN / 投影 / block）
+│   ├── provenance.py            重组变体的诚实归因（逐组件权重状态 + 许可）
+│   ├── assembler.py             逐 block 拆 + 组装器 + 权重搬运核实
+│   ├── variants.py              阶段 D 变体：嫁接可行性判定 + 表征级拼接 + shuffle 对照
+│   └── gpu_cost_model.py        20 档位单价表 + 总费用最优档计算
+├── exp/                         89 个实验脚本（exp0–exp74 + eval_brain_alignment 等）
+│   ├── exp76_variant_structure.py  阶段 D 前置：6 基模结构勘查（block/token/权重形状）
+│   ├── exp77_variant_eval.py        阶段 D 变体评测（宿主 + 供体层拼接 + 对照）
+│   ├── exp78_pooling_axis.py        cbramod 池化轴的量化（as_is vs layout_aware）
+│   └── eval_brain_alignment.py      表评测本体（指标 A/B + 630-d 基线 + --link-check）
+└── results/                     结果与解析（基线表 / 逐层 / 结构 / 变体表）
 ```
