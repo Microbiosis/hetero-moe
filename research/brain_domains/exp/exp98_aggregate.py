@@ -30,19 +30,28 @@ JUDGE = "/domains/scripts/exp98_posneg_control.py"
 
 def main():
     import argparse
+    import importlib
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", default="/domains/runs/illusionbrain-align/exp98b")
+    ap.add_argument("--judge", default=JUDGE, help="被判决脚本（默认 = exp98 的）")
+    ap.add_argument("--out-name", default="exp98_posneg_control.json",
+                    help="最终结果文件名（默认 = exp98 的）")
     args = ap.parse_args()
     RUN = pathlib.Path(args.run)
-    if JUDGE not in sys.path:
-        sys.path.insert(0, str(pathlib.Path(JUDGE).parent))
-    import exp98_posneg_control as E98
+    jdir = str(pathlib.Path(args.judge).parent)
+    if jdir not in sys.path:
+        sys.path.insert(0, jdir)
+    mod = pathlib.Path(args.judge).stem
+    E98 = importlib.import_module(mod)
 
-    shards = sorted(RUN.glob("shard*/exp98_posneg_control.json"))
+    shards = sorted(RUN.glob(f"shard*/{args.out_name}"))
     print(f"分片结果 {len(shards)} 个", flush=True)
-    per_session, seen = [], set()
+    per_session, seen, criteria = [], set(), None
     for sp in shards:
         d = json.loads(sp.read_text(encoding="utf-8"))
+        if criteria is None:
+            # ⚠️ 判据描述**取被判决脚本自己写的**（不在这儿重抄 ⇒ 一条事实只写一处）
+            criteria = d.get("criteria")
         for r in d.get("per_session") or []:
             k = str(r.get("session"))
             if k in seen:
@@ -51,17 +60,10 @@ def main():
             per_session.append(r)
     print(f"合并后逐 session 记录 {len(per_session)} 条", flush=True)
     verdict = E98.decide(per_session)
-    payload = {"config": {"source": "exp98_aggregate", "n_shards": len(shards)},
-               "criteria": {
-                   "C0prime": "逐带可读性：能把刺激身份（118 张自然图像，空白屏已剔除）解码到显著高于机会"
-                              "（acc>1/118 且置换 p<0.05）；主对三区任一不过 ⇒ 该 session 剔除（排除规则与 Δ 无关）",
-                   "C1": "正/负对照分离：逐 session 统计量 = Δ(VISp↔VISam) − Δ(VISp↔VISl)；"
-                         "session 级符号检验 ≥8 session 且 p≤0.05 且中位>0",
-                   "C2": "退化守卫：主判据统计量不得是非零常数",
-                   "C3": "只报：其余带对（VISp↔VISrl/VISal/CA1/VISpm）、每带解码准确率",
-               },
+    payload = {"config": {"source": f"aggregate:{mod}", "n_shards": len(shards)},
+               "criteria": criteria,
                "per_session": per_session, "verdict": verdict}
-    (RUN / "exp98_posneg_control.json").write_text(
+    (RUN / args.out_name).write_text(
         json.dumps(payload, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     for r in per_session:
         print("===REC===" + json.dumps(r, ensure_ascii=False, default=str), flush=True)
@@ -71,11 +73,16 @@ def main():
           flush=True)
     print(f"  符号检验：{verdict['C1']['n_pos']}/{verdict['C1']['n_eff']} 正，"
           f"p={verdict['C1']['p']:.4f}，中位 Δ={verdict['C1']['median_delta']:+.4f}", flush=True)
-    print(f"  正对照中位 Δ={verdict['C1_pos_median']:+.4f}；"
-          f"负对照中位 Δ={verdict['C1_neg_median']:+.4f}", flush=True)
+    c1 = verdict.get("C1") or {}
+    if c1.get("same_median_pooled") is not None:
+        print(f"  同组中位 Δ={c1['same_median_pooled']:+.4f}；"
+              f"跨组中位 Δ={c1['cross_median_pooled']:+.4f}", flush=True)
+    else:
+        print(f"  正对照中位 Δ={verdict.get('C1_pos_median')}；"
+              f"负对照中位 Δ={verdict.get('C1_neg_median')}", flush=True)
     print(f"  解释：{verdict['C1_interpretation']}", flush=True)
     print(f"  C2 退化守卫：{verdict['C2_degenerate_guard']}", flush=True)
-    print(f"结果写入 {RUN}/exp98_posneg_control.json", flush=True)
+    print(f"结果写入 {RUN}/{args.out_name}", flush=True)
     return 0
 
 

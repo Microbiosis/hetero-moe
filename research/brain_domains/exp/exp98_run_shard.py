@@ -60,6 +60,8 @@ def main():
     ap.add_argument("--src", default="/domains/allen_trials")
     ap.add_argument("--out", default="/domains/runs/illusionbrain-align/exp98")
     ap.add_argument("--work", default="")
+    ap.add_argument("--judge", default=JUDGE,
+                    help="被判决脚本（默认 = exp98 的；exp100 用 exp100_group_ladder.py）")
     args = ap.parse_args()
     names = session_names()
     mine = [n for i, n in enumerate(names) if i % args.nshards == args.shard]
@@ -78,7 +80,7 @@ def main():
     print(f"shard {args.shard}/{args.nshards}: {len(mine)} 个 session，缺 {missing}", flush=True)
     out = pathlib.Path(args.out)
     (out / f"shard{args.shard}").mkdir(parents=True, exist_ok=True)
-    cmd = [sys.executable, "-u", JUDGE, "--data", str(work), "--out", str(out / f"shard{args.shard}")]
+    cmd = [sys.executable, "-u", args.judge, "--data", str(work), "--out", str(out / f"shard{args.shard}")]
     print("RUN " + " ".join(cmd), flush=True)
     rc = subprocess.run(cmd).returncode
     print(f"===RC=== {rc}", flush=True)
