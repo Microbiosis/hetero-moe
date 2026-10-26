@@ -209,6 +209,15 @@ CASES = [
      "摸底：Steinmetz 的注册源 id 被改"),
     (G_NUM, "FINDINGS_TIER0_RSA.md", "**收新数据先缓**", "**立即收新数据**",
      "摸底：「收新数据先缓」这条结论被改"),
+    # --- §三十六（exp91/exp92）：判决与关键数字 ---
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**判决 = `C0_FAIL`**", "**判决 = `C1_OK`**",
+     "exp92：判决字符串被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**p = 0.0703**", "**p = 0.0003**",
+     "exp92：符号检验的 p 被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**判决 `C0_FAIL`**", "**判决 `C1_OK`**",
+     "exp91：判决字符串被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "p=0.7266", "p=0.0266",
+     "exp91：符号检验的 p 被改"),
 ]
 
 

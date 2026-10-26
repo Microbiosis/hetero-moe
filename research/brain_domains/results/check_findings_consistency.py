@@ -1571,6 +1571,60 @@ def main():
                     f"[摸底] §三十五 缺「{need}」"
                     "（「同记录 + 多脑区 + 行为标签」规格**已满足** ⇒ 收新数据先缓）")
 
+    # --- 18. §三十六（exp91/exp92：判据① 的可测性自检）---
+    sec36 = find_section_h2(text, "三十六、exp91 / exp92")
+    if not sec36:
+        problems.append("FINDINGS 里找不到「三十六、exp91 / exp92」小节")
+    else:
+        for need in ("工具无效", "C0_FAIL", "exp93"):
+            if need not in sec36:
+                problems.append(f"[exp92] §三十六 缺「{need}」")
+        e92 = HERE / "exp91b-results" / "exp92_summary.json"
+        if e92.exists():
+            d92 = json.loads(e92.read_text(encoding="utf-8"))
+            if not d92.get("recompute_matches_job"):
+                problems.append("[exp92] 离线重算与 Job 判决**不一致**")
+            v92 = d92.get("job_verdict") or {}
+            c192 = v92.get("C1") or {}
+            # ⚠️ 检查**文中的精确写法**（不是裸数字）⇒ 否则同一数字在别处出现时，
+            #    篡改一处仍会被判「通过」（这个坑踩过一次）
+            if v92.get("verdict") and f"**判决 = `{v92['verdict']}`**" not in sec36:
+                problems.append(f"[exp92] §三十六 里找不到判决写法「判决 = `{v92['verdict']}`」")
+            med = c192.get("median_delta")
+            if med is not None and f"**中位 Δ = {float(med):+.4f}**" not in sec36:
+                problems.append(f"[exp92] §三十六 缺中位 Δ 写法「{float(med):+.4f}」")
+            p92 = c192.get("p")
+            if p92 is not None and f"**p = {float(p92):.4f}**" not in sec36:
+                problems.append(f"[exp92] §三十六 缺符号检验 p 写法「{float(p92):.4f}」")
+            np92, ne92 = c192.get("n_pos"), c192.get("n_eff")
+            if np92 and ne92 and f"**{np92}/{ne92} 正**" not in sec36:
+                problems.append(f"[exp92] §三十六 缺符号检验计数写法「{np92}/{ne92} 正」")
+        else:
+            problems.append("缺 exp91b-results/exp92_summary.json")
+
+        # --- 19. exp91（第一版：工具无效）的数字也要绑 ---
+        e91 = HERE / "exp91-results" / "exp91_summary.json"
+        if e91.exists():
+            d91 = json.loads(e91.read_text(encoding="utf-8"))
+            if not d91.get("recompute_matches_job"):
+                problems.append("[exp91] 离线重算与 Job 判决**不一致**")
+            v91 = d91.get("job_verdict") or {}
+            c191 = v91.get("C1") or {}
+            s36 = sec36.replace("−", "-")
+            if v91.get("verdict") and f"**判决 `{v91['verdict']}`**" not in s36:
+                problems.append(f"[exp91] §三十六 里找不到判决写法「判决 `{v91['verdict']}`」")
+            med91 = c191.get("median_delta")
+            if med91 is not None and f"中位 Δ = {float(med91):+.4f}" not in s36:
+                problems.append(f"[exp91] §三十六 缺中位 Δ {float(med91):+.4f}")
+            p91 = c191.get("p")
+            if p91 is not None and f"p={float(p91):.4f}" not in s36:
+                problems.append(f"[exp91] §三十六 缺符号检验 p {float(p91):.4f}")
+            np91, ne91 = c191.get("n_pos"), c191.get("n_eff")
+            if np91 and ne91 and f"{np91}/{ne91} 正" not in s36:
+                problems.append(f"[exp91] §三十六 缺符号检验计数「{np91}/{ne91} 正」")
+        else:
+            problems.append("缺 exp91-results/exp91_summary.json")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:
