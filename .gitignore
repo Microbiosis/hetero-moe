@@ -123,3 +123,9 @@ docs/V5_ALPHA_*.md
 
 # Local preview server state (built personal-site bundle + serve logs)
 .personal-site-staging/
+# arXiv 上传目录里的 LaTeX 编译中间产物 (arxiv/ 本身入库, 中间产物不入)
+docs/research_paper/arxiv/*.aux
+docs/research_paper/arxiv/*.blg
+docs/research_paper/arxiv/*.log
+docs/research_paper/arxiv/*.out
+docs/research_paper/arxiv/*.bbl.tmp

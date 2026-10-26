@@ -10,17 +10,25 @@
 
 | 文件 | 说明 |
 |---|---|
-| `arxiv_package.tar.gz` | **上传这个**（0.28 MB, 10 个文件）。arXiv 收 LaTeX 源并用自己的 TeX Live 重编译 → 源必须自包含。 |
-| `reconstruct_tmlr.pdf` | 预览用（21 页, 全矢量, 四张图齐全）。arXiv 会用自己的编译器重新生成 PDF, 这里的 PDF 只是核对用。 |
+| **`docs/research_paper/arxiv_package.tar.gz`** | **上传这个**（0.28 MB, 10 个文件）。arXiv 收 LaTeX 源并用自己的 TeX Live 重编译 → 源必须自包含。 |
+| `docs/research_paper/arxiv/` | 上传目录的展开形态（`main.tex` 在顶层, arXiv 默认认它）; 打包工具从这里取文件。 |
+| `docs/research_paper/arxiv/main.pdf` | 预览用（**24 页含参考文献**, 全矢量, 四张图齐全）。arXiv 会用自己的编译器重新生成, 这里的只作核对。 |
 
-包内: `reconstruct_arxiv.tex` · `reconstruct.bib` · `tmlr.sty/.bst` · `fancyhdr.sty` ·
-`math_commands.tex` · `figs/{fig_alignment,fig_distill}.pdf` · `figs/mermaid/{heterogeneity_spectrum,alignment_ladder}.pdf`
+包内: `main.tex` · `main.bbl`（**预生成**, arXiv 不必跑 bibtex）· `reconstruct.bib` ·
+`tmlr.sty/.bst` · `fancyhdr.sty` · `figs/{fig_alignment,fig_distill}.pdf` ·
+`figs/mermaid/{heterogeneity_spectrum,alignment_ladder}.pdf`
 
 **打包/自检**（会复制到一个只含包内文件的干净目录里真编译一遍）:
 ```bash
-python3 tools/make_arxiv_package.py        # 重新打包 + 试编译
-# → "干净目录试编译: 通过 ✓, 21 页"
+python3 tools/make_arxiv_package.py        # 重新打包 + 干净目录试编译
+# → "干净目录试编译: 通过 ✓, 24 页"
 ```
+打包工具会: 把 `reconstruct_arxiv.tex` 复制成 `arxiv/main.tex`（单一真源, 不留两份漂移）→
+在**只含包内文件**的临时目录里跑 `pdflatex → bibtex → pdflatex ×2` → 把生成的
+`main.bbl`/`main.pdf` 回写 `arxiv/` → 打 tar.gz。
+
+> ⚠️ 之前汇报的"21 页"是**只跑了一遍 pdflatex、没有参考文献页**的中间产物;
+> 正式长度是 **24 页**(含参考文献), 与论文 README 的 23/24 页一致。
 
 ---
 
@@ -94,8 +102,9 @@ TMLR 匿名评审版 (`reconstruct_tmlr.tex`) 里的作者块是宏包自动隐�
 
 ## 5. 现状
 
-- ✅ 源包自包含, 干净目录试编译通过, 21 页 0 错
+- ✅ 源包自包含, 干净目录试编译通过, **24 页 0 错**
 - ✅ arXiv 版已去掉 "Under review as submission to TMLR" 页眉与全部 TMLR 字样
+- ✅ `main.bbl` 预生成 (arXiv 不必跑 bibtex, 少一个失败点)
 - ✅ 图全部矢量 (内嵌位图 0 个)
 - ✅ 摘要已压到 1868 字符 (arXiv 上限 1920)
 - ⛔ **作者真名/单位/邮箱待填**

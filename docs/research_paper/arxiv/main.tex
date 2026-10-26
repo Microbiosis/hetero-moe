@@ -2,7 +2,8 @@
 
 % !TEX program = pdflatex
 % ==================== NeurIPS 样式（投稿稿式）====================
-\usepackage{tmlr}                 % TMLR 官方样式 (作者块自动匿名)
+\usepackage[preprint]{tmlr}       % arXiv 版: [preprint] → 显示作者、去掉 TMLR 字样
+                                  % (TMLR 模板注释里明确推荐这个选项给 preprint server)
 % (原 neurips 版的 \geometry 设置已移除: TMLR 样式自带页边距)
 
 % ==================== 数学与符号 ====================
@@ -61,6 +62,8 @@ Sublayer Fusion, Coordinated Routing, and Chimera Distillation}
 
 % ⚠️ TMLR: 投稿版由 tmlr 宏包自动隐藏作者信息; 录用后改成 [accepted] 再填真名。
 % TODO(作者): 填真实作者与单位 (见 README 的投稿待办清单)。
+% ⚠️ arXiv 会**显示**作者 → 这里必须填真名/单位/邮箱 (TMLR 模板的 \name / \addr / \email 宏)。
+%    投稿前请把下面的占位替换掉; 匿名评审期(TMLR)用 reconstruct_tmlr.tex, 录用后用 [accepted]。
 \author{
     \name Anonymous Author(s)\\
     \addr Affiliation\\
