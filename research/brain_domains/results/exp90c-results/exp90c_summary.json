@@ -1,0 +1,709 @@
+{
+  "job_verdict": {
+    "C0": {
+      "acc1_median": 0.0475625,
+      "acc1_above_chance3": true,
+      "rsa_median": 0.12268800245533255,
+      "rsa_positive": true
+    },
+    "C0_pass": true,
+    "C1": {
+      "post_minus_cent": {
+        "n_eff": 10,
+        "n_pos": 10,
+        "n_neg": 0,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": 0.11572422328390419
+      },
+      "post_minus_front": {
+        "n_eff": 10,
+        "n_pos": 10,
+        "n_neg": 0,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": 0.04976611969145313
+      }
+    },
+    "C1_pass": true,
+    "C2": {
+      "POST": {
+        "median_disp": 0.9380727762656714,
+        "min_disp": 0.9282515175539262,
+        "pass": true
+      },
+      "CENT": {
+        "median_disp": 0.9721941037428147,
+        "min_disp": 0.9543620309046298,
+        "pass": true
+      },
+      "FRONT": {
+        "median_disp": 0.7820261948350726,
+        "min_disp": 0.7012321054737478,
+        "pass": true
+      }
+    },
+    "C2_pass": true,
+    "C3": {
+      "dorsal|CENT": {
+        "n_eff": 10,
+        "n_pos": 0,
+        "n_neg": 10,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": -1.063577651977539,
+        "has_value": false,
+        "reading": "没有因果价值（⇒ 砍掉）"
+      },
+      "ventral|FRONT": {
+        "n_eff": 10,
+        "n_pos": 0,
+        "n_neg": 10,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": -0.6941438764333725,
+        "has_value": false,
+        "reading": "没有因果价值（⇒ 砍掉）"
+      },
+      "topdown|POST": {
+        "n_eff": 10,
+        "n_pos": 10,
+        "n_neg": 0,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": 2.100206719711423,
+        "has_value": true,
+        "reading": "方向对、检验力不足"
+      }
+    },
+    "interfaces_keep": [
+      "topdown|POST"
+    ],
+    "interfaces_drop": [
+      "dorsal|CENT",
+      "ventral|FRONT"
+    ],
+    "C3_pass": true,
+    "C4_transdiff_report": {
+      "CENT->CENT": {
+        "n": 10,
+        "median": 0.0
+      },
+      "CENT->FRONT": {
+        "n": 10,
+        "median": 0.008551537990570068
+      },
+      "CENT->POST": {
+        "n": 10,
+        "median": 0.0661151185631752
+      },
+      "FRONT->CENT": {
+        "n": 10,
+        "median": -0.014667510986328125
+      },
+      "FRONT->FRONT": {
+        "n": 10,
+        "median": 0.0
+      },
+      "FRONT->POST": {
+        "n": 10,
+        "median": 0.07447058893740177
+      },
+      "POST->CENT": {
+        "n": 10,
+        "median": -0.07806396484375
+      },
+      "POST->FRONT": {
+        "n": 10,
+        "median": 0.2536948323249817
+      },
+      "POST->POST": {
+        "n": 10,
+        "median": 0.0
+      }
+    },
+    "verdict": "INTERFACE_VALUE_OK",
+    "why": "接口有因果价值：['topdown|POST']；无价值（砍）：['dorsal|CENT', 'ventral|FRONT']（⚠️ 判据① 的 3×3 只报不判：原语个数已在鼠上由 exp100 定案）"
+  },
+  "recomputed_verdict": {
+    "C0": {
+      "acc1_median": 0.0475625,
+      "acc1_above_chance3": true,
+      "rsa_median": 0.12268800245533255,
+      "rsa_positive": true
+    },
+    "C0_pass": true,
+    "C1": {
+      "post_minus_cent": {
+        "n_eff": 10,
+        "n_pos": 10,
+        "n_neg": 0,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": 0.11572422328390419
+      },
+      "post_minus_front": {
+        "n_eff": 10,
+        "n_pos": 10,
+        "n_neg": 0,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": 0.04976611969145313
+      }
+    },
+    "C1_pass": true,
+    "C2": {
+      "POST": {
+        "median_disp": 0.9380727762656714,
+        "min_disp": 0.9282515175539262,
+        "pass": true
+      },
+      "CENT": {
+        "median_disp": 0.9721941037428147,
+        "min_disp": 0.9543620309046298,
+        "pass": true
+      },
+      "FRONT": {
+        "median_disp": 0.7820261948350726,
+        "min_disp": 0.7012321054737478,
+        "pass": true
+      }
+    },
+    "C2_pass": true,
+    "C3": {
+      "dorsal|CENT": {
+        "n_eff": 10,
+        "n_pos": 0,
+        "n_neg": 10,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": -1.063577651977539,
+        "has_value": false,
+        "reading": "没有因果价值（⇒ 砍掉）"
+      },
+      "ventral|FRONT": {
+        "n_eff": 10,
+        "n_pos": 0,
+        "n_neg": 10,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": -0.6941438764333725,
+        "has_value": false,
+        "reading": "没有因果价值（⇒ 砍掉）"
+      },
+      "topdown|POST": {
+        "n_eff": 10,
+        "n_pos": 10,
+        "n_neg": 0,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": 2.100206719711423,
+        "has_value": true,
+        "reading": "方向对、检验力不足"
+      }
+    },
+    "interfaces_keep": [
+      "topdown|POST"
+    ],
+    "interfaces_drop": [
+      "dorsal|CENT",
+      "ventral|FRONT"
+    ],
+    "C3_pass": true,
+    "C4_transdiff_report": {
+      "CENT->CENT": {
+        "n": 10,
+        "median": 0.0
+      },
+      "CENT->FRONT": {
+        "n": 10,
+        "median": 0.008551537990570068
+      },
+      "CENT->POST": {
+        "n": 10,
+        "median": 0.0661151185631752
+      },
+      "FRONT->CENT": {
+        "n": 10,
+        "median": -0.014667510986328125
+      },
+      "FRONT->FRONT": {
+        "n": 10,
+        "median": 0.0
+      },
+      "FRONT->POST": {
+        "n": 10,
+        "median": 0.07447058893740177
+      },
+      "POST->CENT": {
+        "n": 10,
+        "median": -0.07806396484375
+      },
+      "POST->FRONT": {
+        "n": 10,
+        "median": 0.2536948323249817
+      },
+      "POST->POST": {
+        "n": 10,
+        "median": 0.0
+      }
+    },
+    "verdict": "INTERFACE_VALUE_OK",
+    "why": "接口有因果价值：['topdown|POST']；无价值（砍）：['dorsal|CENT', 'ventral|FRONT']（⚠️ 判据① 的 3×3 只报不判：原语个数已在鼠上由 exp100 定案）"
+  },
+  "recompute_matches_job": true,
+  "mismatches": [],
+  "per_subject": [
+    {
+      "subject": "sub-01",
+      "img_rsa": {
+        "POST": {
+          "r": 0.08877531672536933,
+          "p": 0.004975124378109453
+        },
+        "CENT": {
+          "r": 0.0067318220574303115,
+          "p": 0.13432835820895522
+        },
+        "FRONT": {
+          "r": 0.08411411552774997,
+          "p": 0.004975124378109453
+        }
+      },
+      "post_acc1": 0.0430625,
+      "latent_disp": {
+        "POST": 0.9282515175539262,
+        "CENT": 0.9789942723960765,
+        "FRONT": 0.8144755574260761
+      },
+      "transdiff": {
+        "POST->POST": 0.0,
+        "CENT->POST": 0.07007821463048458,
+        "FRONT->POST": 0.0795718040317297,
+        "POST->CENT": -0.03144073486328125,
+        "CENT->CENT": 0.0,
+        "FRONT->CENT": -0.021213531494140625,
+        "POST->FRONT": 0.2536948323249817,
+        "CENT->FRONT": 0.019298970699310303,
+        "FRONT->FRONT": 0.0
+      },
+      "iface": {
+        "dorsal|POST": 0.0,
+        "dorsal|CENT": -0.8647918701171875,
+        "dorsal|FRONT": 0.0,
+        "ventral|POST": 0.4039852973073721,
+        "ventral|CENT": 0.0,
+        "ventral|FRONT": -0.6346997767686844,
+        "topdown|POST": 1.8723354693502188,
+        "topdown|CENT": 0.0,
+        "topdown|FRONT": 0.0
+      }
+    },
+    {
+      "subject": "sub-02",
+      "img_rsa": {
+        "POST": {
+          "r": 0.10891803668419989,
+          "p": 0.004975124378109453
+        },
+        "CENT": {
+          "r": 0.008253653791069399,
+          "p": 0.04975124378109453
+        },
+        "FRONT": {
+          "r": 0.07409729639822255,
+          "p": 0.004975124378109453
+        }
+      },
+      "post_acc1": 0.0425,
+      "latent_disp": {
+        "POST": 0.940069128457199,
+        "CENT": 0.9685254497049312,
+        "FRONT": 0.7012321054737478
+      },
+      "transdiff": {
+        "POST->POST": 0.0,
+        "CENT->POST": 0.059692222625017166,
+        "FRONT->POST": 0.07010425254702568,
+        "POST->CENT": -0.07806396484375,
+        "CENT->CENT": 0.0,
+        "FRONT->CENT": -0.0082550048828125,
+        "POST->FRONT": 0.25524967908859253,
+        "CENT->FRONT": 0.008551537990570068,
+        "FRONT->FRONT": 0.0
+      },
+      "iface": {
+        "dorsal|POST": 0.0,
+        "dorsal|CENT": -1.261056900024414,
+        "dorsal|FRONT": 0.0,
+        "ventral|POST": 0.8270553834736347,
+        "ventral|CENT": 0.0,
+        "ventral|FRONT": -0.8375575393438339,
+        "topdown|POST": 2.260490942746401,
+        "topdown|CENT": 0.0,
+        "topdown|FRONT": 0.0
+      }
+    },
+    {
+      "subject": "sub-03",
+      "img_rsa": {
+        "POST": {
+          "r": 0.12838184059698998,
+          "p": 0.004975124378109453
+        },
+        "CENT": {
+          "r": 0.0010892084530218131,
+          "p": 0.8258706467661692
+        },
+        "FRONT": {
+          "r": 0.07861572090553685,
+          "p": 0.004975124378109453
+        }
+      },
+      "post_acc1": 0.0541875,
+      "latent_disp": {
+        "POST": 0.9332144447706936,
+        "CENT": 0.9721941037428147,
+        "FRONT": 0.8362678405778005
+      },
+      "transdiff": {
+        "POST->POST": 0.0,
+        "CENT->POST": 0.0683645959943533,
+        "FRONT->POST": 0.07916214130818844,
+        "POST->CENT": -0.09309959411621094,
+        "CENT->CENT": 0.0,
+        "FRONT->CENT": -0.014667510986328125,
+        "POST->FRONT": 0.2476603388786316,
+        "CENT->FRONT": 0.009573400020599365,
+        "FRONT->FRONT": 0.0
+      },
+      "iface": {
+        "dorsal|POST": 0.0,
+        "dorsal|CENT": -1.0397624969482422,
+        "dorsal|FRONT": 0.0,
+        "ventral|POST": 0.3378451894968748,
+        "ventral|CENT": 0.0,
+        "ventral|FRONT": -0.566608265042305,
+        "topdown|POST": 1.7937089037150145,
+        "topdown|CENT": 0.0,
+        "topdown|FRONT": 0.0
+      }
+    },
+    {
+      "subject": "sub-04",
+      "img_rsa": {
+        "POST": {
+          "r": 0.1408021626226589,
+          "p": 0.004975124378109453
+        },
+        "CENT": {
+          "r": -0.0006443872407190502,
+          "p": 0.8955223880597015
+        },
+        "FRONT": {
+          "r": 0.09659053539079347,
+          "p": 0.004975124378109453
+        }
+      },
+      "post_acc1": 0.0475625,
+      "latent_disp": {
+        "POST": 0.950653339406452,
+        "CENT": 0.9543620309046298,
+        "FRONT": 0.7628850082281657
+      },
+      "transdiff": {
+        "POST->POST": 0.0,
+        "CENT->POST": 0.06769871525466442,
+        "FRONT->POST": 0.07594390027225018,
+        "POST->CENT": -0.15880775451660156,
+        "CENT->CENT": 0.0,
+        "FRONT->CENT": -0.039676666259765625,
+        "POST->FRONT": 0.25386059284210205,
+        "CENT->FRONT": 0.005543351173400879,
+        "FRONT->FRONT": 0.0
+      },
+      "iface": {
+        "dorsal|POST": 0.0,
+        "dorsal|CENT": -1.1561698913574219,
+        "dorsal|FRONT": 0.0,
+        "ventral|POST": 0.6482839789241552,
+        "ventral|CENT": 0.0,
+        "ventral|FRONT": -0.741379514336586,
+        "topdown|POST": 2.165028354153037,
+        "topdown|CENT": 0.0,
+        "topdown|FRONT": 0.0
+      }
+    },
+    {
+      "subject": "sub-05",
+      "img_rsa": {
+        "POST": {
+          "r": 0.11575917951714174,
+          "p": 0.004975124378109453
+        },
+        "CENT": {
+          "r": 0.002106274270511018,
+          "p": 0.6716417910447762
+        },
+        "FRONT": {
+          "r": 0.0654944845694268,
+          "p": 0.004975124378109453
+        }
+      },
+      "post_acc1": 0.037625,
+      "latent_disp": {
+        "POST": 0.9389481692104217,
+        "CENT": 0.9605609500644486,
+        "FRONT": 0.7273776332465169
+      },
+      "transdiff": {
+        "POST->POST": 0.0,
+        "CENT->POST": 0.06257166340947151,
+        "FRONT->POST": 0.07083798572421074,
+        "POST->CENT": -0.08658599853515625,
+        "CENT->CENT": 0.0,
+        "FRONT->CENT": -0.0050868988037109375,
+        "POST->FRONT": 0.3039444088935852,
+        "CENT->FRONT": 0.011823832988739014,
+        "FRONT->FRONT": 0.0
+      },
+      "iface": {
+        "dorsal|POST": 0.0,
+        "dorsal|CENT": -1.1690559387207031,
+        "dorsal|FRONT": 0.0,
+        "ventral|POST": 0.8061345405876637,
+        "ventral|CENT": 0.0,
+        "ventral|FRONT": -0.808380052447319,
+        "topdown|POST": 2.1072820611298084,
+        "topdown|CENT": 0.0,
+        "topdown|FRONT": 0.0
+      }
+    },
+    {
+      "subject": "sub-06",
+      "img_rsa": {
+        "POST": {
+          "r": 0.11470870578273343,
+          "p": 0.004975124378109453
+        },
+        "CENT": {
+          "r": 0.002390516698993475,
+          "p": 0.6019900497512438
+        },
+        "FRONT": {
+          "r": 0.056206631099299936,
+          "p": 0.004975124378109453
+        }
+      },
+      "post_acc1": 0.0556875,
+      "latent_disp": {
+        "POST": 0.9323268705910197,
+        "CENT": 0.9710445624517505,
+        "FRONT": 0.7820261948350726
+      },
+      "transdiff": {
+        "POST->POST": 0.0,
+        "CENT->POST": 0.0661151185631752,
+        "FRONT->POST": 0.07321245223283768,
+        "POST->CENT": -0.04026603698730469,
+        "CENT->CENT": 0.0,
+        "FRONT->CENT": 0.009248733520507812,
+        "POST->FRONT": 0.19186103343963623,
+        "CENT->FRONT": -0.0014567971229553223,
+        "FRONT->FRONT": 0.0
+      },
+      "iface": {
+        "dorsal|POST": 0.0,
+        "dorsal|CENT": -1.0172462463378906,
+        "dorsal|FRONT": 0.0,
+        "ventral|POST": 0.5342663004994392,
+        "ventral|CENT": 0.0,
+        "ventral|FRONT": -0.6238119006156921,
+        "topdown|POST": 1.9436456635594368,
+        "topdown|CENT": 0.0,
+        "topdown|FRONT": 0.0
+      }
+    },
+    {
+      "subject": "sub-07",
+      "img_rsa": {
+        "POST": {
+          "r": 0.11126706656108433,
+          "p": 0.004975124378109453
+        },
+        "CENT": {
+          "r": 0.008577490415473754,
+          "p": 0.08955223880597014
+        },
+        "FRONT": {
+          "r": 0.08079025827195702,
+          "p": 0.004975124378109453
+        }
+      },
+      "post_acc1": 0.064,
+      "latent_disp": {
+        "POST": 0.9380727762656714,
+        "CENT": 0.9781436292221012,
+        "FRONT": 0.8376608347143221
+      },
+      "transdiff": {
+        "POST->POST": 0.0,
+        "CENT->POST": 0.06451451778411865,
+        "FRONT->POST": 0.07171516120433807,
+        "POST->CENT": -0.06619453430175781,
+        "CENT->CENT": 0.0,
+        "FRONT->CENT": -0.028369903564453125,
+        "POST->FRONT": 0.24383896589279175,
+        "CENT->FRONT": 0.018992900848388672,
+        "FRONT->FRONT": 0.0
+      },
+      "iface": {
+        "dorsal|POST": 0.0,
+        "dorsal|CENT": -0.8359718322753906,
+        "dorsal|FRONT": 0.0,
+        "ventral|POST": 0.30856748670339584,
+        "ventral|CENT": 0.0,
+        "ventral|FRONT": -0.5575781017541885,
+        "topdown|POST": 1.6661377176642418,
+        "topdown|CENT": 0.0,
+        "topdown|FRONT": 0.0
+      }
+    },
+    {
+      "subject": "sub-08",
+      "img_rsa": {
+        "POST": {
+          "r": 0.12268800245533255,
+          "p": 0.004975124378109453
+        },
+        "CENT": {
+          "r": -0.004416409837867217,
+          "p": 0.31343283582089554
+        },
+        "FRONT": {
+          "r": 0.06927160528057638,
+          "p": 0.004975124378109453
+        }
+      },
+      "post_acc1": 0.064625,
+      "latent_disp": {
+        "POST": 0.9340513758167919,
+        "CENT": 0.9751033894709237,
+        "FRONT": 0.7857299172718267
+      },
+      "transdiff": {
+        "POST->POST": 0.0,
+        "CENT->POST": 0.06448725052177906,
+        "FRONT->POST": 0.0753109622746706,
+        "POST->CENT": -0.060855865478515625,
+        "CENT->CENT": 0.0,
+        "FRONT->CENT": -0.008729934692382812,
+        "POST->FRONT": 0.28222399950027466,
+        "CENT->FRONT": 0.00770723819732666,
+        "FRONT->FRONT": 0.0
+      },
+      "iface": {
+        "dorsal|POST": 0.0,
+        "dorsal|CENT": -1.063577651977539,
+        "dorsal|FRONT": 0.0,
+        "ventral|POST": 0.6411858964711428,
+        "ventral|CENT": 0.0,
+        "ventral|FRONT": -0.6974987983703613,
+        "topdown|POST": 2.0448061991482973,
+        "topdown|CENT": 0.0,
+        "topdown|FRONT": 0.0
+      }
+    },
+    {
+      "subject": "sub-09",
+      "img_rsa": {
+        "POST": {
+          "r": 0.12825886702322392,
+          "p": 0.004975124378109453
+        },
+        "CENT": {
+          "r": 0.007814548933591155,
+          "p": 0.06965174129353234
+        },
+        "FRONT": {
+          "r": 0.06793036199606327,
+          "p": 0.004975124378109453
+        }
+      },
+      "post_acc1": 0.0374375,
+      "latent_disp": {
+        "POST": 0.9304374239653955,
+        "CENT": 0.9635045645258342,
+        "FRONT": 0.750013194891512
+      },
+      "transdiff": {
+        "POST->POST": 0.0,
+        "CENT->POST": 0.0619486290961504,
+        "FRONT->POST": 0.06785372085869312,
+        "POST->CENT": -0.1283588409423828,
+        "CENT->CENT": 0.0,
+        "FRONT->CENT": -0.027486801147460938,
+        "POST->FRONT": 0.23749172687530518,
+        "CENT->FRONT": 0.006891727447509766,
+        "FRONT->FRONT": 0.0
+      },
+      "iface": {
+        "dorsal|POST": 0.0,
+        "dorsal|CENT": -1.4085807800292969,
+        "dorsal|FRONT": 0.0,
+        "ventral|POST": 0.7023741994053125,
+        "ventral|CENT": 0.0,
+        "ventral|FRONT": -0.6981608271598816,
+        "topdown|POST": 2.1786078605800867,
+        "topdown|CENT": 0.0,
+        "topdown|FRONT": 0.0
+      }
+    },
+    {
+      "subject": "sub-10",
+      "img_rsa": {
+        "POST": {
+          "r": 0.12583630790503902,
+          "p": 0.004975124378109453
+        },
+        "CENT": {
+          "r": 0.010112084621134826,
+          "p": 0.05472636815920398
+        },
+        "FRONT": {
+          "r": 0.10618708675078163,
+          "p": 0.004975124378109453
+        }
+      },
+      "post_acc1": 0.0335625,
+      "latent_disp": {
+        "POST": 0.9431322911214276,
+        "CENT": 0.9728065200911084,
+        "FRONT": 0.7669616787748822
+      },
+      "transdiff": {
+        "POST->POST": 0.0,
+        "CENT->POST": 0.0672867838293314,
+        "FRONT->POST": 0.07447058893740177,
+        "POST->CENT": -0.08560943603515625,
+        "CENT->CENT": 0.0,
+        "FRONT->CENT": -0.0179595947265625,
+        "POST->FRONT": 0.23940706253051758,
+        "CENT->FRONT": 0.0065209269523620605,
+        "FRONT->FRONT": 0.0
+      },
+      "iface": {
+        "dorsal|POST": 0.0,
+        "dorsal|CENT": -1.0667495727539062,
+        "dorsal|FRONT": 0.0,
+        "ventral|POST": 0.6386539805680513,
+        "ventral|CENT": 0.0,
+        "ventral|FRONT": -0.6941438764333725,
+        "topdown|POST": 2.100206719711423,
+        "topdown|CENT": 0.0,
+        "topdown|FRONT": 0.0
+      }
+    }
+  ],
+  "note": "C3 的量 = r_cut − r_full ⇒ >0 ⇒ 满接口时目标分支更一致（接口有正价值）；≤0 ⇒ 接口把目标分支的表征搞乱（负价值 ⇒ 砍掉）"
+}

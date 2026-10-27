@@ -258,6 +258,18 @@ CASES = [
     (G_NUM, "FINDINGS_TIER0_RSA.md", "**进入主判据 = 30 个（共 32）**（组内 vs 跨组）",
      "**进入主判据 = 28 个（共 32）**（组内 vs 跨组）",
      "exp100：进入主判据的 session 数被改"),
+    # --- §四十一（exp90c：判据② 接口的因果价值）---
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**判决 = `INTERFACE_VALUE_OK`**",
+     "**判决 = `NO_INTERFACE_VALUE`**",
+     "exp90c：判决字符串被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**+0.0476**", "**+0.0076**",
+     "exp90c：POST 的 200-way 中位被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**+0.1227**", "**+0.2227**",
+     "exp90c：POST 的图像 RSA 中位被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**+2.1002**", "**-2.1002**",
+     "exp90c：top-down 接口的中位被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "−1.0636", "+1.0636",
+     "exp90c：背侧流接口的中位被改（全角负号 ⇒ 守卫按归一化后的 ASCII 串比对）"),
 ]
 
 
