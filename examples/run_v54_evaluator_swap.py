@@ -60,6 +60,12 @@ for _d in D_SHAREDS:
 _DEV_ENV = os.environ.get("V54_DEVICE", "auto").strip().lower()
 if _DEV_ENV in ("", "auto"):
     _DEV_ENV = "cuda" if torch.cuda.is_available() else "cpu"
+if _DEV_ENV == "cuda" and not torch.cuda.is_available():
+    raise SystemExit(
+        "V54_DEVICE=cuda 但此镜像的 torch 不支持 CUDA "
+        f"(torch={torch.__version__}, torch.version.cuda={torch.version.cuda})。\n"
+        "  · 想用 GPU: 镜像必须装 CUDA 版 torch (Dockerfile 换 CUDA base 或 cuXXX index)\n"
+        "  · 只想跑完: 设 V54_DEVICE=cpu (或 auto), 并把 Space 硬件换成 cpu-upgrade")
 DEVICE = torch.device(_DEV_ENV)
 EXPERTS = ["big", "small1", "small2"]
 SMOKE = os.environ.get("V54_SMOKE", "0") == "1"
@@ -606,6 +612,8 @@ def main():
                "code_fingerprint": FP,
                "device": str(DEVICE),
                "device_name": (torch.cuda.get_device_name(0) if DEVICE.type == "cuda" else "cpu"),
+               "n_cpu": os.cpu_count(),
+               "torch_cuda_build": torch.version.cuda,
                "config": {"d_shareds": D_SHAREDS, "steps": STEPS, "seeds": SEEDS,
                           "seed_base": SEED_BASE, "n_per_class": N_PER_CLASS,
                           "n_classes": N_CLASSES, "tokens": S_TOK,
