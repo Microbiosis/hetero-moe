@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "version": "56.0",
+  "package": "v56_capacity_allocation",
+  "line": "scale_heterogeneous",
+  "title": "维度作为容量分配: hidden 宽度 × 投影方式 × 头类型 析因",
+  "generation": {
+    "one_mechanism_added": "把 v39 中从未作为变量出现的两个量（融合头 hidden 宽度、ProjHead 投影到 D_BIG）变成析因变量, 并新增按模态块的消融与激活有效秩诊断",
+    "parent": "39.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "33.0",
+    "line_children": [],
+    "note": "scale_heterogeneous 线第 8 个成员; 直接继承 v39 的容器范式与协议, 只改容量相关超参"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "audit.py"
+    ],
+    "note": "复用 v39 的 Adult XOR 数据 / MSA-4B h_base / TabLDM c_passive 并冻结; 只新增容量变量与维度诊断"
+  },
+  "claim": {
+    "asserts": "维度不是约束, 但空间确实是空的。hidden=16 已达最好宽度(2048)的 97.5%; 而 hidden=2048 的激活有效秩只有 16.7(占 0.8%)。2560 维容器输出实际只占 33.7 个方向(1.32%)。投影到 D_BIG 稳定带来 +0.9~1.4pp(优化条件, 非信息量)。按块消融显示两侧模态都必需(各掉 0.27-0.41)。",
+    "metric": "xor_accuracy",
+    "direction": "higher_is_better",
+    "value": 0.972,
+    "baseline": {
+      "ref": "A 零入口",
+      "value": 0.714
+    },
+    "delta_pct": 36.1,
+    "seeds": 5,
+    "outcome_label": "mixed",
+    "note": "P1 ✗(native linear 0.833 > 预登记 0.80, 根因是 decouple 未完全切断泄漏, 单侧线性 0.65-0.73) / P2 ✓ / P3 ✗(差 0.009-0.014, 投影略好但未达 0.03 阈值; 按字面未过) / P4 ✓"
+  },
+  "protocol": {
+    "eval_set": "Adult XOR, 384/128 划分 (seed 1234), 与 v39 同构造",
+    "input": "h_base[512,2560] (MSA-4B 浅层 1 层均值池化) + c_passive[512,512] (TabLDM 被动中间表征), 全部冻结",
+    "grid": "2 表征(proj/native) × 2 头(linear/mlp) × 10 宽度(4..2048) × 2 臂(A零入口/C真入口) × 5 seeds = 220 次训练",
+    "caveat": "容器与入口全冻结, 只有融合头在学; 单任务二分类; decouple 未完全切断泄漏"
+  },
+  "acceptance": {
+    "criterion": "P1 linear 任何宽度 ≤0.80 / P2 hidden=16 达最好宽度 95% / P3 proj vs native 差 ≤0.03 / P4 大宽度激活有效秩 <5%",
+    "outcome": "P1 ✗ / P2 ✓ / P3 ✗ / P4 ✓",
+    "note": "P1 与 P3 的未过都不是架构问题: P1 源于数据泄漏(单侧探针 0.65-0.73), P3 是投影带来小幅优化收益(0.9-1.4pp)但未到阈值"
+  },
+  "leakage_audit": {
+    "status": "pending",
+    "audits": [],
+    "note": "decouple=True 未能完全切断职业-工时相关: 单侧线性探针 0.727/0.648 而非 0.5。这是 v39 §5 已声明的已知边界, 本代沿用并实测确认。严格零泄漏需切断所有相关类别字段"
+  },
+  "falsified": [
+    {
+      "hypothesis": "『高维空间是表达力的约束, 需要更宽』",
+      "verdict": "否证: 16 维已达 2048 维的 97.5%",
+      "evidence": "FINDINGS.md §2"
+    },
+    {
+      "hypothesis": "『空间被充分使用, 容器输出真是高维的』",
+      "verdict": "否证: 2560 维只占 33.7 个方向(1.32%); hidden=2048 的激活只占 0.8%",
+      "evidence": "FINDINGS.md §1 §3"
+    },
+    {
+      "hypothesis": "『linear 头在任何宽度下都解不开 XOR (P1)』",
+      "verdict": "**本代自己的预登记被否证**: native linear 达 0.833。根因是数据泄漏而非架构",
+      "evidence": "FINDINGS.md §4"
+    },
+    {
+      "hypothesis": "『投影到 D_BIG 不增信息所以无益也无害 (P3)』",
+      "verdict": "部分否证: 投影稳定带来 +0.9~1.4pp, 来自优化条件对称而非信息",
+      "evidence": "FINDINGS.md §5"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "missing",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "results": "results/metrics.json",
+    "findings": "FINDINGS.md"
+  },
+  "_needs_human": [
+    "补单元测试 (tests/)",
+    "leakage_audit 需严格零泄漏版本",
+    "多类/多模态下重测阈值"
+  ],
+  "_extracted_from": [
+    "research/scale_heterogeneous/README.md"
+  ]
+}
