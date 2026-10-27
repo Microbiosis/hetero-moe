@@ -163,6 +163,20 @@ PYEOFCHK
         # V53.0 第三审: 独立复算 (值域分割 + 三族探针 + 残差抬升 + 跨底座一致性)
         python3 examples/run_v53_third_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
         ;;
+    v54)
+        # V54.0 评价器换轨: MSE → {高斯 NLL, CE} | 同网格, 三档配对, 不降级
+        # 先自检产物血缘: python3 tools/check_artifacts.py research/aligner/v54_evaluator_swap
+        python3 examples/run_v54_evaluator_swap.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
+    v54-smoke)
+        # 不用模型权重的冒烟 (只验证训练/判决逻辑)
+        V54_SMOKE=1 V54_SEEDS=1 V54_STEPS=8 V54_DSHARED=96 \
+            python3 examples/run_v54_evaluator_swap.py 2>&1 | grep -v -i "warning\|UserWarning"
+        ;;
+    v55)
+        # V55.0 中枢带宽: 融合算子的秩判据 (只读实测, 不训练, 不加载底座权重, ~40s)
+        python3 research/aligner/v55_hub_bandwidth/measure.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
     e2e)
         # §8.1-8.3 端到端仿真
         python3 examples/run_e2e_simulation.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"

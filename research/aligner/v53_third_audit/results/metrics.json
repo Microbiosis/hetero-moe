@@ -12,8 +12,9 @@
     "seeds": 5,
     "seed_base": 2000,
     "n_per_class": 16,
-    "n_classes": 8,
-    "tokens": 6
+    "n_classes": 6,
+    "tokens": 6,
+    "n_classes_recorded_originally": 8
   },
   "predictions": {
     "D1a": "冻结随机空间里 源可解码 − 类别可解码 ≥ 0.30 (≥4/5 seeds), 且**三个探针族同向**",
@@ -1121,5 +1122,17 @@
     "D2_not_passed": "预登记的 D2 (随机目标臂里类别可解码 ≤0.50, 三族都要) 在两档都未通过 (D96: ridge .43 / mlp .58 / knn .49; D384: .60/.67/.51) → 说明输出里含类别信息在本就成立(冻结随机投影保留输入的类别结构), 该判据把输出含类别信息误当成模型用了目标的代理",
     "stronger_control": "同一臂内 随机化目标 与 对齐目标 的 held-out 数字**逐位相同** → 模型从未使用目标 → margin 与学会任务无关 (比 D2 更强的判决)",
     "chain": "v50/v51 (首审) → v52 (二审) → v53 (三审) → 结论三套独立实现一致; 预登记判据 D2 字面未过, 如实记录"
-  }
+  },
+  "corrections": {
+    "n_classes": {
+      "was": 8,
+      "now": 6,
+      "why": "audit.py 的 CLASSES 只有 6 个键; runner 第 257 行写 N_CLASSES; Space 上的 audit.py 与 runner 与仓库版逐字节相同; 运行日志的数字与 cells 逐位一致 → 那次运行用的是 6 类。config 块出自另一个写入者。",
+      "impact": "基线从 1/8=0.125 纠正为 1/6=0.1667; '有意义空间低于平凡基线' 不成立 (D96 0.1617 比全零好 3.0% 但比预测类别均值差 16.4%)",
+      "verdicts_affected": "无 (D1a/D1b/D1c/D3 均为相对比较)",
+      "checked_by": "tools/check_artifacts.py",
+      "corrected_at": "2026-10-27"
+    }
+  },
+  "code_sha_note": "v53 运行时未记录 code_sha; 现以 Space 副本 (与仓库 a3298c8 逐字节相同) 与 logs/ 交叉推定"
 }

@@ -1,0 +1,500 @@
+{
+  "schema_version": "1.0",
+  "package": "v55_hub_bandwidth",
+  "line": "aligner",
+  "kind": "measured_lemma",
+  "provenance": {
+    "code_sha": "4023ee5be7419099756c1d33d24f265717d20fbd",
+    "torch": "2.10.0+cpu",
+    "device": "cpu",
+    "seed": 0,
+    "d_shared": 256,
+    "num_experts": 4,
+    "d_ff": 512,
+    "modal_dims": [
+      2560,
+      1024,
+      1024
+    ],
+    "rel_tol": 1e-05,
+    "measured_at": "2026-10-27T04:45:25+00:00"
+  },
+  "note": "v33/v49 融合层在**初始化**处的雅可比结构; P_m 与专家 FFN 在 v33 中冻结, 故一阶响应是架构量",
+  "rows": [
+    {
+      "top_k": 1,
+      "n_nonzero_weights": 1,
+      "gate_states": 4,
+      "gate_bits": 2.0,
+      "J_alpha": {
+        "shape": [
+          4,
+          256
+        ],
+        "rank": 1,
+        "sigma_head": [
+          0.036611,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sigma_floor_rel": 0.0,
+        "spectral_gap_after_rank": 1.0,
+        "stable_rank": 1.0,
+        "eff_rank": 1.0,
+        "top1_mass": 1.0,
+        "top19_mass": 1.0,
+        "fro_norm": 0.036611
+      },
+      "J_alpha_theory_rank": 1,
+      "J_route": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 1,
+        "sigma_head": [
+          0.002659,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sigma_floor_rel": 0.0,
+        "spectral_gap_after_rank": 0.99999911,
+        "stable_rank": 1.0,
+        "eff_rank": 1.0,
+        "top1_mass": 1.0,
+        "top19_mass": 1.0,
+        "fro_norm": 0.002659
+      },
+      "J_local": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 256,
+        "sigma_head": [
+          0.000523,
+          0.000492,
+          0.000484,
+          0.00048,
+          0.000462,
+          0.000456
+        ],
+        "sigma_floor_rel": 0.000400743913,
+        "spectral_gap_after_rank": 0.0,
+        "stable_rank": 73.049,
+        "eff_rank": 151.46,
+        "top1_mass": 0.0137,
+        "top19_mass": 0.2129,
+        "fro_norm": 0.003106
+      },
+      "J_out": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 256,
+        "sigma_head": [
+          0.002675,
+          0.000508,
+          0.000491,
+          0.000482,
+          0.000472,
+          0.000462
+        ],
+        "sigma_floor_rel": 3.5524678e-05,
+        "spectral_gap_after_rank": 0.0,
+        "stable_rank": 15.125,
+        "eff_rank": 98.494,
+        "top1_mass": 0.0661,
+        "top19_mass": 0.2567,
+        "fro_norm": 0.004077
+      },
+      "route_share_fro": 0.6523,
+      "local_share_fro": 0.7618
+    },
+    {
+      "top_k": 2,
+      "n_nonzero_weights": 2,
+      "gate_states": 6,
+      "gate_bits": 2.585,
+      "J_alpha": {
+        "shape": [
+          4,
+          256
+        ],
+        "rank": 2,
+        "sigma_head": [
+          0.041649,
+          0.028508,
+          0.0,
+          0.0
+        ],
+        "sigma_floor_rel": 0.0,
+        "spectral_gap_after_rank": 0.68449098,
+        "stable_rank": 1.684,
+        "eff_rank": 1.932,
+        "top1_mass": 0.5937,
+        "top19_mass": 1.0,
+        "fro_norm": 0.050471
+      },
+      "J_alpha_theory_rank": 2,
+      "J_route": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 2,
+        "sigma_head": [
+          0.003627,
+          0.002488,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sigma_floor_rel": 0.0,
+        "spectral_gap_after_rank": 0.68594718,
+        "stable_rank": 1.686,
+        "eff_rank": 1.933,
+        "top1_mass": 0.5931,
+        "top19_mass": 1.0,
+        "fro_norm": 0.004398
+      },
+      "J_local": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 256,
+        "sigma_head": [
+          0.000715,
+          0.000684,
+          0.000678,
+          0.000653,
+          0.000646,
+          0.00064
+        ],
+        "sigma_floor_rel": 0.000694363785,
+        "spectral_gap_after_rank": 0.0,
+        "stable_rank": 84.308,
+        "eff_rank": 164.888,
+        "top1_mass": 0.0119,
+        "top19_mass": 0.1918,
+        "fro_norm": 0.004694
+      },
+      "J_out": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 256,
+        "sigma_head": [
+          0.003643,
+          0.002571,
+          0.00069,
+          0.000679,
+          0.000654,
+          0.00065
+        ],
+        "sigma_floor_rel": 1.6176607e-05,
+        "spectral_gap_after_rank": 0.0,
+        "stable_rank": 17.945,
+        "eff_rank": 103.626,
+        "top1_mass": 0.0557,
+        "top19_mass": 0.2525,
+        "fro_norm": 0.006421
+      },
+      "route_share_fro": 0.6849,
+      "local_share_fro": 0.7311
+    },
+    {
+      "top_k": 3,
+      "n_nonzero_weights": 3,
+      "gate_states": 4,
+      "gate_bits": 2.0,
+      "J_alpha": {
+        "shape": [
+          4,
+          256
+        ],
+        "rank": 3,
+        "sigma_head": [
+          0.04432,
+          0.041775,
+          0.01829,
+          0.0
+        ],
+        "sigma_floor_rel": 0.0,
+        "spectral_gap_after_rank": 0.41268581,
+        "stable_rank": 2.355,
+        "eff_rank": 2.694,
+        "top1_mass": 0.4246,
+        "top19_mass": 1.0,
+        "fro_norm": 0.063592
+      },
+      "J_alpha_theory_rank": 3,
+      "J_route": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 3,
+        "sigma_head": [
+          0.003604,
+          0.003328,
+          0.001571,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sigma_floor_rel": 4e-12,
+        "spectral_gap_after_rank": 0.43592054,
+        "stable_rank": 2.359,
+        "eff_rank": 2.725,
+        "top1_mass": 0.4239,
+        "top19_mass": 1.0,
+        "fro_norm": 0.005151
+      },
+      "J_local": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 256,
+        "sigma_head": [
+          0.000811,
+          0.000776,
+          0.000762,
+          0.000747,
+          0.000737,
+          0.000724
+        ],
+        "sigma_floor_rel": 0.000177801136,
+        "spectral_gap_after_rank": 0.0,
+        "stable_rank": 89.076,
+        "eff_rank": 170.484,
+        "top1_mass": 0.0112,
+        "top19_mass": 0.1835,
+        "fro_norm": 0.005532
+      },
+      "J_out": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 256,
+        "sigma_head": [
+          0.0036,
+          0.003404,
+          0.001778,
+          0.000797,
+          0.000752,
+          0.000744
+        ],
+        "sigma_floor_rel": 0.000387489621,
+        "spectral_gap_after_rank": 0.0,
+        "stable_rank": 22.006,
+        "eff_rank": 109.958,
+        "top1_mass": 0.0454,
+        "top19_mass": 0.2513,
+        "fro_norm": 0.007555
+      },
+      "route_share_fro": 0.6818,
+      "local_share_fro": 0.7322
+    },
+    {
+      "top_k": 4,
+      "n_nonzero_weights": 4,
+      "gate_states": 1,
+      "gate_bits": 0.0,
+      "J_alpha": {
+        "shape": [
+          4,
+          256
+        ],
+        "rank": 3,
+        "sigma_head": [
+          0.044002,
+          0.04324,
+          0.037536,
+          0.0
+        ],
+        "sigma_floor_rel": 3.04737e-07,
+        "spectral_gap_after_rank": 0.8530578,
+        "stable_rank": 2.836,
+        "eff_rank": 2.986,
+        "top1_mass": 0.3526,
+        "top19_mass": 1.0,
+        "fro_norm": 0.072213
+      },
+      "J_alpha_theory_rank": 3,
+      "J_route": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 3,
+        "sigma_head": [
+          0.003878,
+          0.003458,
+          0.003063,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sigma_floor_rel": 4e-12,
+        "spectral_gap_after_rank": 0.78975821,
+        "stable_rank": 2.681,
+        "eff_rank": 2.973,
+        "top1_mass": 0.3729,
+        "top19_mass": 1.0,
+        "fro_norm": 0.006032
+      },
+      "J_local": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 256,
+        "sigma_head": [
+          0.000894,
+          0.000872,
+          0.000852,
+          0.000835,
+          0.000831,
+          0.000813
+        ],
+        "sigma_floor_rel": 0.00216411869,
+        "spectral_gap_after_rank": 0.0,
+        "stable_rank": 94.301,
+        "eff_rank": 173.998,
+        "top1_mass": 0.0106,
+        "top19_mass": 0.1765,
+        "fro_norm": 0.006391
+      },
+      "J_out": {
+        "shape": [
+          256,
+          256
+        ],
+        "rank": 256,
+        "sigma_head": [
+          0.003976,
+          0.003495,
+          0.003101,
+          0.000879,
+          0.000864,
+          0.000844
+        ],
+        "sigma_floor_rel": 0.000181551586,
+        "spectral_gap_after_rank": 0.0,
+        "stable_rank": 23.426,
+        "eff_rank": 112.295,
+        "top1_mass": 0.0427,
+        "top19_mass": 0.2486,
+        "fro_norm": 0.00879
+      },
+      "route_share_fro": 0.6862,
+      "local_share_fro": 0.7271
+    }
+  ],
+  "v33_default": {
+    "top_k": 2,
+    "n_nonzero_weights": 2,
+    "gate_states": 6,
+    "gate_bits": 2.585,
+    "J_alpha": {
+      "shape": [
+        4,
+        256
+      ],
+      "rank": 2,
+      "sigma_head": [
+        0.041649,
+        0.028508,
+        0.0,
+        0.0
+      ],
+      "sigma_floor_rel": 0.0,
+      "spectral_gap_after_rank": 0.68449098,
+      "stable_rank": 1.684,
+      "eff_rank": 1.932,
+      "top1_mass": 0.5937,
+      "top19_mass": 1.0,
+      "fro_norm": 0.050471
+    },
+    "J_alpha_theory_rank": 2,
+    "J_route": {
+      "shape": [
+        256,
+        256
+      ],
+      "rank": 2,
+      "sigma_head": [
+        0.003627,
+        0.002488,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "sigma_floor_rel": 0.0,
+      "spectral_gap_after_rank": 0.68594718,
+      "stable_rank": 1.686,
+      "eff_rank": 1.933,
+      "top1_mass": 0.5931,
+      "top19_mass": 1.0,
+      "fro_norm": 0.004398
+    },
+    "J_local": {
+      "shape": [
+        256,
+        256
+      ],
+      "rank": 256,
+      "sigma_head": [
+        0.000715,
+        0.000684,
+        0.000678,
+        0.000653,
+        0.000646,
+        0.00064
+      ],
+      "sigma_floor_rel": 0.000694363785,
+      "spectral_gap_after_rank": 0.0,
+      "stable_rank": 84.308,
+      "eff_rank": 164.888,
+      "top1_mass": 0.0119,
+      "top19_mass": 0.1918,
+      "fro_norm": 0.004694
+    },
+    "J_out": {
+      "shape": [
+        256,
+        256
+      ],
+      "rank": 256,
+      "sigma_head": [
+        0.003643,
+        0.002571,
+        0.00069,
+        0.000679,
+        0.000654,
+        0.00065
+      ],
+      "sigma_floor_rel": 1.6176607e-05,
+      "spectral_gap_after_rank": 0.0,
+      "stable_rank": 17.945,
+      "eff_rank": 103.626,
+      "top1_mass": 0.0557,
+      "top19_mass": 0.2525,
+      "fro_norm": 0.006421
+    },
+    "route_share_fro": 0.6849,
+    "local_share_fro": 0.7311
+  }
+}

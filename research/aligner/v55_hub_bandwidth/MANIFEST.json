@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "version": "55.0",
+  "package": "v55_hub_bandwidth",
+  "line": "aligner",
+  "kind": "extension_document",
+  "title": "中枢带宽: 把「测量可分离」判据搬进融合算子 (理论 + 只读实测, 无训练)",
+  "generation": {
+    "one_mechanism_added": "把上游 ETH 论文的『精确分解 = 跨块耦合行空间 ⊆ 中枢行空间』判据搬到融合算子, 给出带宽夹逼 (定理 1/2); 并证明 v33 融合层的跨专家通道秩恒 ≤ min(top_k, M-1) (定理 3, 结构性, 对任意参数成立), 实测为 2 维 / 2.58 bit 却承担 68.5% 的雅可比能量",
+    "parent": "54.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "v48→v49→v50→v51→v52→v53 审计链的机制补全; 与 v54 (评价器换轨) 并列而非替代 —— v54 换尺子, v55 给解释。本包**不做训练实验**"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "measure.py"
+    ],
+    "note": "只读: 直接 import v33 的 CrossModalFusionLayer, 逐基向量求雅可比; 不加载底座权重, 不读桶, 不训练"
+  },
+  "claim": {
+    "asserts": "(1) 上游算法本体不可搬 (配分函数 vs 点值, 遍历项 (2D+1)^{2τn} 塌成 O(1); 且其时间指数在 n<10^2500 上恒 >1 ⇒ 连点值求值也无收益); (2) 可搬的是秩判据: G 通过宽度 c 的中枢无损分解 ⟺ 耦合行空间 ⊆ 中枢行空间 (定理 1), 欠宽时最优误差 = 谱尾 (定理 2, Eckart-Young); (3) ★ v33 融合层的跨专家通道秩恒等于 min(top_k, M-1), 对任意参数成立 (定理 3); 默认配置 M=4, top_k=2 下是 2 维 = 2.58 bit, 却承担 68.5% 的雅可比能量; (4) 与数据侧 4–19 维并置 ⇒ 双向错配: 门过窄 (2) + 共享空间过宽 (256 vs 4–19, 13–64 倍), 这解释 v48–v53 全部读数的『margin = 源身份』现象",
+    "metric": "rank(J_alpha) / rank(J_route) / route_share_fro / effrank(J_out)",
+    "direction": "structural",
+    "value": 2,
+    "baseline": {
+      "ref": "min(top_k, M-1) @ M=4, top_k=2",
+      "value": 2
+    },
+    "seeds": 1,
+    "outcome_label": "theory_plus_measured_lemma",
+    "note": "秩对任意参数成立 (定理), 故单种子足够; 68.5% 的份额是取值依赖的, 训练后会变 (H5 重测), 不作为结构量使用。**本文不主张上游算法能加速融合算子**"
+  },
+  "protocol": {
+    "eval_set": "无 (不涉及数据); x0 ~ N(0, 0.5^2) in R^256, 仅用于取一阶导数",
+    "input": "CrossModalFusionLayer(d_shared=256, d_ff=512, num_experts=4, top_k ∈ {1,2,3,4}, modal_dims=[2560,1024,1024]); 随机初始化, seed=0, CPU",
+    "caveat": "只在初始化处测 (秩是结构量不受影响, 份额受影响); 只测一阶 (耦合可经高阶项绕过带宽); 单一架构族 (v6/v7/v33/v49 同源), 交叉注意力族 v10/v46 未做; 未在真实数据主子空间上测对齐 (需底座权重)"
+  },
+  "acceptance": {
+    "criterion": "定理 3 对 top_k ∈ {1,2,3,4} 逐一成立: rank(J_alpha) = min(top_k, M-1), rank(J_route) ≤ min(top_k, M-1)",
+    "outcome": "四档全部相等 (1,2,3,3): 前三档等于 top_k, 第四档落在 softmax 退化 M-1=3 上, 与定理一致",
+    "note": "预登记判据见 SPEC.md §5 (H1–H5), 待 v56 执行。H1 为核心: margin 应跟踪 min(k,M-1), 呈升→升→平, 而非单调"
+  },
+  "leakage_audit": {
+    "status": "not_applicable",
+    "audits": [],
+    "note": "本包不训练、不使用标签、不读数据, 无泄漏面。H1–H5 属 v56, 届时须重走泄漏审计。"
+  },
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "runner": "measure.py",
+    "forwarder_tests": "tests/test_v55_hub_bandwidth.py",
+    "forwarder_spec": "docs/V55_0_HUB_BANDWIDTH.md"
+  },
+  "falsified": [
+    {
+      "hypothesis": "『路由通道的秩随 top_k 或专家数 M 一起增长, 所以加宽门就能加宽中枢』",
+      "verdict": "**证伪 (结构性)**: 秩上界是 min(top_k, M-1); top_k=M 时被 softmax 的秩 M-1 卡住, 再宽也没用",
+      "evidence": "results/metrics.json → rows[*].J_alpha.rank = 1,2,3,3 与 J_alpha_theory_rank = 1,2,3,3 逐档相等"
+    },
+    {
+      "hypothesis": "『随机映射会把类别信息抹掉, 所以类别可解码性可当「模型是否用了目标」的代理』(v53 预登记判据 D2)",
+      "verdict": "**为 v53 的 D2 失败提供机制解释 (不推翻其结论)**: 随机线性/非线性映射近似保距 ⇒ 类别几何必然保留; 该代理量测的是『保几何』, 而带宽问题在『保秩』这一层, 两者不是一回事",
+      "evidence": "SPEC.md §4; effrank(J_out)=103.6/256 且 top19_mass=0.253 ⇒ 局部项近乎各向同性, 对数据 4–19 维子空间无偏好"
+    }
+  ],
+  "superseded_by": null,
+  "supersedes": null,
+  "tests_status": "none"
+}

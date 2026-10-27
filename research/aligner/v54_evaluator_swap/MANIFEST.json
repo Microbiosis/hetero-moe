@@ -1,0 +1,55 @@
+{
+ "schema_version": "1.0",
+ "version": "54.0",
+ "package": "v54_evaluator_swap",
+ "line": "aligner",
+ "title": "评价器换轨: MSE → {高斯 NLL, Cross-Entropy} (同网格, 不降级)",
+ "status": "spec-ready",
+ "date": "2026-10-27",
+ "parent": "v53_third_audit",
+ "question": "v49–v53 的全部结论都建立在一个评价器上; 换尺子后结论是否还成立?",
+ "protocol": {
+   "data": "复用 v53 (值域分割, 训练域前8×前8 / 留出域后8×后8, 零重叠)",
+   "probes": "复用 v53 三族 (ridge/mlp/knn)",
+   "lift": "复用 v53 (ResidualLift / LinearLift, 参数等量)",
+   "seeds": [2000, 2001, 2002, 2003, 2004],
+   "steps": 200,
+   "n_per_class": 16,
+   "tokens": 8,
+   "n_classes": 6,
+   "d_shared": [96, 252, 384],
+   "evaluators": ["mse", "gauss_nll", "ce"],
+   "paired": "三档共用同一 seed / 初始化 / 批顺序 → 差异只来自损失",
+   "grid_size": 180
+ },
+ "constraints": {
+   "integer_divisibility": "D_shared 必须能被 n_classes=6 整除; v52 的 256 在 6 类下不可用, 最近同量级合法值 252=42×6",
+   "param_parity": {"mse": 0, "ce": 1, "gauss_nll": "D+1"}
+ },
+ "baselines_exact": {
+   "n_classes": 6,
+   "mse_all_zero": 0.166667,
+   "mse_predict_mean": 0.138889,
+   "gauss_nll_all_zero": -0.395880,
+   "ce_uniform": 1.791759,
+   "identity": "CE 均匀预测的 MSE 恰等于 MSE 档的 predict_mean 基线 (两条独立推导同一个数)"
+ },
+ "predictions": {
+   "E1": "有意义空间绝对误差在三档全部低于冻结随机臂",
+   "E2": "冻结随机臂 CE 准确率 ≈ 1/6 ±0.05",
+   "E3": "有意义空间 '融合 vs 最优单专家' CE 准确率差 ≤5pp",
+   "E4": "NLL 档 logvar 与平方误差 Spearman ≥0.2 (否则该档读数作废)",
+   "E5": "投影空间有效秩: 有意义空间 > 冻结随机空间"
+ },
+ "artifacts": {
+   "code": ["research/aligner/v54_evaluator_swap/audit.py", "examples/run_v54_evaluator_swap.py"],
+   "tests": ["research/aligner/v54_evaluator_swap/tests/test_package.py", "tests/test_v54_evaluator_swap.py"],
+   "checker": "tools/check_artifacts.py",
+   "results": "research/aligner/v54_evaluator_swap/results/metrics.json"
+ },
+ "lineage": {
+   "code_sha_per_cell": true,
+   "why": "v53 的 metrics.json 记 n_classes=8 而代码是 6, 且无 code_sha → 查不出产物出处 (见 v53_third_audit/CORRECTION.md)"
+ },
+ "reproduce": ["bash run.sh v54", "bash run.sh v54-smoke", "python tools/check_artifacts.py research/aligner/v54_evaluator_swap"]
+}
