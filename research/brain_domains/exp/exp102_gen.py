@@ -306,11 +306,13 @@ def clip_encode(model, proc, images, device, batch=16):
 
 def step_generate(args):
     import torch
+
+    import exp102_train as T
+    T.ensure_deps()          # ⚠️ 必须在 `from diffusers import ...` **之前**（镜像里没有 diffusion 全家桶）
     from diffusers import DDIMScheduler
     from PIL import Image
 
     import exp93b_contrastive as E93B
-    import exp102_train as T
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     out_dir = Path(args.out_dir)
