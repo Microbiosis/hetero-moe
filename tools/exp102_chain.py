@@ -145,8 +145,8 @@ def find_live_job(names):
        ⇒ 用前缀会把烟囱 Job 也当成正式生成 Job。
     """
     want = set(names)
-    best, rank = None, -1
-    for j in _jobs():
+    best, rank = None, 0          # ⚠️ 起始必须是 0：终态（COMPLETED/ERROR/CANCELED）排名 0
+    for j in _jobs():              #    ⇒ 若起始是 -1，就会把**死掉的** Job 也当成「活着的」挂上去
         name = str((j.labels or {}).get("name") or "")
         if name not in want:
             continue

@@ -397,6 +397,16 @@ def step_generate(args):
     hi = n_img * (args.shard + 1) // args.n_shards
     log(f"[生成] 概念区间 [{lo}, {hi})")
 
+    # 被剔除的被试（对齐闸门没过）⇒ 续跑时要**继承**（否则第二次跑会丢掉剔除记录）
+    excl_path = out_dir / "gen_excluded_subjects.json"
+    excluded = []
+    if excl_path.exists():
+        try:
+            excluded = json.loads(excl_path.read_text(encoding="utf-8"))
+            log(f"[剔除] 沿用已有的剔除记录：{[e.get('subject') for e in excluded]}")
+        except Exception as e:                                   # noqa: BLE001
+            log(f"[剔除] 读已有剔除记录失败（按空处理）：{type(e).__name__}: {e}")
+
     for sid in args.subjects:
         fp = out_dir / f"gen_clip_sub{sid:02d}.pt"
         if fp.exists() and not args.overwrite:
@@ -453,9 +463,22 @@ def step_generate(args):
         except Exception as e:                                   # noqa: BLE001
             log(f"[样例] 生成图拼图失败（不影响判决）：{e}")
         feats = l2norm(np.stack(feats, axis=0))
-        # ---- **对齐闸门**：真图顺序若与 EEG 行序对不上 ⇒ 2-way 全无意义 ⇒ 当场停 ----
+        # ---- **对齐闸门**：真图顺序若与 EEG 行序对不上 ⇒ 该被试的 2-way/50-way 全无意义 ----
         # 判据：冻结 encoder 的 200-way top-1 必须显著高于随机（1/200 = 0.005）
         # ⇒ 参照 exp101 的同口径数字 0.0589（管线零漂移）。
+        #
+        # ⚠️⚠️ **2026-10-27 修订（出结果前改 ⇒ 正当修订，须留痕，见 §四十四·六）**：
+        #   原实现是 `raise RuntimeError` ⇒ **一个被试不过 ⇒ 整场中止**。
+        #   实测：sub-05 的 rep-0 条件 200-way = 0.0000（其余 9 个被试 0.020~0.075）
+        #   ⇒ 诊断（`exp102_diag_align.py` / `exp102_diag_align2.py`）证明：
+        #      ① `meta.parquet` 的行号→概念号映射对 10/10 被试都是**恒等** ⇒ 不是行序错；
+        #      ② sub-05 的 rep 20/40/60 分别 0.035/0.050/0.030、**80 试次平均 0.1200**
+        #         ⇒ **sub-05 的 EEG 数据是好的，坏的只是 rep 0 这一试次**；
+        #      ③ 换 rep / 试次平均都能救回 ⇒ 数据可用，只是 rep 0 不可用。
+        #   ⇒ 而 §四十四·三 的 C1/C2 只要求「**≥8 个被试**」⇒ 预登记本来就预留了
+        #      「个别被试不可用」的情形 ⇒ ⇒ 闸门失败 = **该被试不可用**（不是「整场作废」）。
+        #   ⇒ 改成：**剔除该被试 + 写进 `gen_excluded_subjects.json` + 继续跑**。
+        #      ⚠️ 剔除判据 = **预登记的数据质量闸门**，与判决结果无关（不看生成结果）⇒ 不是挑人。
         g_all, neg_all = build_candidate_structure(200)
         cz = l2norm(cond.astype(np.float64))
         sim = cz @ true_clip[:len(cz)].T
@@ -464,9 +487,15 @@ def step_generate(args):
         log(f"[对齐] sub-{sid:02d}: 200-way top-1={acc200:.4f}（随机 0.0050｜"
             f"exp101 参照 0.0589）｜条件侧 2-way={acc2:.4f}")
         if acc200 < 0.01:
-            raise RuntimeError(
-                f"对齐闸门未过：200-way={acc200:.4f} ≈ 随机 ⇒ **真图顺序与 EEG 行序对不上** "
-                f"⇒ 2-way/50-way 全无意义 ⇒ 停（先查 test_images 的概念顺序）")
+            excl = {"subject": sid, "align_acc200": acc200, "align_acc2": acc2,
+                    "reason": "对齐闸门未过（200-way < 0.01）⇒ 该被试的条件与真图对不上 "
+                              "⇒ 其 2-way/50-way 无意义 ⇒ **剔除该被试**（判据 = 预登记的"
+                              "数据质量闸门，与判决结果无关）"}
+            log(f"!! {excl['reason']}")
+            excluded.append(excl)
+            with open(out_dir / "gen_excluded_subjects.json", "w", encoding="utf-8") as f:
+                json.dump(excluded, f, ensure_ascii=False, indent=1)
+            continue                      # ⇒ 换下一个被试（不中止整场）
         torch.save({"clip": torch.from_numpy(feats.astype(np.float32)),
                     "lo": lo, "hi": hi, "subject": sid,
                     "align_acc200": acc200, "align_acc2": acc2},
@@ -601,9 +630,27 @@ def step_judge(args):
         r["per_concept_recall"] = recall
 
     verdict = judge(records)
+    # 被剔除的被试（对齐闸门没过）⇒ **必须写进判决**（不许悄悄少一个被试）
+    excluded = []
+    excl_path = out_dir / "gen_excluded_subjects.json"
+    if excl_path.exists():
+        try:
+            excluded = json.loads(excl_path.read_text(encoding="utf-8"))
+        except Exception as e:                                   # noqa: BLE001
+            log(f"[judge] 剔除记录读不出：{type(e).__name__}: {e}")
+    used_subjects = [r["subject"] for r in records]
+    excl_subjects = [e.get("subject") for e in excluded]
     out = {"verdict": verdict, "records": records,
+           "n_subjects_used": len(used_subjects),
+           "subjects_used": used_subjects,
+           "subjects_excluded": excl_subjects,
+           "exclusion_reason": excluded,
            "atm_reference_C_class": ATM_REF,
            "exp101_condition_reference": EXP101_REF}
+    if excl_subjects:
+        log(f"[judge] ⚠ 有被试被剔除：{excl_subjects}"
+            f"（判据 = 预登记的对齐闸门；与判决结果无关）"
+            f"⇒ 统计单元 = {len(used_subjects)} 个（§四十四·三 要求 ≥ {MIN_SUBJECTS}）")
 
     # 落盘：逐被试原始记录（**离线可重算**）+ 判决
     res_dir = Path(args.results_dir)
