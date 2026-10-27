@@ -393,6 +393,7 @@ def step_generate(args):
 
         feats = []
         pix = []
+        samples = []
         for i in range(lo, hi):
             g = torch.Generator(device="cpu").manual_seed(gen_seed(sid, i))
             lat = torch.randn((1, 4, RES // 8, RES // 8), generator=g,
@@ -409,11 +410,27 @@ def step_generate(args):
             arr = ((img[0].float().permute(1, 2, 0).cpu().numpy() + 1) * 127.5)
             arr = np.clip(arr, 0, 255).astype(np.uint8)
             pil = Image.fromarray(arr)
+            if len(samples) < 8:
+                samples.append(pil.copy())
             feats.append(clip_encode(clip_model, clip_proc, [pil], device)[0])
             if len(pix) < 16:
                 pix.append(arr[::16, ::16, :].astype(np.float32))
             if (i - lo) % 25 == 0:
                 log(f"  [sub-{sid:02d}] {i}/{hi}")
+        # 样例拼图（**给人看的**：生成图 + 对应真图，各 8 张）
+        try:
+            if samples:
+                grid = Image.new("RGB", (256 * 4, 256 * 4), (255, 255, 255))
+                for j, sm in enumerate(samples[:8]):
+                    grid.paste(sm.resize((256, 256)), (256 * (j % 4), 256 * (j // 4)))
+                for j, sm in enumerate(samples[:8]):
+                    ti = lo + j
+                    if ti < len(true_paths):
+                        grid.paste(Image.open(true_paths[ti]).convert("RGB").resize((256, 256)),
+                                   (256 * (j % 4), 256 * 2 + 256 * (j // 4)))
+                grid.save(out_dir / f"gen_samples_sub{sid:02d}.jpg", quality=88)
+        except Exception as e:                                   # noqa: BLE001
+            log(f"[样例] 生成图拼图失败（不影响判决）：{e}")
         feats = l2norm(np.stack(feats, axis=0))
         # ---- **对齐闸门**：真图顺序若与 EEG 行序对不上 ⇒ 2-way 全无意义 ⇒ 当场停 ----
         # 判据：冻结 encoder 的 200-way top-1 必须显著高于随机（1/200 = 0.005）
