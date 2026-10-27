@@ -57,7 +57,10 @@ for _d in D_SHAREDS:
         raise SystemExit(f"V54_DSHARED 含 {_d}: 不能被 n_classes={N_CLASSES} 整除 "
                          f"(块状 one-hot 要求等宽块; 最近的合法值 {(_d // N_CLASSES) * N_CLASSES} "
                          f"或 {(_d // N_CLASSES + 1) * N_CLASSES})")
-DEVICE = torch.device(os.environ.get("V54_DEVICE", "cpu"))
+_DEV_ENV = os.environ.get("V54_DEVICE", "auto").strip().lower()
+if _DEV_ENV in ("", "auto"):
+    _DEV_ENV = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = torch.device(_DEV_ENV)
 EXPERTS = ["big", "small1", "small2"]
 SMOKE = os.environ.get("V54_SMOKE", "0") == "1"
 OUT_DIR = os.path.join(ROOT, "research/aligner/v54_evaluator_swap/results")
@@ -462,6 +465,8 @@ def _restore_cells(sha):
                 why = f"代码指纹 {cfg['code_fp']} != {FP.get('_combined')}"
             elif cfg.get("predictions_sha") != cur_pred:
                 why = "判据指纹不符"
+            elif cfg.get("device") != str(DEVICE):
+                why = f"device {cfg.get('device')} != {DEVICE} (不允许 CPU/GPU 混格)"
             elif cfg.get("steps") != STEPS:
                 why = f"steps {cfg.get('steps')} != {STEPS}"
             if why:
@@ -571,7 +576,8 @@ def main():
                                    "evaluator": ev, "arm": arm, "d_shared": d,
                                    "seeds": SEEDS, "seed_base": SEED_BASE,
                                    "predictions_sha": _predictions_sha(),
-                                   "code_fp": (FP or {}).get("_combined")},
+                                   "code_fp": (FP or {}).get("_combined"),
+                                   "device": str(DEVICE)},
                         "rows": rows}
                 results[key] = {"rows": rows, "code_sha": sha, "config": cell["config"]}
                 _push(cell, key.replace(":", "_"))
@@ -598,6 +604,8 @@ def main():
     payload = {"schema_version": "1.0", "version": "54.0", "package": "v54_evaluator_swap",
                "line": "aligner", "code_sha": sha,
                "code_fingerprint": FP,
+               "device": str(DEVICE),
+               "device_name": (torch.cuda.get_device_name(0) if DEVICE.type == "cuda" else "cpu"),
                "config": {"d_shareds": D_SHAREDS, "steps": STEPS, "seeds": SEEDS,
                           "seed_base": SEED_BASE, "n_per_class": N_PER_CLASS,
                           "n_classes": N_CLASSES, "tokens": S_TOK,
