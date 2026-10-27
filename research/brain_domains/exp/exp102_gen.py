@@ -335,11 +335,11 @@ def step_generate(args):
         p.requires_grad_(False)
     log(f"[adapter] {args.adapter} 已加载")
 
-    # ---- SD1.5 ----
-    unet = T.load_sd_component("unet", dtype=torch.float16, device=device).eval()
-    vae = T.load_sd_component("vae", dtype=torch.float16, device=device).eval()
+    # ---- SD1.5（**权重用 fp32** + autocast bf16 ⇒ 与训练脚本同一套，避免 fp16/fp32 混用崩）----
+    unet = T.load_sd_component("unet", dtype=torch.float32, device=device).eval()
+    vae = T.load_sd_component("vae", dtype=torch.float32, device=device).eval()
     tok = T.load_sd_component("tokenizer")
-    txt = T.load_sd_component("text_encoder", dtype=torch.float16, device=device).eval()
+    txt = T.load_sd_component("text_encoder", dtype=torch.float32, device=device).eval()
     sched = DDIMScheduler.from_pretrained(
         "stable-diffusion-v1-5/stable-diffusion-v1-5", subfolder="scheduler",
         cache_dir="/domains/hf_cache")
@@ -350,7 +350,7 @@ def step_generate(args):
     with torch.no_grad():
         ids = tok([T.PROMPT], padding="max_length", max_length=77, truncation=True,
                   return_tensors="pt").input_ids.to(device)
-        text_emb = txt(ids)[0].to(torch.float16)      # (1, 77, 768)
+        text_emb = txt(ids)[0]                                 # (1, 77, 768) fp32
 
     clip_model, clip_proc = load_clip(device)
 
@@ -397,14 +397,14 @@ def step_generate(args):
             g = torch.Generator(device="cpu").manual_seed(gen_seed(sid, i))
             lat = torch.randn((1, 4, RES // 8, RES // 8), generator=g,
                               dtype=torch.float32).to(device) * sched.init_noise_sigma
-            with torch.no_grad():
-                c = torch.from_numpy(cond[i:i + 1]).to(device, torch.float16)
-                tokens = adapter(c).to(torch.float16)
+            with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+                c = torch.from_numpy(cond[i:i + 1]).to(device, torch.float32)
+                tokens = adapter(c)                              # (1, 16, 768) fp32
                 enc = torch.cat([text_emb, tokens], dim=1)      # (1, 77+16, 768)
                 for t in sched.timesteps:
                     inp = sched.scale_model_input(lat, t)
                     eps = unet(inp, t, encoder_hidden_states=enc).sample
-                    lat = sched.step(eps, t, lat).prev_sample
+                    lat = sched.step(eps.float(), t, lat).prev_sample
                 img = vae.decode(lat / vae.config.scaling_factor).sample
             arr = ((img[0].float().permute(1, 2, 0).cpu().numpy() + 1) * 127.5)
             arr = np.clip(arr, 0, 255).astype(np.uint8)
