@@ -1,38 +1,35 @@
 # v54 产物状态
 
-> **本目录的 `metrics.json` 是冒烟快照, 不是实验结果。**
+| 文件 | 是什么 | 能不能引用 |
+|---|---|---|
+| `metrics.json` | **全网格正式产物**: 36 格 × 5 seeds = 180 观测, 完备 | ✅ 可引用 |
+| `run_full.log` | 该次运行的完整日志 | ✅ 佐证 |
 
-| 项 | 值 |
-|---|---|
-| 性质 | 冒烟 (链路验证) |
-| 产物自述 | `protocol_check.status == "smoke"` (runner 写入, 检查器据此放行 L6) |
-| 网格 | D=96 × 4 臂 × 3 评价器 × **1 seed** × **2 steps** |
-| 编码器 | **伪编码** (确定性哈希投影, 不用底座权重) |
-| code_sha | `2f4119a` (干净树, 对应真实提交) |
-| predictions_sha | `20c6ae18d313b4e3` (= `protocol.lock.json`, 判据未被事后改动) |
-| 能否引用 | **否** |
+- `code_sha = a32eda6`, `code_fp = aeafb1d1f4fc54c8`, `predictions_sha = 20c6ae18d313b4e3`
+- `device = cpu`（`n_cpu=64` 是容器看到的核数, 非实际配额; `torch_cuda_build = None`）
+- 桶: `redmingwei/hetero-moe-jobs/v54-a32eda6-cpu8/`
+- 硬件: HF Space `cpu-upgrade` (8 vCPU / 32 GB), 全程 **49 分钟** 跑完 36 格
+  （对照 `cpu-basic` 2 vCPU: 75 分钟只到 28 格, 约 **2.4 倍**）
 
-## 全网格未跑
+## 本地独立复核 (`tools/verify_v54_run.py`)
 
-180 格 = 3 D (96/252/384) × 4 臂 × 3 评价器 × 5 seeds, 200 steps, 真实底座编码。
-本机不可行: 沙箱剩 ~350 MB 可用内存、swap 已用 12.4 GB, 冒烟 12 格就要 228 s。
-
-计划:
-```bash
-V54_DEVICE=cuda V54_MAX_MINUTES=120 bash run.sh v54     # HF Space t4-small
+```
+C1a code_fp  产物=aeafb1d1f4fc54c8 本地=aeafb1d1f4fc54c8   ok
+C1b 判据指纹 产物=20c6ae18d313b4e3 本地=20c6ae18d313b4e3   ok
+C2  网格     36/36 格, 180/180 观测                        ok
+C3  配对     30 组 (arm,D,seed) 三档 init_sha 不一致 0 组    ok
+C4  判决     逐条对拍 0 处不一致                            ok
+C5  闸门     all_pass 产物=False 本地重算=False             ok
+→ 9/9 PASS, 远端产物在本地代码下逐条复现
 ```
 
-## 全网格跑完后必须做的三件事
+## 闸门状态
 
-1. 用真实 metrics 覆盖本文件所在目录的 `metrics.json`; 冒烟版另存 `metrics.smoke.json`
-2. `python tools/check_artifacts.py research/aligner/v54_evaluator_swap` → 必须 0 FAIL
-3. `bash run.sh generations` 的 `[MISSING] results/metrics.json` 应消失; `selfcontain` 应保持 46/46
+`grid_complete=True` / `no_undecided=True` / `all_true=False` → **`all_pass=False`**
 
-## 完整性四件套 (全网格开跑前已就位)
+**这是完备的负面结果, 不是"没跑成"。** 六条判据里四条未过, 原因见 `FINDINGS.md`。
 
-| 机制 | 防的是什么 | 检查项 |
-|---|---|---|
-| `protocol.lock.json` | 看到结果后偷改网格 (seeds/steps/D/评价器) | L6 |
-| `predictions_sha` | 看到结果后偷改预登记判据 | L6 |
-| `init_sha` (逐 arm,D,seed) | "三档配对"只是嘴上说说 | L5 |
-| `code_sha` + `+dirty` 标记 | 产物出处不明 (v53 的病) | L2 |
+## 与冒烟的关系
+
+首轮冒烟产物 (出自 `4023ee5+dirty`) 已删除; 本目录只保留正式产物。
+后续任何冒烟运行必须落在 `V54_ART_DIR` 指向的临时目录, 不得写进 `results/`。
