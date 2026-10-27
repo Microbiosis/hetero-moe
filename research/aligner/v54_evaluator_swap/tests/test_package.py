@@ -11,7 +11,7 @@ if _root not in sys.path:
 
 from research._primitives.testing import run_suite
 
-TITLE = "V54.0 评价器换轨 — 单元测试 (9 项)"
+TITLE = "V54.0 评价器换轨 — 单元测试 (16 项)"
 
 import numpy as np
 import torch
@@ -149,6 +149,140 @@ def test_evaluator_swap_is_paired():
     return True
 
 
+# ----------------------------------------------------------------------
+# 完整性闸门 (integrity.py) —— 这一组是**回归测试**, 全部来自真实踩到的洞
+# ----------------------------------------------------------------------
+
+def _fake_results(d=96, evs=("mse", "gauss_nll", "ce"), arms=("frozen_random", "learned_lift"),
+                  seeds=(2000, 2001), fuse_l=0.10, fuse_f=0.16):
+    """造一份结构合法的 results, 只填判决用得到的字段。"""
+    out = {}
+    for ev in evs:
+        for arm in arms:
+            rows = []
+            for sd in seeds:
+                rows.append({
+                    "seed": sd,
+                    "held_out": {"fuse": fuse_l if arm == "learned_lift" else fuse_f,
+                                 "avg": 0.2, "best_single": 0.2},
+                    "acc": {"fuse": 1.0 / N_CLASSES if arm == "frozen_random" else 0.5,
+                            "best_single": 0.45},
+                    "held_out_calibration": 0.5,
+                    "eff_rank": 30.0 if arm == "learned_lift" else 20.0,
+                })
+            out[f"D{d}:{ev}:{arm}"] = {"rows": rows}
+    return out
+
+
+def _grid(d=96, evs=("mse", "gauss_nll", "ce"), arms=("frozen_random", "learned_lift"),
+          seeds=(2000, 2001)):
+    from research.aligner.v54_evaluator_swap.integrity import expected_grid
+    return expected_grid([d], list(evs), list(arms), len(seeds), seeds[0])
+
+
+def _crit():
+    from research.aligner.v54_evaluator_swap.audit import baselines
+    N = N_CLASSES
+
+    def e1(rl, rf, ctx):
+        return rl["held_out"]["fuse"] < rf["held_out"]["fuse"]
+
+    def e2(rl, rf, ctx):
+        return abs(rf["acc"]["fuse"] - 1.0 / N) <= 0.05
+
+    return {"E1": {"fn": e1}, "E2": {"fn": e2, "only_ev": ("ce",)}}
+
+
+def test_gate_empty_grid_is_not_pass():
+    """★ 回归: 空网格曾判 all_pass=True (None 被过滤掉)。必须为 False。"""
+    from research.aligner.v54_evaluator_swap.integrity import judge_verdicts
+    v, a, ok = judge_verdicts({}, _grid(), _crit())
+    assert ok is False, "空网格判通过了 —— 这就是要防的那个 bug"
+    assert a["_completeness"]["ok"] is False
+    assert v["D96"]["E1"] is None
+    print(f"[PASS] 空网格 → all_pass=False, 缺 {a['_completeness']['n_cells_want']} 格")
+    return True
+
+
+def test_gate_missing_one_cell_blocks():
+    """★ 少一格也不给结论 (不能"差不多就发")。"""
+    from research.aligner.v54_evaluator_swap.integrity import judge_verdicts
+    r = _fake_results()
+    r.pop("D96:mse:learned_lift")
+    v, a, ok = judge_verdicts(r, _grid(), _crit())
+    assert ok is False and a["_completeness"]["ok"] is False
+    assert a["_completeness"]["missing_cells"] == ["D96:mse:learned_lift"]
+    print(f"[PASS] 缺 1 格 → all_pass=False; 缺格被点名")
+    return True
+
+
+def test_gate_missing_one_seed_blocks():
+    """★ 一格少一个 seed 也算不完备 —— 否则 80% 规则会被"只剩 2 个 seed"钻空子。"""
+    from research.aligner.v54_evaluator_swap.integrity import judge_verdicts
+    r = _fake_results()
+    r["D96:mse:learned_lift"]["rows"].pop()
+    v, a, ok = judge_verdicts(r, _grid(), _crit())
+    assert ok is False
+    assert "D96:mse:learned_lift" in a["_completeness"]["bad_seed_sets"]
+    print(f"[PASS] 缺 1 个 seed → all_pass=False, 记入 bad_seed_sets")
+    return True
+
+
+def test_gate_complete_and_true_passes():
+    """完备 + 全真 → 通过 (闸门不能把所有事都判失败)。"""
+    from research.aligner.v54_evaluator_swap.integrity import judge_verdicts
+    v, a, ok = judge_verdicts(_fake_results(), _grid(), _crit())
+    assert ok is True, (v, a["_gate"])
+    assert a["_completeness"]["n_obs_have"] == a["_completeness"]["n_obs_want"] == 12
+    print(f"[PASS] 完备且全真 → all_pass=True ({a['_completeness']['n_obs_have']} 观测)")
+    return True
+
+
+def test_gate_complete_but_false_fails():
+    """完备但有一条为假 → 不通过, 且**不是** None (要能区分"没过"与"没算")。"""
+    from research.aligner.v54_evaluator_swap.integrity import judge_verdicts
+    r = _fake_results(fuse_l=0.30, fuse_f=0.16)      # learned 更差
+    v, a, ok = judge_verdicts(r, _grid(), _crit())
+    assert ok is False
+    assert v["D96"]["E1"] is False, v["D96"]
+    assert a["_gate"]["no_undecided"] is True        # 有结论, 只是结论为假
+    print("[PASS] 完备但 E1 为假 → all_pass=False, 且 no_undecided=True "
+          "(区分『没过』与『没算』)")
+    return True
+
+
+def test_gate_undecidable_blocks():
+    """判据返回 None → 该判据"无结论", 整体不得判通过。"""
+    from research.aligner.v54_evaluator_swap.integrity import judge_verdicts
+    r = _fake_results()
+    for k in r:
+        for row in r[k]["rows"]:
+            row.pop("held_out_calibration", None)
+
+    def e4(rl, rf, ctx):
+        rho = rl.get("held_out_calibration")
+        return None if rho is None else rho >= 0.2
+
+    crit = dict(_crit())
+    crit["E4"] = {"fn": e4, "only_ev": ("gauss_nll",)}
+    v, a, ok = judge_verdicts(r, _grid(), crit)
+    assert v["D96"]["E4"] is None
+    assert ok is False and a["_gate"]["no_undecided"] is False
+    print("[PASS] 判据无结论 → E4=None, all_pass=False (不会被当成通过)")
+    return True
+
+
+def test_gate_only_ev_scales_expectation():
+    """only_ev 的预期观测数必须按适用评价器缩放, 否则 E2 永远"观测不足"。"""
+    from research.aligner.v54_evaluator_swap.integrity import judge_verdicts
+    v, a, ok = judge_verdicts(_fake_results(), _grid(), _crit())
+    assert a["D96"]["E2"]["n_expected"] == 2, a["D96"]["E2"]     # 1 D × 1 seed × 仅 ce
+    assert a["D96"]["E1"]["n_expected"] == 6, a["D96"]["E1"]     # 3 档 × 2 seed
+    print(f"[PASS] only_ev 缩放正确: E2 预期 {a['D96']['E2']['n_expected']} (ce×2 seed), "
+          f"E1 预期 {a['D96']['E1']['n_expected']} (3 档×2 seed)")
+    return True
+
+
 TESTS = [
     test_three_evaluators_registered,
     test_param_parity,
@@ -159,6 +293,13 @@ TESTS = [
     test_constant_logvar_spearman_is_zero,
     test_ce_output_lives_on_simplex,
     test_evaluator_swap_is_paired,
+    test_gate_empty_grid_is_not_pass,
+    test_gate_missing_one_cell_blocks,
+    test_gate_missing_one_seed_blocks,
+    test_gate_complete_and_true_passes,
+    test_gate_complete_but_false_fails,
+    test_gate_undecidable_blocks,
+    test_gate_only_ev_scales_expectation,
 ]
 
 

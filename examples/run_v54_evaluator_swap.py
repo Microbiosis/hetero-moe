@@ -29,6 +29,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from research.aligner.v54_evaluator_swap.integrity import (
+    expected_grid, completeness, judge_verdicts, summarize,
+)
 from research.aligner.v54_evaluator_swap.audit import (
     CLASSES, ARMS, N_CLASSES, EVALUATORS, PREDICTIONS_V54,
     EvaluatorHead, eval_loss, baselines, decode_accuracy, calibration,
@@ -347,32 +350,95 @@ def run_cell(arm, d_shared, evaluator, seed, feats, feats_ho, labels, labels_ho)
 
 # ------------------------------------------------------------------ 判决
 
+def _criteria():
+    """预登记判据 (可执行形式)。only_ev 也属于预登记, 开跑前固定。
+
+    每个 fn(learned_row, frozen_row, ctx) -> bool | None
+      True/False = 该观测有明确结论; None = 该观测无法判定 (会让整条判据变成"无结论")
+    """
+    def e1(rl, rf, ctx):
+        """有意义空间的绝对误差 < 冻结随机空间 (同 seed 配对)。"""
+        return rl["held_out"]["fuse"] < rf["held_out"]["fuse"]
+
+    def e2(rl, rf, ctx):
+        """冻结随机臂在 CE 下应处于 chance 水平。"""
+        return abs(rf["acc"]["fuse"] - 1.0 / N_CLASSES) <= 0.05
+
+    def e3(rl, rf, ctx):
+        """融合 vs 最优单专家: CE 准确率差不超 5pp。"""
+        return (rl["acc"]["fuse"] - rl["acc"]["best_single"]) * 100 <= 5.0
+
+    def e4(rl, rf, ctx):
+        """NLL 档的方差头没退化 (held-out 校准, 不是训练末读数)。"""
+        rho = rl.get("held_out_calibration")
+        return None if rho is None else rho >= 0.2
+
+    def e5(rl, rf, ctx):
+        """有意义空间的有效秩 > 冻结随机空间。"""
+        a, b = rl.get("eff_rank"), rf.get("eff_rank")
+        return None if (a is None or b is None) else a > b
+
+    def e6(rl, rf, ctx):
+        """低于该档**自己的**零参数基线 (冒烟后新增, 见 audit.PREDICTIONS_V54 注释)。"""
+        base = baselines(ctx["ev"])
+        ref = base.get("predict_mean", base.get("uniform_pred_mse"))
+        return rl["held_out"]["fuse"] < ref
+
+    return {"E1": {"fn": e1}, "E2": {"fn": e2, "only_ev": ("ce",)},
+            "E3": {"fn": e3}, "E4": {"fn": e4, "only_ev": ("gauss_nll",)},
+            "E5": {"fn": e5}, "E6": {"fn": e6}}
+
+
 def judge(results):
-    """E1–E4, 全部从 rows 重算。E5 (有效秩) 在 check 阶段单独算。"""
-    out = {}
-    for d in D_SHAREDS:
-        acc = {"E1": [], "E2": [], "E3": [], "E4": [], "E6": [], "E5": []}
-        for ev in EVALUATORS:
-            for rl, rf in zip(results.get(f"D{d}:{ev}:learned_lift", {}).get("rows", []),
-                              results.get(f"D{d}:{ev}:frozen_random", {}).get("rows", [])):
-                acc["E1"].append(rl["held_out"]["fuse"] < rf["held_out"]["fuse"])
-                acc["E3"].append((rl["acc"]["fuse"] - rl["acc"]["best_single"]) * 100 <= 5.0)
-                if ev == "ce":
-                    acc["E2"].append(abs(rf["acc"]["fuse"] - 1.0 / N_CLASSES) <= 0.05)
-                if ev == "gauss_nll":
-                    # E4: 用 held-out 校准 (train_readout 是拟合过的, 不能当判决依据)
-                    rho = rl.get("held_out_calibration")
-                    acc["E4"].append(rho is not None and rho >= 0.2)
-                # E6: 低于该档自己的零参数基线 (冒烟后新增, 见 audit.PREDICTIONS_V54 注释)
-                base = baselines(ev)
-                ref = base.get("predict_mean", base.get("uniform_pred_mse"))
-                acc["E6"].append(rl["held_out"]["fuse"] < ref)
-                # E5: 有意义空间的有效秩 > 冻结随机空间 (逐 seed 配对比较)
-                rf_ = results.get(f"D{d}:{ev}:frozen_random", {}).get("rows", [])
-                if rf_ and "eff_rank" in rl and "eff_rank" in rf_[0]:
-                    acc["E5"].append(rl["eff_rank"] > rf_[len(acc["E5"]) % len(rf_)]["eff_rank"])
-        out[f"D{d}"] = {k: (bool(np.mean(v) >= 0.8) if v else None) for k, v in acc.items()}
-    return out
+    """判决 = 闸门 (完备 + 无未决 + 全真)。缺一格就不给结论, 见 integrity.py 的说明。"""
+    grid = expected_grid(D_SHAREDS, EVALUATORS, list(ARMS), SEEDS, SEED_BASE)
+    return judge_verdicts(results, grid, _criteria())
+
+
+def _restore_cells(sha):
+    """从桶里恢复已算的格。**不混血**: 代码/判据/步数任一不符就丢弃重算。"""
+    if not BUCKET:
+        return {}, []
+    try:
+        import tempfile
+        from huggingface_hub import list_bucket_tree, download_bucket_files
+        paths = [getattr(it, "path", None) for it in
+                 list_bucket_tree(BUCKET, prefix=f"{BUCKET_PREFIX}/cells/", recursive=True)]
+        paths = [p for p in paths if p and p.endswith(".json")]
+        if not paths:
+            return {}, []
+        tmp = tempfile.mkdtemp()
+        download_bucket_files(BUCKET,
+                              files=[(p, os.path.join(tmp, os.path.basename(p))) for p in paths],
+                              token=os.environ.get("HF_TOKEN"), raise_on_missing_files=False)
+        out, rejected = {}, []
+        cur_pred = _predictions_sha()
+        for p in paths:
+            f = os.path.join(tmp, os.path.basename(p))
+            if not os.path.exists(f):
+                continue
+            try:
+                d = json.load(open(f, encoding="utf-8"))
+            except Exception:
+                continue
+            key, cfg = d.get("key"), d.get("config", {}) or {}
+            if not key:
+                continue
+            why = None
+            if d.get("code_sha") != sha:
+                why = f"code_sha {d.get('code_sha')} != {sha}"
+            elif cfg.get("predictions_sha") != cur_pred:
+                why = "判据指纹不符"
+            elif cfg.get("steps") != STEPS:
+                why = f"steps {cfg.get('steps')} != {STEPS}"
+            if why:
+                rejected.append({"key": key, "why": why})
+                continue
+            out[key] = {"rows": d.get("rows", []), "code_sha": d["code_sha"], "config": cfg}
+        return out, rejected
+    except Exception as e:  # noqa: BLE001
+        print(f"  (warn) 恢复失败: {repr(e)[:110]}")
+        return {}, []
 
 
 def _push(payload, key):
@@ -418,6 +484,11 @@ def main():
         for k, v in proto["diff"].items():
             print(f"  ⚠ 偏离 {k}: 锁={v['lock']} 运行={v['run']}")
 
+    restored, rejected = _restore_cells(sha)
+    if restored or rejected:
+        print(f"\n断点续跑: 恢复 {len(restored)} 格, 丢弃 {len(rejected)} 格"
+              + (f" (例: {rejected[0]})" if rejected else ""))
+
     results = {}
     total = len(D_SHAREDS) * len(ARMS) * len(EVALUATORS) * SEEDS
     i = 0
@@ -425,6 +496,11 @@ def main():
         for arm in ARMS:
             for ev in EVALUATORS:
                 key = f"D{d}:{ev}:{arm}"
+                if key in restored and len(restored[key]["rows"]) == SEEDS:
+                    results[key] = restored[key]
+                    i += SEEDS
+                    print(f"[{i:3d}/{total}] D{d:<4d} {ev:<10s} {arm:<18s} —— 已算, 跳过")
+                    continue
                 rows = []
                 for s in range(SEEDS):
                     seed = SEED_BASE + s
@@ -445,14 +521,23 @@ def main():
                 results[key] = {"rows": rows, "code_sha": sha, "config": cell["config"]}
                 _push(cell, key.replace(":", "_"))
 
-    verdicts = judge(results)
+    verdicts, audit, all_pass = judge(results)
+    comp = audit["_completeness"]
     print("\n" + "=" * 78)
-    print("预登记判决 E1–E4 (E5 见 tools/check_artifacts.py)")
+    print("预登记判决 E1–E6 (闸门: only_ev 也由预登记固定)")
     print("=" * 78)
     for d, v in verdicts.items():
-        print(f"  {d}: " + "  ".join(f"{k}={'过' if x else '未过'}"
-                                     for k, x in v.items() if x is not None))
-    all_pass = all(all(x for x in v.values() if x is not None) for v in verdicts.values())
+        cells = []
+        for k, x in v.items():
+            a = audit[d][k]
+            tag = "过" if x is True else ("未过" if x is False else "无结论")
+            cells.append(f"{k}={tag}({a['n_true']}/{a['n_expected']})")
+        print(f"  {d}: " + "  ".join(cells))
+    print(f"\n完整性: {summarize(audit)}")
+    if not comp["ok"]:
+        print(f"  缺格 {len(comp['missing_cells'])} 个: {comp['missing_cells'][:6]}")
+        if comp["bad_seed_sets"]:
+            print(f"  seed 集合异常 {len(comp['bad_seed_sets'])} 格")
 
     os.makedirs(ART_DIR, exist_ok=True)
     payload = {"schema_version": "1.0", "version": "54.0", "package": "v54_evaluator_swap",
@@ -467,13 +552,33 @@ def main():
                "protocol_check": proto,
                "verdicts": verdicts, "all_pass": all_pass,
                "results": results,
+               "IS_SMOKE_NOT_RESULTS": SMOKE,   # 冒烟产物必须自带这个标记, 否则会冒充结果
                "notes": {"paired": "三档共用同一 seed/初始化/批顺序 → 差异只来自损失",
                          "comparable_metric": "每档都报 mse (同一输出张量的绝对误差)",
                          "lineage": "v54 起每个 cell 带 code_sha",
                          "smoke": SMOKE}}
+    payload["integrity"] = {
+        "gate": audit["_gate"], "completeness": comp,
+        "per_criterion": {d: audit[d] for d in audit if not d.startswith("_")},
+        "restored_cells": len(restored), "rejected_cells": rejected,
+        "criterion_errors": audit.get("criterion_errors", []),
+    }
+    os.makedirs(ART_DIR, exist_ok=True)
+    if not comp["ok"]:
+        # ⚠️ 网格不完备 → 只写 partial, 绝不写成 metrics.json 冒充结果
+        ppath = os.path.join(ART_DIR, "metrics.partial.json")
+        payload["IS_PARTIAL_NOT_RESULTS"] = True
+        payload["partial_reason"] = summarize(audit)
+        json.dump(payload, open(ppath, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        print(f"\n⛔ 网格不完备 ({comp['n_cells_have']}/{comp['n_cells_want']} 格, "
+              f"{comp['n_obs_have']}/{comp['n_obs_want']} 观测)")
+        print(f"   已写 {ppath} (IS_PARTIAL_NOT_RESULTS=true) —— 这不是结果, 续跑后会被取代")
+        sys.exit(2)
+
     mpath = os.path.join(ART_DIR, "metrics.json")
     json.dump(payload, open(mpath, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"\n指标已落盘: {mpath}  (code_sha={sha}, {total} 格, {time.time() - t0:.0f}s)")
+    print(f"闸门: {summarize(audit)} → all_pass={all_pass}")
 
 
 if __name__ == "__main__":
