@@ -1,0 +1,819 @@
+{
+ "schema_version": "1.0",
+ "version": "54.0-smoke",
+ "package": "v54_evaluator_swap",
+ "line": "aligner",
+ "code_sha": "2f4119a",
+ "config": {
+  "d_shareds": [
+   96
+  ],
+  "steps": 2,
+  "seeds": 1,
+  "seed_base": 2000,
+  "n_per_class": 16,
+  "n_classes": 6,
+  "tokens": 8,
+  "evaluators": [
+   "mse",
+   "gauss_nll",
+   "ce"
+  ]
+ },
+ "baselines": {
+  "mse": {
+   "all_zero": 0.16666666666666666,
+   "predict_mean": 0.1388888888888889
+  },
+  "gauss_nll": {
+   "all_zero": -0.3958797346140275,
+   "predict_mean": -0.4870405130110048
+  },
+  "ce": {
+   "uniform": 1.791759469228055,
+   "perfect": 0.0,
+   "uniform_pred_mse": 0.1388888888888889
+  }
+ },
+ "predictions": {
+  "E1": "有意义空间臂的绝对误差(mse 读数)在**三档全部**低于冻结随机臂 (3/3 档, ≥4/5 seeds)",
+  "E2": "冻结随机臂在 CE 下准确率 ≈ 1/n_classes ±0.05 (chance); 且 NLL 显著差于常数预测器",
+  "E3": "有意义空间下 '融合 vs 最优单专家' 的 CE 准确率差 ≤ 5pp (≥4/5 seeds), 否则须单独解释",
+  "E4": "NLL 臂 logvar 与平方误差 Spearman ≥ 0.2 且为正 (否则方差头退化, E2/E3 的 NLL 读数作废)",
+  "E5": "投影空间有效秩: 有意义空间 > 冻结随机空间, 且三档同量级",
+  "E6": "有意义空间臂在三档都严格低于**该档自己的零参数基线** (mse: predict_mean=0.138889 / gauss_nll: predict_mean=-0.486977 / ce: 均匀预测的等价 mse=0.138889)"
+ },
+ "predictions_sha": "20c6ae18d313b4e3",
+ "protocol_check": {
+  "status": "smoke",
+  "locked": true,
+  "run": {
+   "d_shareds": [
+    96
+   ],
+   "arms": [
+    "frozen_random",
+    "permuted_target",
+    "learned_lift",
+    "randomized_target"
+   ],
+   "evaluators": [
+    "mse",
+    "gauss_nll",
+    "ce"
+   ],
+   "seeds": 1,
+   "seed_base": 2000,
+   "steps": 2,
+   "n_per_class": 16,
+   "tokens": 8,
+   "n_classes": 6,
+   "batch": 32
+  },
+  "note": "冒烟不是网格, 不与锁对拍"
+ },
+ "verdicts": {
+  "D96": {
+   "E1": false,
+   "E2": true,
+   "E3": true,
+   "E4": true,
+   "E6": false,
+   "E5": false
+  }
+ },
+ "all_pass": false,
+ "results": {
+  "D96:mse:frozen_random": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.16751712560653687,
+      "avg": 0.16751711070537567,
+      "best_single": 0.16751712560653687
+     },
+     "acc": {
+      "fuse": 0.1527777761220932,
+      "best_single": 0.1527777761220932
+     },
+     "probes": {
+      "source": {
+       "ridge": 1.0,
+       "mlp": 0.982646420824295,
+       "knn": 0.9674620390455532
+      },
+      "class": {
+       "ridge": 0.22125813449023862,
+       "mlp": 0.18872017353579176,
+       "knn": 0.19088937093275488
+      }
+     },
+     "consistency": {
+      "input": -0.012174822390079498,
+      "output": -0.012174746952950954
+     },
+     "in_sample_fuse": 0.16749458014965057,
+     "train_readout": {
+      "loss": 0.1670321524143219,
+      "mse": 0.1670321524143219
+     },
+     "held_out_calibration": null,
+     "eff_rank": 37.26100465663173,
+     "init_sha": "00583637e4ecfb37",
+     "n_params": {
+      "head_extra": 0,
+      "trained": 867
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "mse"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "mse",
+    "arm": "frozen_random",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  },
+  "D96:gauss_nll:frozen_random": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.16751712560653687,
+      "avg": 0.16751708090305328,
+      "best_single": 0.16751712560653687
+     },
+     "acc": {
+      "fuse": 0.1527777761220932,
+      "best_single": 0.1527777761220932
+     },
+     "probes": {
+      "source": {
+       "ridge": 1.0,
+       "mlp": 0.982646420824295,
+       "knn": 0.9674620390455532
+      },
+      "class": {
+       "ridge": 0.22125813449023862,
+       "mlp": 0.18872017353579176,
+       "knn": 0.19088937093275488
+      }
+     },
+     "consistency": {
+      "input": -0.012174822390079498,
+      "output": -0.01217474415898323
+     },
+     "in_sample_fuse": 0.16749458014965057,
+     "train_readout": {
+      "loss": -0.38436615467071533,
+      "mse": 0.1670321524143219,
+      "logvar_mean": -1.9869956970214844,
+      "logvar_err_spearman": -0.006006673909723759
+     },
+     "held_out_calibration": 0.017134256660938263,
+     "eff_rank": 37.26100465663173,
+     "init_sha": "00583637e4ecfb37",
+     "n_params": {
+      "head_extra": 97,
+      "trained": 964
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "gauss_nll"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "gauss_nll",
+    "arm": "frozen_random",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  },
+  "D96:ce:frozen_random": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.1388981193304062,
+      "avg": 0.1388981193304062,
+      "best_single": 0.1388981193304062
+     },
+     "acc": {
+      "fuse": 0.1527777761220932,
+      "best_single": 0.1527777761220932
+     },
+     "probes": {
+      "source": {
+       "ridge": 0.5574837310195228,
+       "mlp": 0.2993492407809111,
+       "knn": 0.9913232104121475
+      },
+      "class": {
+       "ridge": 0.1735357917570499,
+       "mlp": 0.16702819956616052,
+       "knn": 0.19956616052060738
+      }
+     },
+     "consistency": {
+      "input": -0.012174822390079498,
+      "output": -0.012174791656434536
+     },
+     "in_sample_fuse": 0.13889244198799133,
+     "train_readout": {
+      "loss": 1.790010690689087,
+      "mse": 0.13879147171974182,
+      "ce_acc": 0.22083333134651184,
+      "tau": 0.6891597509384155
+     },
+     "held_out_calibration": null,
+     "eff_rank": 37.26100465663173,
+     "init_sha": "00583637e4ecfb37",
+     "n_params": {
+      "head_extra": 1,
+      "trained": 868
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "ce"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "ce",
+    "arm": "frozen_random",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  },
+  "D96:mse:permuted_target": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.16751712560653687,
+      "avg": 0.16751711070537567,
+      "best_single": 0.16751712560653687
+     },
+     "acc": {
+      "fuse": 0.1527777761220932,
+      "best_single": 0.1527777761220932
+     },
+     "probes": {
+      "source": {
+       "ridge": 1.0,
+       "mlp": 0.982646420824295,
+       "knn": 0.9674620390455532
+      },
+      "class": {
+       "ridge": 0.22125813449023862,
+       "mlp": 0.18872017353579176,
+       "knn": 0.19088937093275488
+      }
+     },
+     "consistency": {
+      "input": -0.012174822390079498,
+      "output": -0.012174746952950954
+     },
+     "in_sample_fuse": 0.16749458014965057,
+     "train_readout": {
+      "loss": 0.1670321524143219,
+      "mse": 0.1670321524143219
+     },
+     "held_out_calibration": null,
+     "eff_rank": 37.26100465663173,
+     "init_sha": "00583637e4ecfb37",
+     "n_params": {
+      "head_extra": 0,
+      "trained": 867
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "mse"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "mse",
+    "arm": "permuted_target",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  },
+  "D96:gauss_nll:permuted_target": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.16751712560653687,
+      "avg": 0.16751708090305328,
+      "best_single": 0.16751712560653687
+     },
+     "acc": {
+      "fuse": 0.1527777761220932,
+      "best_single": 0.1527777761220932
+     },
+     "probes": {
+      "source": {
+       "ridge": 1.0,
+       "mlp": 0.982646420824295,
+       "knn": 0.9674620390455532
+      },
+      "class": {
+       "ridge": 0.22125813449023862,
+       "mlp": 0.18872017353579176,
+       "knn": 0.19088937093275488
+      }
+     },
+     "consistency": {
+      "input": -0.012174822390079498,
+      "output": -0.01217474415898323
+     },
+     "in_sample_fuse": 0.16749458014965057,
+     "train_readout": {
+      "loss": -0.38436615467071533,
+      "mse": 0.1670321524143219,
+      "logvar_mean": -1.9869956970214844,
+      "logvar_err_spearman": -0.006006673909723759
+     },
+     "held_out_calibration": 0.017134256660938263,
+     "eff_rank": 37.26100465663173,
+     "init_sha": "00583637e4ecfb37",
+     "n_params": {
+      "head_extra": 97,
+      "trained": 964
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "gauss_nll"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "gauss_nll",
+    "arm": "permuted_target",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  },
+  "D96:ce:permuted_target": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.1388981193304062,
+      "avg": 0.1388981193304062,
+      "best_single": 0.1388981193304062
+     },
+     "acc": {
+      "fuse": 0.1527777761220932,
+      "best_single": 0.1527777761220932
+     },
+     "probes": {
+      "source": {
+       "ridge": 0.5574837310195228,
+       "mlp": 0.2993492407809111,
+       "knn": 0.9913232104121475
+      },
+      "class": {
+       "ridge": 0.1735357917570499,
+       "mlp": 0.16702819956616052,
+       "knn": 0.19956616052060738
+      }
+     },
+     "consistency": {
+      "input": -0.012174822390079498,
+      "output": -0.012174791656434536
+     },
+     "in_sample_fuse": 0.13889244198799133,
+     "train_readout": {
+      "loss": 1.790010690689087,
+      "mse": 0.13879147171974182,
+      "ce_acc": 0.22083333134651184,
+      "tau": 0.6891597509384155
+     },
+     "held_out_calibration": null,
+     "eff_rank": 37.26100465663173,
+     "init_sha": "00583637e4ecfb37",
+     "n_params": {
+      "head_extra": 1,
+      "trained": 868
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "ce"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "ce",
+    "arm": "permuted_target",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  },
+  "D96:mse:learned_lift": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.17164485156536102,
+      "avg": 0.17164428532123566,
+      "best_single": 0.17164479196071625
+     },
+     "acc": {
+      "fuse": 0.15625,
+      "best_single": 0.15625
+     },
+     "probes": {
+      "source": {
+       "ridge": 1.0,
+       "mlp": 1.0,
+       "knn": 0.9978308026030369
+      },
+      "class": {
+       "ridge": 0.22125813449023862,
+       "mlp": 0.22342733188720174,
+       "knn": 0.19305856832971802
+      }
+     },
+     "consistency": {
+      "input": 0.16595129668712616,
+      "output": 0.16595137119293213
+     },
+     "in_sample_fuse": 0.16807802021503448,
+     "train_readout": {
+      "loss": 0.17861957848072052,
+      "mse": 0.17861957848072052
+     },
+     "held_out_calibration": null,
+     "eff_rank": 26.268841982776017,
+     "init_sha": "11a403e6675c88a0",
+     "n_params": {
+      "head_extra": 0,
+      "trained": 441786
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "mse"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "mse",
+    "arm": "learned_lift",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  },
+  "D96:gauss_nll:learned_lift": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.17176984250545502,
+      "avg": 0.17176905274391174,
+      "best_single": 0.17176979780197144
+     },
+     "acc": {
+      "fuse": 0.1597222238779068,
+      "best_single": 0.1597222238779068
+     },
+     "probes": {
+      "source": {
+       "ridge": 1.0,
+       "mlp": 1.0,
+       "knn": 0.9978308026030369
+      },
+      "class": {
+       "ridge": 0.22125813449023862,
+       "mlp": 0.22342733188720174,
+       "knn": 0.19522776572668113
+      }
+     },
+     "consistency": {
+      "input": 0.1683996021747589,
+      "output": 0.16840024292469025
+     },
+     "in_sample_fuse": 0.16817188262939453,
+     "train_readout": {
+      "loss": -0.34465229511260986,
+      "mse": 0.17861953377723694,
+      "logvar_mean": -1.9695465564727783,
+      "logvar_err_spearman": 0.04605116695165634
+     },
+     "held_out_calibration": 0.2050313651561737,
+     "eff_rank": 26.32520269505017,
+     "init_sha": "11a403e6675c88a0",
+     "n_params": {
+      "head_extra": 97,
+      "trained": 441883
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "gauss_nll"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "gauss_nll",
+    "arm": "learned_lift",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  },
+  "D96:ce:learned_lift": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.1422940492630005,
+      "avg": 0.14229314029216766,
+      "best_single": 0.14229388535022736
+     },
+     "acc": {
+      "fuse": 0.1354166716337204,
+      "best_single": 0.1354166716337204
+     },
+     "probes": {
+      "source": {
+       "ridge": 0.8264642082429501,
+       "mlp": 0.9067245119305857,
+       "knn": 0.9978308026030369
+      },
+      "class": {
+       "ridge": 0.1561822125813449,
+       "mlp": 0.16919739696312364,
+       "knn": 0.19956616052060738
+      }
+     },
+     "consistency": {
+      "input": 0.03936702013015747,
+      "output": 0.039363373070955276
+     },
+     "in_sample_fuse": 0.13868148624897003,
+     "train_readout": {
+      "loss": 1.7514533996582031,
+      "mse": 0.13665983080863953,
+      "ce_acc": 0.21666666865348816,
+      "tau": 0.6891597509384155
+     },
+     "held_out_calibration": null,
+     "eff_rank": 17.152687702746384,
+     "init_sha": "11a403e6675c88a0",
+     "n_params": {
+      "head_extra": 1,
+      "trained": 441787
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "ce"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "ce",
+    "arm": "learned_lift",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  },
+  "D96:mse:randomized_target": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.16751712560653687,
+      "avg": 0.16751711070537567,
+      "best_single": 0.16751712560653687
+     },
+     "acc": {
+      "fuse": 0.1527777761220932,
+      "best_single": 0.1527777761220932
+     },
+     "probes": {
+      "source": {
+       "ridge": 1.0,
+       "mlp": 0.982646420824295,
+       "knn": 0.9674620390455532
+      },
+      "class": {
+       "ridge": 0.22125813449023862,
+       "mlp": 0.18872017353579176,
+       "knn": 0.19088937093275488
+      }
+     },
+     "consistency": {
+      "input": -0.012174822390079498,
+      "output": -0.012174746952950954
+     },
+     "in_sample_fuse": 0.16749458014965057,
+     "train_readout": {
+      "loss": 0.1670321524143219,
+      "mse": 0.1670321524143219
+     },
+     "held_out_calibration": null,
+     "eff_rank": 37.26100465663173,
+     "init_sha": "00583637e4ecfb37",
+     "n_params": {
+      "head_extra": 0,
+      "trained": 867
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "mse"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "mse",
+    "arm": "randomized_target",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  },
+  "D96:gauss_nll:randomized_target": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.16751712560653687,
+      "avg": 0.16751708090305328,
+      "best_single": 0.16751712560653687
+     },
+     "acc": {
+      "fuse": 0.1527777761220932,
+      "best_single": 0.1527777761220932
+     },
+     "probes": {
+      "source": {
+       "ridge": 1.0,
+       "mlp": 0.982646420824295,
+       "knn": 0.9674620390455532
+      },
+      "class": {
+       "ridge": 0.22125813449023862,
+       "mlp": 0.18872017353579176,
+       "knn": 0.19088937093275488
+      }
+     },
+     "consistency": {
+      "input": -0.012174822390079498,
+      "output": -0.01217474415898323
+     },
+     "in_sample_fuse": 0.16749458014965057,
+     "train_readout": {
+      "loss": -0.38436615467071533,
+      "mse": 0.1670321524143219,
+      "logvar_mean": -1.9869956970214844,
+      "logvar_err_spearman": -0.006006673909723759
+     },
+     "held_out_calibration": 0.017134256660938263,
+     "eff_rank": 37.26100465663173,
+     "init_sha": "00583637e4ecfb37",
+     "n_params": {
+      "head_extra": 97,
+      "trained": 964
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "gauss_nll"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "gauss_nll",
+    "arm": "randomized_target",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  },
+  "D96:ce:randomized_target": {
+   "rows": [
+    {
+     "held_out": {
+      "fuse": 0.1388981193304062,
+      "avg": 0.1388981193304062,
+      "best_single": 0.1388981193304062
+     },
+     "acc": {
+      "fuse": 0.1527777761220932,
+      "best_single": 0.1527777761220932
+     },
+     "probes": {
+      "source": {
+       "ridge": 0.5574837310195228,
+       "mlp": 0.2993492407809111,
+       "knn": 0.9913232104121475
+      },
+      "class": {
+       "ridge": 0.1735357917570499,
+       "mlp": 0.16702819956616052,
+       "knn": 0.19956616052060738
+      }
+     },
+     "consistency": {
+      "input": -0.012174822390079498,
+      "output": -0.012174791656434536
+     },
+     "in_sample_fuse": 0.13889244198799133,
+     "train_readout": {
+      "loss": 1.790010690689087,
+      "mse": 0.13879147171974182,
+      "ce_acc": 0.22083333134651184,
+      "tau": 0.6891597509384155
+     },
+     "held_out_calibration": null,
+     "eff_rank": 37.26100465663173,
+     "init_sha": "00583637e4ecfb37",
+     "n_params": {
+      "head_extra": 1,
+      "trained": 868
+     },
+     "perm": null,
+     "d_shared": 96,
+     "seed": 2000,
+     "evaluator": "ce"
+    }
+   ],
+   "code_sha": "2f4119a",
+   "config": {
+    "n_classes": 6,
+    "tokens": 8,
+    "steps": 2,
+    "evaluator": "ce",
+    "arm": "randomized_target",
+    "d_shared": 96,
+    "seeds": 1,
+    "seed_base": 2000,
+    "predictions_sha": "20c6ae18d313b4e3"
+   }
+  }
+ },
+ "notes": {
+  "paired": "三档共用同一 seed/初始化/批顺序 → 差异只来自损失",
+  "comparable_metric": "每档都报 mse (同一输出张量的绝对误差)",
+  "lineage": "v54 起每个 cell 带 code_sha",
+  "smoke": true
+ },
+ "smoke_note": "**冒烟快照, 不是全网格结果**: D=96 / 1 seed / 2 steps / 伪编码器。用途仅为把训练·判决·血缘链路跑通; 任何结论都不得引用。全网格 180 格 (3 D × 4 臂 × 3 评价器 × 5 seeds, 200 steps, 真实底座) 待 HF Space t4-small。"
+}

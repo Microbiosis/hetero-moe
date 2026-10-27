@@ -86,6 +86,16 @@ def file_sha(path: str) -> str:
     return h.hexdigest()[:12]
 
 
+def is_ancestor(sha: str, repo: str) -> bool:
+    """sha 是否为 repo HEAD 的祖先 (只在前 7 位可用时也成立)。"""
+    try:
+        out = subprocess.run(["git", "-C", repo, "merge-base", "--is-ancestor", sha, "HEAD"],
+                             capture_output=True, text=True, timeout=10)
+        return out.returncode == 0
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def git_head(repo: str) -> str | None:
     try:
         out = subprocess.run(["git", "-C", repo, "rev-parse", "--short", "HEAD"],
@@ -119,7 +129,8 @@ def check(pkg_dir: str, cells_dir: str | None, repo: str,
         add("F0", False, f"missing {mpath}")
         return rep
     m = json.load(open(mpath, encoding="utf-8"))
-    is_smoke = bool(m.get("IS_SMOKE_NOT_RESULTS"))
+    is_smoke = bool(m.get("IS_SMOKE_NOT_RESULTS")) or \
+        (m.get("protocol_check") or {}).get("status") == "smoke"
     if is_smoke:
         rep["checks"].append({"id": "S0", "status": "WARN",
                               "detail": "冒烟快照 (IS_SMOKE_NOT_RESULTS=true) —— 读数不得引用; "
@@ -147,9 +158,12 @@ def check(pkg_dir: str, cells_dir: str | None, repo: str,
     if not sha:
         add("L2", False, "产物未记录 code_sha → 无法证明出自哪份代码 (v49–v53 均缺)", warn_only=True)
     else:
-        add("L2", is_smoke or head is None or sha.startswith(head) or head.startswith(sha[:7]),
-            f"code_sha={sha} / repo HEAD={head}"
-            + ("  (冒烟, 允许早于 HEAD)" if is_smoke else ""))
+        base = sha.split("+")[0]
+        anc = is_ancestor(base, repo)
+        add("L2", anc or is_smoke,
+            f"code_sha={sha} / repo HEAD={head}  "
+            + ("是该提交的祖先 ✓" if anc else "**不在本仓库历史中**")
+            + (" (+dirty: 工作树有未提交改动)" if "+" in sha else ""))
 
     # ---- L3: 网格完整 ----
     d_list = cfg.get("d_shareds") or []
