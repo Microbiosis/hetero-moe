@@ -226,13 +226,18 @@ def load_latents(cache_dir):
     if not files:
         raise RuntimeError(f"{cache_dir} 里没有 vae_latents_*.pt ⇒ 先跑 exp102_cache.py --step vae")
     idx_all, lat_all, paths = [], [], []
+    seen = set()
     for f in files:
         obj = torch.load(f, map_location="cpu", weights_only=False)
         # ⚠️ `idx` 可能是 **list**（缓存脚本就是 list 存的）也可能是张量 ⇒ 两种都能读
         idxs = obj["idx"]
         idxs = idxs.tolist() if hasattr(idxs, "tolist") else list(idxs)
         for i, l, p in zip(idxs, obj["latents"], obj["paths"]):
-            idx_all.append(int(i))
+            i = int(i)
+            if i in seen:      # 续跑可能留下重叠分片 ⇒ 去重（保留先到的）
+                continue
+            seen.add(i)
+            idx_all.append(i)
             lat_all.append(l)
             paths.append(str(p))
     order = np.argsort(np.asarray(idx_all))

@@ -284,10 +284,36 @@ def vae_step(args):
     log(f"[路径] ✓ 全部 {len(abs_paths)} 张都解析到真实文件（缺一张就停）")
 
     lat_all = []
+    idx_all = []
     miss = 0
     t0 = time.time()
+
+    # ---- 分段落盘（⚠️ 2026-10-27：平台会中途取消长 Job ⇒ 必须**中间落盘 + 可续跑**）----
+    cache_dir = out_dir / "cache"
+    part_files = sorted(cache_dir.glob(f"vae_latents_{args.shard:02d}_p*.pt"))
+    done_idx = set()
+    for pf in part_files:
+        try:
+            obj = torch.load(pf, map_location="cpu", weights_only=False)
+            done_idx.update(int(i) for i in obj["idx"])
+            log(f"  [续跑] 已有分片 {pf.name}：{len(obj['idx'])} 行")
+        except Exception as e:                                   # noqa: BLE001
+            log(f"  [续跑] 分片 {pf.name} 读不出（{type(e).__name__}）⇒ 忽略")
+    if done_idx:
+        log(f"  [续跑] 已完成 {len(done_idx)} 张 ⇒ 跳过它们")
+
+    def flush_part(idx_chunk, lat_chunk, start_idx):
+        fp = cache_dir / f"vae_latents_{args.shard:02d}_p{int(start_idx):06d}.pt"
+        torch.save({"idx": list(idx_chunk), "latents": torch.cat(lat_chunk, 0),
+                    "paths": [str(abs_paths[i]) for i in idx_chunk],
+                    "resolution": args.res, "scaling_factor": scale}, fp)
+        log(f"  ✓ 写分片 {fp.name}：{len(idx_chunk)} 行")
+
+    part_k = len(part_files)
     for b in range(0, len(sel), args.vae_batch):
-        chunk = sel[b:b + args.vae_batch]
+        chunk = [i for i in sel[b:b + args.vae_batch] if i not in done_idx]
+        if not chunk:
+            continue
         imgs = []
         for i in chunk:
             p = abs_paths[i]
@@ -308,14 +334,18 @@ def vae_step(args):
             mode = dist.mode() if callable(dist.mode) else dist.mode
             lat = mode * scale
         lat_all.append(lat.cpu().half())
+        idx_all.append(chunk)
+        n_done = sum(len(c) for c in idx_all)
+        if n_done % args.flush_every < args.vae_batch:
+            # 按**起始行号**命名分片 ⇒ 续跑时不会与旧分片重名 ⇒ 不会产生重复行
+            flush_part([i for c in idx_all for i in c], lat_all, idx_all[0][0])
+            lat_all, idx_all = [], []
+            part_k += 1
         if (b // args.vae_batch) % 20 == 0:
-            done = b + len(chunk)
-            log(f"  {done}/{len(sel)}｜{time.time()-t0:.0f}s")
-    lats = torch.cat(lat_all, 0)
-    fp = cache_dir / f"vae_latents_{args.shard:02d}.pt"
-    torch.save({"idx": sel, "latents": lats, "paths": [paths[i] for i in sel],
-                "resolution": args.res, "scaling_factor": scale}, fp)
-    log(f"  ✓ 写 {fp}｜{tuple(lats.shape)}（fp16）｜缺图 {miss} 张｜{time.time()-t0:.0f}s")
+            log(f"  {n_done}/{len(sel)}｜{time.time()-t0:.0f}s")
+    if idx_all:
+        flush_part([i for c in idx_all for i in c], lat_all, idx_all[0][0])
+    log(f"  ✓ 本分片完成｜缺图 {miss} 张｜{time.time()-t0:.0f}s")
     return 0
 
 
@@ -331,7 +361,7 @@ def main():
     ap.add_argument("--batch", type=int, default=256)
     ap.add_argument("--vae-batch", type=int, default=4,
                     help="VAE 编码的批大小（512×512 很吃显存 ⇒ 别用 --batch 那个大值）")
-    ap.add_argument("--res", type=int, default=512)
+    ap.add_argument("--flush-every", type=int, default=1500,                    help="每编码多少张就落一个分片（平台会中途取消 Job ⇒ 必须中间落盘）")
     ap.add_argument("--encoder-ckpt", default=ENCODER_CKPT)
     ap.add_argument("--out-dir", default=str(DEFAULT_OUT))
     ap.add_argument("--overwrite", action="store_true")
