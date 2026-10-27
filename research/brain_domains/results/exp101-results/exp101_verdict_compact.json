@@ -1,0 +1,50 @@
+{
+  "verdict": "CONDITION_USABLE",
+  "recompute_matches_job": true,
+  "C0": {
+    "acc200_median": 0.058875,
+    "acc200_above_chance3": true,
+    "acc200_positive": true,
+    "exp93b_reference": 0.0589
+  },
+  "C0_pass": true,
+  "C1": {
+    "acc50_minus_chance": {
+      "n_eff": 10,
+      "n_pos": 10,
+      "n_neg": 0,
+      "p_sign": 0.001953125,
+      "n_zero": 0,
+      "median": 0.12825,
+      "pass": true
+    }
+  },
+  "C1_pass": true,
+  "C2": {
+    "acc2_minus_chance": {
+      "n_eff": 10,
+      "n_pos": 10,
+      "n_neg": 0,
+      "p_sign": 0.001953125,
+      "n_zero": 0,
+      "median": 0.28093749999999995,
+      "pass": true
+    }
+  },
+  "C2_pass": true,
+  "C3_report": {
+    "acc200_median": 0.058875,
+    "acc50_median": 0.14825,
+    "acc2_median": 0.7809375,
+    "acc200_avg_median": 0.23,
+    "acc50_avg_median": 0.42,
+    "acc2_avg_median": 0.92,
+    "atm_reference": {
+      "two_way_pct": 83.1,
+      "fifty_way_top1_pct": 28.4,
+      "fid": 24.6
+    },
+    "atm_caveat": "ATM 报的是**生成图**的指标；我们这里量的是**条件**的指标 ⇒ 协议不同 ⇒ 只作量级参照"
+  },
+  "why": "条件在 50 张候选里显著认出正确图像 ⇒ **②③ 值得开**（下一步才是训生成模型）"
+}

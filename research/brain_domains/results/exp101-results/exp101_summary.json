@@ -1,0 +1,194 @@
+{
+  "job_verdict": {
+    "C0": {
+      "acc200_median": 0.058875,
+      "acc200_above_chance3": true,
+      "acc200_positive": true,
+      "exp93b_reference": 0.0589
+    },
+    "C0_pass": true,
+    "C1": {
+      "acc50_minus_chance": {
+        "n_eff": 10,
+        "n_pos": 10,
+        "n_neg": 0,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": 0.12825,
+        "pass": true
+      }
+    },
+    "C1_pass": true,
+    "C2": {
+      "acc2_minus_chance": {
+        "n_eff": 10,
+        "n_pos": 10,
+        "n_neg": 0,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": 0.28093749999999995,
+        "pass": true
+      }
+    },
+    "C2_pass": true,
+    "C3_report": {
+      "acc200_median": 0.058875,
+      "acc50_median": 0.14825,
+      "acc2_median": 0.7809375,
+      "acc200_avg_median": 0.23,
+      "acc50_avg_median": 0.42,
+      "acc2_avg_median": 0.92,
+      "atm_reference": {
+        "two_way_pct": 83.1,
+        "fifty_way_top1_pct": 28.4,
+        "fid": 24.6
+      },
+      "atm_caveat": "ATM 报的是**生成图**的指标；我们这里量的是**条件**的指标 ⇒ 协议不同 ⇒ 只作量级参照"
+    },
+    "verdict": "CONDITION_USABLE",
+    "why": "条件在 50 张候选里显著认出正确图像 ⇒ **②③ 值得开**（下一步才是训生成模型）"
+  },
+  "recomputed_verdict": {
+    "C0": {
+      "acc200_median": 0.058875,
+      "acc200_above_chance3": true,
+      "acc200_positive": true,
+      "exp93b_reference": 0.0589
+    },
+    "C0_pass": true,
+    "C1": {
+      "acc50_minus_chance": {
+        "n_eff": 10,
+        "n_pos": 10,
+        "n_neg": 0,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": 0.12825,
+        "pass": true
+      }
+    },
+    "C1_pass": true,
+    "C2": {
+      "acc2_minus_chance": {
+        "n_eff": 10,
+        "n_pos": 10,
+        "n_neg": 0,
+        "p_sign": 0.001953125,
+        "n_zero": 0,
+        "median": 0.28093749999999995,
+        "pass": true
+      }
+    },
+    "C2_pass": true,
+    "C3_report": {
+      "acc200_median": 0.058875,
+      "acc50_median": 0.14825,
+      "acc2_median": 0.7809375,
+      "acc200_avg_median": 0.23,
+      "acc50_avg_median": 0.42,
+      "acc2_avg_median": 0.92,
+      "atm_reference": {
+        "two_way_pct": 83.1,
+        "fifty_way_top1_pct": 28.4,
+        "fid": 24.6
+      },
+      "atm_caveat": "ATM 报的是**生成图**的指标；我们这里量的是**条件**的指标 ⇒ 协议不同 ⇒ 只作量级参照"
+    },
+    "verdict": "CONDITION_USABLE",
+    "why": "条件在 50 张候选里显著认出正确图像 ⇒ **②③ 值得开**（下一步才是训生成模型）"
+  },
+  "recompute_matches_job": true,
+  "mismatches": [],
+  "per_subject": [
+    {
+      "subject": "sub-01",
+      "acc200": 0.0480625,
+      "acc50": 0.1296875,
+      "acc2": 0.7565625,
+      "acc200_avg": 0.225,
+      "acc50_avg": 0.39,
+      "acc2_avg": 0.945
+    },
+    {
+      "subject": "sub-02",
+      "acc200": 0.0486875,
+      "acc50": 0.135625,
+      "acc2": 0.76275,
+      "acc200_avg": 0.195,
+      "acc50_avg": 0.42,
+      "acc2_avg": 0.92
+    },
+    {
+      "subject": "sub-03",
+      "acc200": 0.062125,
+      "acc50": 0.162125,
+      "acc2": 0.789625,
+      "acc200_avg": 0.23,
+      "acc50_avg": 0.45,
+      "acc2_avg": 0.94
+    },
+    {
+      "subject": "sub-04",
+      "acc200": 0.058875,
+      "acc50": 0.14825,
+      "acc2": 0.7810625,
+      "acc200_avg": 0.245,
+      "acc50_avg": 0.435,
+      "acc2_avg": 0.92
+    },
+    {
+      "subject": "sub-05",
+      "acc200": 0.04075,
+      "acc50": 0.1111875,
+      "acc2": 0.7286875,
+      "acc200_avg": 0.165,
+      "acc50_avg": 0.35,
+      "acc2_avg": 0.895
+    },
+    {
+      "subject": "sub-06",
+      "acc200": 0.0629375,
+      "acc50": 0.16,
+      "acc2": 0.7888125,
+      "acc200_avg": 0.24,
+      "acc50_avg": 0.445,
+      "acc2_avg": 0.92
+    },
+    {
+      "subject": "sub-07",
+      "acc200": 0.066625,
+      "acc50": 0.1631875,
+      "acc2": 0.7809375,
+      "acc200_avg": 0.19,
+      "acc50_avg": 0.415,
+      "acc2_avg": 0.925
+    },
+    {
+      "subject": "sub-08",
+      "acc200": 0.07625,
+      "acc50": 0.1861875,
+      "acc2": 0.817,
+      "acc200_avg": 0.27,
+      "acc50_avg": 0.485,
+      "acc2_avg": 0.955
+    },
+    {
+      "subject": "sub-09",
+      "acc200": 0.0453125,
+      "acc50": 0.1148125,
+      "acc2": 0.726875,
+      "acc200_avg": 0.235,
+      "acc50_avg": 0.39,
+      "acc2_avg": 0.92
+    },
+    {
+      "subject": "sub-10",
+      "acc200": 0.03275,
+      "acc50": 0.093,
+      "acc2": 0.6954375,
+      "acc200_avg": 0.07,
+      "acc50_avg": 0.205,
+      "acc2_avg": 0.845
+    }
+  ]
+}

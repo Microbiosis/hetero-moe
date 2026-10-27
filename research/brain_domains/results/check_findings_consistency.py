@@ -1816,6 +1816,43 @@ def main():
         else:
             problems.append("缺 exp90c-results/exp90c_verdict_compact.json")
 
+    # --- 25. §四十二（exp101：②③ 线的第一个里程碑 · 脑侧条件的可辨识性）---
+    sec42 = find_section_h2(text, "四十二、exp101")
+    if not sec42:
+        problems.append("FINDINGS 里找不到「四十二、exp101」小节")
+    else:
+        for need in ("exp101_condition.py", "parse_exp101.py", "CONDITION_USABLE",
+                     "ATM", "零训练"):
+            if need not in sec42:
+                problems.append(f"[exp101] §四十二 缺「{need}」")
+        e101 = HERE / "exp101-results" / "exp101_verdict_compact.json"
+        if e101.exists():
+            t_norm = text.replace("−", "-")
+            d101 = json.loads(e101.read_text(encoding="utf-8"))
+            if not d101.get("recompute_matches_job"):
+                problems.append("[exp101] 离线重算与 Job 判决**不一致**")
+            v101 = d101.get("verdict") or ""
+            rep101 = d101.get("C3_report") or {}
+            if v101 and f"**判决 = `{v101}`**" not in sec42:
+                problems.append(f"[exp101] §四十二 里找不到判决写法「判决 = `{v101}`」")
+            a200 = (d101.get("C0") or {}).get("acc200_median")
+            # ⚠️ 绑定**预登记的判决量**（与机会水平的**差**）⇒ 语义上就是判据本身
+            #    （⚠️ 别绑「准确率中位」：0.14825 这类值在 4 位小数上正好落在舍入边界 ⇒ 不可靠）
+            a50 = ((d101.get("C1") or {}).get("acc50_minus_chance") or {}).get("median")
+            a2 = ((d101.get("C2") or {}).get("acc2_minus_chance") or {}).get("median")
+            for val, lbl in ((a200, "200-way 中位"), (a50, "50-way 中位"), (a2, "2-way 中位")):
+                if val is not None and f"**{float(val):+.4f}**" not in t_norm:
+                    problems.append(f"[exp101] §四十二 缺 {lbl} 写法「{float(val):+.4f}」")
+            for s in (f"**判决 = `{v101}`**" if v101 else "",
+                      f"**{float(a200):+.4f}**" if a200 is not None else "",
+                      f"**{float(a50):+.4f}**" if a50 is not None else "",
+                      f"**{float(a2):+.4f}**" if a2 is not None else ""):
+                if s and t_norm.count(s) != 1:
+                    problems.append(f"[exp101] 检查串「{s}」在全文出现 {t_norm.count(s)} 次"
+                                    "（必须唯一，否则篡改一处仍会判通过）")
+        else:
+            problems.append("缺 exp101-results/exp101_verdict_compact.json")
+
     if problems:
         print("✗ 文档与数据不一致：")
         for p in problems:
