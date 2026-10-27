@@ -58,11 +58,56 @@ def log(*a):
 
 
 def _jobs():
+    for _try in range(3):
+        try:
+            return list(api.list_jobs())
+        except Exception as e:                                   # noqa: BLE001
+            log(f"list_jobs 失败（try={_try + 1}）：{type(e).__name__}: {e}")
+            time.sleep(6)
+    return []
+
+
+def job_id_of(name, want=("COMPLETED", "RUNNING", "SCHEDULING", "PENDING")):
+    """按**名字**找 job 的 **id**（`fetch_job_logs` 要的是 id，不是名字 ⇒ 传名字会 404）。"""
+    for j in _jobs():
+        if str((j.labels or {}).get("name")) == name:
+            return str(j.id)
+    return None
+
+
+def read_c0_from_job(job_id):
+    """从训练 Job 的 stdout 里读 C0-损失 那一行 ⇒ (first10, last10, decreased) 或 None。
+
+    ⚠️ **不依赖桶下载**（HF 的 CAS CDN 会抽风）⇒ ⇒ 而训练脚本自己算的这条线
+       就是整条累积曲线上的 C0 ⇒ ⇒ 与 judge 脚本同一套口径。
+    """
+    if not job_id:
+        return None
+    import re as _re
     try:
-        return list(api.list_jobs())
+        logs = list(api.fetch_job_logs(job_id=job_id, follow=False, tail=600))
     except Exception as e:                                       # noqa: BLE001
-        log(f"list_jobs 失败：{type(e).__name__}: {e}")
-        return []
+        log(f"  [C0] 读 Job 日志失败：{type(e).__name__}: {str(e)[:120]}")
+        return None
+    for ln in logs:
+        if "[C0-损失]" in ln:
+            m = _re.search(r"首 10% 均值 ([0-9.eE+-]+)｜末 10% 均值 ([0-9.eE+-]+)｜下降：(True|False)", ln)
+            if m:
+                return float(m.group(1)), float(m.group(2)), m.group(3) == "True"
+    return None
+
+
+def latest_train_job_id():
+    """最近一个**训练** Job（按创建时间倒序）⇒ 用来「先查 C0 再决定要不要训」。"""
+    best = None
+    for j in _jobs():
+        name = str((j.labels or {}).get("name") or "")
+        if not name.startswith("t102-train"):
+            continue
+        t = getattr(j, "created_at", None)
+        if best is None or (t is not None and best[1] is not None and t > best[1]):
+            best = (str(j.id), t, name)
+    return best
 
 
 _RANK = {"COMPLETED": 4, "RUNNING": 3, "SCHEDULING": 2, "PENDING": 2,
@@ -259,6 +304,14 @@ def train_until_decreased(max_rounds=8):
         log(f"[训练] 探测已有 adapter 失败（按从头训处理）：{type(e).__name__}: {e}")
     if resume_first:
         log("[训练] 桶里已有 adapter_last.pt ⇒ 第 1 轮就 --resume（接着同一条轨迹）")
+    # ⚠️ **先查上一次训练的 C0**：成立就别再白训一轮（训练很贵）
+    prev = latest_train_job_id()
+    if prev:
+        c0 = read_c0_from_job(prev[0])
+        if c0 and c0[2]:
+            log(f"[训练] 上一次训练（{prev[2]}）的 C0 已成立："
+                f"首 10%={c0[0]:.6f} 末 10%={c0[1]:.6f} ⇒ **不再训练**，直接进生成")
+            return True
     for rnd in range(1, max_rounds + 1):
         cmd = train_cmd + (["--resume"] if (rnd > 1 or resume_first) else [])
         job = run_step(f"t102-train" if rnd == 1 else f"t102-train-r{rnd}", "60m",
@@ -279,23 +332,11 @@ def train_until_decreased(max_rounds=8):
             # ⚠️ **C0 的结论直接读训练 Job 的日志**（训练脚本自己算好了、而且它算的就是
             #    整条累积曲线 ⇒ 与 judge 脚本同一套口径）⇒ **不依赖桶下载** ⇒
             #    网络抽风时也不会误判。
-            c0_line = None
-            try:
-                logs = list(api.fetch_job_logs(job_id=name, follow=False, tail=400))
-                for ln in logs:
-                    if "[C0-损失]" in ln:
-                        c0_line = ln.strip()
-            except Exception as e:                                 # noqa: BLE001
-                log(f"  [训练] 读 Job 日志失败：{type(e).__name__}: {e}")
-            m = None
-            if c0_line:
-                import re as _re
-                m = _re.search(r"首 10% 均值 ([0-9.eE+-]+)｜末 10% 均值 ([0-9.eE+-]+)｜下降：(True|False)",
-                               c0_line)
-            if not m:
+            c0 = read_c0_from_job(job_id_of(name))
+            if not c0:
                 log(f"!! 没从日志里解析出 C0-损失 ⇒ 无法判定 ⇒ 停下（别再盲训）")
                 return False
-            first10, last10, decreased = float(m.group(1)), float(m.group(2)), m.group(3) == "True"
+            first10, last10, decreased = c0
             log(f"[训练] 第 {rnd} 轮后（读自 Job 日志）：首 10%={first10:.6f} 末 10%={last10:.6f} "
                 f"下降={decreased}")
 
