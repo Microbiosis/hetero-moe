@@ -228,7 +228,10 @@ def load_latents(cache_dir):
     idx_all, lat_all, paths = [], [], []
     for f in files:
         obj = torch.load(f, map_location="cpu", weights_only=False)
-        for i, l, p in zip(obj["idx"].tolist(), obj["latents"], obj["paths"]):
+        # ⚠️ `idx` 可能是 **list**（缓存脚本就是 list 存的）也可能是张量 ⇒ 两种都能读
+        idxs = obj["idx"]
+        idxs = idxs.tolist() if hasattr(idxs, "tolist") else list(idxs)
+        for i, l, p in zip(idxs, obj["latents"], obj["paths"]):
             idx_all.append(int(i))
             lat_all.append(l)
             paths.append(str(p))

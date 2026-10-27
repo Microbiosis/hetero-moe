@@ -117,6 +117,53 @@ def concept_of_path(p):
         return -1
 
 
+def resolve_image_index():
+    """**自发现** Image_set 里的真实文件 ⇒ (概念目录, 文件名) → 绝对路径。
+
+    ⚠️⚠️ **为什么要自发现（这是一个真坑，2026-10-27）**：
+    `train.pt` 的 `img` 字段写的是 **`train_images/...`**，而 `Image_set` 下真实的 split 目录
+    是 **`training_images/`**（探针实测顶层 = `.DS_Store` / `test_images` / `training_images`）
+    ⇒ ⇒ 直接拼路径 ⇒ **100% 读不到** ⇒ 而旧版代码**静默用灰占位图顶替** ⇒
+    ⇒ ⇒ **潜变量全是灰图的** ⇒ 训练看着「正常跑完」，其实全废
+    ⇒ ⇒ ⇒ **两条硬规矩**：① 路径**不信任**上游字符串 ⇒ 自己 rglob 建索引；
+    ② **缺图即报错**（不许占位图顶替）⇒ 让问题当场炸，而不是变成一场静默的假实验。
+
+    ⇒ 索引键 = (概念目录名, 文件名) ⇒ 对前缀差异免疫。
+    """
+    idx = {}
+    by_dir = {}
+    for p in IMAGE_SET.rglob("*.jpg"):
+        idx[(p.parent.name, p.name)] = p
+        by_dir.setdefault(p.parent.name, []).append(p)
+    for p in IMAGE_SET.rglob("*.png"):
+        idx.setdefault((p.parent.name, p.name), p)
+        by_dir.setdefault(p.parent.name, []).append(p)
+    return idx, by_dir
+
+
+def resolve_paths(paths, idx):
+    """把 train.pt 的相对路径解析成**真实绝对路径**；解析不到 ⇒ 直接抛（不许占位）。"""
+    out = []
+    missing = []
+    for rel in paths:
+        parts = str(rel).split("/")
+        cand = idx.get((parts[-2], parts[-1]))
+        if cand is None:
+            # 退路：只按文件名找（同一张图在别处）
+            hits = [v for k, v in idx.items() if k[1] == parts[-1]]
+            cand = hits[0] if len(hits) == 1 else None
+        if cand is None:
+            missing.append(str(rel))
+        else:
+            out.append(cand)
+    if missing:
+        raise RuntimeError(
+            f"**{len(missing)}/{len(paths)} 张图解析不到真实文件**"
+            f"（例：{missing[:3]}）⇒ 拒绝用占位图顶替"
+            f"（旧版就是在这里静默把 8270 张全变成灰图 ⇒ 训练全废）")
+    return out
+
+
 def master_paths(subjects=TRAIN_SUBJECTS):
     """→ (paths list, source str)：**行号 = EEG 行号**的图像路径表。"""
     for sid in subjects:
@@ -126,7 +173,7 @@ def master_paths(subjects=TRAIN_SUBJECTS):
         if paths:
             return paths, f"train.pt sub-{sid:02d}.img"
     # 兜底：文件系统（⚠️ 此时**行内**的照片顺序未必与 EEG 行序一致 ⇒ 只算兜底）
-    jpgs = sorted(p for p in IMAGE_SET.rglob("*.jpg") if "train_images" in p.parts)
+    jpgs = sorted(p for p in IMAGE_SET.rglob("*.jpg") if "train" in str(p))
     rel = [str(p.relative_to(IMAGE_SET)) for p in jpgs]
     return rel, "文件系统（兜底：行内顺序未验证）"
 
@@ -230,6 +277,12 @@ def vae_step(args):
     log(f"[VAE] SD1.5 自带 VAE｜scaling_factor={scale}｜{args.res}×{args.res}"
         f"｜batch={args.vae_batch}")
 
+    # ---- **自发现**真实文件路径（⚠️ train.pt 的 'train_images/' 前缀 ≠ 真实的 'training_images/'）----
+    idx, _by_dir = resolve_image_index()
+    log(f"[路径] 自发现索引：{len(idx)} 个图片文件")
+    abs_paths = resolve_paths(paths, idx)        # 解析不到 ⇒ 直接抛（**不许占位图**）
+    log(f"[路径] ✓ 全部 {len(abs_paths)} 张都解析到真实文件（缺一张就停）")
+
     lat_all = []
     miss = 0
     t0 = time.time()
@@ -237,12 +290,12 @@ def vae_step(args):
         chunk = sel[b:b + args.vae_batch]
         imgs = []
         for i in chunk:
-            p = IMAGE_SET / paths[i]
+            p = abs_paths[i]
             try:
                 im = Image.open(p).convert("RGB")
-            except Exception:
-                miss += 1
-                im = Image.new("RGB", (args.res, args.res), (127, 127, 127))
+            except Exception as e:                               # noqa: BLE001
+                # ⚠️ **不许**用灰占位图顶替：旧版就是在这里静默把 8270 张全变成灰图
+                raise RuntimeError(f"读图失败 {p}: {type(e).__name__}: {e}")
             im = im.resize((args.res, args.res), Image.BICUBIC)
             arr = np.asarray(im, dtype=np.float32) / 127.5 - 1.0
             imgs.append(torch.from_numpy(arr).permute(2, 0, 1))
