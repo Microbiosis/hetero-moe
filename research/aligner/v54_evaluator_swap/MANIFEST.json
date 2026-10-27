@@ -1,55 +1,89 @@
 {
- "schema_version": "1.0",
- "version": "54.0",
- "package": "v54_evaluator_swap",
- "line": "aligner",
- "title": "评价器换轨: MSE → {高斯 NLL, Cross-Entropy} (同网格, 不降级)",
- "status": "spec-ready",
- "date": "2026-10-27",
- "parent": "v53_third_audit",
- "question": "v49–v53 的全部结论都建立在一个评价器上; 换尺子后结论是否还成立?",
- "protocol": {
-   "data": "复用 v53 (值域分割, 训练域前8×前8 / 留出域后8×后8, 零重叠)",
-   "probes": "复用 v53 三族 (ridge/mlp/knn)",
-   "lift": "复用 v53 (ResidualLift / LinearLift, 参数等量)",
-   "seeds": [2000, 2001, 2002, 2003, 2004],
-   "steps": 200,
-   "n_per_class": 16,
-   "tokens": 8,
-   "n_classes": 6,
-   "d_shared": [96, 252, 384],
-   "evaluators": ["mse", "gauss_nll", "ce"],
-   "paired": "三档共用同一 seed / 初始化 / 批顺序 → 差异只来自损失",
-   "grid_size": 180
- },
- "constraints": {
-   "integer_divisibility": "D_shared 必须能被 n_classes=6 整除; v52 的 256 在 6 类下不可用, 最近同量级合法值 252=42×6",
-   "param_parity": {"mse": 0, "ce": 1, "gauss_nll": "D+1"}
- },
- "baselines_exact": {
-   "n_classes": 6,
-   "mse_all_zero": 0.166667,
-   "mse_predict_mean": 0.138889,
-   "gauss_nll_all_zero": -0.395880,
-   "ce_uniform": 1.791759,
-   "identity": "CE 均匀预测的 MSE 恰等于 MSE 档的 predict_mean 基线 (两条独立推导同一个数)"
- },
- "predictions": {
-   "E1": "有意义空间绝对误差在三档全部低于冻结随机臂",
-   "E2": "冻结随机臂 CE 准确率 ≈ 1/6 ±0.05",
-   "E3": "有意义空间 '融合 vs 最优单专家' CE 准确率差 ≤5pp",
-   "E4": "NLL 档 logvar 与平方误差 Spearman ≥0.2 (否则该档读数作废)",
-   "E5": "投影空间有效秩: 有意义空间 > 冻结随机空间"
- },
- "artifacts": {
-   "code": ["research/aligner/v54_evaluator_swap/audit.py", "examples/run_v54_evaluator_swap.py"],
-   "tests": ["research/aligner/v54_evaluator_swap/tests/test_package.py", "tests/test_v54_evaluator_swap.py"],
-   "checker": "tools/check_artifacts.py",
-   "results": "research/aligner/v54_evaluator_swap/results/metrics.json"
- },
- "lineage": {
-   "code_sha_per_cell": true,
-   "why": "v53 的 metrics.json 记 n_classes=8 而代码是 6, 且无 code_sha → 查不出产物出处 (见 v53_third_audit/CORRECTION.md)"
- },
- "reproduce": ["bash run.sh v54", "bash run.sh v54-smoke", "python tools/check_artifacts.py research/aligner/v54_evaluator_swap"]
+  "schema_version": "1.0",
+  "version": "54.0",
+  "package": "v54_evaluator_swap",
+  "line": "aligner",
+  "title": "评价器换轨: MSE → {高斯 NLL, Cross-Entropy} (同网格, 三档配对, 不降级)",
+  "generation": {
+    "one_mechanism_added": "把**评价器**从一个 (MSE) 变成三个 (MSE 对照 / 高斯 NLL / cross-entropy), 三档共用同一 seed、初始化与批顺序 (配对), 数据/划分/探针/抬升 import v53 同一份代码",
+    "parent": "53.0",
+    "children": [
+      "55.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线第 10 个成员; 审计链 v50→v51→v52→v53 收口之后的第一代; 本代不再审计结论, 而是审计**尺子本身**"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "audit.py",
+      "tests/test_package.py"
+    ],
+    "note": "刻意 import v53 的 make_split / probe_accuracy_all / ResidualLift / LinearLift (同线复用, 保证协议逐位不变); 只新增评价器头与解析基线; 产物血缘检查器在仓库级 tools/check_artifacts.py (非包内文件)"
+  },
+  "claim": {
+    "asserts": "前六代 (v49–v53) 的全部结论都建立在一个评价器上; 本代证明**换尺子后结论的方向不变, 但基线口径必须重新确立**: (1) 块状 one-hot 目标下 MSE(预测全零)=1/n_classes 是**精确等式**, v53 真实 n=6 → 0.166667, 而不是记录里的 1/8=0.125; (2) v53 的有意义空间臂 (0.1617) 只是**勉强好于全零 (3.0%)**, 比零参数的'预测类别均值'基线 (0.138889) 还**差 16.4%**; (3) 三档评价器在配对条件下给出同一量级的绝对误差 (<0.5% 差), 说明 MSE 的结论不是度量假象; (4) 但 CE 档暴露了 E1 的结构性缺陷: CE 下随机冻结臂饱和到**均匀分布**, 那恰是零参数最优常数预测器 (0.1389) → '融合 vs 随机臂'比的是两个都不是坏模型的东西",
+    "metric": "held_out_fuse_mse_after_evaluator_head",
+    "direction": "lower_is_better",
+    "value": null,
+    "baseline": {
+      "ref": "zero_parameter predict_mean",
+      "value": 0.138889
+    },
+    "delta_pct": null,
+    "seeds": 5,
+    "outcome_label": "pending",
+    "note": "全网格 (180 格) 待 HF Space (t4-small) 跑完; 冒烟 (D96/1 seed/8 steps/伪编码) 三档配对读数 0.1504/0.1507/0.1500, 相对 predict_mean 基线 +8.0%~+8.5% → E6 在欠训练下未过"
+  },
+  "protocol": {
+    "eval_set": "复用 v53 值域分割: 训练只见 slot1∈前8∧slot2∈前8, 留出只见 slot1∈后8∧slot2∈后8 (零重叠); 6 类 × 16 = 96 文本/底座",
+    "input": "三个真实底座 (MSA-4B 浅层1层 + embedding-0.6b + reranker-0.6b); D_shared ∈ {96, 252, 384} (6 类必须整除; v52 的 256 不可用); 5 seeds (基址 2000); 200 步; minibatch 288; 三档评价器 × 4 臂 = 180 格",
+    "caveat": "三档的 loss 量纲不同, **不可直接互比**; 跨档唯一可比的量是每档都报的 mse (同一个输出张量经过各自评价器头后的绝对误差)。CE 档必须把输出压到单纯形, 否则其 MSE 与 MSE 档不可比 (未压时实测 1.97 vs 0.1528)"
+  },
+  "acceptance": {
+    "criterion": "预登记 E1 (三档全部: 有意义空间 < 冻结随机) / E2 (CE 下冻结臂 ≈ chance±0.05) / E3 (融合 vs 最优单专家 CE 准确率差 ≤5pp) / E4 (NLL logvar 与平方误差 Spearman ≥0.2, 退化则该档作废) / E5 (有效秩: 有意义 > 随机) / E6 (**冒烟后新增**: 有意义空间 < 该档自己的零参数基线)",
+    "outcome": "未开跑。冒烟: E2 ✓ E3 ✓; E1 ✗ E4 ✗ E6 ✗ (8 steps 欠训练 + E1 对 CE 结构上不成立)",
+    "note": "E1 保留不改 (预登记纪律); E6 是**新增**而非修改, 由来记录在 audit.py 的 PREDICTIONS_V54 注释里"
+  },
+  "leakage_audit": {
+    "status": "pending",
+    "audits": [],
+    "note": "本代只换评价器, 数据与划分与 v53 逐位相同; 泄漏审计沿用 v53 的结论, 但按规范仍标 pending 直到全网格跑完"
+  },
+  "falsified": [
+    {
+      "hypothesis": "『v53 的有意义空间把误差降到平凡基线以下』",
+      "verdict": "**证伪**: 记录里的平凡基线 0.125 出自错误的 n_classes=8; 真实 n_classes=6 → 全零基线 0.1667, 预测类别均值基线 0.1389。v53 的 0.1617 只比全零好 3.0%, 比预测均值差 16.4%",
+      "evidence": "research/aligner/v53_third_audit/CORRECTION.md + tools/check_artifacts.py 输出"
+    },
+    {
+      "hypothesis": "『三档评价器的读数不可比, 所以换尺子会改变结论』",
+      "verdict": "**部分证伪**: 不可比是**实现的错**而非评价器的错。CE 输出压到单纯形 + 推理读数过同一层头之后, 三档配对读数 0.1504/0.1507/0.1500, 差 <0.5%",
+      "evidence": "research/aligner/v54_evaluator_swap/SPEC.md §7.1"
+    },
+    {
+      "hypothesis": "『冻结随机臂在任何评价器下都是坏模型, 因此可作通用对照』",
+      "verdict": "**证伪 (对 CE 档)**: CE 下它饱和到均匀分布, 恰是零参数最优常数预测器 (0.1389 = predict_mean 基线) → E1 的 'learned < frozen' 对 CE 档结构上不成立",
+      "evidence": "冒烟产物: D96 CE frozen_random fuse=0.1389 = baselines('ce')['uniform_pred_mse']"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v54_evaluator_swap.py",
+    "forwarder_spec": "docs/V54_0_EVALUATOR_SWAP.md"
+  },
+  "_needs_human": [
+    "全网格 180 格需在 HF Space t4-small 上跑 (本机 CPU 会退化)"
+  ],
+  "_extracted_from": [
+    "research/aligner/README.md"
+  ]
 }

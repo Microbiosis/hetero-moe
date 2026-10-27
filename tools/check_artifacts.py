@@ -119,6 +119,12 @@ def check(pkg_dir: str, cells_dir: str | None, repo: str,
         add("F0", False, f"missing {mpath}")
         return rep
     m = json.load(open(mpath, encoding="utf-8"))
+    is_smoke = bool(m.get("IS_SMOKE_NOT_RESULTS"))
+    if is_smoke:
+        rep["checks"].append({"id": "S0", "status": "WARN",
+                              "detail": "冒烟快照 (IS_SMOKE_NOT_RESULTS=true) —— 读数不得引用; "
+                                        "只校验结构与血缘字段是否存在, 不校验 sha 是否等于 HEAD"})
+        rep["warn"].append("S0")
     cfg = m.get("config", {}) or {}
     res = m.get("results", {}) or {}
 
@@ -141,8 +147,9 @@ def check(pkg_dir: str, cells_dir: str | None, repo: str,
     if not sha:
         add("L2", False, "产物未记录 code_sha → 无法证明出自哪份代码 (v49–v53 均缺)", warn_only=True)
     else:
-        add("L2", head is None or sha.startswith(head) or head.startswith(sha[:7]),
-            f"code_sha={sha} / repo HEAD={head}")
+        add("L2", is_smoke or head is None or sha.startswith(head) or head.startswith(sha[:7]),
+            f"code_sha={sha} / repo HEAD={head}"
+            + ("  (冒烟, 允许早于 HEAD)" if is_smoke else ""))
 
     # ---- L3: 网格完整 ----
     d_list = cfg.get("d_shareds") or []

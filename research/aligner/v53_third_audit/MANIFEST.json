@@ -7,18 +7,32 @@
   "generation": {
     "one_mechanism_added": "第三套**互不相同**的实现 (值域分割的数据 / 三族探针 / 残差抬升 / 新种子 / 不重叠的 D_shared), 外加首个**正面量**: 跨底座一致性 (同一文本在三底座上的输出余弦)",
     "parent": "52.0",
-    "children": []
+    "children": [
+      "54.0"
+    ]
   },
-  "lineage": {"line_parent": "10.0", "line_children": [],
-    "note": "aligner 线第 9 个成员; 审计链: v50(首审, 审 v33 线) → v51(审 v6/v7 线) → v52(二审, 独立复算 v50/v51) → v53(三审, 独立复算 v52) → 结论闭合"},
-  "implementation": {"location": "self", "lifted_to": null, "modules": ["audit.py"],
-    "note": "刻意不 import v49/v50/v51/v52 的实现; 只保留被审计对象 (三个真实底座 + v33 融合层)"},
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线第 9 个成员; 审计链: v50(首审, 审 v33 线) → v51(审 v6/v7 线) → v52(二审, 独立复算 v50/v51) → v53(三审, 独立复算 v52) → 结论闭合"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "audit.py"
+    ],
+    "note": "刻意不 import v49/v50/v51/v52 的实现; 只保留被审计对象 (三个真实底座 + v33 融合层)"
+  },
   "claim": {
     "asserts": "三套互不相同的独立实现给出**同向结论**: (1) 冻结随机空间里 margin 对**目标置换完全免疫** (D96: +20.5%→+20.5%; D384: +37.0%→+37.0%); (2) 换成有意义空间后 margin 归零 (D96: −0.2%; D384: −0.4%); (3) 源身份可解码性 1.000 远高于类别可解码性 (三族探针同向, 差 +0.33~+0.57); (4) ★**首个正面量**: 跨底座一致性从冻结随机空间的 +0.01/−0.01 升到有意义空间的 **+0.54/+0.61** → 共享空间确实让异构底座'相遇'了",
     "metric": "held_out_fuse_mse",
     "direction": "lower_is_better",
     "value": 0.1545,
-    "baseline": {"ref": "frozen_random @D384", "value": 6.0785},
+    "baseline": {
+      "ref": "frozen_random @D384",
+      "value": 6.0785
+    },
     "delta_pct": -97.5,
     "seeds": 5,
     "outcome_label": "mixed",
@@ -40,12 +54,16 @@
     "note": "本包是对 v52 的独立复算 (三审制第三审); 预登记判据 D2 未过已如实记录在案, 并给出解释与更强对照。"
   },
   "falsified": [
-    {"hypothesis": "『冻结随机空间里不可能残留类别信息, 因此类别可解码性可当'模型是否用了目标'的代理』",
-     "verdict": "**证伪 (本代自查推翻自己的预登记判据)**: 随机线性映射保留输入的类别几何 → 输出里恒有类别信息 (0.43-0.67)。正确判据是同臂内'目标随机化后数字逐位相同'",
-     "evidence": "results/metrics.json → D 臂(随机目标) 与 A 臂(对齐目标) 的 held_out 数字逐位相同 (7.527 / 6.079)"},
-    {"hypothesis": "『margin 是识别机制的产物, 但至少融合让异构底座'相遇'了』",
-     "verdict": "**部分证伪**: 在冻结随机空间里三者**没有**相遇 (跨底座一致性 +0.01/−0.01); 只有在有意义的空间里才相遇 (+0.54/+0.61)",
-     "evidence": "results/metrics.json → consistency.input / consistency.output 列"}
+    {
+      "hypothesis": "『冻结随机空间里不可能残留类别信息, 因此类别可解码性可当'模型是否用了目标'的代理』",
+      "verdict": "**证伪 (本代自查推翻自己的预登记判据)**: 随机线性映射保留输入的类别几何 → 输出里恒有类别信息 (0.43-0.67)。正确判据是同臂内'目标随机化后数字逐位相同'",
+      "evidence": "results/metrics.json → D 臂(随机目标) 与 A 臂(对齐目标) 的 held_out 数字逐位相同 (7.527 / 6.079)"
+    },
+    {
+      "hypothesis": "『margin 是识别机制的产物, 但至少融合让异构底座'相遇'了』",
+      "verdict": "**部分证伪**: 在冻结随机空间里三者**没有**相遇 (跨底座一致性 +0.01/−0.01); 只有在有意义的空间里才相遇 (+0.54/+0.61)",
+      "evidence": "results/metrics.json → consistency.input / consistency.output 列"
+    }
   ],
   "superseded_by": null,
   "tests_status": "present",
@@ -57,5 +75,7 @@
     "forwarder_spec": "docs/V53_0_THIRD_AUDIT.md"
   },
   "_needs_human": [],
-  "_extracted_from": ["research/aligner/README.md"]
+  "_extracted_from": [
+    "research/aligner/README.md"
+  ]
 }
