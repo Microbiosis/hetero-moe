@@ -8,7 +8,7 @@
             "type": "command",
             "name": "网络坏了自动 WiFi 重连",
             "command": "pwsh -NoProfile -File \"${MINIMAX_PROJECT_DIR}/tools/net-auto-recover.ps1\"",
-            "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${MINIMAX_PROJECT_DIR}/tools/net-auto-recover.ps1\"",
+            "commandWindows": "call \"${MINIMAX_PROJECT_DIR}\\tools\\hook-run.cmd\"",
             "timeout": 9
           }
         ]

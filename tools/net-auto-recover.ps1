@@ -55,11 +55,14 @@ param(
 $ErrorActionPreference = 'Continue'
 Set-StrictMode -Version Latest
 
-# ⚠️ 本脚本要同时跑在 **Windows PowerShell 5.1**（钩子的 commandWindows 用的就是它）
-#    与 PowerShell 7 上 ⇒ 下面几处写法是刻意保守的：
+# ⚠️ 本脚本要同时跑在 **PowerShell 7** 与 **Windows PowerShell 5.1** 上：
+#    钩子的 Windows 入口是 `tools/hook-run.cmd`（**优先 pwsh 7、回落 5.1**，
+#    理由与 cmd 的编码/引号坑都写在那份 .cmd 的注释里）⇒
+#    ⇒ 下面几处写法是刻意保守的：
 #    · $PSCommandPath 在脚本作用域取一次（函数内的 $MyInvocation.MyCommand.Path 是空的）；
 #    · 计数器放脚本作用域（嵌套函数里的 $script: 才是同一份）；
-#    · 任何可能为空的结果都先 @() 包一层再取 .Count（5.1 上 $null.Count 会炸）。
+#    · 任何可能为空的结果都先 @() 包一层再取 .Count（5.1 上 $null.Count 会炸）；
+#    · epoch 用**纯 UTC 算术**（`[DateTime]::UtcNow - (Get-Date)` 在 UTC+8 上是负数）。
 $script:ScriptPath = $PSCommandPath
 $script:fail = 0
 
