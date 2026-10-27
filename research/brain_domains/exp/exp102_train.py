@@ -338,13 +338,21 @@ def train(args):
     opt = torch.optim.AdamW(adapter.parameters(), lr=args.lr, weight_decay=0.01)
 
     # ---- 续训 ----
+    # ⚠️⚠️ **损失曲线只能在「同一条训练轨迹」上比较**（2026-10-27 踩过）：
+    #   曲线**只在 --resume 时才接着读**；否则（新一轮从头训）曲线**从空开始**
+    #   ⇒ ⇒ 绝不会出现「前半段是旧模型、后半段是新模型」的拼接曲线
+    #   ⇒ ⇒ C0 的「首 10% vs 末 10%」永远在同一条轨迹上比较。
+    #   （之前是「只要文件存在就读」⇒ 拼出 26 个 epoch 的两段式曲线
+    #     ⇒ 首 10% 取自旧模型、末 10% 取自新模型 ⇒ 结论是假的。）
     curve_path = out_dir / "train_curve.json"
     curve = []
-    if curve_path.exists():
+    if args.resume and curve_path.exists():
         try:
             curve = json.loads(curve_path.read_text(encoding="utf-8")).get("epochs", [])
+            log(f"[续训] 接着上次的损失曲线（已有 {len(curve)} 个 epoch）")
         except Exception:
             curve = []
+    run_id = time.strftime("%Y%m%d-%H%M%S")     # 本轮标识（审计用：同一条轨迹的 epoch 同 run_id）
     ckpt_path = out_dir / "adapter_last.pt"
     step = 0
     if args.resume and ckpt_path.exists():
@@ -399,7 +407,8 @@ def train(args):
             losses = []
             ep = step // args.steps_per_epoch
             curve.append({"epoch": ep, "step": step, "mean_loss": mean_loss,
-                          "elapsed_s": round(time.time() - t_start, 1)})
+                          "elapsed_s": round(time.time() - t_start, 1),
+                          "run_id": run_id})
             _write_json(curve_path, {"epochs": curve, "config": vars(args)})
             print(f"===EPOCH=== {json.dumps(curve[-1], ensure_ascii=False)}", flush=True)
             log(f"  epoch {ep:>3} | step {step} | loss {mean_loss:.5f} | "

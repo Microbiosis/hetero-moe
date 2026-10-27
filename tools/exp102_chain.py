@@ -246,7 +246,7 @@ def train_until_decreased(max_rounds=8):
     train_cmd = ["python", "-u", "/domains/scripts/exp102_train.py",
                  "--out-dir", OUT, "--cache-dir", CACHE,
                  "--max-minutes", "42", "--batch", "8", "--lr", "1e-4",
-                 "--steps-per-epoch", "250"]
+                 "--steps-per-epoch", "50"]
     for rnd in range(1, max_rounds + 1):
         cmd = train_cmd + (["--resume"] if rnd > 1 else [])
         if not run_step(f"t102-train" if rnd == 1 else f"t102-train-r{rnd}", "60m",
@@ -264,12 +264,28 @@ def train_until_decreased(max_rounds=8):
                                     / "research/brain_domains/exp"))
             import exp102_train as T                      # noqa: PLC0415
             curve = json.loads((out / "train_curve.json").read_text(encoding="utf-8"))
-            summ = T.loss_curve_summary(curve.get("epochs", []))
+            eps = curve.get("epochs", [])
+            # ⚠️ **接缝检测**：若 epoch 或 step 不单调 ⇒ 说明中间**重启过**（模型从头训）
+            #   ⇒ 曲线是「两个模型的轨迹拼接」⇒ ⇒ **C0 的比较不成立** ⇒ 不采信。
+            seam = None
+            for i in range(1, len(eps)):
+                if eps[i].get("step", 0) <= eps[i - 1].get("step", 0):
+                    seam = f"step 在第 {i} 个 epoch 处不单调（{eps[i-1].get('step')} → {eps[i].get('step')}）"
+                    break
+                if eps[i].get("epoch", 0) <= eps[i - 1].get("epoch", 0):
+                    seam = f"epoch 编号在第 {i} 个 epoch 处不单调（{eps[i-1].get('epoch')} → {eps[i].get('epoch')}）"
+                    break
+            summ = T.loss_curve_summary(eps)
             log(f"[训练] 第 {rnd} 轮后：{summ}")
+            if seam:
+                log(f"!! 曲线有**接缝**（{seam}）⇒ 中途重启过 ⇒ "
+                    f"「首/末 10%」跨了两个模型 ⇒ **不采信** ⇒ 请用 --resume 连续训")
+                continue
             if summ.get("decreased"):
-                log(f"✓ C0 的「损失下降」成立 ⇒ 停止加训（共 {rnd} 轮）")
+                log(f"✓ C0 的「损失下降」成立（同一条轨迹、{len(eps)} 个 epoch、"
+                    f"窗口 k={summ.get('k_epochs')}）⇒ 停止加训")
                 return True
-            log(f"  ⇒ 还没降 ⇒ 继续第 {rnd + 1} 轮（--resume 续训）")
+            log(f"  ⇒ 还没降 ⇒ 继续第 {rnd + 1} 轮（--resume 续训 ⇒ 曲线接着长）")
         except Exception as e:                             # noqa: BLE001
             log(f"  [训练] 读损失曲线失败（不影响继续）：{type(e).__name__}: {e}")
     log(f"!! 训了 {max_rounds} 轮仍没让 C0 成立 ⇒ 停下（要人判断：是不是**条件形式本身**太弱）")
