@@ -276,15 +276,18 @@ def build_loss_fns(model, args):
 
     def selfsup(branch, x, temp=0.07, mask_frac=0.25):
         """CENT/FRONT：**同一试次两个时间掩码视图**的 InfoNCE（负样本 = 批内其它试次）
-        ⇒ **带负样本 ⇒ 不塌缩**（exp90 的去噪重建目标塌缩 ⇒ §三十三·六·2）。"""
+        ⇒ **带负样本 ⇒ 不塌缩**（exp90 的去噪重建目标塌缩 ⇒ §三十三·六·2）。
+
+        ⚠️ 掩码**必须向量化**（逐样本 Python 循环在 30k 步 × batch 256 下不可接受）。
+        """
         b, c, t = x.shape
+        span = max(int(t * mask_frac), 1)
+        idx = torch.arange(t, device=x.device)[None, :]
 
         def view():
-            m = torch.ones(b, 1, t, device=x.device)
-            span = max(int(t * mask_frac), 1)
-            for i in range(b):
-                st = int(torch.randint(0, max(t - span, 1), (1,)).item())
-                m[i, :, st:st + span] = 0.0
+            st = torch.randint(0, max(t - span, 1), (b,), device=x.device)
+            keep = (idx < st[:, None]) | (idx >= (st + span)[:, None])
+            m = keep.float().unsqueeze(1)                    # (B, 1, T)
             return F.normalize(branch.pooled(branch.tokens(x * m)), dim=-1)
 
         z1, z2 = view(), view()

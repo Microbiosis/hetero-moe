@@ -1736,7 +1736,10 @@ def main():
             d100 = json.loads(e100.read_text(encoding="utf-8"))
             if not d100.get("recompute_matches_job"):
                 problems.append("[exp100] 离线重算与 Job 判决**不一致**")
-            v100 = d100.get("job_verdict") or {}
+            # ⚠️ 紧凑文件里判决字段**就在顶层**；完整 summary 里裹在 `job_verdict` 下
+            #    ⇒ 两种都支持（⚠️ 只写其中一种会让另一批检查**静默跳过** ——
+            #    这个坑被篡改自测当场抓住过 ⇒ 「守卫在跑」不等于「守卫在查」）
+            v100 = d100.get("job_verdict") or d100
             c1x = v100.get("C1") or {}
             # ⚠️ 检查**文中的精确写法**（裸数字串）⇒ 且要求它在**全文唯一**
             #    （否则篡改一处仍会判「通过」——这个坑踩过一次）
@@ -1766,6 +1769,52 @@ def main():
                                     "（必须唯一，否则篡改一处仍会判通过）")
         else:
             problems.append("缺 exp100-results/exp100_summary.json")
+
+    # --- 24. §四十一（exp90c：判据② 接口的因果价值）---
+    sec41 = find_section_h2(text, "四十一、exp90c")
+    if not sec41:
+        problems.append("FINDINGS 里找不到「四十一、exp90c」小节")
+    else:
+        for need in ("exp90c_interface.py", "parse_exp90c.py", "INTERFACE_VALUE_OK",
+                     "退化守卫", "topdown|POST", "dorsal|CENT", "ventral|FRONT"):
+            if need not in sec41:
+                problems.append(f"[exp90c] §四十一 缺「{need}」")
+        e90c = HERE / "exp90c-results" / "exp90c_verdict_compact.json"
+        if e90c.exists():
+            # ⚠️ 文档里负号常用**全角 U+2212** ⇒ 守卫比对前先归一化（不然永远不匹配）
+            t_norm = text.replace("−", "-")
+            d90c = json.loads(e90c.read_text(encoding="utf-8"))
+            if not d90c.get("recompute_matches_job"):
+                problems.append("[exp90c] 离线重算与 Job 判决**不一致**")
+            v90c = d90c.get("verdict") or {}
+            c0x = d90c.get("C0") or {}
+            c3x = d90c.get("C3") or {}
+            if v90c and f"**判决 = `{v90c}`**" not in sec41:
+                problems.append(f"[exp90c] §四十一 里找不到判决写法「判决 = `{v90c}`」")
+            accx = c0x.get("acc1_median")
+            if accx is not None and f"**+{float(accx):.4f}**" not in t_norm:
+                problems.append(f"[exp90c] §四十一 缺 200-way 中位写法「+{float(accx):.4f}」")
+            rsax = c0x.get("rsa_median")
+            if rsax is not None and f"**+{float(rsax):.4f}**" not in t_norm:
+                problems.append(f"[exp90c] §四十一 缺 RSA 中位写法「+{float(rsax):.4f}」")
+            for key, want in (("topdown|POST", "+2.1002"),
+                              ("dorsal|CENT", "-1.0636"),
+                              ("ventral|FRONT", "-0.6941")):
+                v = c3x.get(key) or {}
+                med = v.get("median")
+                if med is not None:
+                    if f"{float(med):+.4f}" not in t_norm:
+                        problems.append(f"[exp90c] §四十一 缺 {key} 的中位写法「{float(med):+.4f}」")
+                    if v.get("n_pos") and f"{v.get('n_pos')}/{v.get('n_eff')}" not in t_norm:
+                        problems.append(f"[exp90c] §四十一 缺 {key} 的计数写法「{v.get('n_pos')}/{v.get('n_eff')}」")
+                _ = want
+            for s in (f"**判决 = `{v90c}`**" if v90c else "",
+                      f"**+{float(accx):.4f}**" if accx is not None else ""):
+                if s and t_norm.count(s) != 1:
+                    problems.append(f"[exp90c] 检查串「{s}」在全文出现 {t_norm.count(s)} 次"
+                                    "（必须唯一，否则篡改一处仍会判通过）")
+        else:
+            problems.append("缺 exp90c-results/exp90c_verdict_compact.json")
 
     if problems:
         print("✗ 文档与数据不一致：")

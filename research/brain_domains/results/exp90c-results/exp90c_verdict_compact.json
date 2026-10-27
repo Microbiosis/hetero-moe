@@ -1,0 +1,109 @@
+{
+  "verdict": "INTERFACE_VALUE_OK",
+  "recompute_matches_job": true,
+  "C0": {
+    "acc1_median": 0.0475625,
+    "acc1_above_chance3": true,
+    "rsa_median": 0.12268800245533255,
+    "rsa_positive": true
+  },
+  "C0_pass": true,
+  "C1_pass": true,
+  "C2": {
+    "POST": {
+      "median_disp": 0.9380727762656714,
+      "min_disp": 0.9282515175539262,
+      "pass": true
+    },
+    "CENT": {
+      "median_disp": 0.9721941037428147,
+      "min_disp": 0.9543620309046298,
+      "pass": true
+    },
+    "FRONT": {
+      "median_disp": 0.7820261948350726,
+      "min_disp": 0.7012321054737478,
+      "pass": true
+    }
+  },
+  "C2_pass": true,
+  "C3": {
+    "dorsal|CENT": {
+      "n_eff": 10,
+      "n_pos": 0,
+      "n_neg": 10,
+      "p_sign": 0.001953125,
+      "n_zero": 0,
+      "median": -1.063577651977539,
+      "has_value": false,
+      "reading": "没有因果价值（⇒ 砍掉）"
+    },
+    "ventral|FRONT": {
+      "n_eff": 10,
+      "n_pos": 0,
+      "n_neg": 10,
+      "p_sign": 0.001953125,
+      "n_zero": 0,
+      "median": -0.6941438764333725,
+      "has_value": false,
+      "reading": "没有因果价值（⇒ 砍掉）"
+    },
+    "topdown|POST": {
+      "n_eff": 10,
+      "n_pos": 10,
+      "n_neg": 0,
+      "p_sign": 0.001953125,
+      "n_zero": 0,
+      "median": 2.100206719711423,
+      "has_value": true,
+      "reading": "方向对、检验力不足"
+    }
+  },
+  "C3_pass": true,
+  "interfaces_keep": [
+    "topdown|POST"
+  ],
+  "interfaces_drop": [
+    "dorsal|CENT",
+    "ventral|FRONT"
+  ],
+  "C4_transdiff_report": {
+    "CENT->CENT": {
+      "n": 10,
+      "median": 0.0
+    },
+    "CENT->FRONT": {
+      "n": 10,
+      "median": 0.008551537990570068
+    },
+    "CENT->POST": {
+      "n": 10,
+      "median": 0.0661151185631752
+    },
+    "FRONT->CENT": {
+      "n": 10,
+      "median": -0.014667510986328125
+    },
+    "FRONT->FRONT": {
+      "n": 10,
+      "median": 0.0
+    },
+    "FRONT->POST": {
+      "n": 10,
+      "median": 0.07447058893740177
+    },
+    "POST->CENT": {
+      "n": 10,
+      "median": -0.07806396484375
+    },
+    "POST->FRONT": {
+      "n": 10,
+      "median": 0.2536948323249817
+    },
+    "POST->POST": {
+      "n": 10,
+      "median": 0.0
+    }
+  },
+  "why": "接口有因果价值：['topdown|POST']；无价值（砍）：['dorsal|CENT', 'ventral|FRONT']（⚠️ 判据① 的 3×3 只报不判：原语个数已在鼠上由 exp100 定案）"
+}
