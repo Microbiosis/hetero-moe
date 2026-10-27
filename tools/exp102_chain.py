@@ -164,7 +164,7 @@ def run_step(prefix, timeout, cmd, budget_s, resume_cmd=None, flavors=None):
             st = wait_for(name, budget_s)
             log(f"{name} ⇒ {st}")
             if st == "COMPLETED":
-                return True
+                return name          # ⇒ 把 job 名回传给调用方（调用方要读它的日志）
             if st == "ERROR":
                 err_streak += 1
                 if err_streak >= 2:
@@ -247,12 +247,26 @@ def train_until_decreased(max_rounds=8):
                  "--out-dir", OUT, "--cache-dir", CACHE,
                  "--max-minutes", "42", "--batch", "8", "--lr", "1e-4",
                  "--steps-per-epoch", "50"]
+    # ⚠️ 第 1 轮也要**接着已有的轨迹训**（若桶里已有 adapter_last.pt）
+    #    ⇒ 否则会从头训 ⇒ 前面几轮的轨迹白丢 ⇒ 且曲线会被清空（训练脚本只在 --resume 时读曲线）。
+    resume_first = False
+    try:
+        from huggingface_hub import get_bucket_paths_info
+        probe = list(get_bucket_paths_info(
+            "illusion-brain/brain-domains", ["runs/illusionbrain-align/exp102/adapter_last.pt"]))
+        resume_first = len(probe) > 0
+    except Exception as e:                                     # noqa: BLE001
+        log(f"[训练] 探测已有 adapter 失败（按从头训处理）：{type(e).__name__}: {e}")
+    if resume_first:
+        log("[训练] 桶里已有 adapter_last.pt ⇒ 第 1 轮就 --resume（接着同一条轨迹）")
     for rnd in range(1, max_rounds + 1):
-        cmd = train_cmd + (["--resume"] if rnd > 1 else [])
-        if not run_step(f"t102-train" if rnd == 1 else f"t102-train-r{rnd}", "60m",
-                        cmd, 4200, resume_cmd=cmd):
+        cmd = train_cmd + (["--resume"] if (rnd > 1 or resume_first) else [])
+        job = run_step(f"t102-train" if rnd == 1 else f"t102-train-r{rnd}", "60m",
+                       cmd, 4200, resume_cmd=cmd)
+        if not job:
             log(f"!! 训练第 {rnd} 轮失败 ⇒ 停下")
             return False
+        name = job
         # 读回损失曲线 ⇒ 看 C0 的前半段是否已成立
         try:
             from huggingface_hub import download_bucket_files
@@ -262,28 +276,64 @@ def train_until_decreased(max_rounds=8):
                                   [(repo_json, out / "train_curve.json")])
             sys.path.insert(0, str(Path(__file__).resolve().parent.parent
                                     / "research/brain_domains/exp"))
-            import exp102_train as T                      # noqa: PLC0415
-            curve = json.loads((out / "train_curve.json").read_text(encoding="utf-8"))
-            eps = curve.get("epochs", [])
-            # ⚠️ **接缝检测**：若 epoch 或 step 不单调 ⇒ 说明中间**重启过**（模型从头训）
-            #   ⇒ 曲线是「两个模型的轨迹拼接」⇒ ⇒ **C0 的比较不成立** ⇒ 不采信。
+            # ⚠️ **C0 的结论直接读训练 Job 的日志**（训练脚本自己算好了、而且它算的就是
+            #    整条累积曲线 ⇒ 与 judge 脚本同一套口径）⇒ **不依赖桶下载** ⇒
+            #    网络抽风时也不会误判。
+            c0_line = None
+            try:
+                logs = list(api.fetch_job_logs(job_id=name, follow=False, tail=400))
+                for ln in logs:
+                    if "[C0-损失]" in ln:
+                        c0_line = ln.strip()
+            except Exception as e:                                 # noqa: BLE001
+                log(f"  [训练] 读 Job 日志失败：{type(e).__name__}: {e}")
+            m = None
+            if c0_line:
+                import re as _re
+                m = _re.search(r"首 10% 均值 ([0-9.eE+-]+)｜末 10% 均值 ([0-9.eE+-]+)｜下降：(True|False)",
+                               c0_line)
+            if not m:
+                log(f"!! 没从日志里解析出 C0-损失 ⇒ 无法判定 ⇒ 停下（别再盲训）")
+                return False
+            first10, last10, decreased = float(m.group(1)), float(m.group(2)), m.group(3) == "True"
+            log(f"[训练] 第 {rnd} 轮后（读自 Job 日志）：首 10%={first10:.6f} 末 10%={last10:.6f} "
+                f"下降={decreased}")
+
+            # ---- 接缝检测（**补充**）：曲线若跨了「模型重启」，C0 的比较就不成立 ----
             seam = None
+            eps = []
+            try:
+                from huggingface_hub import download_bucket_files
+                for _try in range(3):
+                    try:
+                        download_bucket_files(
+                            "illusion-brain/brain-domains",
+                            [(repo_json, out / "train_curve.json")])
+                        eps = json.loads((out / "train_curve.json").read_text(
+                            encoding="utf-8")).get("epochs", [])
+                        break
+                    except Exception as e:                         # noqa: BLE001
+                        log(f"  [接缝检查] 下载曲线失败（try={_try + 1}）：{type(e).__name__}")
+                        time.sleep(8)
+            except Exception as e:                                 # noqa: BLE001
+                log(f"  [接缝检查] 不可用：{type(e).__name__}: {e}")
             for i in range(1, len(eps)):
                 if eps[i].get("step", 0) <= eps[i - 1].get("step", 0):
-                    seam = f"step 在第 {i} 个 epoch 处不单调（{eps[i-1].get('step')} → {eps[i].get('step')}）"
+                    seam = (f"step 在第 {i} 个 epoch 处不单调"
+                            f"（{eps[i-1].get('step')} → {eps[i].get('step')}）")
                     break
                 if eps[i].get("epoch", 0) <= eps[i - 1].get("epoch", 0):
-                    seam = f"epoch 编号在第 {i} 个 epoch 处不单调（{eps[i-1].get('epoch')} → {eps[i].get('epoch')}）"
+                    seam = (f"epoch 编号在第 {i} 个 epoch 处不单调"
+                            f"（{eps[i-1].get('epoch')} → {eps[i].get('epoch')}）")
                     break
-            summ = T.loss_curve_summary(eps)
-            log(f"[训练] 第 {rnd} 轮后：{summ}")
             if seam:
-                log(f"!! 曲线有**接缝**（{seam}）⇒ 中途重启过 ⇒ "
-                    f"「首/末 10%」跨了两个模型 ⇒ **不采信** ⇒ 请用 --resume 连续训")
+                log(f"!! 曲线有**接缝**（{seam}）⇒ 中途重启过 ⇒ 「首/末 10%」跨了两个模型 "
+                    f"⇒ **不采信** ⇒ 请用 --resume 连续训")
                 continue
-            if summ.get("decreased"):
-                log(f"✓ C0 的「损失下降」成立（同一条轨迹、{len(eps)} 个 epoch、"
-                    f"窗口 k={summ.get('k_epochs')}）⇒ 停止加训")
+            if not eps:
+                log("  [接缝检查] 曲线没拿到 ⇒ 跳过接缝检查（依赖「全程 --resume」这个不变量）")
+            if decreased:
+                log(f"✓ C0 的「损失下降」成立（同一条轨迹）⇒ 停止加训")
                 return True
             log(f"  ⇒ 还没降 ⇒ 继续第 {rnd + 1} 轮（--resume 续训 ⇒ 曲线接着长）")
         except Exception as e:                             # noqa: BLE001
