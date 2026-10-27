@@ -199,6 +199,51 @@ def check(pkg_dir: str, cells_dir: str | None, repo: str,
         add("B1", n > 0, f"n_classes={n} → 全零={b.get('all_zero', float('nan')):.4f} "
                          f"均值={b.get('predict_mean', float('nan')):.4f}")
 
+    # ---- L5: 配对证据 (三档共享初始化必须给出同一指纹) ----
+    pairs = {}
+    for key, v in res.items():
+        parts = key.split(":")
+        if len(parts) != 3:
+            continue
+        d, ev, arm = parts
+        for r in v.get("rows", []):
+            if "init_sha" in r:
+                pairs.setdefault((d, arm, r.get("seed")), {})[ev] = r["init_sha"]
+    if not pairs:
+        add("L5", False, "产物未记录 init_sha → 配对无法从产物层验证", warn_only=True)
+    else:
+        bad = {k: v for k, v in pairs.items() if len(set(v.values())) > 1}
+        add("L5", not bad,
+            f"配对指纹: 检查 {len(pairs)} 组 (D,arm,seed), 三档指纹不一致={bad or '无'}")
+
+    # ---- L6: 预登记锁 ----
+    lock_p = os.path.join(pkg_dir, "protocol.lock.json")
+    if not os.path.exists(lock_p) and code_dir:
+        lock_p = os.path.join(code_dir, "protocol.lock.json")
+    if not os.path.exists(lock_p):
+        add("L6", False, "无 protocol.lock.json → 无法证明本次运行是预登记的那次", warn_only=True)
+    else:
+        lock = json.load(open(lock_p, encoding="utf-8"))
+        pred_sha = m.get("predictions_sha")
+        lock_pred = lock.get("predictions_sha")
+        grid = lock.get("grid", {})
+        run = {"d_shareds": cfg.get("d_shareds"), "seeds": cfg.get("seeds"),
+               "steps": cfg.get("steps"), "seed_base": cfg.get("seed_base"),
+               "n_per_class": cfg.get("n_per_class"), "tokens": cfg.get("tokens"),
+               "n_classes": cfg.get("n_classes")}
+        if "evaluators" in cfg:
+            run["evaluators"] = cfg["evaluators"]
+        gdiff = {k: {"lock": grid.get(k), "run": v} for k, v in run.items()
+                 if k in grid and grid.get(k) != v}
+        ok_pred = (pred_sha is None) or (pred_sha == lock_pred)
+        # 冒烟: 网格本就不等于锁 → 只查判据指纹, 网格偏离降级为 WARN
+        ok = ok_pred and (is_smoke or not gdiff)
+        add("L6", ok,
+            f"锁 sha={lock.get('sha256')} | 判据指纹 产物={pred_sha} 锁={lock_pred}"
+            f" | 网格偏离={gdiff or '无'}"
+            + ("  (冒烟: 网格偏离属预期, 但判据指纹必须对上)" if is_smoke else ""),
+            warn_only=is_smoke)
+
     # ---- V1: 判决可重算 ----
     verdicts = m.get("verdicts", {}) or {}
     if not verdicts:

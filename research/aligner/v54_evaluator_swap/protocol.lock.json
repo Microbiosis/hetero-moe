@@ -1,0 +1,38 @@
+{
+ "grid": {
+  "d_shareds": [
+   96,
+   252,
+   384
+  ],
+  "arms": [
+   "frozen_random",
+   "permuted_target",
+   "learned_lift",
+   "randomized_target"
+  ],
+  "evaluators": [
+   "mse",
+   "gauss_nll",
+   "ce"
+  ],
+  "seeds": 5,
+  "seed_base": 2000,
+  "steps": 200,
+  "n_per_class": 16,
+  "tokens": 8,
+  "n_classes": 6,
+  "batch": 288
+ },
+ "predictions": {
+  "E1": "有意义空间臂的绝对误差(mse 读数)在**三档全部**低于冻结随机臂 (3/3 档, ≥4/5 seeds)",
+  "E2": "冻结随机臂在 CE 下准确率 ≈ 1/n_classes ±0.05 (chance); 且 NLL 显著差于常数预测器",
+  "E3": "有意义空间下 '融合 vs 最优单专家' 的 CE 准确率差 ≤ 5pp (≥4/5 seeds), 否则须单独解释",
+  "E4": "NLL 臂 logvar 与平方误差 Spearman ≥ 0.2 且为正 (否则方差头退化, E2/E3 的 NLL 读数作废)",
+  "E5": "投影空间有效秩: 有意义空间 > 冻结随机空间, 且三档同量级",
+  "E6": "有意义空间臂在三档都严格低于**该档自己的零参数基线** (mse: predict_mean=0.138889 / gauss_nll: predict_mean=-0.486977 / ce: 均匀预测的等价 mse=0.138889)"
+ },
+ "predictions_sha": "20c6ae18d313b4e3",
+ "frozen_note": "全网格开跑前冻结。d_shared=252 而非 256: 块状 one-hot 要求 D_shared 被 n_classes=6 整除 (256/6 不整, v52 的 256 仅适用于 8 类)。网格 180 格 = 3×4×3×5。",
+ "sha256": "559ec41467efeb3a"
+}

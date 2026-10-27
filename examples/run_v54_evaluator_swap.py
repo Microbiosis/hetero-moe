@@ -63,6 +63,57 @@ BUCKET = os.environ.get("V54_BUCKET", "")
 BUCKET_PREFIX = os.environ.get("V54_BUCKET_PREFIX", "v54_artifacts")
 
 
+def _params_sha(objs) -> str:
+    """共享初始化参数的指纹 —— 配对是否成立的**产物级证据** (不是靠纪律)。
+
+    只哈希 projs + layer (三档共用), 不含 EvaluatorHead (三档本就不同)。
+    三档在 (arm, D, seed) 下必须给出同一个指纹; 不成立就说明配对没做到。
+    """
+    h = hashlib.sha256()
+    for o in objs:
+        for name in sorted(o.state_dict()):
+            t = o.state_dict()[name]
+            h.update(name.encode())
+            h.update(t.detach().cpu().contiguous().numpy().tobytes())
+    return h.hexdigest()[:16]
+
+
+def load_protocol_lock() -> dict | None:
+    """预登记锁: 全网格开跑**之前**冻结的网格与判据。存在即必须服从。"""
+    p = os.path.join(ROOT, "research/aligner/v54_evaluator_swap/protocol.lock.json")
+    if not os.path.exists(p):
+        return None
+    return json.load(open(p, encoding="utf-8"))
+
+
+def check_protocol(lock: dict | None) -> dict:
+    """把当前运行的网格与预登记锁对拍。
+
+    完整性要求: 全网格 (非冒烟) 必须与锁逐项相同。允许偏离的唯一路径是
+    显式设 V54_ALLOW_DEVIATION=1, 且偏离会被**写进产物**, 不会静默。
+    """
+    run = {"d_shareds": D_SHAREDS, "arms": list(ARMS), "evaluators": list(EVALUATORS),
+           "seeds": SEEDS, "seed_base": SEED_BASE, "steps": STEPS,
+           "n_per_class": N_PER_CLASS, "tokens": S_TOK, "n_classes": N_CLASSES,
+           "batch": BATCH}
+    if SMOKE:
+        return {"status": "smoke", "locked": lock is not None, "run": run,
+                "note": "冒烟不是网格, 不与锁对拍"}
+    if lock is None:
+        return {"status": "no_lock", "run": run,
+                "note": "无 protocol.lock.json → 这次运行无法被证明是预登记的那次"}
+    grid = lock.get("grid", {})
+    diff = {k: {"lock": grid.get(k), "run": v} for k, v in run.items() if grid.get(k) != v}
+    if diff and os.environ.get("V54_ALLOW_DEVIATION") != "1":
+        raise SystemExit(
+            "✗ 本次网格与预登记锁不一致, 拒绝开跑 (完整性保护):\n"
+            + "\n".join(f"    {k}: 锁={v['lock']} 运行={v['run']}" for k, v in diff.items())
+            + "\n  若确属有意变更: 重生成 protocol.lock.json, 或显式设 V54_ALLOW_DEVIATION=1 "
+              "(偏离会写进产物)")
+    return {"status": "deviated" if diff else "match", "locked": True,
+            "lock_sha": lock.get("sha256"), "diff": diff or None, "run": run}
+
+
 def code_sha() -> str:
     """产物血缘: 产生这份数字的 commit。v53 缺这个字段, 事后查不出出处。"""
     try:
@@ -147,12 +198,39 @@ def _build(arm, d_shared, Dm, seed):
                                   [Dm[e] for e in EXPERTS]).to(DEVICE)
     for p in layer.P_m:
         p.requires_grad_(False)
-    return lift_kind, variant, projs, layer
+    init_sha = _params_sha([*projs.values(), layer])
+    return lift_kind, variant, projs, layer, init_sha
+
+
+def _predictions_sha() -> str:
+    """预登记判据的指纹。事后改 PREDICTIONS_V54 → 这个哈希就对不上。"""
+    return hashlib.sha256(
+        json.dumps(PREDICTIONS_V54, ensure_ascii=False, sort_keys=True).encode()
+    ).hexdigest()[:16]
+
+
+def _effective_rank(x: torch.Tensor) -> float:
+    """exp(H(p)), p_i = s_i² / Σs_j² (奇异值的能量分布)。
+
+    对 d_shared 维的投影空间给一个"实际用了多少维"的连续读数。
+    退化解 (所有样本挤在一个方向) → 1.0; 各向同性 → d_shared。
+    """
+    z = x.double() - x.double().mean(0, keepdim=True)
+    try:
+        sv = torch.linalg.svdvals(z)
+    except Exception:
+        return float("nan")
+    e = sv ** 2
+    tot = float(e.sum())
+    if tot <= 0:
+        return 0.0
+    p = (e / tot).clamp_min(1e-12)
+    return float(torch.exp(-(p * p.log()).sum()))
 
 
 def run_cell(arm, d_shared, evaluator, seed, feats, feats_ho, labels, labels_ho):
     Dm = {e: feats[e].shape[-1] for e in EXPERTS}
-    lift_kind, variant, projs, layer = _build(arm, d_shared, Dm, seed)
+    lift_kind, variant, projs, layer, init_sha = _build(arm, d_shared, Dm, seed)
     head = EvaluatorHead(evaluator, d_shared).to(DEVICE)
 
     perm = None
@@ -239,6 +317,16 @@ def run_cell(arm, d_shared, evaluator, seed, feats, feats_ho, labels, labels_ho)
         tgt_idx = ho_t_all.reshape(-1, d_shared).argmax(-1) // blk
         cons_in, cons_out = consistency(proj_ho, None), consistency(out_ho, None)
 
+        # E4 必须在 **held-out** 上量, 不能只用训练末读数 (训练末的 logvar 是拟合过的)
+        cal_ho = None
+        if evaluator == "gauss_nll":
+            q_ho = head.forward(y_raw)
+            err_ho = ((q_ho["pred"] - ho_t_all) ** 2).mean(dim=(1, 2))
+            cal_ho = calibration(q_ho["logvar"], err_ho)
+
+        # E5 有效秩 (Roy–Vetterli): exp(熵(归一化奇异值²))。越高 = 空间越不退化。
+        eff_rank = _effective_rank(x_ho.reshape(-1, d_shared))
+
     probes = {"source": probe_accuracy_all(y_flat, src, len(EXPERTS), seed=seed),
               "class": probe_accuracy_all(y_flat, tgt_idx, N_CLASSES, seed=seed)}
     return {
@@ -248,6 +336,9 @@ def run_cell(arm, d_shared, evaluator, seed, feats, feats_ho, labels, labels_ho)
         "consistency": {"input": cons_in, "output": cons_out},
         "in_sample_fuse": err(layer(torch.cat([projs[e](feats[e]) for e in EXPERTS], 0))),
         "train_readout": last,
+        "held_out_calibration": cal_ho,
+        "eff_rank": eff_rank,
+        "init_sha": init_sha,
         "n_params": {"head_extra": head.extra_params(),
                      "trained": sum(p.numel() for p in allp if p.requires_grad)},
         "perm": perm, "d_shared": d_shared, "seed": seed, "evaluator": evaluator,
@@ -260,7 +351,7 @@ def judge(results):
     """E1–E4, 全部从 rows 重算。E5 (有效秩) 在 check 阶段单独算。"""
     out = {}
     for d in D_SHAREDS:
-        acc = {"E1": [], "E2": [], "E3": [], "E4": [], "E6": []}
+        acc = {"E1": [], "E2": [], "E3": [], "E4": [], "E6": [], "E5": []}
         for ev in EVALUATORS:
             for rl, rf in zip(results.get(f"D{d}:{ev}:learned_lift", {}).get("rows", []),
                               results.get(f"D{d}:{ev}:frozen_random", {}).get("rows", [])):
@@ -269,12 +360,17 @@ def judge(results):
                 if ev == "ce":
                     acc["E2"].append(abs(rf["acc"]["fuse"] - 1.0 / N_CLASSES) <= 0.05)
                 if ev == "gauss_nll":
-                    rho = rl.get("train_readout", {}).get("logvar_err_spearman")
-                    acc["E4"].append(rho is None or rho >= 0.2)
+                    # E4: 用 held-out 校准 (train_readout 是拟合过的, 不能当判决依据)
+                    rho = rl.get("held_out_calibration")
+                    acc["E4"].append(rho is not None and rho >= 0.2)
                 # E6: 低于该档自己的零参数基线 (冒烟后新增, 见 audit.PREDICTIONS_V54 注释)
                 base = baselines(ev)
                 ref = base.get("predict_mean", base.get("uniform_pred_mse"))
                 acc["E6"].append(rl["held_out"]["fuse"] < ref)
+                # E5: 有意义空间的有效秩 > 冻结随机空间 (逐 seed 配对比较)
+                rf_ = results.get(f"D{d}:{ev}:frozen_random", {}).get("rows", [])
+                if rf_ and "eff_rank" in rl and "eff_rank" in rf_[0]:
+                    acc["E5"].append(rl["eff_rank"] > rf_[len(acc["E5"]) % len(rf_)]["eff_rank"])
         out[f"D{d}"] = {k: (bool(np.mean(v) >= 0.8) if v else None) for k, v in acc.items()}
     return out
 
@@ -316,6 +412,12 @@ def main():
     print(f"编码完成 ({time.time() - t0:.0f}s)  "
           + " ".join(f"{k}={list(v.shape)}" for k, v in feats.items()))
 
+    proto = check_protocol(load_protocol_lock())
+    print(f"\n协议锁: {proto['status']}" + (f"  sha={proto.get('lock_sha')}" if proto.get('lock_sha') else ""))
+    if proto.get("diff"):
+        for k, v in proto["diff"].items():
+            print(f"  ⚠ 偏离 {k}: 锁={v['lock']} 运行={v['run']}")
+
     results = {}
     total = len(D_SHAREDS) * len(ARMS) * len(EVALUATORS) * SEEDS
     i = 0
@@ -337,7 +439,8 @@ def main():
                 cell = {"key": key, "code_sha": sha,
                         "config": {"n_classes": N_CLASSES, "tokens": S_TOK, "steps": STEPS,
                                    "evaluator": ev, "arm": arm, "d_shared": d,
-                                   "seeds": SEEDS, "seed_base": SEED_BASE},
+                                   "seeds": SEEDS, "seed_base": SEED_BASE,
+                                   "predictions_sha": _predictions_sha()},
                         "rows": rows}
                 results[key] = {"rows": rows, "code_sha": sha, "config": cell["config"]}
                 _push(cell, key.replace(":", "_"))
@@ -359,7 +462,10 @@ def main():
                           "n_classes": N_CLASSES, "tokens": S_TOK,
                           "evaluators": list(EVALUATORS)},
                "baselines": {ev: baselines(ev) for ev in EVALUATORS},
-               "predictions": PREDICTIONS_V54, "verdicts": verdicts, "all_pass": all_pass,
+               "predictions": PREDICTIONS_V54,
+               "predictions_sha": _predictions_sha(),
+               "protocol_check": proto,
+               "verdicts": verdicts, "all_pass": all_pass,
                "results": results,
                "notes": {"paired": "三档共用同一 seed/初始化/批顺序 → 差异只来自损失",
                          "comparable_metric": "每档都报 mse (同一输出张量的绝对误差)",
