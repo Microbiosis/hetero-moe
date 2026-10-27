@@ -49,6 +49,25 @@ def main():
     log(f"[潜变量] 逐通道 std: {[round(float(v), 3) for v in per_ch]}")
     log(f"[潜变量] 前 3 个通道的均值: {[round(float(v), 4) for v in x.mean(dim=(0, 2, 3))]}")
 
+    # ---- 决定性检查：这些潜变量是不是**全都一样**（= 灰占位图）----
+    # ⚠️ 2026-10-27 的坑：旧版缓存把 8270 张图全读成了灰占位图，而**静默**跑完了
+    #    ⇒ 训练「看起来正常」，其实全废 ⇒ ⇒ 这里要有**能一眼看出全同**的检查。
+    rows = x[:8].reshape(8, -1)
+    d01 = float(torch.linalg.norm(rows[0] - rows[1]))
+    d02 = float(torch.linalg.norm(rows[0] - rows[2]))
+    dmax = float(torch.linalg.norm(rows[0] - rows[-1]))
+    log(f"[占位检查] 前 8 行的两两 L2 距离: d(0,1)={d01:.6f} d(0,2)={d02:.6f} d(0,7)={dmax:.6f}")
+    n_identical = 1
+    for i in range(1, 8):
+        if float(torch.linalg.norm(rows[0] - rows[i])) == 0.0:
+            n_identical += 1
+    log(f"[占位检查] 前 8 行里与第 0 行**完全相同**的有 {n_identical}/8"
+        f" ⇒ {'⚠️⚠️ 全是同一个占位图（缓存坏了）' if n_identical >= 8 else '✓ 各行不同（不是占位图）'}")
+    # 跨行差异的量级（真图 ⇒ 距离应是潜变量尺度的百分之几）
+    scale = float(torch.linalg.norm(rows[0]))
+    log(f"[占位检查] 第 0 行的 L2 范数={scale:.4f}；行间相对差="
+        f"{(d02/scale if scale else float('nan')):.4f}")
+
     # ---- 2) 真潜变量 vs 零潜变量的 ε-预测损失 ----
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     unet = T.load_sd_component("unet", dtype=torch.float32, device=device).eval()

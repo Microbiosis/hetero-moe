@@ -415,8 +415,23 @@ def step_generate(args):
             if (i - lo) % 25 == 0:
                 log(f"  [sub-{sid:02d}] {i}/{hi}")
         feats = l2norm(np.stack(feats, axis=0))
+        # ---- **对齐闸门**：真图顺序若与 EEG 行序对不上 ⇒ 2-way 全无意义 ⇒ 当场停 ----
+        # 判据：冻结 encoder 的 200-way top-1 必须显著高于随机（1/200 = 0.005）
+        # ⇒ 参照 exp101 的同口径数字 0.0589（管线零漂移）。
+        g_all, neg_all = build_candidate_structure(200)
+        cz = l2norm(cond.astype(np.float64))
+        sim = cz @ true_clip[:len(cz)].T
+        acc200 = float((sim.argmax(axis=1) == np.arange(len(cz))).mean())
+        acc2 = two_way_acc(cz, true_clip[:len(cz)], neg_all[:len(cz)])
+        log(f"[对齐] sub-{sid:02d}: 200-way top-1={acc200:.4f}（随机 0.0050｜"
+            f"exp101 参照 0.0589）｜条件侧 2-way={acc2:.4f}")
+        if acc200 < 0.01:
+            raise RuntimeError(
+                f"对齐闸门未过：200-way={acc200:.4f} ≈ 随机 ⇒ **真图顺序与 EEG 行序对不上** "
+                f"⇒ 2-way/50-way 全无意义 ⇒ 停（先查 test_images 的概念顺序）")
         torch.save({"clip": torch.from_numpy(feats.astype(np.float32)),
-                    "lo": lo, "hi": hi, "subject": sid},
+                    "lo": lo, "hi": hi, "subject": sid,
+                    "align_acc200": acc200, "align_acc2": acc2},
                    fp)
         # C0 的「图不是常数」：前 16 张的像素两两距离中位
         if len(pix) >= 2:
