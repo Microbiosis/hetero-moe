@@ -25,6 +25,7 @@ $env:EXP102_FLAVORS = "l40sx1,l4x1,a100-large,a10g-large,a10g-small,t4-medium"
 """
 from __future__ import annotations
 
+import json
 import os
 import socket
 import subprocess
@@ -40,6 +41,8 @@ api = HfApi()
 SPACE = "hf.co/spaces/redmingwei/IllusionBrain"      # ← 跑 Job 的 Space
 OUT = "/domains/runs/illusionbrain-align/exp102"
 CACHE = OUT + "/cache"
+# 生成产物放**另一个目录** ⇒ 避免第一轮（欠训 adapter）的产物混进新判决
+GEN_OUT = os.environ.get("EXP102_GEN_OUT", OUT + "/gen2")
 MAX_TRIES = 4
 # flavor 阶梯：先试「有 48 GB 且快的 L40S」，再退到「24 GB 的 L4」，再到 A100 / A10G / T4。
 # 启动看门狗：还在 SCHEDULING 超过这个秒数 ⇒ 换下一个 flavor（而不是死等）。
@@ -228,6 +231,51 @@ def preflight():
     return True
 
 
+def train_until_decreased(max_rounds=8):
+    """**训到 C0 的「损失下降」成立为止**（上限 max_rounds 轮），每轮一个 Job（可续跑）。
+
+    ⇒ 为什么需要循环（2026-10-27 实测）：
+      第一轮 42 分钟只训了 **3250 步 / 13 个 epoch** ⇒ 损失 0.0760 → 0.0783（**没降**）
+      ⇒ C0 的前半段判死 ⇒ 而 13 个 epoch 时「首 10% / 末 10%」**各只取 1 个 epoch**
+      ⇒ ⇒ 那个统计量基本是抛硬币 ⇒ ⇒ **训练必须到 epoch 数够多才有判别力**。
+      ⇒ **训练步数/时长从来不在预登记里**（§四十四·五 只固定了 lr / batch / 结构）
+      ⇒ ⇒ 所以「多训几轮」**不是改判据**，而是把同一个判据测到它能分辨。
+      ⇒ ⇒ 每轮用 `--resume`（损失曲线接着写 ⇒ epoch 数累加 ⇒ 10% 的窗口也随之变宽）。
+    """
+    repo_json = "runs/illusionbrain-align/exp102/train_curve.json"
+    train_cmd = ["python", "-u", "/domains/scripts/exp102_train.py",
+                 "--out-dir", OUT, "--cache-dir", CACHE,
+                 "--max-minutes", "42", "--batch", "8", "--lr", "1e-4",
+                 "--steps-per-epoch", "250"]
+    for rnd in range(1, max_rounds + 1):
+        cmd = train_cmd + (["--resume"] if rnd > 1 else [])
+        if not run_step(f"t102-train" if rnd == 1 else f"t102-train-r{rnd}", "60m",
+                        cmd, 4200, resume_cmd=cmd):
+            log(f"!! 训练第 {rnd} 轮失败 ⇒ 停下")
+            return False
+        # 读回损失曲线 ⇒ 看 C0 的前半段是否已成立
+        try:
+            from huggingface_hub import download_bucket_files
+            out = Path(r"D:\.minimax\tmp\exp102_out")
+            out.mkdir(parents=True, exist_ok=True)
+            download_bucket_files("illusion-brain/brain-domains",
+                                  [(repo_json, out / "train_curve.json")])
+            sys.path.insert(0, str(Path(__file__).resolve().parent.parent
+                                    / "research/brain_domains/exp"))
+            import exp102_train as T                      # noqa: PLC0415
+            curve = json.loads((out / "train_curve.json").read_text(encoding="utf-8"))
+            summ = T.loss_curve_summary(curve.get("epochs", []))
+            log(f"[训练] 第 {rnd} 轮后：{summ}")
+            if summ.get("decreased"):
+                log(f"✓ C0 的「损失下降」成立 ⇒ 停止加训（共 {rnd} 轮）")
+                return True
+            log(f"  ⇒ 还没降 ⇒ 继续第 {rnd + 1} 轮（--resume 续训）")
+        except Exception as e:                             # noqa: BLE001
+            log(f"  [训练] 读损失曲线失败（不影响继续）：{type(e).__name__}: {e}")
+    log(f"!! 训了 {max_rounds} 轮仍没让 C0 成立 ⇒ 停下（要人判断：是不是**条件形式本身**太弱）")
+    return False
+
+
 def main():
     if not preflight():
         log("!! 起飞前自检未过 ⇒ 不建任何 Job（先修本地）")
@@ -255,27 +303,23 @@ def main():
                   "--adapter", "/domains/runs/illusionbrain-align/exp102_smoke/adapter_last.pt",
                   "--out-dir", "/domains/runs/illusionbrain-align/exp102_gsmoke"], 2400)
 
-    # ③ 训练（被抢占 ⇒ --resume 接着训）
-    train_cmd = ["python", "-u", "/domains/scripts/exp102_train.py",
-                 "--out-dir", OUT, "--cache-dir", CACHE,
-                 "--max-minutes", "42", "--batch", "8", "--lr", "1e-4",
-                 "--steps-per-epoch", "250"]
-    if not run_step("t102-train", "60m", train_cmd, 4200, resume_cmd=train_cmd + ["--resume"]):
-        log("!! 训练反复失败 ⇒ 链子停下")
+    # ③ 训练（**训到 C0 的「损失下降」成立为止**；每轮 --resume 续训）
+    if not train_until_decreased(max_rounds=int(os.environ.get("EXP102_TRAIN_ROUNDS", "8"))):
+        log("!! 训练没能让 C0 成立 ⇒ 链子停下")
         return 1
 
     # ④ 生成（按被试落盘 ⇒ 第二轮补齐剩余的）
     gen_cmd = ["python", "-u", "/domains/scripts/exp102_gen.py", "--step", "generate",
                "--subjects", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
                "--shard", "0", "--n-shards", "1",
-               "--adapter", OUT + "/adapter_final.pt", "--out-dir", OUT]
+               "--adapter", OUT + "/adapter_final.pt", "--out-dir", GEN_OUT]
     run_step("t102-gen", "60m", gen_cmd, 3900)
     run_step("t102-gen2", "60m", gen_cmd, 3900)
 
     # ⑤ 判决（CPU）
     run_step("t102-judge", "30m",
              ["python", "-u", "/domains/scripts/exp102_gen.py", "--step", "judge",
-              "--out-dir", OUT, "--results-dir", OUT + "/results"], 1800,
+              "--out-dir", GEN_OUT, "--results-dir", OUT + "/results"], 1800,
              flavors=[CPU_FLAVOR])
 
     # ⑥ 结果取回本地（**只下小 JSON**）
