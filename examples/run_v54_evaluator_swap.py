@@ -64,6 +64,7 @@ OUT_DIR = os.path.join(ROOT, "research/aligner/v54_evaluator_swap/results")
 ART_DIR = os.environ.get("V54_ART_DIR", OUT_DIR)
 BUCKET = os.environ.get("V54_BUCKET", "")
 BUCKET_PREFIX = os.environ.get("V54_BUCKET_PREFIX", "v54_artifacts")
+FP: dict = {}
 
 
 def _params_sha(objs) -> str:
@@ -117,8 +118,38 @@ def check_protocol(lock: dict | None) -> dict:
             "lock_sha": lock.get("sha256"), "diff": diff or None, "run": run}
 
 
+def code_fingerprint() -> dict:
+    """代码**字节指纹** —— 比 commit hash 更强。
+
+    为什么需要它: 全网格在 HF Space 上跑, 那里是**同步过去的文件副本**, 它的 git HEAD
+    与本地提交无关。只说 "code_sha=某 commit" 并不能证明跑的就是那份代码。
+    指纹把"跑的是哪几行字节"钉死, 本地检查器可逐字节复核 (tools/check_artifacts.py L6)。
+    """
+    rels = ["research/aligner/v53_third_audit/audit.py",   # v54 的数据/探针/抬升全在这里
+            "research/aligner/v54_evaluator_swap/audit.py",
+            "research/aligner/v54_evaluator_swap/integrity.py",
+            "examples/run_v54_evaluator_swap.py",
+            "research/aligner/v54_evaluator_swap/protocol.lock.json"]
+    out = {}
+    for rel in rels:
+        p = os.path.join(ROOT, rel)
+        if not os.path.exists(p):
+            out[rel] = "missing"
+            continue
+        out[rel] = hashlib.sha256(open(p, "rb").read()).hexdigest()[:16]
+    combo = "|".join(f"{k}:{v}" for k, v in sorted(out.items()))
+    out["_combined"] = hashlib.sha256(combo.encode()).hexdigest()[:16]
+    return out
+
+
 def code_sha() -> str:
-    """产物血缘: 产生这份数字的 commit。v53 缺这个字段, 事后查不出出处。"""
+    """产物血缘: 产生这份数字的 commit。v53 缺这个字段, 事后查不出出处。
+
+    Space 上跑时用 V54_CODE_SHA 显式传入**源提交** (Space 是同步副本, 没有这段历史)。
+    """
+    forced = os.environ.get("V54_CODE_SHA", "").strip()
+    if forced:
+        return forced
     try:
         sha = subprocess.run(["git", "-C", ROOT, "rev-parse", "--short", "HEAD"],
                              capture_output=True, text=True, timeout=10).stdout.strip()
@@ -427,6 +458,8 @@ def _restore_cells(sha):
             why = None
             if d.get("code_sha") != sha:
                 why = f"code_sha {d.get('code_sha')} != {sha}"
+            elif cfg.get("code_fp") and FP and cfg["code_fp"] != FP.get("_combined"):
+                why = f"代码指纹 {cfg['code_fp']} != {FP.get('_combined')}"
             elif cfg.get("predictions_sha") != cur_pred:
                 why = "判据指纹不符"
             elif cfg.get("steps") != STEPS:
@@ -454,13 +487,34 @@ def _push(payload, key):
         print(f"  (warn) 推桶失败 {key}: {repr(e)[:100]}")
 
 
+def _push_final(local_path: str, name: str):
+    """把最终产物推到桶。runner 自己负责, 不依赖 Space app 的包名白名单。"""
+    if not BUCKET:
+        return
+    try:
+        from huggingface_hub import batch_bucket_files
+        add = [(local_path, f"{BUCKET_PREFIX}/{name}")]
+        for extra in ("SPEC.md", "MANIFEST.json", "protocol.lock.json"):
+            lp = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              "..", "research/aligner/v54_evaluator_swap", extra)
+            lp = os.path.normpath(lp)
+            if os.path.exists(lp):
+                add.append((lp, f"{BUCKET_PREFIX}/{extra}"))
+        batch_bucket_files(BUCKET, add=add, token=os.environ.get("HF_TOKEN"))
+        print(f"  已推桶: {BUCKET}/{BUCKET_PREFIX}/{name}")
+    except Exception as e:  # noqa: BLE001
+        print(f"  (warn) 推桶失败 {name}: {repr(e)[:110]}")
+
+
 def main():
     t0 = time.time()
+    global FP
     sha = code_sha()
+    FP = code_fingerprint()
     print("=" * 78)
     print("V54.0 — 评价器换轨: MSE → {高斯 NLL, CE} | 同网格, 配对, 不降级")
     print("=" * 78)
-    print(f"code_sha={sha}  SMOKE={SMOKE}  device={DEVICE}")
+    print(f"code_sha={sha}  code_fp={(FP or {}).get('_combined')}  SMOKE={SMOKE}  device={DEVICE}")
     print(f"D={D_SHAREDS} arms={list(ARMS)} evaluators={EVALUATORS} seeds={SEEDS} steps={STEPS}")
     print("\n解析基线 (块状 one-hot, 精确值):")
     for ev in EVALUATORS:
@@ -516,7 +570,8 @@ def main():
                         "config": {"n_classes": N_CLASSES, "tokens": S_TOK, "steps": STEPS,
                                    "evaluator": ev, "arm": arm, "d_shared": d,
                                    "seeds": SEEDS, "seed_base": SEED_BASE,
-                                   "predictions_sha": _predictions_sha()},
+                                   "predictions_sha": _predictions_sha(),
+                                   "code_fp": (FP or {}).get("_combined")},
                         "rows": rows}
                 results[key] = {"rows": rows, "code_sha": sha, "config": cell["config"]}
                 _push(cell, key.replace(":", "_"))
@@ -542,6 +597,7 @@ def main():
     os.makedirs(ART_DIR, exist_ok=True)
     payload = {"schema_version": "1.0", "version": "54.0", "package": "v54_evaluator_swap",
                "line": "aligner", "code_sha": sha,
+               "code_fingerprint": FP,
                "config": {"d_shareds": D_SHAREDS, "steps": STEPS, "seeds": SEEDS,
                           "seed_base": SEED_BASE, "n_per_class": N_PER_CLASS,
                           "n_classes": N_CLASSES, "tokens": S_TOK,
@@ -573,12 +629,14 @@ def main():
         print(f"\n⛔ 网格不完备 ({comp['n_cells_have']}/{comp['n_cells_want']} 格, "
               f"{comp['n_obs_have']}/{comp['n_obs_want']} 观测)")
         print(f"   已写 {ppath} (IS_PARTIAL_NOT_RESULTS=true) —— 这不是结果, 续跑后会被取代")
+        _push_final(ppath, "metrics.partial.json")
         sys.exit(2)
 
     mpath = os.path.join(ART_DIR, "metrics.json")
     json.dump(payload, open(mpath, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"\n指标已落盘: {mpath}  (code_sha={sha}, {total} 格, {time.time() - t0:.0f}s)")
     print(f"闸门: {summarize(audit)} → all_pass={all_pass}")
+    _push_final(mpath, "metrics.json")
 
 
 if __name__ == "__main__":
