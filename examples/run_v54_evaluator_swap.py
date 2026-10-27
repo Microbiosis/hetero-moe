@@ -31,7 +31,7 @@ import torch.nn.functional as F
 
 from research.aligner.v54_evaluator_swap.audit import (
     CLASSES, ARMS, N_CLASSES, EVALUATORS, PREDICTIONS_V54,
-    EvaluatorHead, eval_loss, baselines, decode_accuracy,
+    EvaluatorHead, eval_loss, baselines, decode_accuracy, calibration,
     make_split, build_targets, probe_accuracy_all, consistency,
     ResidualLift, LinearLift,
 )
