@@ -41,6 +41,11 @@ PRIMITIVES = {
 
 # 允许的"intra-line" 兄弟引用 (同研究线内引用)
 ALLOWED_INTRA_LINE = {
+    # aligner 内 v54 刻意 import v53 的 audit (数据划分/探针/抬升逐位复用),
+    # 这是"不降级"的结构性保证 —— 若复制一份代码, 协议就会悄悄漂移。
+    "research.aligner.v53_third_audit.audit": {
+        "research.aligner.v54_evaluator_swap",
+    },
     # corpus_scale 内 v26/v27/v28/v29 都可以 import v25 (它们都是 v25 的扩展)
     "research.corpus_scale.v25_corpus_central": {
         "research.corpus_scale.v26_real_corpus",
