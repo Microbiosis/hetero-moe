@@ -581,6 +581,9 @@ def step_judge(args):
                 w.writerow(r)
     (res_dir / "verdict.json").write_text(
         json.dumps(out, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
+    # C0 的「损失下降」是**整轮量**（不在逐被试表里）⇒ 单独落盘 ⇒ 离线重算要读它
+    (res_dir / "loss_summary.json").write_text(
+        json.dumps(loss_summary, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
 
     lines = []
     lines.append("=== exp102 判据（§四十四）===")
