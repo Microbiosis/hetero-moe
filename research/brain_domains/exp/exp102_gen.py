@@ -291,7 +291,15 @@ def load_clip(device):
     raise RuntimeError(f"CLIP 取不到（候选全失败）：{last}")
 
 
-def clip_encode(model, proc, images, device, batch=16):
+def clip_encode(model, proc, images, device, batch=16, expect_dim=1024):
+    """用 **同一个** CLIP 编码器编「生成图」与「真图」⇒ 两边同空间。
+
+    ⚠️ transformers 5.x 里 `get_image_features()` 返回的是 **BaseModelOutputWithPooling**
+       （不是张量）⇒ 要取**投影后**的 `image_embeds`（ViT-H-14 的投影维 = 1024
+       ⇒ 正好接得上 exp93b 冻结 encoder 的 1024 维输出）⇒
+       ⇒ 维度必须断言：若拿到的是 1280 维的 hidden state（不是投影）⇒ 立刻报错，
+          否则「生成侧 1280 维 vs 条件侧 1024 维」会让 2-way 比较**静默失效**。
+    """
     import torch
 
     feats = []
@@ -300,6 +308,17 @@ def clip_encode(model, proc, images, device, batch=16):
             chunk = images[i:i + batch]
             inp = proc(images=chunk, return_tensors="pt").to(device)
             out = model.get_image_features(**inp)
+            if not torch.is_tensor(out):
+                emb = getattr(out, "image_embeds", None)
+                if emb is None:
+                    pooler = getattr(out, "pooler_output", None)
+                    emb = pooler if torch.is_tensor(pooler) else out[0]
+                out = emb
+            if out.shape[-1] != expect_dim:
+                raise RuntimeError(
+                    f"CLIP 特征维度 {out.shape[-1]} ≠ 期望 {expect_dim}"
+                    f"（拿到的是 hidden state 而不是投影后的 image_embeds？"
+                    f"⇒ 会让 2-way 比较静默失效 ⇒ 停）")
             feats.append(out.float().cpu().numpy())
     return l2norm(np.concatenate(feats, axis=0).astype(np.float64))
 

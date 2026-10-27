@@ -132,8 +132,14 @@ def cancel(name):
 
 
 def run_step(prefix, timeout, cmd, budget_s, resume_cmd=None, flavors=None):
-    """跑一步：**flavor 阶梯** × **重试** ⇒ 拿不到槽位就换池，被抢占就重跑（可续）。"""
+    """跑一步：**flavor 阶梯** × **重试** ⇒ 拿不到槽位就换池，被抢占就重跑（可续）。
+
+    ⚠️ **确定性失败不重试**：脚本自己崩了（ERROR）⇒ 再试一百次也是同样的结果
+    ⇒ ⇒ 连续两次 ERROR ⇒ **这一步停下**（要人看日志），别白烧几十个 GPU 跑。
+    只有「被抢占（CANCELED）/ 没排上」才值得重试。
+    """
     ladder = flavors or FLAVORS
+    err_streak = 0
     for fl in ladder:
         for attempt in range(1, MAX_TRIES + 1):
             name = prefix if attempt == 1 else f"{prefix}-{fl}-r{attempt}"
@@ -156,9 +162,42 @@ def run_step(prefix, timeout, cmd, budget_s, resume_cmd=None, flavors=None):
             log(f"{name} ⇒ {st}")
             if st == "COMPLETED":
                 return True
+            if st == "ERROR":
+                err_streak += 1
+                if err_streak >= 2:
+                    log(f"!! {prefix} 连续 {err_streak} 次 ERROR ⇒ **脚本自己崩了**"
+                        f"（确定性失败）⇒ 停下，别再烧算力 ⇒ 看这个 Job 的日志")
+                    return False
+            else:
+                err_streak = 0
             log(f"!! {name} 没成功（{st}）⇒ 重试")
             time.sleep(10)
     return False
+
+
+def pick_python():
+    """挑一个**装了 numpy 的**解释器来跑本地自检。
+
+    ⚠️ 链子自己跑在 huggingface-hub 那个工具解释器上（**没有 numpy/torch**）⇒
+    ⇒ 仓库里的脚本用它跑会 `ModuleNotFoundError: numpy` ⇒
+    ⇒ 逐个候选试，**用第一个 import numpy 成功的**。
+    """
+    import shutil
+    cands = [sys.executable, shutil.which("python"), shutil.which("python3")]
+    seen, out = set(), []
+    for c in cands:
+        if not c or c in seen:
+            continue
+        seen.add(c)
+        out.append(c)
+    for c in out:
+        try:
+            r = subprocess.run([c, "-c", "import numpy"], capture_output=True, timeout=120)
+            if r.returncode == 0:
+                return c
+        except Exception:                                      # noqa: BLE001
+            continue
+    return out[0] if out else sys.executable
 
 
 def preflight():
@@ -170,8 +209,10 @@ def preflight():
       ② `exp/exp102_gen.py --self-test`（判据脚本自测）
     """
     repo = Path(__file__).resolve().parent.parent
-    checks = [("check_cli_args", [sys.executable, str(repo / "research/brain_domains/results/check_cli_args.py")]),
-              ("exp102_gen --self-test", [sys.executable, str(repo / "research/brain_domains/exp/exp102_gen.py"), "--self-test"])]
+    py = pick_python()
+    log(f"[起飞前自检] 用解释器 {py}")
+    checks = [("check_cli_args", [py, str(repo / "research/brain_domains/results/check_cli_args.py")]),
+              ("exp102_gen --self-test", [py, str(repo / "research/brain_domains/exp/exp102_gen.py"), "--self-test"])]
     for name, cmd in checks:
         try:
             r = subprocess.run(cmd, capture_output=True, text=True, timeout=600, cwd=str(repo))
