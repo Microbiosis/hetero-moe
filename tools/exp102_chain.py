@@ -135,19 +135,58 @@ def stage_of(name):
     return None
 
 
+_LIVE_RANK = {"RUNNING": 3, "SCHEDULING": 2, "PENDING": 2}
+
+
+def find_live_job(names):
+    """在**给定的确切名字**里找还活着的 Job（排队中 / 在跑）⇒ (name, id, stage)。
+
+    ⚠️ 必须按**确切名字**匹配（不能用前缀）：`t102-gen` 是 `t102-gen-smoke` 的前缀
+       ⇒ 用前缀会把烟囱 Job 也当成正式生成 Job。
+    """
+    want = set(names)
+    best, rank = None, -1
+    for j in _jobs():
+        name = str((j.labels or {}).get("name") or "")
+        if name not in want:
+            continue
+        st = str(j.status.stage)
+        r = _LIVE_RANK.get(st, 0)
+        if r > rank:
+            best, rank = (name, str(j.id), st), r
+    return best
+
+
 def wait_for(name, budget_s):
+    """等一个 Job 跑到终态。
+
+    ⚠️ **超时不是「判失败」**：活着的 Job 不能因为本地等久了就当它死了
+       ⇒ ⇒ 超时后只要它还活着就**继续等**（并每 5 分钟报一次），
+       ⇒ 否则链子会在旧 Job 还在跑的时候又建一个新的 ⇒ **两个进程写同一个文件**。
+    ⇒ 只有「它死了」（COMPLETED / ERROR / CANCELED）才返回。
+    """
     t0 = time.time()
     last = None
-    while time.time() - t0 < budget_s:
+    last_report = 0.0
+    while True:
         st = stage_of(name)
         if st != last:
             log(f"{name}: {st}")
             last = st
         if st in ("COMPLETED", "ERROR", "CANCELED"):
             return st
+        el = time.time() - t0
+        if el > budget_s:
+            if st is None:
+                log(f"{name}: 等了 {el:.0f}s 而且**查不到这个 Job 了** ⇒ 当作失败")
+                return None
+            if el > 6 * budget_s:
+                log(f"{name}: 等了 {el:.0f}s 还没完 ⇒ **放弃这个 Job**（不判成功）")
+                return st
+            if time.time() - last_report > 300:
+                log(f"{name}: 已等 {el:.0f}s（还在 {st}）⇒ 继续等（活着的 Job 不判死）")
+                last_report = time.time()
         time.sleep(40)
-    log(f"{name}: 等待超时（{budget_s}s）")
-    return last
 
 
 def launch(name, timeout, flavor, cmd):
@@ -179,33 +218,52 @@ def cancel(name):
             return
 
 
-def run_step(prefix, timeout, cmd, budget_s, resume_cmd=None, flavors=None):
+def run_step(prefix, timeout, cmd, budget_s, resume_cmd=None, flavors=None,
+             startup_budget=None, attach_names=None, hold=False):
     """跑一步：**flavor 阶梯** × **重试** ⇒ 拿不到槽位就换池，被抢占就重跑（可续）。
 
-    ⚠️ **确定性失败不重试**：脚本自己崩了（ERROR）⇒ 再试一百次也是同样的结果
-    ⇒ ⇒ 连续两次 ERROR ⇒ **这一步停下**（要人看日志），别白烧几十个 GPU 跑。
-    只有「被抢占（CANCELED）/ 没排上」才值得重试。
+    `startup_budget`：这一步等槽位多久再换池。**默认用全局值**；
+    ⇒ 但「生成」这种**逐被试落盘、可以慢慢等**的步骤要**给很长**（默认 1500 s）：
+    实测平台的 GPU 池会整池满（l4x1 / l40sx1 / a100-large 排队都排不上）⇒
+    ⇒ 这时候**排队等**才是对的，换池只是白建 Job。
+
+    `hold=True`：**启动看门狗超时也不取消**排队中的 Job ⇒ ⇒ **保住队列位置**。
+    ⚠️ 2026-10-27 实测：取消一个排队中的 Job 会把它从队列里挪出去 ⇒
+    ⇒ 每 240 s 取消 + 重建 = **永远排不到**（本轮 l4x1 / l40sx1 / a100-large
+    ⇒ 依次排了一遍又全取消 ⇒ 队列位置全丢）。
+
+    `attach_names`：**这几个确切名字的 Job 若还活着 ⇒ 挂上去接着等**（不重建）。
+    ⇒ 链子重启时不会重复建 Job（重建 = 丢队列位置 + 两个进程写同一个文件）。
     """
     ladder = flavors or FLAVORS
+    sbudget = int(startup_budget if startup_budget is not None else STARTUP_BUDGET)
     err_streak = 0
     for fl in ladder:
         for attempt in range(1, MAX_TRIES + 1):
             name = prefix if attempt == 1 else f"{prefix}-{fl}-r{attempt}"
             c = cmd if (attempt == 1 or not resume_cmd) else resume_cmd
-            if not launch(name, timeout, fl, c):
+            live = find_live_job(attach_names or [name])
+            if live:
+                name = live[0]
+                log(f"  ↺ 挂到已有的 {name}（{live[2]}）⇒ 不重建（重建会丢队列位置）")
+            elif not launch(name, timeout, fl, c):
                 break
-            # 启动看门狗：还在排队就换 flavor
+            # 启动看门狗：还在排队就换 flavor（等 sbudget 秒）
             t0 = time.time()
             st = None
-            while time.time() - t0 < STARTUP_BUDGET:
+            while time.time() - t0 < sbudget:
                 st = stage_of(name)
                 if st in ("RUNNING", "COMPLETED", "ERROR", "CANCELED"):
                     break
                 time.sleep(20)
             if st in ("SCHEDULING", "PENDING", None):
-                log(f"  ⏳ {name} 排了 {STARTUP_BUDGET}s 没拿到槽位 ⇒ 换 flavor")
-                cancel(name)
-                break
+                if hold:
+                    log(f"  ⏳ {name} 排了 {sbudget}s 没拿到槽位 ⇒ **不取消**"
+                        f"（保住队列位置）⇒ 接着等")
+                else:
+                    log(f"  ⏳ {name} 排了 {sbudget}s 没拿到槽位 ⇒ 换 flavor")
+                    cancel(name)
+                    break
             st = wait_for(name, budget_s)
             log(f"{name} ⇒ {st}")
             if st == "COMPLETED":
@@ -383,6 +441,30 @@ def train_until_decreased(max_rounds=8):
     return False
 
 
+GEN_SUBJECTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+
+def gen_done():
+    """桶里已经有多少个被试的生成产物（`gen_clip_subXX.pt`）⇒ 判断要不要补跑。
+
+    ⇒ 生成脚本**按被试单独落盘**且**跳过已有产物的被试**
+    ⇒ ⇒ 补跑一轮不会重算 ⇒ 平台中途抢占也不怕。
+    """
+    rel = GEN_OUT.replace("/domains/", "").rstrip("/")
+    paths = [f"{rel}/gen_clip_sub{s:02d}.pt" for s in GEN_SUBJECTS]
+    try:
+        from huggingface_hub import get_bucket_paths_info
+        info = list(get_bucket_paths_info("illusion-brain/brain-domains", paths))
+    except Exception as e:                                     # noqa: BLE001
+        log(f"  [生成] 探测已有产物失败（按 0 个算）：{type(e).__name__}: {e}")
+        return 0
+    got = {getattr(p, "path", str(p)) for p in info}
+    n = sum(1 for p in paths if p in got)
+    if n:
+        log(f"  [生成] 桶里已有 {n}/{len(GEN_SUBJECTS)} 个被试的产物")
+    return n
+
+
 def main():
     if not preflight():
         log("!! 起飞前自检未过 ⇒ 不建任何 Job（先修本地）")
@@ -420,8 +502,15 @@ def main():
                "--subjects", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
                "--shard", "0", "--n-shards", "1",
                "--adapter", OUT + "/adapter_final.pt", "--out-dir", GEN_OUT]
-    run_step("t102-gen", "60m", gen_cmd, 3900)
-    run_step("t102-gen2", "60m", gen_cmd, 3900)
+    for gi in range(1, 7):
+        if gen_done() >= len(GEN_SUBJECTS):
+            log("✓ 10 个被试的生成产物都齐了 ⇒ 不用再补跑")
+            break
+        prefix = "t102-gen" if gi == 1 else f"t102-gen{gi}"
+        # ⚠️ 第 1 轮**挂到已经在跑的那个 Job**（不重建 ⇒ 不丢队列位置）
+        # ⚠️ timeout 给 2h（平台接受；实测 60m 不够 2000 张）
+        run_step(prefix, "2h", gen_cmd, 7200,
+                 attach_names=[prefix], hold=True, startup_budget=1200)
 
     # ⑤ 判决（CPU）
     run_step("t102-judge", "30m",
