@@ -41,6 +41,11 @@ PRIMITIVES = {
 
 # 允许的"intra-line" 兄弟引用 (同研究线内引用)
 ALLOWED_INTRA_LINE = {
+    # aligner 内 v58 刻意复用 v57 的 Gavish–Donoho 阈值常数与函数 ——
+    # 两代必须用**同一套**噪声地板, 否则 v57 的 r 与 v58 的 chi 不可比。
+    "research.aligner.v57_adaptive_dimension.operators": {
+        "research.aligner.v58_entanglement_area",
+    },
     # aligner 内 v54 刻意 import v53 的 audit (数据划分/探针/抬升逐位复用),
     # 这是"不降级"的结构性保证 —— 若复制一份代码, 协议就会悄悄漂移。
     "research.aligner.v53_third_audit.audit": {

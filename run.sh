@@ -168,6 +168,14 @@ PYEOFCHK
         # 先自检产物血缘: python3 tools/check_artifacts.py research/aligner/v54_evaluator_swap
         python3 examples/run_v54_evaluator_swap.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
         ;;
+    v58)
+        # V58.0 膜/面积律: S(A) 与 chi 在真实表征上的读数 (RT 公式的可算形式)
+        python3 examples/run_v58_entanglement_area.py 2>&1 | grep -v -i "warning\|UserWarning"
+        ;;
+    v57)
+        # V57.0 自适应维度: 空间优先, 维度是状态 (r(t) 轨迹)
+        python3 examples/run_v57_adaptive_dimension.py 2>&1 | grep -v -i "warning\|UserWarning"
+        ;;
     v54-smoke)
         # 不用模型权重的冒烟 (只验证训练/判决逻辑)
         V54_SMOKE=1 V54_SEEDS=1 V54_STEPS=8 V54_DSHARED=96 \

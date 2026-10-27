@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "version": "57.0",
+  "package": "v57_adaptive_dimension",
+  "line": "aligner",
+  "title": "自适应维度算子: 空间优先, 维度是状态 (可双向坍缩/扩张)",
+  "generation": {
+    "one_mechanism_added": "把维度从超参变成**被观测的状态**: 状态是正交基 V, 维度 r = V 的列数; 扩张由残差谱的 Gavish–Donoho 阈值触发, 坍缩由方向能量跌到 MP 噪声地板以下且持续 window 步触发; 并提供把参数定义在 environment 空间、有效秩随空间自动变的算子 P_V·W·P_V",
+    "parent": "56.0",
+    "children": [
+      "58.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线第 12 个成员; 收口 v48–v56 关于『D_shared 该多大』的全部争论 —— 该问题本身设错"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "operators.py"
+    ],
+    "note": "自写 autograd.Function 做子空间投影的直通梯度: 显式承认『选哪几个方向』是离散决策、没有梯度"
+  },
+  "claim": {
+    "asserts": "维度不该是超参。v48–v56 六代都在扫同一族固定维度超参 (D_shared 96/252/256/384, hidden 4..2048), 结论都是『不是它』。本代把维度改成状态: r 由数据决定, 双向。算子层面给出 P_V·W·P_V —— 参数总量不随 r 变, 变的是有多少参数被激活 (r=5 时 1255/16384)。",
+    "metric": "rank_recovery_exactness",
+    "direction": "exact_match",
+    "value": 4,
+    "baseline": {
+      "ref": "fixed D (v48-v56)",
+      "value": null
+    },
+    "seeds": 1,
+    "outcome_label": "positive",
+    "note": "单元测试 10/10; 真实秩 {0,3,8,20} 全部精确估出; 坍缩测试 r 8→0。全网格 (真实表征上的 r(t) 轨迹) 待 Space 落桶"
+  },
+  "protocol": {
+    "eval_set": "合成: 固定正交基 + 已知秩 k 的信号 + 高斯噪声 (d=512)",
+    "input": "无模型; 只测算子本身",
+    "caveat": "扩张不造信息 —— ambient 是计算上界, r 是真实占用; 噪声地板假设噪声近似各向同性"
+  },
+  "acceptance": {
+    "criterion": "σ̂ 还原精度 / τ 高于噪声谱上边缘 / 秩精确性 / 生长 / 扩张 / 坍缩 / 投影幂等与梯度",
+    "outcome": "7 类 10 项全过"
+  },
+  "leakage_audit": {
+    "status": "not_applicable",
+    "audits": [],
+    "note": "本代只测算子数学性质, 不涉及目标任务与标签"
+  },
+  "falsified": [
+    {
+      "hypothesis": "『D 是超参, 问题是『该多大』』",
+      "verdict": "问法作废: 一个固定的数不可能同时适配秩为 3 和秩为 30 的数据",
+      "evidence": "SPEC.md §0"
+    },
+    {
+      "hypothesis": "『空间该过配还是该紧凑』(v48 vs v49 的争论)",
+      "verdict": "两者都不对: 没有『配』这个概念 —— 秩是数据 + 噪声地板的属性, 不是空间的属性",
+      "evidence": "SPEC.md §3"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "forwarder_tests": "tests/test_v57_adaptive_dimension.py",
+    "status": "results/STATUS.md"
+  },
+  "_needs_human": [
+    "全网格 r(t) 轨迹需在 HF Space 上跑并落桶",
+    "噪声地板在各向异性噪声下的标定 (v58 的注入实验可复用)"
+  ],
+  "_extracted_from": [
+    "research/aligner/README.md"
+  ]
+}

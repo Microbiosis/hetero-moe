@@ -7,7 +7,9 @@
   "generation": {
     "one_mechanism_added": "把 v39 中从未作为变量出现的两个量（融合头 hidden 宽度、ProjHead 投影到 D_BIG）变成析因变量, 并新增按模态块的消融与激活有效秩诊断",
     "parent": "39.0",
-    "children": []
+    "children": [
+      "57.0"
+    ]
   },
   "lineage": {
     "line_parent": "33.0",
@@ -75,11 +77,13 @@
     }
   ],
   "superseded_by": null,
-  "tests_status": "missing",
+  "tests_status": "present",
   "artifacts": {
     "spec": "SPEC.md",
     "results": "results/metrics.json",
-    "findings": "FINDINGS.md"
+    "findings": "FINDINGS.md",
+    "tests": "tests/test_package.py",
+    "forwarder_tests": "tests/test_v56_capacity_allocation.py"
   },
   "_needs_human": [
     "补单元测试 (tests/)",

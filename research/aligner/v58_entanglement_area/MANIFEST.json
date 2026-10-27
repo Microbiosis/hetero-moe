@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "version": "58.0",
+  "package": "v58_entanglement_area",
+  "line": "aligner",
+  "title": "膜 / 面积律算子: 维度按边界面积分配, 不按体积分配",
+  "generation": {
+    "one_mechanism_added": "把 v57 的全局标量 r 拆成**逐切口的 χ 剖面**: 用 Ryu–Takayanagi 的面积律定规则 —— 每个切口的维数由跨越它的净耦合通道数决定。全高斯态下 S(A)=½Σlog(1/(1−ρ̃²)) 是可算的恒等式, χ = 互协方差谱超噪声阈值的个数",
+    "parent": "57.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线第 13 个成员; 把 v57 的『维度会伸缩』推进到『维度在空间上分布不均』"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "brane.py"
+    ],
+    "note": "复用 v57 的 Gavish–Donoho 系数 ω(β), 但阈值改用**解析 σ** (=1/√(n−1), 因为互协方差已按列标准化), 由三条失败路径反推出来"
+  },
+  "claim": {
+    "asserts": "v57 只有一个全局 r, 无法表达『这里维度多、那里维度少』。膜结构要求逐切口的 χ, 且 χ 由边界面积 (跨界通道数) 而非块内体积决定。实测: 独立块 χ=0; 共享 k 维时 k∈{1,2,5,12} 全部精确还原; 面积律 corr=0.00、体积律 corr=+0.97、单热点读出 [0,0,0,0,2,7,2,0,0,0,0]。",
+    "metric": "chi_recovery_exactness",
+    "direction": "exact_match",
+    "value": 4,
+    "baseline": {
+      "ref": "v57 scalar r",
+      "value": null
+    },
+    "seeds": 1,
+    "outcome_label": "positive",
+    "note": "单元测试 11/11; 真实表征上的 B1–B4 判决正在 HF Space 跑 (前缀 v58-area2)。精度边界: k≥20 时低估 (噪声地板消失)"
+  },
+  "protocol": {
+    "eval_set": "合成: 相邻 site 定宽耦合 (面积律) / 共享数随位置增长 (体积律) / 单热点",
+    "input": "MSA-4B 前 8 层表征 [8, 192, 2560] → 逐切口扫描 (B2 用层方向当 RG 轴)",
+    "caveat": "互协方差只测线性耦合; 『层 = RG 方向』是待检验假设 (B2 正是检验); n_blk 切块是对隐维的任意二分 (B3 用 random 置换做对照)"
+  },
+  "acceptance": {
+    "criterion": "B1 面积律 |corr|<0.5 / B2 RG 流熵随深度下降 / B3 natural χ < random χ / B4 χ 剖面非均匀",
+    "outcome": "合成侧全部验证 (11/11); 真实表征判决待落桶"
+  },
+  "leakage_audit": {
+    "status": "not_applicable",
+    "audits": [],
+    "note": "本代测算子与表征几何, 不涉及目标任务标签"
+  },
+  "falsified": [
+    {
+      "hypothesis": "『用 CCA 正则相关做通道计数』",
+      "verdict": "**三次失败**: 朴素 CCA 在独立随机块上给 29–31 个『显著』通道; 置换零分布 +1 偏差; z 检验把噪声读成 17。根因是白化在 n≈d 时放大样本噪声",
+      "evidence": "SPEC.md §1"
+    },
+    {
+      "hypothesis": "『GD 的 median(s) 估 σ 在任何情形都可用』",
+      "verdict": "否证: 信号占满 ambient 时中位数被污染 → σ̂ 虚高 → k=20 读成 7。改用解析 σ 后 k∈{0..12} 全部精确",
+      "evidence": "SPEC.md §1"
+    },
+    {
+      "hypothesis": "『所有 site 共享同一组全局方向 = 体积律』",
+      "verdict": "错误构造: 那样给出的是**恒定** χ (任何切口的跨协方差只经过同一组方向, 与块大小无关)。真体积律需共享数随位置增长",
+      "evidence": "tests/test_package.py::test_volume_law_detected 注释"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "forwarder_tests": "tests/test_v58_entanglement_area.py",
+    "status": "results/STATUS.md"
+  },
+  "_needs_human": [
+    "真实表征上的 B1–B4 判决待落桶 (前缀 v58-area2)",
+    "k≥20 的失效边界需在真实数据上确认是否触及",
+    "非线性耦合 (互协方差之外) 未覆盖"
+  ],
+  "_extracted_from": [
+    "research/aligner/README.md"
+  ]
+}
