@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import os
 import socket
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -160,7 +161,36 @@ def run_step(prefix, timeout, cmd, budget_s, resume_cmd=None, flavors=None):
     return False
 
 
+def preflight():
+    """**起飞前自检**：本地就能抓到的错，不该烧云端 Job。
+
+    ⇒ 2026-10-27 的教训：`--res` 参数被我用正则改没了 ⇒ 脚本在启动处就 AttributeError
+    ⇒ ⇒ 链子连续试了 8 次才撞上（每次 45 秒 GPU）。⇒ ⇒ 现在起飞前先跑：
+      ① `results/check_cli_args.py`（静态查 `args.X` 是否有声明）
+      ② `exp/exp102_gen.py --self-test`（判据脚本自测）
+    """
+    repo = Path(__file__).resolve().parent.parent
+    checks = [("check_cli_args", [sys.executable, str(repo / "research/brain_domains/results/check_cli_args.py")]),
+              ("exp102_gen --self-test", [sys.executable, str(repo / "research/brain_domains/exp/exp102_gen.py"), "--self-test"])]
+    for name, cmd in checks:
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=600, cwd=str(repo))
+        except Exception as e:                                  # noqa: BLE001
+            log(f"!! 起飞前自检 [{name}] 跑不起来：{type(e).__name__}: {e}")
+            return False
+        if r.returncode != 0:
+            log(f"!! 起飞前自检 [{name}] 未过：")
+            log((r.stdout or "")[-800:])
+            log((r.stderr or "")[-400:])
+            return False
+        log(f"✓ 起飞前自检 [{name}] 通过")
+    return True
+
+
 def main():
+    if not preflight():
+        log("!! 起飞前自检未过 ⇒ 不建任何 Job（先修本地）")
+        return 1
     # ① 缓存分片 0/1（可续跑 ⇒ 被抢占就再跑一次，接着上次）
     for shard, prefix in ((0, "t102-cache-vae0e"), (1, "t102-cache-vae1f")):
         cur = stage_of_prefix(prefix)

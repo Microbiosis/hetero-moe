@@ -361,7 +361,9 @@ def main():
     ap.add_argument("--batch", type=int, default=256)
     ap.add_argument("--vae-batch", type=int, default=4,
                     help="VAE 编码的批大小（512×512 很吃显存 ⇒ 别用 --batch 那个大值）")
-    ap.add_argument("--flush-every", type=int, default=1500,                    help="每编码多少张就落一个分片（平台会中途取消 Job ⇒ 必须中间落盘）")
+    ap.add_argument("--flush-every", type=int, default=1500,
+                    help="每编码多少张就落一个分片（平台会中途取消 Job ⇒ 必须中间落盘）")
+    ap.add_argument("--res", type=int, default=512)
     ap.add_argument("--encoder-ckpt", default=ENCODER_CKPT)
     ap.add_argument("--out-dir", default=str(DEFAULT_OUT))
     ap.add_argument("--overwrite", action="store_true")
