@@ -18,6 +18,7 @@ from huggingface_hub import HfApi
 socket.setdefaulttimeout(90)
 api = HfApi()
 PY = sys.executable
+SPACE = "hf.co/spaces/redmingwei/IllusionBrain"   # ← 跑 Job 的 Space
 
 OUT = "/domains/runs/illusionbrain-align/exp102"
 CACHE = OUT + "/cache"
