@@ -61,7 +61,9 @@ FLAVORS = [f.strip() for f in os.environ.get(
 STARTUP_BUDGET = int(os.environ.get("EXP105_STARTUP_BUDGET", "240"))
 
 TRAIN_COMMON = ["--max-minutes", "100", "--batch", "8", "--lr", "1e-4",
-                "--steps-per-epoch", "50"]
+                "--steps-per-epoch", "50", "--steps", "7400"]
+# ⚠️ **每段 7,400 步**（≈148 epoch）：只靠墙钟收尾 ⇒ 段与段之间步数不可比
+#    ⇒ 用 --steps 把每段的训练量**定死**（--max-minutes 只作兜底）。
 GEN_TIMEOUT = "2h"
 TRAIN_TIMEOUT = "2h"
 TRAIN_SEGS = 2                      # 每个对照的训练段数

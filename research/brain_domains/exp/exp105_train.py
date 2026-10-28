@@ -289,6 +289,10 @@ def train(args):
             # ⚠️ checkpoint **降频**（每 epoch 写 122 MB 会把 CAS 写通道压垮 ⇒ 整场训练崩）
             if step % max(1, args.ckpt_every * args.steps_per_epoch) == 0:
                 save_ckpt(ckpt_path, step)
+            # ⚠️ **按步数收尾**（不只靠墙钟）⇒ 段与段之间的训练量可比
+            if args.steps > 0 and step >= args.steps:
+                stop_reason = f"到达步数 {args.steps}"
+                break
             if args.max_minutes and (time.time() - t_start) / 60.0 >= args.max_minutes:
                 stop_reason = f"墙钟到 {args.max_minutes} min（epoch 边界收尾）"
                 break
