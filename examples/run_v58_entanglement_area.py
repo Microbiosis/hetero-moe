@@ -119,6 +119,7 @@ def main():
     print("对照 · 纯噪声 (χ 必须 = 0; 否则阈值把噪声当信号)")
     print("=" * 80)
     g = torch.Generator().manual_seed(0)
+    n_blk = 16                      # 空间轴把 D 切成 16 块（下面 B1/B3/B4 沿用）
     noise = torch.randn(n, nL, n_blk, D // n_blk, generator=g)
     bs_null = BraneSpace()
     bs_null.measure(noise, axis=1)
@@ -135,7 +136,6 @@ def main():
     print("=" * 80)
     # 用每层 [n, D] 当一个 site → 链长 = 层数; 但 token 方向的 lattic 需要逐 token。
     # 这里用"把每层的 D 维切成若干块"作为空间轴: 块 = 隐维的一段 (natural) 或随机置换
-    n_blk = 16
     results = {}
     for name, order in (("natural", "natural"), ("random", "random")):
         # 把最后一层 + 中间层堆成 2D 片: [L2=n_blk 块, L1=层]
