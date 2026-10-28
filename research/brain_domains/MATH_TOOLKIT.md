@@ -12,9 +12,10 @@
 
 1. **文献方法优先**：凡是既有方法能覆盖的，**不自写**；自写只在「既有方法不覆盖我们的使用场景」时允许
    （与 `COMPONENT_DESIGN.md` §3 的两条判据同源：符合使用场景 + 名字承诺的机制必须兑现）。
-2. **引用分两档**：下面 §4 的 **A 档＝已核到原文条目**（带 DOI/PMID/链接，**22 条**；
+2. **引用分两档**：下面 §4 的 **A 档＝已核到原文条目**（带 DOI/PMID/链接，**27 条**；
    其中 A21/A22 只核到标题与链接 ⇒ **卷期/DOI 仍待补**），
-   **B 档＝只核到邻域文献、原文条目未核**（**2 条**）⇒ **B 档不得当作已核实的引用写进论文**。
+   **B 档＝只核到邻域文献、原文条目未核** ⇒ **B 档不得当作已核实的引用写进论文**。
+   ⇒ **目前 B 档为空**：原 B2 已被 A25 覆盖；原 B1 **查无此条 ⇒ 整条删除**（见 §4「否定结果」）。
    ⚠️ 核到的过程中纠正过两处**常被记错**的归属：**dPCA 的第一作者是 Kobak 不是 Cunningham**（A13）、
    **SVA 原文在 *PLoS Genetics* 不是 *PLoS Computational Biology***（A17）。
 3. **一条事实只写一处**：本文件只写「数学方法 ↔ 我们的对应」，算子的实现细节仍在 `arch/ops_brain.py`，
@@ -26,7 +27,7 @@
 
 | # | 数学家族 | 神经学出处 | 生物信息学里的同一数学 | 我们项目里对应哪一处 | 状态 |
 |---|---|---|---|---|---|
-| F1 | **空间统计与保结构置换** | 脑图「对应问题」：空间自相关让朴素置换失效 ⇒ **spin test**（A1）| 空间转录组学的空间受限置换（A21/A22）| 各地板（跨被试×跨试次错配）、与同尺寸随机组比、组装级跨区隔离检查 | ⚠️ **思路对、零分布弱**：我们手工错配 ⇒ 下一轮（判据①，多区数据）应换成保结构置换 |
+| F1 | **空间统计与保结构置换** | 脑图「对应问题」：空间自相关让朴素置换失效 ⇒ **spin test**（A1 + 预印本 A24）；置换检验 primer（A23）| 空间受限零模型（A25）、空间自相关感知重采样（A21）、脑图–基因表达对齐实践指南（A26）、空间置换综述（A27）| 各地板（跨被试×跨试次错配）、与同尺寸随机组比、组装级跨区隔离检查 | ⚠️ **思路对、零分布弱**：我们手工错配 ⇒ 下一轮（判据①，多区数据）应换成保结构置换 |
 | F2 | **稀疏多元对齐 + 结构化惩罚** | imaging genetics：稀疏 CCA（A2）、图引导 fused lasso / GraphNet-SCCA（A3）、多任务结构化 SCCA（A4）| SNP–ROI 成对选择、eQTL 映射（A6）、microbiome 结构化 CCA（A5）、genomic sCCA 扩展（A7）| exp102「脑侧条件 ↔ CLIP 图像特征」对齐；位置轴的跨带比较；表征比较的方法论参照 RSA（A18）| ⚠️ **自写了加权/聚合、没借这一族** ⇒ 「按脑区分组」的先验正好对应 group lasso 的组惩罚 |
 | F3 | **独立成分与潜在混杂** | ICA 成分的跨被试/跨试次一致性检验（A8）| SVA（正交化隐藏混杂，A17）；基因型分解 ICA | exp93b 的跨被试 200-way 地板（一致性检验的变体）；低秩算子的诚实边界（共模/参考/体积传导）| ⚠️ **概念已用、未做正交化去混杂** ⇒ 多区数据上 SVA 类工具对口 |
 | F4 | **低维流形 / 群体活动** | population coding、低秩动力学、**dPCA**（A13）| 单细胞轨迹推断；群体级表达因子（PLEX/NMF）| `RegionLocalLowRank`（共同驱动）；exp102 的「adapter 输出 token 是否与概念相关」（跨概念一致性 0.9905）| ⚠️ 我们只做了 SVD + 重建误差，**不是 dPCA 口径** |
@@ -99,13 +100,20 @@
 | A20 | Baker, Pham, Demetci, Tran, Redko, Sandstede, Singh, **"SCOT+: a comprehensive software suite for single-cell alignment using optimal transport"**, *Bioinformatics Advances* 6(1):vbaf314 (2026) — doi **10.1093/bioadv/vbaf314**（前身为 SCOT）| F7 |
 | A21 | **"Spatial Autocorrelation Aware Resampling Improves Cell-Cell Interaction Inference in Spatial Transcriptomics Data"**（SOAAR）— PMC13370955（**空间自相关感知重采样**：构造保持基因级空间自相关的重采样数据做零分布 ⇒ 假阳性率低于随机置换）⚠️ 卷期/DOI 待补 | F1 |
 | A22 | **"Toward Best Practices for Imaging Transcriptomics of the Human Brain"**, *Biological Psychiatry* (2023)（明确建议区域分析用**空间受限零模型**）⚠️ DOI 待补 | F1 |
+| A23 | Nichols, T.E. & Holmes, A.P., **"Nonparametric permutation tests for functional neuroimaging: a primer with examples"**, *Human Brain Mapping* 15(1):1–25 (2002) — doi **10.1002/hbm.1058**（PMID 11747097；Crossref 的 issued 记 2001 = 在线首发）| F1 |
+| A24 | Alexander-Bloch, Vandekar, Shinohara, Liu, Satterthwaite, Glahn, Raznahan 等, **"The correspondence problem: which brain maps are significantly similar?"**, bioRxiv 预印本 (2017) — doi **10.1101/203083**（**A1 的预印本** ⇒ 同一工作的两版）| F1 |
+| A25 | Fulcher, B.D., Arnatkevičiūtė, S. & Fornito, A., **"Overcoming false-positive gene-category enrichment in the analysis of spatially resolved transcriptomic brain atlas data"**, *Nature Communications* 12 (2021) — doi **10.1038/s41467-021-22862-1** ⇒ **这就是「空间受限零模型」的方法侧原文**（A22 那条 best-practice 建议的就是它）| F1 |
+| A26 | Arnatkevičiūtė, S., Fulcher, B.D. & Fornito, A., **"A practical guide to linking brain-wide gene expression and neuroimaging data"**, *NeuroImage* 189:353–367 (2019) — doi **10.1016/j.neuroimage.2019.01.011**（预印本 bioRxiv doi 10.1101/380089）| F1/F2 |
+| A27 | **"Decoding cell-cell communication in spatial transcriptomics: mechanistic insights, modeling constraints, and analytical caveats"**, *Briefings in Bioinformatics* 27:bbag477 (2026) — doi **10.1093/bib/bbag477**（PMID 42704267）⇒ 空间置换/零模型方法的**综述锚点** | F1 |
 
-### B 档：**原文条目未核**（只核到邻域文献 ⇒ 落笔前必须再核，当前**不得**当作已核实引用）
+### 否定结果（**查过、确认查不到 ⇒ 不得再当作引用写**）
 
-| 编号 | 条目 | 家族 | 处置 |
-|---|---|---|---|
-| B1 | Varoquaux et al. 2018, "Rotate this to see the problem"（counter-screening）；同族还有 "Make it real: fMRI maps and the correspondence problem" | F1 | 两轮检索**均未命中原文条目** ⇒ 保留 B 档；**A1 的 spin test 已覆盖同一问题** ⇒ 若不需要可直接整条删掉 |
-| B2 | 空间转录组学「空间置换检验」的**方法侧原始出处**（本轮只核到 A21/A22 两个应用侧条目）| F1 | 落笔前再核 |
+| 原拟条目 | 查了哪些源 | 结论 |
+|---|---|---|
+| Varoquaux et al. 2018, **"Rotate this to see the problem: A counter-screening method for sign-preserving rotations"**；同族 "Make it real: fMRI maps and the correspondence problem" | Crossref（精确题名 + 题名 + 作者三查）、Europe PMC/PubMed（题名查 + 作者年查）、Semantic Scholar、OpenAlex、arXiv API（题名查）| **五个源都查无此条** ⇒ ⇒ **是我记错了题名/条目本身** ⇒ **整条删除**，**不得**出现在文档或论文里。同一问题由 **A1 + A24**（spin test 及其预印本）与 **A23**（置换检验 primer）覆盖 ⇒ 引 A1 即可 |
+| 空间转录组「空间置换检验」的原始方法出处 | Crossref / Europe PMC / Semantic Scholar | **已由 A25 覆盖**（Fulcher 等 2021 的空间受限零模型）⇒ B2 升级为 A25，不再单列 |
+
+⚠️ **纪律**：查不到 ≠ 不存在，但**查不到就不能当引用用** ⇒ 宁可写「未核到原文」也不要写一个像真的条目。
 
 ---
 
