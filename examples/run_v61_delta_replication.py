@@ -42,10 +42,7 @@ PREDICTIONS = {
     "R4": "非交替: 每条件 |mean(偶d) − mean(奇d≥3)| < 0.15",
 }
 
-# 文本必须长到 S=32 不触发 padding —— padding 位置全相同会污染 Δ
-TEXT_TMPL = ("sample {i} the quick brown fox jumps over the lazy dog and then it "
-             "runs away into the green forest near the river bank while {j} birds "
-             "sing loudly every single morning of the week without fail")
+from research.aligner.v61_delta_replication import TEXT_TMPL
 
 
 def get_model(name):
