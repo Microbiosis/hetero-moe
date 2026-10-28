@@ -64,12 +64,18 @@ FLAVORS = [f.strip() for f in os.environ.get(
 # ⚠️ 排多久就换池（换池 = 取消当前排队 Job + 换下一个 flavor ⇒ 不回到已排过的池）
 STARTUP_BUDGET = int(os.environ.get("EXP105_STARTUP_BUDGET", "240"))
 
-TRAIN_COMMON = ["--max-minutes", "100", "--batch", "8", "--lr", "1e-4",
-                "--steps-per-epoch", "50", "--steps", "7400"]
-# ⚠️ **每段 7,400 步**（≈148 epoch）：只靠墙钟收尾 ⇒ 段与段之间步数不可比
-#    ⇒ 用 --steps 把每段的训练量**定死**（--max-minutes 只作兜底）。
+# ⚠️⚠️ **`--steps` 绝不放在这里**：它由 `train_cmd()` **按段**给（累计目标 `SEG_STEPS × seg`）。
+#    放这里会被 argparse「**后者覆盖前者**」**静默改掉**调用方传的值 ⇒ 段 2 拿到 7,400 而不是 14,800
+#    ⇒ 续训一上来就 `step >= 7400` 到点即停 ⇒ `train_done('more', 2)` 永远 False ⇒ 白烧一个 GPU Job。
+#    ⇒ 共用品一律拼在**调用方参数之后**（见 `train_cmd`），同名 flag 由调用方生效。
+# ⚠️ `--max-minutes` 只是**兜底**：实测同样 7,400 步，快池 28 min / 慢池 100.4 min（差 3.6 倍）
+#    ⇒ 留 50% 余量；正常由 `--steps` 收尾，不会真的跑满 150 min。
+TRAIN_COMMON = ["--max-minutes", "150", "--batch", "8", "--lr", "1e-4",
+                "--steps-per-epoch", "50"]
 GEN_TIMEOUT = "2h"
-TRAIN_TIMEOUT = "2h"
+# ⚠️ 兜底墙钟已放到 150 min（快池 28 min / 慢池 100.4 min，同样 7,400 步）
+#    ⇒ Job 超时必须**大于**它，否则墙钟还没到就被平台掐掉。
+TRAIN_TIMEOUT = "3h"
 # ⚠️⚠️ **段计划（2026-10-29 R4 修订；审计事实见 `FINDINGS_TIER0_RSA.md` §五十二）**：
 #   审计（Job 日志地面真相）发现**三个对照都只完成了第 1 段**（各 7,400 步 / 148 epoch），
 #   §四十九 预登记的 snr/oracle 14,800、more 29,600 **从未执行过**。
@@ -154,6 +160,8 @@ def train_cmd(variant, seed, resume, total_steps):
         cmd += ["--cond-clip", f"{EXP}/cache/clip_train.pt"]
     if resume:
         cmd.append("--resume")
+    # ⚠️ **共用品拼在最后**：argparse「后者覆盖前者」⇒ 共用品里若出现同名 flag，
+    #    生效的仍是**调用方**的值。段目标 `--steps` 因此不可能被共用品改掉。
     return cmd + TRAIN_COMMON
 
 
@@ -451,15 +459,18 @@ def main():
             files.append((f"runs/illusionbrain-align/exp105/{v}/results/{fname}",
                           out / f"{v}_{outname}"))
     files.append(("runs/illusionbrain-align/exp105/cond_gate.json", out / "cond_gate.json"))
-    for attempt in range(1, 6):
-        try:
-            from huggingface_hub import download_bucket_files
-            download_bucket_files("illusion-brain/brain-domains", files)
-            log(f"✓ 结果已取回：{out}")
-            break
-        except Exception as e:                                   # noqa: BLE001
-            log(f"  [取回] 失败（try={attempt}）：{type(e).__name__}: {str(e)[:140]}")
-            time.sleep(15)
+    # ⚠️ **一次只取一个文件**：`download_bucket_files` 传多个文件会**挂死**
+    #    （实测两次 3 min 无输出被取消）⇒ 逐个下，坏的单独重试，不拖垮整段收尾。
+    from huggingface_hub import download_bucket_files
+    for rel, dst in files:
+        for attempt in range(1, 4):
+            try:
+                download_bucket_files("illusion-brain/brain-domains", [(rel, dst)])
+                break
+            except Exception as e:                               # noqa: BLE001
+                log(f"  [取回] {rel} 失败（try={attempt}）：{type(e).__name__}: {str(e)[:140]}")
+                time.sleep(10)
+    log(f"✓ 结果已取回：{out}")
     log(f"CHAIN DONE｜完成 {sorted(done)}｜失败 {sorted(failed)}")
     return 0
 
