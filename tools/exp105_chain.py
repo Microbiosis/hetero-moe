@@ -138,10 +138,10 @@ def cond_clipfeat_cmd():
             "--out-dir", EXP]
 
 
-def train_cmd(variant, seed, resume):
+def train_cmd(variant, seed, resume, total_steps):
     cmd = ["python", "-u", "/domains/scripts/exp105_train.py", "--variant", variant,
            "--out-dir", f"{EXP}/{variant}", "--cache-dir", EXP102_CACHE,
-           "--seed", str(seed)]
+           "--seed", str(seed), "--steps", str(total_steps)]
     if variant == "oracle":
         cmd += ["--cond-clip", f"{EXP}/cache/clip_train.pt"]
     if resume:
@@ -260,18 +260,22 @@ def build_tasks():
             "runs/illusionbrain-align/exp105/cache/clip_train.pt"],
         budget=5400)
 
-    # 训练：每个对照 2 段，段内串行、段间靠 adapter
-    seeds = {"snr": 0, "oracle": 0, "more": 0}
+    # 训练：每个对照多段，段内串行、段与段靠 adapter
+    # ⚠️⚠️ **「训练量」这个变量必须真的不同**（2026-10-28 抓到的错）：
+    #   三个对照原本都是 2 段 ⇒ snr 与 more 的总步数**完全相同** ⇒ 测不到训练量。
+    #   ⇒ 现在：**snr/oracle 各 2 段（总 14,800 步）｜more 4 段（总 29,600 步 = 2×）**。
+    #   ⇒ `--steps` 是**累计目标**（训练脚本的 step 从 ckpt 恢复 ⇒ 累计）✔
+    #   ⇒ 且 **more 也从头训**（第 1 段不带 --resume）⇒ 三个对照的起点一致。
+    SEG_STEPS = 7400
+    PLAN = {"snr": 2, "oracle": 2, "more": 4}
     for variant in ("snr", "oracle", "more"):
         prev = None
-        for seg in range(1, TRAIN_SEGS + 1):
-            seed = seeds[variant] if seg == 1 else seg
+        for seg in range(1, PLAN[variant] + 1):
+            seed = 0 if seg == 1 else seg
             deps = [] if prev is None else [prev]
-            if variant == "more":
-                deps = [] if seg == 1 else [prev]      # more 的第 1 段自带 exp102 起点
             nm = f"train-{variant}-{seg}"
-            add(nm, train_cmd(variant, seed, seg > 1), deps, TRAIN_TIMEOUT,
-                (lambda v=variant, s=seg: train_done(v, s)))
+            add(nm, train_cmd(variant, seed, seg > 1, SEG_STEPS * seg), deps,
+                TRAIN_TIMEOUT, (lambda v=variant, s=seg: train_done(v, s)))
             prev = nm
 
     # 生成：依赖该对照的最后一段训练

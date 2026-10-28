@@ -117,9 +117,14 @@ def load_conditions(variant, cache_dir, train_subjects, cond_clip, batch=8):
     raise ValueError(f"未知 variant：{variant}")
 
 
-def maybe_seed_from_exp102(variant, out_dir):
-    """X2：**复制** exp102 的起点（adapter + 曲线）到自己的 out-dir ⇒ 不改动 exp102。"""
-    if variant != "more":
+def maybe_seed_from_exp102(variant, out_dir, resume):
+    """X2：**复制** exp102 的起点（adapter + 曲线）到自己的 out-dir ⇒ 不改动 exp102。
+
+    ⚠️ **只在 `--resume` 时才复制**（2026-10-28 改）：
+      X2 改成**从头训**（三个对照训练量完全一致 ⇒ 归因表干净）⇒ 第 1 段不带 `--resume`
+      ⇒ 不复制 exp102 的起点 ⇒ `more` 与 `snr`/`oracle` 训练量严格一致。
+    """
+    if variant != "more" or not resume:
         return
     out_dir = Path(out_dir)
     ck = out_dir / "adapter_last.pt"
@@ -152,7 +157,7 @@ def train(args):
     out_dir.mkdir(parents=True, exist_ok=True)
     cache_dir = Path(args.cache_dir)
 
-    maybe_seed_from_exp102(args.variant, out_dir)
+    maybe_seed_from_exp102(args.variant, out_dir, args.resume)
 
     log(f"[数据] 读 VAE 潜变量（{cache_dir}/vae_latents_*.pt）")
     lat = T.load_latents(cache_dir)
