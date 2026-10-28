@@ -15,15 +15,17 @@ r"""exp105_chain.py — exp105（**三个交叉对照**，§四十九）的编�
 - **每个任务都有「完成判据」**（查桶上产物）⇒ 链子可以随时重启，
   **不会重复烧算力**（2026-10-28 实测：重启时 G0 闸门已跑完却重跑 ⇒ 白烧两个 GPU Job）。
 
-## 任务图
+## 任务图（**2026-10-29 R4 修订后的实际计划**；snr/oracle 已训满基线 7,400 ⇒ 只剩生成与判决）
 
 ```
-train-snr-1 ──┬─► train-snr-2 ──┬─► gen-snr ──┬─► mech-snr ──► judge-snr
-              │                 │             │
-train-oracle-1┴─► train-oracle-2┴─► gen-oracle┴─► mech-oracle► judge-oracle
-              │
-train-more-1 ───► train-more-2 ───► gen-more ───► mech-more ──► judge-more
+train-snr-1（7,400 ✔已完成）──────────► gen-snr（✔已完成）
+train-oracle-1（7,400 ✔已完成）───────► gen-oracle ──► mech-oracle ──► judge-oracle
+train-more-1（7,400 ✔已完成）─► train-more-2（→14,800）─► gen-more ──► mech-more ──► judge-more
 ```
+
+⇒ ⇒ **「训练量 ×2」= more 的 14,800 vs snr/oracle 的 7,400**（三个基线严格相等）。
+   §四十九 原预登记的 snr/oracle 14,800、more 29,600 **从未执行过**（完成判据 bug 把第 2 段起全跳过）；
+   审计与修订理由见 `FINDINGS_TIER0_RSA.md` §五十二（R4，用户 2026-10-29 拍板）。
 
 ## 用法
 
@@ -68,8 +70,14 @@ TRAIN_COMMON = ["--max-minutes", "100", "--batch", "8", "--lr", "1e-4",
 #    ⇒ 用 --steps 把每段的训练量**定死**（--max-minutes 只作兜底）。
 GEN_TIMEOUT = "2h"
 TRAIN_TIMEOUT = "2h"
-TRAIN_SEGS = 2                      # 每个对照的训练段数
-SEG_EPOCH_TARGET = 120             # 一段训练完成的 epoch 阈值（--max-minutes 100 ≈ 148 epoch）
+# ⚠️⚠️ **段计划（2026-10-29 R4 修订；审计事实见 `FINDINGS_TIER0_RSA.md` §五十二）**：
+#   审计（Job 日志地面真相）发现**三个对照都只完成了第 1 段**（各 7,400 步 / 148 epoch），
+#   §四十九 预登记的 snr/oracle 14,800、more 29,600 **从未执行过**。
+#   ⇒ **基线统一为 7,400 步**（三个对照严格相等，归因表的对照有效性不受影响）；
+#   ⇒ **「训练量 ×2」这个变量靠只把 `more` 补到 14,800 达成** ⇒ snr/oracle **不再补训**（各 1 段）。
+#   ⇒ 理由：归因只依赖**比值**（×2），绝对量级与归因无关；照字面补满要 +37,000 步 ≈ 5 倍成本。
+PLAN = {"snr": 1, "oracle": 1, "more": 2}
+SEG_STEPS = 7400                    # 每段的**累计**步数目标（`--steps` 是累计值，续训从 ckpt 的 step 接上）
 N_GEN_SUBJECTS = 10
 
 SCRIPTS = ("exp105_conditions.py", "exp105_train.py", "exp105_gen.py")
@@ -187,17 +195,17 @@ def bucket_has(paths):
 
 
 def train_done(variant, seg):
-    """第 seg 段训练完成 ⇔ **曲线里的 epoch 数达到该段阈值**。
+    """第 seg 段完成 ⇔ **曲线最后一条的 step ≥ 该段累计目标**（`SEG_STEPS × seg`）。
 
-    ⚠️⚠️ **不能**用「`adapter_last.pt` 存在」当判据（2026-10-28 实测踩到）：
-      第 1 段是**中途崩的**（`torch.save` 崩在 epoch 32）⇒ 但 checkpoint 还在桶上
-      ⇒ 被误判成「已完成」⇒ 链子跳过第 1 段直接跑第 2 段 ⇒ **训练量少了一整段**。
-    ⇒ 判据必须是**进度量**：曲线每 epoch 记一条 ⇒ 崩在中途就够不到阈值。
-    ⇒ 段目标：`--max-minutes 100` ≈ 7,400 步 ≈ 148 epoch ⇒ 阈值取 120（容忍波动）。
+    ⚠️⚠️ **2026-10-29 修（R4，审计见 §五十二）**：原判据是
+      「`seg >= TRAIN_SEGS` 且 `adapter_final.pt` 存在 ⇒ 该段完成」——
+      但 `exp105_train.py` 在**每一段结束时都会写** `adapter_final.pt`
+      ⇒ 第 2/3/4 段被**静默判成已完成而跳过**
+      ⇒ 三个对照实际都只训了第 1 段（7,400 步），预登记量从未执行。
+    ⇒ 新判据只看**进度量**（曲线末 step）：对「崩在中途」与
+      「`adapter_final.pt` 已存在但该段并没训完」**两种情况都正确**。
     """
-    if seg >= TRAIN_SEGS:
-        p = f"runs/illusionbrain-align/exp105/{variant}/adapter_final.pt"
-        return bucket_has([p])[p]
+    target = SEG_STEPS * seg
     rel = f"runs/illusionbrain-align/exp105/{variant}/train_curve.json"
     if not bucket_has([rel])[rel]:
         return False
@@ -208,9 +216,9 @@ def train_done(variant, seg):
         dst = tmp / f"{variant}_curve_probe.json"
         download_bucket_files("illusion-brain/brain-domains", [(rel, dst)])
         eps = json.loads(dst.read_text(encoding="utf-8")).get("epochs", [])
-        n = len(eps)
-        ok = n >= SEG_EPOCH_TARGET
-        log(f"  [完成判据] {variant} 段{seg}：epoch {n} / 阈值 {SEG_EPOCH_TARGET} ⇒ {ok}")
+        last = max((int(e.get("step", 0)) for e in eps), default=0)
+        ok = last >= target
+        log(f"  [完成判据] {variant} 段{seg}：曲线末 step {last} / 目标 {target} ⇒ {ok}")
         return ok
     except Exception as e:                                       # noqa: BLE001
         log(f"  [完成判据] {variant} 段{seg} 读曲线失败（按未完成）：{type(e).__name__}")
@@ -261,13 +269,13 @@ def build_tasks():
         budget=5400)
 
     # 训练：每个对照多段，段内串行、段与段靠 adapter
-    # ⚠️⚠️ **「训练量」这个变量必须真的不同**（2026-10-28 抓到的错）：
+    # ⚠️⚠️ **「训练量」这个变量必须真的不同**（2026-10-28 抓到、2026-10-29 R4 修订）：
     #   三个对照原本都是 2 段 ⇒ snr 与 more 的总步数**完全相同** ⇒ 测不到训练量。
-    #   ⇒ 现在：**snr/oracle 各 2 段（总 14,800 步）｜more 4 段（总 29,600 步 = 2×）**。
+    #   ⇒ 当时改成 snr/oracle 各 2 段（14,800）｜more 4 段（29,600）—— **但那版从没执行过**
+    #     （完成判据 bug 把第 2 段起全跳过了，审计见 §五十二）。
+    #   ⇒ **R4（用户 2026-10-29 拍板）**：基线统一 7,400（snr/oracle 各 1 段，**不补训**），
+    #     **more 补到 14,800（2 段）** ⇒ ×2 对照成立，成本约 1/5。
     #   ⇒ `--steps` 是**累计目标**（训练脚本的 step 从 ckpt 恢复 ⇒ 累计）✔
-    #   ⇒ 且 **more 也从头训**（第 1 段不带 --resume）⇒ 三个对照的起点一致。
-    SEG_STEPS = 7400
-    PLAN = {"snr": 2, "oracle": 2, "more": 4}
     for variant in ("snr", "oracle", "more"):
         prev = None
         for seg in range(1, PLAN[variant] + 1):
@@ -280,7 +288,7 @@ def build_tasks():
 
     # 生成：依赖该对照的最后一段训练
     for variant in ("snr", "oracle", "more"):
-        add(f"gen-{variant}", gen_cmd(variant), [f"train-{variant}-{TRAIN_SEGS}"],
+        add(f"gen-{variant}", gen_cmd(variant), [f"train-{variant}-{PLAN[variant]}"],
             GEN_TIMEOUT, (lambda v=variant: gen_done(v)),
             hold=True, budget=14400)          # 生成可慢慢等（逐被试落盘 ⇒ 不怕被抢占）
 
