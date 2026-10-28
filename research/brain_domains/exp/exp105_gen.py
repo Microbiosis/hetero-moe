@@ -263,6 +263,9 @@ def step_generate(args):
             log(f"[跳过] sub-{sid:02d} 已有产物")
             continue
         cond = conds[sid]
+        # ⚠️ 落盘测试侧条件（**judge 的条件侧 2-way 要读它** ⇒ 与 exp102_gen 同构）
+        torch.save({"cond": torch.from_numpy(cond.astype(np.float32)), "subject": sid},
+                   out_dir / f"test_cond_sub{sid:02d}.pt")
         feats, samples, pix = gen_images(
             cond, lambda i, s=sid: G.gen_seed(s, i), lo, hi, sched, unet, vae,
             txt, tokzr, text_emb, adapter, clip_model, clip_proc, device)
