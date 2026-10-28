@@ -192,14 +192,27 @@ def judge_cmd(variant):
 # 完成判据（查桶上产物 ⇒ 链子重启不重复烧算力）
 # ---------------------------------------------------------------------------
 def bucket_has(paths):
+    """查桶上文件**是否存在**。
+
+    ⚠️⚠️ **2026-10-29 修（一次真实事故的根因，见 FINDINGS §五十四）**：
+      原实现查失败时 `return {p: False for p in paths}`（"按未完成处理"）⇒
+      **一次瞬时网络故障就让链子把已完成的昂贵任务判成"未完成"并重跑**。
+      实测后果：三个训练 Job 被白重跑（≈90 min A100），
+      `more` 的 14,800 步 `adapter_final.pt` / `train_curve.json` **被覆盖**，
+      14,800 步的模型只剩 `adapter_step14000.pt`。
+    ⇒ 现在：**查不动就抛异常**，让链子当场停下。
+      "文件确实不在"（返回 False）与"查不动"（抛异常）是两件不同的事，
+      前者可以继续，后者必须停——**拿"未完成"去赌一次的代价是几个 GPU 小时**。
+    """
     try:
         from huggingface_hub import get_bucket_paths_info
         info = list(get_bucket_paths_info("illusion-brain/brain-domains", paths))
-        got = {getattr(p, "path", str(p)) for p in info}
-        return {p: (p in got) for p in paths}
-    except Exception as e:                                       # noqa: BLE001
-        log(f"  [完成判据] 查询失败（按未完成处理）：{type(e).__name__}")
-        return {p: False for p in paths}
+    except Exception as e:                                   # noqa: BLE001
+        raise RuntimeError(
+            f"桶查询失败（{type(e).__name__}）⇒ 无法判定完成状态 ⇒ 链子必须停"
+        ) from e
+    got = {getattr(p, "path", str(p)) for p in info}
+    return {p: (p in got) for p in paths}
 
 
 def train_done(variant, seg):
@@ -212,25 +225,51 @@ def train_done(variant, seg):
       ⇒ 三个对照实际都只训了第 1 段（7,400 步），预登记量从未执行。
     ⇒ 新判据只看**进度量**（曲线末 step）：对「崩在中途」与
       「`adapter_final.pt` 已存在但该段并没训完」**两种情况都正确**。
+
+    ⚠️⚠️ **2026-10-29 二次修（同一次事故的另一半）**：原实现在**读曲线失败时
+      `return False`**（"按未完成处理"）⇒ 与 `bucket_has` 的老毛病叠加，
+      一次 `ConnectionError` 就把三个训练 Job 全部重跑（详见 `bucket_has` 的docstring）。
+    ⇒ 现在：**文件确实不在 ⇒ 返回 False；读不动 ⇒ 抛异常让链子停**。
+      两者语义不同，混为一谈就会用几个 GPU 小时为一次网络抖动买单。
     """
     target = SEG_STEPS * seg
     rel = f"runs/illusionbrain-align/exp105/{variant}/train_curve.json"
     if not bucket_has([rel])[rel]:
-        return False
+        return False                      # 曲线文件确实不在 ⇒  definitively 未完成
+    from huggingface_hub import download_bucket_files
+    tmp = Path(os.environ.get("EXP105_OUT", r"D:\.minimax\tmp\exp105_out"))
+    tmp.mkdir(parents=True, exist_ok=True)
+    dst = tmp / f"{variant}_curve_probe.json"
+    download_bucket_files("illusion-brain/brain-domains", [(rel, dst)])
+    eps = json.loads(dst.read_text(encoding="utf-8")).get("epochs", [])
+    last = max((int(e.get("step", 0)) for e in eps), default=0)
+    ok = last >= target
+    log(f"  [完成判据] {variant} 段{seg}：曲线末 step {last} / 目标 {target} ⇒ {ok}")
+    return ok
+
+
+def n_excluded(variant):
+    """该 variant 被**预登记对齐闸门**合法剔除的被试数（读 `gen_excluded_subjects.json`）。
+
+    ⚠️ 2026-10-29 修：原 `gen_done` 硬要求 10 个文件全在，但闸门会合法剔除被试
+    （实测 more 的 sub-05 `align_acc200=0.0 < 0.01` 被剔 ⇒ 只有 9 个文件）
+    ⇒ 判据永远不成立 ⇒ 链子会**重跑生成**，而重跑用的是桶上当前的 adapter
+    ——本次事故后 more 的 `adapter_final.pt` 已被覆盖成 7,400 步的旧模型，
+    一重跑就会拿错模型生成，把 ×2 对照彻底毁掉。
+    """
+    from huggingface_hub import download_bucket_files
+    rel = f"runs/illusionbrain-align/exp105/{variant}/gen/gen_excluded_subjects.json"
+    tmp = Path(os.environ.get("EXP105_OUT", r"D:\.minimax\tmp\exp105_out"))
+    tmp.mkdir(parents=True, exist_ok=True)
+    dst = tmp / f"{variant}_excluded_probe.json"
     try:
-        from huggingface_hub import download_bucket_files
-        tmp = Path(os.environ.get("EXP105_OUT", r"D:\.minimax\tmp\exp105_out"))
-        tmp.mkdir(parents=True, exist_ok=True)
-        dst = tmp / f"{variant}_curve_probe.json"
         download_bucket_files("illusion-brain/brain-domains", [(rel, dst)])
-        eps = json.loads(dst.read_text(encoding="utf-8")).get("epochs", [])
-        last = max((int(e.get("step", 0)) for e in eps), default=0)
-        ok = last >= target
-        log(f"  [完成判据] {variant} 段{seg}：曲线末 step {last} / 目标 {target} ⇒ {ok}")
-        return ok
-    except Exception as e:                                       # noqa: BLE001
-        log(f"  [完成判据] {variant} 段{seg} 读曲线失败（按未完成）：{type(e).__name__}")
-        return False
+        return len(json.loads(dst.read_text(encoding="utf-8")))
+    except Exception as e:                                   # noqa: BLE001
+        # 文件不在（还没跑到剔除那一步）⇒ 0 个剔除；查不动 ⇒ 抛异常（不能猜）
+        if "404" in str(e) or "Not Found" in str(e) or "EntryNotFound" in type(e).__name__:
+            return 0
+        raise RuntimeError(f"读 {rel} 失败（{type(e).__name__}）⇒ 判不了剔除数") from e
 
 
 def gen_done(variant):
@@ -239,10 +278,15 @@ def gen_done(variant):
                  f"runs/illusionbrain-align/exp105/{variant}/gen/gen_clip_floor.pt"]
         st = bucket_has(paths)
         return all(st.values())
+    # ⚠️ **应有数 = 10 − 被剔除数**（剔除是预登记的数据质量闸门，不是失败）
+    need = N_GEN_SUBJECTS - n_excluded(variant)
     paths = [f"runs/illusionbrain-align/exp105/{variant}/gen/gen_clip_sub{s:02d}.pt"
              for s in range(1, N_GEN_SUBJECTS + 1)]
     st = bucket_has(paths)
-    return sum(st.values()) >= N_GEN_SUBJECTS
+    got = sum(st.values())
+    log(f"  [完成判据] gen-{variant}：{got}/{need} 个被试产物"
+        f"（10 − 剔除 {N_GEN_SUBJECTS - need}）⇒ {got >= need}")
+    return got >= need
 
 
 def mech_done(variant):
@@ -405,14 +449,16 @@ def main():
         # ---- 跳过已完成的（查桶上产物）----
         still = []
         for t in pending:
-            try:
-                if t["done_fn"]():
-                    log(f"✓ {t['name']} 已完成 ⇒ 跳过")
-                    done.add(t["name"])
-                else:
-                    still.append(t)
-            except Exception as e:                               # noqa: BLE001
-                log(f"  [完成判据] {t['name']} 判不了（按未完成）：{type(e).__name__}")
+            # ⚠️⚠️ **2026-10-29 修（同一次事故的第三处）**：原来这里是
+            #   `except: log("判不了（按未完成）")` ⇒ **判据查不动时静默按未完成处理**，
+            #   与 `bucket_has` / `train_done` 的老毛病合成一条完整的毁数据链路。
+            #   ⇒ 现在：**判不了就抛出去、让链子停**。"未完成"必须是**确定**的结论，
+            #      不能是"查不到所以当没有"。宁可停一次等人看，也不能白烧 GPU
+            #      去重跑一个其实已经完成的任务。
+            if t["done_fn"]():
+                log(f"✓ {t['name']} 已完成 ⇒ 跳过")
+                done.add(t["name"])
+            else:
                 still.append(t)
         pending = still
         if not pending:

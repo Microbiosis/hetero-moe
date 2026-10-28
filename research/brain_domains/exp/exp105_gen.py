@@ -536,7 +536,15 @@ def step_judge(args):
             hit = 0
             for s in subs:
                 gf = by_sub[s]
-                gv = G.l2norm(torch.load(out_dir / f"gen_clip_{s}.pt", map_location="cpu",
+                # ⚠️⚠️ **2026-10-29 修（judge 从来没成功跑过的真因）**：
+                #   `s` 是 `r["subject"]`，形如 `"sub-01"`（**带横线**，见上面
+                #   `rec["subject"] = f"sub-{sid:02d}"`），而生成步写盘用的是
+                #   `f"gen_clip_sub{sid:02d}.pt"`（**不带横线**）⇒ 这里必然
+                #   `FileNotFoundError: gen_clip_sub-01.pt`。
+                #   ⇒ judge-snr 连续 ERROR 两次就是它；snr 的 verdict 是更早版本留下的。
+                sid = int(s.split("-")[1])                      # 与上面 524 行同构
+                gv = G.l2norm(torch.load(out_dir / f"gen_clip_sub{sid:02d}.pt",
+                                        map_location="cpu",
                                         weights_only=False)["clip"].numpy().astype(np.float64))
                 hit += int(gv[i] @ true_clip[i] > gv[i] @ true_clip[neg[i]])
             pc.append(hit / len(subs))
