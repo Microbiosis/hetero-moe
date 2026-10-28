@@ -52,10 +52,12 @@ EXP102_CACHE = "/domains/runs/illusionbrain-align/exp102/cache"
 CPU = C.CPU_FLAVOR
 MAX_PARALLEL = 2
 
-# ⚠️ **flavor 阶梯：l40sx1 已删**（2026-10-28：实测它排 40 分钟拿不到槽位 ⇒ 别再排它）
-#    保留：l4x1（实测 26 秒开跑）→ a100-large → a10g-large → a10g-small → t4-medium
+# ⚠️ **flavor 阶梯：a100-large 排最前**（2026-10-28 实测各池：
+#    a100-large 有槽位且是 A100 40 GB（最快 + 显存够）⇒ 首选；
+#    l4x1 / a10g-large 有槽位但慢；l40sx1 整池满（排 40 分钟无槽位）⇒ 垫底；
+#    a10g-small / t4-medium 池空但**只有 16 GB** ⇒ 跑不动 SD1.5 512px 训练 ⇒ 不进训练阶梯）
 FLAVORS = [f.strip() for f in os.environ.get(
-    "EXP105_FLAVORS", "l4x1,a100-large,a10g-large,a10g-small,t4-medium").split(",")
+    "EXP105_FLAVORS", "a100-large,l4x1,a10g-large,l40sx1").split(",")
     if f.strip()]
 # ⚠️ 排多久就换池（换池 = 取消当前排队 Job + 换下一个 flavor ⇒ 不回到已排过的池）
 STARTUP_BUDGET = int(os.environ.get("EXP105_STARTUP_BUDGET", "240"))
