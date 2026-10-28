@@ -120,3 +120,18 @@ docs/V5_ALPHA_*.md
 
 # Local preview server state (built personal-site bundle + serve logs)
 .personal-site-staging/
+
+# ─────────────────────────────────────────────────────────────────────
+# MiniMax Code 运行时产物 + 独立 Mini App（**两者都不属于本仓库的源码**）
+#
+# /.mavis/   —— MiniMax Code 的画布产物（如 exp102 架构图 PNG）。runtime 资产，
+#               不是项目源码：克隆者拿到也没有对应会话可以复现它。
+# /miniapps/ —— `hf-hub-console` 是一个**独立**的 Mini App（HF Hub 控制台），
+#               只是碰巧搭建在本工作区里 ⇒ 不构成 hetero-moe 的从属部分
+#               （判定规矩：文件所在目录 ≠ 归属仓库）。它将来若要分发，
+#               应放进**它自己的**仓库，而不是塞进这个科研仓库。
+# 前导斜杠与上面 `/compose.rebuild.yaml` 同理：只锚定仓库根，不误伤将来
+# 可能出现在子目录里的同名文件。
+# ─────────────────────────────────────────────────────────────────────
+/.mavis/
+/miniapps/
