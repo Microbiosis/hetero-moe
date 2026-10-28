@@ -159,15 +159,57 @@ function Test-Endpoint {
     }
 }
 
+function Test-WritePath {
+    <#
+      探「写通道」：**发一个 >1 KB 的 POST**。
+
+      ⇒ 为什么要这一步（2026-10-28 实测出来的坏法）：
+        本机现在的故障形态是「**小请求通、大 body 断**」：
+          · `git push` 的 pack（$6.7 KB）⇒ curl 52 Empty reply（TLS renegotiation 后被掐）
+          · HF Jobs 的 `command`（>~1 KB）⇒ API 直接断开连接（862 字符通、1066 字符断）
+          · HF 桶上传（流式 body）⇒ 挂死 100 s 超时
+        ⇒ 而**只探 GET 的探针对这种坏法完全失明** ⇒ 钩子永远不动作 ⇒ 只能干等。
+        ⇒ ⇒ 探针必须**带上大 body 的写请求**才算测到了真实链路。
+
+      ⇒ 判定「通」的标准与 Test-Endpoint 一致：**拿到 HTTP 响应**就算通
+        （401 / 405 / 400 都说明链路是通的，只是请求本身不被接受）。
+    #>
+    param([string]$Url = 'https://huggingface.co/api/whoami-v2',
+          [int]$TimeoutSec = 8,
+          [int]$BodyBytes = 4096)
+    $body = 'x' * $BodyBytes
+    try {
+        $resp = Invoke-WebRequest -Uri $Url -Method POST -Body $body -ContentType 'application/json' `
+                   -TimeoutSec $TimeoutSec -UseBasicParsing
+        return ($null -ne $resp)
+    } catch {
+        $r = $null
+        try { $r = $_.Exception.Response } catch { $r = $null }
+        if ($null -ne $r) {
+            Write-Log "写通道探针 $Url 返回 HTTP 错误但链路是通的: $($_.Exception.Message)" 'OK'
+            return $true
+        }
+        Write-Log "写通道探针 $Url（大 body POST，$BodyBytes 字节）失败: $($_.Exception.Message)" 'WARN'
+        return $false
+    }
+}
+
 function Test-NetworkDown {
     # 依次探端点：**任一**通 ⇒ 网络可用；**全**不通 ⇒ 网络死了。
+    # ⚠️ 2026-10-28：**还要看写通道** —— 「读通、写不通」也是坏（出口节点坏了），
+    #    而这种坏法只探 GET 看不见 ⇒ ⇒ 读通但写不通 ⇒ 同样判为「网络不可用」。
     $alive = @()
     foreach ($e in $ProbeEndpoints) {
         if (Test-Endpoint -Url $e.Url -TimeoutSec $e.TimeoutSec) { $alive += $e.Url }
     }
-    if ($alive.Count -gt 0) {
-        Write-Log "探测：连通 $($alive -join ',') ⇒ 网络可用" 'OK'
+    $writeOk = Test-WritePath
+    if ($alive.Count -gt 0 -and $writeOk) {
+        Write-Log "探测：读连通 $($alive -join ',')｜写通道也通 ⇒ 网络可用" 'OK'
         return $false
+    }
+    if ($alive.Count -gt 0) {
+        Write-Log "探测：读连通但**写通道不通**（小请求通、大 body 断 ⇒ 出口节点坏了）⇒ 判为网络不可用" 'WARN'
+        return $true
     }
     Write-Log "探测：全部端点不通 ⇒ 判为网络不可用" 'WARN'
     return $true

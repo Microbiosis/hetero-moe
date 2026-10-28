@@ -68,6 +68,8 @@ def main():
     import exp102_train as T
     import exp93b_contrastive as E93B
 
+    T.ensure_deps()          # ⚠️ 镜像里没有 diffusers/transformers ⇒ 必须先装（`from diffusers` 之前）
+
     # ---- ① adapter 末层权重 ----
     ck = torch.load(ADAPTER_CKPT, map_location="cpu", weights_only=False)
     sd = ck["state_dict"] if "state_dict" in ck else ck
@@ -102,7 +104,6 @@ def main():
         f"｜max {tok_norm.max():.6f}｜全零的比例 {float((tok == 0).mean()):.4f}")
 
     # 文本 token 的幅度（同一个尺度：CLIP text encoder 的 77×768）
-    from diffusers import StableDiffusionPipeline  # noqa: F401  (仅确认 diffusers 在)
     from transformers import CLIPTextModel, CLIPTokenizer
     repo = T.SD_REPO if hasattr(T, "SD_REPO") else "stable-diffusion-v1-5/stable-diffusion-v1-5"
     tokzr = CLIPTokenizer.from_pretrained(repo, subfolder="tokenizer")
@@ -128,10 +129,21 @@ def main():
     log(f"[方向] 条件 token 与文本 token 的余弦：均值 {cos.mean():.4f}"
         f"｜max |cos| {np.abs(cos).max():.4f}｜随机基线 ≈ 0")
 
-    rec = {"adapter_weights": out,
+    # ---- 4. **一致性**（= 1 ⇒ 200 个概念的条件 token 几乎一模一样 ⇒ adapter 收敛成常数方向）----
+    # WARNING 必须**逐 token**比（跨概念均值范数 ÷ 平均范数）；拿整个 (16,768) 块去比会算出 >1 的废数。
+    mu = tok.mean(axis=0)                                     # (16,768) 跨概念均值
+    per_tok_mean = np.linalg.norm(mu, axis=-1)                # (16,)
+    per_tok_avg = np.linalg.norm(tok, axis=-1).mean(axis=0)    # (16,)
+    cons = float((per_tok_mean / per_tok_avg).mean())
+    log(f"[一致性] 跨概念均值范数 / 平均范数 = **{cons:.6f}**"
+        f"（= 1 ⇒ 条件 token 与概念无关 ⇒ 生成图里不会有概念信息）")
+
+    rec = {"w_max": float(sd["net.3.weight"].abs().max()),
+           "w_mean": float(sd["net.3.weight"].abs().mean()),
+           "tok_med": float(np.median(tok_norm)),
+           "consistency": cons,
            "token_norm_median": float(np.median(tok_norm)),
            "token_norm_max": float(tok_norm.max()),
-           "token_zero_fraction": float((tok == 0).mean()),
            "text_token_norm_median": float(np.median(tnorm)),
            "amplitude_ratio": ratio,
            "cos_to_text_mean": float(cos.mean()),

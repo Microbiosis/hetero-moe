@@ -50,6 +50,10 @@ def main():
     lp = rd / "loss_summary.json"
     if lp.exists():
         loss = json.loads(lp.read_text(encoding="utf-8"))
+    mech = {}
+    mp = rd / "mechanism.json"
+    if mp.exists():
+        mech = json.loads(mp.read_text(encoding="utf-8"))
 
     rows = []
     cp = rd / "per_subject.csv"
@@ -72,7 +76,7 @@ def main():
     L.append("## 四十八、exp102（**出结果**）：②③ 条件生成 —— **脑侧条件能不能驱动出可辨认的图像**")
     L.append("")
     L.append(f"> **判决：`{v.get('verdict')}`**（判据正本 = §四十四，**出结果前已落盘并推远端**）")
-    L.append(f"> 脚本：`exp/exp102_{cache,train,gen}.py`；判决 = `exp102_gen.py` 的 `judge()`（**纯函数**）；"
+    L.append(f"> 脚本：`exp/exp102_{{cache,train,gen}}.py`；判决 = `exp102_gen.py` 的 `judge()`（**纯函数**）；"
              f"离线重算：`results/parse_exp102.py`（读逐被试原始记录 ⇒ 与云端逐字对齐）。")
     L.append("")
 
@@ -134,6 +138,15 @@ def main():
     L.append("")
     L.append(f"**解释**：{v.get('interpretation') or '（C1 通过 ⇒ 条件驱动了生成）'}")
     L.append("")
+    # ⚠️ **如实标注**：预登记的解释规则按「中位 > 0」给标签 ⇒ 标签叫「方向对」，
+    #    但**符号检验的正负比例**才是方向的直接证据 ⇒ 两个数不一致时必须写出来。
+    L.append(f"> ⚠️ **判决标签「方向对、检验力不足」与数据对不上**：C1 的符号检验是 "
+             f"**{c1.get('n_pos')} 正 / {c1.get('n_neg')} 负 / {c1.get('n_zero')} 零**"
+             f"（p = {num(c1.get('p_sign'), 4)}，n = {c1.get('n_eff')}）⇒ 方向上与掷硬币无异；"
+             f"中位数 {num(c1.get('median'))} 为正，是**上中位**口径在近乎平局时的产物"
+             f" ⇒ **不能**当成「方向对」的证据。"
+             f"判据与阈值**一字未改**（预登记 commit `c5c92ca`），这里只如实标注读法。")
+    L.append("")
 
     L.append("### 四十八·四、**C3（只报）**：传递效率与并排参照")
     L.append("")
@@ -141,9 +154,22 @@ def main():
     L.append("|---|---|")
     L.append(f"| **传递效率** = 生成的 2-way ÷ 条件的 2-way（同一 CLIP 口径）| "
              f"**{num(c3.get('transfer_efficiency'))}** |")
-    L.append(f"| 生成的 2-way（中位）| {num(c3.get('generated_2way_median'))} |")
-    L.append(f"| 条件的 2-way（中位，同一 CLIP）| {num(c3.get('condition_2way_median_same_clip'))} |")
+    # ⚠️ 预登记口径是两个**绝对值**之比 ⇒ 看起来不小；但两个都在机会附近时这个比值会**骗人**
+    #    ⇒ 必须同时给出「超机会量」的传递（同一个量的另一种读法，不是新判据）。
+    gen_med = c3.get("generated_2way_median")
+    cond_med = c3.get("condition_2way_median_same_clip")
+    exc_gen = None
+    exc_cond = None
+    if gen_med is not None and cond_med is not None:
+        exc_gen = float(gen_med) - 0.5
+        exc_cond = float(cond_med) - 0.5
+    L.append(f"| 生成的 2-way（中位）| {num(gen_med)} |")
+    L.append(f"| 条件的 2-way（中位，同一 CLIP）| {num(cond_med)} |")
     L.append(f"| 地板 2-way（中位）| {num(c3.get('floor_2way_median'))} |")
+    if exc_cond and exc_gen is not None:
+        L.append(f"| ⚠️ **超机会量**的传递 = (生成 {num(gen_med)} − 0.5) ÷ (条件 "
+                 f"{num(cond_med)} − 0.5) | **{num(exc_gen / exc_cond)}** "
+                 f"（生成侧只超出机会 {num(exc_gen)}，条件侧超出 {num(exc_cond)}）|")
     L.append(f"| CLIP 相似度（生成图 ↔ 真图，均值）| {num(c3.get('clip_similarity_mean'))} |")
     L.append(f"| 每概念召回（中位）| {num(c3.get('per_concept_recall_median'))} |")
     L.append(f"| ⚠️ ATM（C 类：别人发表的系统）| 2-way **{ATM['two_way_pct']}%** / "
@@ -154,10 +180,35 @@ def main():
              f"{EXP101['fifty_way_pct_single_trial']}% / {EXP101['fifty_way_pct_trial_avg']}% |")
     L.append("")
     if curve:
-        first = curve[0].get("mean_loss")
-        last = curve[-1].get("mean_loss")
         L.append(f"**训练曲线**：{len(curve)} 个 epoch（每 epoch {curve[0].get('step', '?')} 步）"
-                 f"；首个 epoch 均值 {num(first, 5)} → 末个 {num(last, 5)}。")
+                 f"；C0 的**窗口口径**：首 10%（k={loss.get('k_epochs', '?')} epoch）均值 "
+                 f"{num(c0.get('loss_first10'), 5)} → 末 10% 均值 {num(c0.get('loss_last10'), 5)}"
+                 f" ⇒ 下降 **{bool(c0.get('loss_decreased'))}**。")
+        L.append(f"> ⚠️ **不要拿「首个 epoch → 末个 epoch」读这张曲线**：单个 epoch 的均值噪声有 "
+                 f"**±0.012**（§四十七·五·一）⇒ 这一层的两个数是**噪声**；"
+                 f"**只有 10% 窗口均值**才是 C0 的口径。")
+        L.append("")
+
+    if mech:
+        L.append("### 四十八·五、**机制证据：条件到底有没有进到生成里**")
+        L.append("")
+        L.append("| 量 | 值 | 读法 |")
+        L.append("|---|---|---|")
+        L.append(f"| adapter 末层权重 `max|w|` | {num(mech.get('w_max'), 6)} | "
+                 f"末层是**零初始化**的 ⇒ 这个数就是「训了多久才长出来」的量度 |")
+        L.append(f"| adapter 末层权重 `mean|w|` | {num(mech.get('w_mean'), 6)} | "
+                 f"同上 |")
+        L.append(f"| 条件 token 范数（中位）| {num(mech.get('tok_med'), 4)} | "
+                 f"**不是 0** ⇒ 条件支**确实训动了**，不是「没训动」 |")
+        cons = mech.get("consistency")
+        L.append(f"| **条件 token 的一致性** = ‖跨概念均值‖ ÷ 平均范数 | **{num(cons, 4)}** | "
+                 f"**= 1 意味着 200 个概念的条件 token 几乎一模一样** ⇒ adapter 收敛成了"
+                 f"「与概念无关的常数方向」⇒ 生成图里自然没有概念信息 |")
+        L.append("")
+        L.append(f"⇒ ⇒ **这一轮测到的不是「脑里没有信息」，而是「这一版条件化方式没把"
+                 f"概念信息传进生成」**：条件侧（同 CLIP 口径）2-way 中位 "
+                 f"{num(cond_med)}，生成侧 {num(gen_med)} ⇒ 超机会量几乎没传过去"
+                 f"（一致性 {num(cons, 4)} ⇒ 条件 token 几乎与概念无关）。")
         L.append("")
 
     Path(args.out).write_text("\n".join(L) + "\n", encoding="utf-8")

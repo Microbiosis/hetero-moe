@@ -583,7 +583,13 @@ def step_judge(args):
         log(f"[C0] 损失曲线：{curve}")
         try:
             import exp102_train as T
-            loss_summary = T.loss_curve_summary(json.loads(curve.read_text(encoding="utf-8")))
+            # ⚠️⚠️ **2026-10-28 修第三处 bug**：`loss_curve_summary(curve)` 要的是
+            #   **epoch 列表**（`curve` 里每项是 {"mean_loss": ...}），
+            #   而这里传的是**整个 JSON 字典** ⇒ 迭代字典得到的是**键（字符串）**
+            #   ⇒ `e.get(...)` ⇒ "'str' object has no attribute 'get'" ⇒ 损失摘要读不出来
+            #   ⇒ C0 的「损失下降」判 false ⇒ 判决错成 C0_FAIL。
+            loss_summary = T.loss_curve_summary(
+                json.loads(curve.read_text(encoding="utf-8")).get("epochs", []))
         except Exception as e:                                   # noqa: BLE001
             log(f"[C0] 损失曲线读不出：{type(e).__name__}: {e}")
 
