@@ -219,13 +219,19 @@ def main():
             return 1
 
     # ---- G1/G2：X1 与 X3 的训练（seed 0 ⇒ 与 exp102 逐点同序列）----
+    # ⚠️⚠️ **hold=True**：2026-10-28 实测：GPU 池排 300 s 没上槽位 ⇒ 老链子每 5 分钟
+    #    「取消 + 换 flavor」⇒ **每换一个 flavor 就丢一次队列位置** ⇒ 永远排不上
+    #    （§exp102_chain 的同一条教训：取消排队中的 Job = 从队列里挪出去）⇒
+    #    ⇒ 训练也必须**保住队列位置**，只换池不取消。
     for seg in (1, 2):
         log(f"=== G{seg} 训练 X1 / X3 第 {seg} 段 ===")
         r = run_parallel([
             {"prefix": f"t105-train-snr-s{seg}", "cmd": train_cmd("snr", 0, seg > 1),
-             "timeout": TRAIN_TIMEOUT, "budget": 9000, "startup_budget": 300},
+             "timeout": TRAIN_TIMEOUT, "budget": 9000, "startup_budget": 1800,
+             "hold": True},
             {"prefix": f"t105-train-oracle-s{seg}", "cmd": train_cmd("oracle", 0, seg > 1),
-             "timeout": TRAIN_TIMEOUT, "budget": 9000, "startup_budget": 300},
+             "timeout": TRAIN_TIMEOUT, "budget": 9000, "startup_budget": 1800,
+             "hold": True},
         ])
         if not all(r.values()):
             log(f"!! G{seg} 未全过：{r} ⇒ 停下")
@@ -236,7 +242,8 @@ def main():
         log(f"=== G3 训练 X2 第 {seg} 段（seed={seg}）===")
         r = run_parallel([
             {"prefix": f"t105-train-more-s{seg}", "cmd": train_cmd("more", seg, True),
-             "timeout": TRAIN_TIMEOUT, "budget": 9000, "startup_budget": 300},
+             "timeout": TRAIN_TIMEOUT, "budget": 9000, "startup_budget": 1800,
+             "hold": True},
         ])
         if not all(r.values()):
             log(f"!! G3 第 {seg} 段未过：{r} ⇒ 停下")
