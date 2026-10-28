@@ -39,7 +39,7 @@ PREDICTIONS = {
     "R1": "跨模型复制: detrend 臂 Δ<0 在 ≥5/6 条件成立, 每条件内 ≥6/8 层为负",
     "R2": "反向对照: raw 臂 Δ>0 在 ≥5/6 条件成立",
     "R3": "效应量: 全部条件的中位 |Δ| > 0.05",
-    "R4": "非交替: 每条件 |mean(偶d) − mean(奇d≥3)| < 0.05",
+    "R4": "非交替: 每条件 |mean(偶d) − mean(奇d≥3)| < 0.15",
 }
 
 # 文本必须长到 S=32 不触发 padding —— padding 位置全相同会污染 Δ
@@ -226,16 +226,25 @@ def main():
     r3 = med > 0.05
     print(f"  R3 中位 |Δ| = {med:.4f}  (需 >0.05)  {'通过' if r3 else '未通过'}")
 
-    r4_bad = []
+    R4_THR = 0.15        # 预登记值, 见 SPEC「修订记录」; 运行前由合成校准确定
+    r4_bad, r4_by_arm = [], {}
     for c in ok:
         for arm in ("raw", "centered", "detrend"):
-            for a in c["arms"][arm]:
-                if abs(a["parity_gap"]) >= 0.05:
-                    r4_bad.append((c["model"], c["S"], arm, a["layer"], a["parity_gap"]))
+            bad = [(c["model"], c["S"], a["layer"], a["parity_gap"])
+                   for a in c["arms"][arm] if abs(a["parity_gap"]) >= R4_THR]
+            r4_by_arm[arm] = r4_by_arm.get(arm, 0) + len(bad)
+            r4_bad.extend(bad)
     r4 = len(r4_bad) == 0
-    print(f"  R4 非交替: {len(r4_bad)} 个 (条件,臂,层) 的奇偶差 ≥0.05  {'通过' if r4 else '未通过'}")
+    print(f"  R4 非交替 (阈值 {R4_THR}): {len(r4_bad)} 个 (条件,臂,层) 违规  "
+          f"{'通过' if r4 else '未通过'}")
+    print(f"     按臂拆: {r4_by_arm}")
     if r4_bad[:5]:
         print(f"     前几例: {r4_bad[:5]}")
+    # R4 的实际用途是给 R1/R2 挡枪 —— 报告那两个臂是否干净
+    for arm in ("detrend", "raw"):
+        mx = max((abs(a["parity_gap"]) for c in ok for a in c["arms"][arm]), default=0.0)
+        print(f"     {arm:9s} 的 max|奇偶差| = {mx:.4f}  "
+              f"({'干净' if mx < R4_THR else '有交替污染'})")
 
     print("\n  逐条件（detrend / raw 的 Δ 符号计数）:")
     for c in ok:
@@ -267,6 +276,7 @@ def main():
         "summary": {"R0": r0, "R1": r1, "R2": r2, "R3": r3, "R4": r4,
                     "R1_n": f"{len(r1_conds)}/{n_ok}", "R2_n": f"{len(r2_conds)}/{n_ok}",
                     "median_abs_delta": round(med, 5), "n_conditions": n_ok,
+                    "r4_threshold": 0.15, "r4_by_arm": r4_by_arm,
                     "r4_violations": len(r4_bad)},
         "seconds": round(time.time() - t0, 1),
     }

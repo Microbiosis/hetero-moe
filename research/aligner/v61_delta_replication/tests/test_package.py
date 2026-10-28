@@ -118,6 +118,37 @@ def test_stable_seed_deterministic():
     return True
 
 
+def test_centering_induces_parity_gap():
+    """★ 机制怀疑: `centered` 臂的奇偶差污染是否由**中心化本身**引起。
+
+    中心化强制 Σ_t x_t = 0，于是
+        Σ_{i≠j} x_i·x_j = −Σ_i |x_i|²  < 0
+    即所有非对角点积被压到**负偏置**上。cos 在接近 −1 时高度非线性，
+    不同 d 的点数 (S−d) 不同，于是偏置被非线性放大成奇偶差异。
+
+    本测试若成立 ⇒ v61 中 centered 的 11 个 R4 违规是**构造性伪影**，
+    与模型的表征无关 —— 这解释了为什么 raw 与 detrend 都干净。
+    """
+    torch.manual_seed(0)
+    n, S, D = 192, 16, 32
+    X = torch.randn(n, S, D) * 0.5 + torch.randn(n, 1, D) * 3.0   # 强共同因
+    raw = parity_gap(cos_matrix(X))
+    cen_M = cos_matrix(X - X.mean(dim=1, keepdim=True))
+    cen = parity_gap(cen_M)
+
+    # 中心化后非对角均值必须显著为负 (Σ x_t = 0 的直接推论)
+    off = float((cen_M.sum() - cen_M.diagonal().sum()) / (S * (S - 1)))
+    assert abs(raw) < 0.15, ("raw 应干净", round(raw, 4))
+    assert off < -0.02, ("中心化后非对角应整体为负", round(off, 4))
+    print(f"[观察] raw 奇偶差={raw:+.4f}（干净）→ centered 奇偶差={cen:+.5f}")
+    print(f"       centered 非对角均值={off:+.4f}（Σx=0 的直接推论，负偏置）")
+    if abs(cen) >= 0.15:
+        print("       ⇒ centered 的 R4 违规是中心化的构造性伪影，不是模型表征")
+    else:
+        print("       ⇒ 本合成样例未复现该量级，仍待查（不可据此排除）")
+    return True
+
+
 def test_predictions_match_spec():
     assert set(PREDICTIONS) == {"R0", "R1", "R2", "R3", "R4"}
     print(f"[PASS] 五条预登记判据齐全: {list(PREDICTIONS)}")
@@ -132,10 +163,11 @@ TESTS = [
     test_planted_alternating_delta_negative_and_r4_flags,
     test_pure_noise_null,
     test_stable_seed_deterministic,
+    test_centering_induces_parity_gap,
     test_predictions_match_spec,
 ]
 
-TITLE = "V61.0 Δ 跨模型复制 — 单元测试 (8 项)"
+TITLE = "V61.0 Δ 跨模型复制 — 单元测试 (9 项)"
 
 if __name__ == "__main__":
     print(f"=== {TITLE} ===")
