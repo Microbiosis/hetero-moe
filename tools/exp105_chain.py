@@ -52,10 +52,10 @@ EXP102_CACHE = "/domains/runs/illusionbrain-align/exp102/cache"
 CPU = C.CPU_FLAVOR
 MAX_PARALLEL = 2
 
-# ⚠️ **flavor 阶梯：l4x1 排最前**（2026-10-28 实测：l40sx1 排 40 分钟没槽位，
-#    l4x1 26 秒就开跑）⇒ 排不到就换池，而不是死等同一个池。
+# ⚠️ **flavor 阶梯：l40sx1 已删**（2026-10-28：实测它排 40 分钟拿不到槽位 ⇒ 别再排它）
+#    保留：l4x1（实测 26 秒开跑）→ a100-large → a10g-large → a10g-small → t4-medium
 FLAVORS = [f.strip() for f in os.environ.get(
-    "EXP105_FLAVORS", "l4x1,l40sx1,a100-large,a10g-large,a10g-small,t4-medium").split(",")
+    "EXP105_FLAVORS", "l4x1,a100-large,a10g-large,a10g-small,t4-medium").split(",")
     if f.strip()]
 # ⚠️ 排多久就换池（换池 = 取消当前排队 Job + 换下一个 flavor ⇒ 不回到已排过的池）
 STARTUP_BUDGET = int(os.environ.get("EXP105_STARTUP_BUDGET", "240"))
@@ -65,6 +65,7 @@ TRAIN_COMMON = ["--max-minutes", "100", "--batch", "8", "--lr", "1e-4",
 GEN_TIMEOUT = "2h"
 TRAIN_TIMEOUT = "2h"
 TRAIN_SEGS = 2                      # 每个对照的训练段数
+SEG_EPOCH_TARGET = 120             # 一段训练完成的 epoch 阈值（--max-minutes 100 ≈ 148 epoch）
 N_GEN_SUBJECTS = 10
 
 SCRIPTS = ("exp105_conditions.py", "exp105_train.py", "exp105_gen.py")
@@ -182,15 +183,34 @@ def bucket_has(paths):
 
 
 def train_done(variant, seg):
-    """第 seg 段训练完成 ⇔ 该段的 checkpoint 落在桶上且曲线在增长。"""
-    if seg < TRAIN_SEGS:
-        # 段内完成：adapter_last.pt 存在（段尾会更新）⇒ 且不是"还在训"的中间态
-        paths = [f"runs/illusionbrain-align/exp105/{variant}/adapter_last.pt",
-                 f"runs/illusionbrain-align/exp105/{variant}/train_curve.json"]
-        st = bucket_has(paths)
-        return st[paths[0]] and st[paths[1]]
-    p = f"runs/illusionbrain-align/exp105/{variant}/adapter_final.pt"
-    return bucket_has([p])[p]
+    """第 seg 段训练完成 ⇔ **曲线里的 epoch 数达到该段阈值**。
+
+    ⚠️⚠️ **不能**用「`adapter_last.pt` 存在」当判据（2026-10-28 实测踩到）：
+      第 1 段是**中途崩的**（`torch.save` 崩在 epoch 32）⇒ 但 checkpoint 还在桶上
+      ⇒ 被误判成「已完成」⇒ 链子跳过第 1 段直接跑第 2 段 ⇒ **训练量少了一整段**。
+    ⇒ 判据必须是**进度量**：曲线每 epoch 记一条 ⇒ 崩在中途就够不到阈值。
+    ⇒ 段目标：`--max-minutes 100` ≈ 7,400 步 ≈ 148 epoch ⇒ 阈值取 120（容忍波动）。
+    """
+    if seg >= TRAIN_SEGS:
+        p = f"runs/illusionbrain-align/exp105/{variant}/adapter_final.pt"
+        return bucket_has([p])[p]
+    rel = f"runs/illusionbrain-align/exp105/{variant}/train_curve.json"
+    if not bucket_has([rel])[rel]:
+        return False
+    try:
+        from huggingface_hub import download_bucket_files
+        tmp = Path(os.environ.get("EXP105_OUT", r"D:\.minimax\tmp\exp105_out"))
+        tmp.mkdir(parents=True, exist_ok=True)
+        dst = tmp / f"{variant}_curve_probe.json"
+        download_bucket_files("illusion-brain/brain-domains", [(rel, dst)])
+        eps = json.loads(dst.read_text(encoding="utf-8")).get("epochs", [])
+        n = len(eps)
+        ok = n >= SEG_EPOCH_TARGET
+        log(f"  [完成判据] {variant} 段{seg}：epoch {n} / 阈值 {SEG_EPOCH_TARGET} ⇒ {ok}")
+        return ok
+    except Exception as e:                                       # noqa: BLE001
+        log(f"  [完成判据] {variant} 段{seg} 读曲线失败（按未完成）：{type(e).__name__}")
+        return False
 
 
 def gen_done(variant):
