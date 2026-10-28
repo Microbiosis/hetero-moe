@@ -13,7 +13,8 @@
 1. **文献方法优先**：凡是既有方法能覆盖的，**不自写**；自写只在「既有方法不覆盖我们的使用场景」时允许
    （与 `COMPONENT_DESIGN.md` §3 的两条判据同源：符合使用场景 + 名字承诺的机制必须兑现）。
 2. **引用分两档**：下面 §4 的 **A 档＝已核到原文条目**（带 DOI/PMID/链接，**27 条**；
-   其中 A21/A22 只核到标题与链接 ⇒ **卷期/DOI 仍待补**），
+   ✅ **2026-10-28 补齐 ⇒ 27 条全部带 DOI/PMID**（A21 补核时发现它是 **bioRxiv 预印本、没有卷期**
+   ⇒ 原先「卷期待补」这个预期本身是错的；A22 补到卷期页码）），
    **B 档＝只核到邻域文献、原文条目未核** ⇒ **B 档不得当作已核实的引用写进论文**。
    ⇒ **目前 B 档为空**：原 B2 已被 A25 覆盖；原 B1 **查无此条 ⇒ 整条删除**（见 §4「否定结果」）。
    ⚠️ 核到的过程中纠正过两处**常被记错**的归属：**dPCA 的第一作者是 Kobak 不是 Cunningham**（A13）、
@@ -98,8 +99,8 @@
 | A18 | Kriegeskorte, N., **"Representational similarity analysis – connecting the branches of systems neuroscience"**, *Frontiers in Systems Neuroscience* 2:4 (2008) — doi **10.3389/neuro.06.004.2008**（PMID 19104670；PMC2605405）| F2 |
 | A19 | Sihn, D. & Kim, S.-P., **"A Spike Train Distance Robust to Firing Rate Changes Based on the Earth Mover's Distance"** — PMC6914768（PMID **31920607**；EMD 即 Wasserstein 度量）| F7 |
 | A20 | Baker, Pham, Demetci, Tran, Redko, Sandstede, Singh, **"SCOT+: a comprehensive software suite for single-cell alignment using optimal transport"**, *Bioinformatics Advances* 6(1):vbaf314 (2026) — doi **10.1093/bioadv/vbaf314**（前身为 SCOT）| F7 |
-| A21 | **"Spatial Autocorrelation Aware Resampling Improves Cell-Cell Interaction Inference in Spatial Transcriptomics Data"**（SOAAR）— PMC13370955（**空间自相关感知重采样**：构造保持基因级空间自相关的重采样数据做零分布 ⇒ 假阳性率低于随机置换）⚠️ 卷期/DOI 待补 | F1 |
-| A22 | **"Toward Best Practices for Imaging Transcriptomics of the Human Brain"**, *Biological Psychiatry* (2023)（明确建议区域分析用**空间受限零模型**）⚠️ DOI 待补 | F1 |
+| A21 | Khatri, P., Newton, M.A., Kendziorski, C. & Dinh, H.Q., **"Spatial Autocorrelation Aware Resampling Improves Cell-Cell Interaction Inference in Spatial Transcriptomics Data"**（SOAAR）— **bioRxiv 预印本**（posted 2026-07-10）— doi **10.64898/2026.07.06.736800**（PMC13370955；PMID 42465270）⚠️ **是预印本 ⇒ 没有卷期/页码**（2026-10-28 补核：Crossref 里 type = `posted-content`，**无期刊版**；与 A24 同属预印本档）（**空间自相关感知重采样**：构造保持基因级空间自相关的重采样数据做零分布 ⇒ 假阳性率低于随机置换）| F1 |
+| A22 | Arnatkevičiūtė, A., Markello, R.D., Fulcher, B.D., Misic, B. & Fornito, A., **"Toward Best Practices for Imaging Transcriptomics of the Human Brain"**, *Biological Psychiatry* **93(5):391–404** (2023-03) — doi **10.1016/j.biopsych.2022.10.016**（明确建议区域分析用**空间受限零模型**）| F1 |
 | A23 | Nichols, T.E. & Holmes, A.P., **"Nonparametric permutation tests for functional neuroimaging: a primer with examples"**, *Human Brain Mapping* 15(1):1–25 (2002) — doi **10.1002/hbm.1058**（PMID 11747097；Crossref 的 issued 记 2001 = 在线首发）| F1 |
 | A24 | Alexander-Bloch, Vandekar, Shinohara, Liu, Satterthwaite, Glahn, Raznahan 等, **"The correspondence problem: which brain maps are significantly similar?"**, bioRxiv 预印本 (2017) — doi **10.1101/203083**（**A1 的预印本** ⇒ 同一工作的两版）| F1 |
 | A25 | Fulcher, B.D., Arnatkevičiūtė, S. & Fornito, A., **"Overcoming false-positive gene-category enrichment in the analysis of spatially resolved transcriptomic brain atlas data"**, *Nature Communications* 12 (2021) — doi **10.1038/s41467-021-22862-1** ⇒ **这就是「空间受限零模型」的方法侧原文**（A22 那条 best-practice 建议的就是它）| F1 |
