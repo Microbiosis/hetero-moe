@@ -219,13 +219,33 @@ def train(args):
     log(f"[采样] seed={args.seed}（⚠️ R2：**每段必须不同**）")
 
     def save_ckpt(path, cur_step):
-        torch.save({"state_dict": adapter.state_dict(),
-                    "optimizer": opt.state_dict(),
-                    "step": int(cur_step),
-                    "config": vars(args),
-                    "variant": args.variant,
-                    "cond_dim": T.COND_DIM, "token_dim": T.TOKEN_DIM,
-                    "n_tokens": T.N_TOKENS, "prompt": T.PROMPT}, path)
+        """写 checkpoint：**原子写 + 失败不致命** + 降频（曲线仍每 epoch 记）。
+
+        ⚠️ 2026-10-28 实测（t105-train-snr-s1 崩过一次）：每 epoch 往桶里写 122 MB
+        ⇒ CAS 写入偶发 `RuntimeError: basic_ios::clear: iostream error`
+        ⇒ **整场训练崩掉**（已训到 epoch 32 白丢）⇒ ⇒ 三条改法：
+          ① **原子写**：先写 `path.tmp` 再 rename ⇒ 永远不会留下半个文件；
+          ② **失败只警告、不崩**：训练本身比 checkpoint 更值钱；
+          ③ **降频**（`--ckpt-every`，默认 5 个 epoch）：曲线文件小（几 KB），
+             **仍每 epoch 记**（C0 的「首/末 10%」靠它）。
+        """
+        tmp = Path(str(path) + ".tmp")
+        try:
+            torch.save({"state_dict": adapter.state_dict(),
+                        "optimizer": opt.state_dict(),
+                        "step": int(cur_step),
+                        "config": vars(args),
+                        "variant": args.variant,
+                        "cond_dim": T.COND_DIM, "token_dim": T.TOKEN_DIM,
+                        "n_tokens": T.N_TOKENS, "prompt": T.PROMPT}, tmp)
+            tmp.replace(path)
+        except Exception as e:                                   # noqa: BLE001
+            log(f"[ckpt] ⚠ 写 {path} 失败（**不影响训练**）：{type(e).__name__}: {str(e)[:140]}")
+            try:
+                if tmp.exists():
+                    tmp.unlink()
+            except Exception:                                    # noqa: BLE001
+                pass
 
     t_start = time.time()
     losses = []
@@ -266,13 +286,23 @@ def train(args):
                 f"{time.time() - t_start:.0f}s")
             if step % args.save_every == 0:
                 save_ckpt(out_dir / f"adapter_step{step}.pt", step)
-            save_ckpt(ckpt_path, step)
+            # ⚠️ checkpoint **降频**（每 epoch 写 122 MB 会把 CAS 写通道压垮 ⇒ 整场训练崩）
+            if step % max(1, args.ckpt_every * args.steps_per_epoch) == 0:
+                save_ckpt(ckpt_path, step)
             if args.max_minutes and (time.time() - t_start) / 60.0 >= args.max_minutes:
                 stop_reason = f"墙钟到 {args.max_minutes} min（epoch 边界收尾）"
                 break
 
     save_ckpt(ckpt_path, step)
     save_ckpt(out_dir / "adapter_final.pt", step)
+    # ⚠️ **兜底**：生成阶段只认 `adapter_final.pt` ⇒ 若它写失败（CAS 抖动）⇒ 重试几次
+    final_path = out_dir / "adapter_final.pt"
+    for attempt in range(1, 6):
+        if final_path.exists() and final_path.stat().st_size > 100_000_000:
+            break
+        log(f"[ckpt] adapter_final.pt 不可用（第 {attempt} 次）⇒ 重试保存")
+        save_ckpt(final_path, step)
+        time.sleep(5)
     summ = T.loss_curve_summary(curve)
     # ---- **只报**：epoch 间 loss 的振荡幅度（给 C0 的「下降」一个噪声量级参照，§四十九·六）----
     vals = [float(e["mean_loss"]) for e in curve if e.get("mean_loss") is not None]
@@ -354,6 +384,9 @@ def main():
     ap.add_argument("--seed", type=int, default=1,
                     help="⚠️ **每段必须不同**（R2）⇒ 链子逐段递增")
     ap.add_argument("--save-every", type=int, default=1000)
+    ap.add_argument("--ckpt-every", type=int, default=5,
+                    help="**每几个 epoch 存一次 checkpoint**（默认 5）"
+                         "⇒ 每 epoch 写 122 MB 会把 CAS 写通道压垮（实测崩过）")
     ap.add_argument("--train-subjects", type=int, nargs="+", default=list(T.TRAIN_SUBJECTS))
     ap.add_argument("--cache-dir", default=str(EXP102_ROOT / "cache"))
     ap.add_argument("--cond-clip", default=str(EXP105_ROOT / "cache/clip_train.pt"))
