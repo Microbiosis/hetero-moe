@@ -45,10 +45,17 @@ from typing import Any
 
 
 def load_audit(pkg_dir: str):
-    """按路径导入包内 audit.py, 不依赖 sys.path 顺序。"""
-    path = os.path.join(pkg_dir, "audit.py")
-    if not os.path.exists(path):
-        return None, f"missing {path}"
+    """按路径导入包内 audit.py (审计型包) 或 measure.py (结构测量型包)。
+
+    v55 属后者: 它的产物是雅可比秩的结构测量, 没有 n_classes、没有 seeds、
+    没有 cells —— 用审计型的检查项去套它只会产生误报 (实测 4 个 FAIL 全是假阳性)。
+    """
+    for name in ("audit.py", "measure.py"):
+        path = os.path.join(pkg_dir, name)
+        if os.path.exists(path):
+            break
+    else:
+        return None, f"missing audit.py / measure.py in {pkg_dir}"
     spec = importlib.util.spec_from_file_location(f"_probe_{os.path.basename(pkg_dir)}", path)
     mod = importlib.util.module_from_spec(spec)
     try:
@@ -129,6 +136,14 @@ def check(pkg_dir: str, cells_dir: str | None, repo: str,
         add("F0", False, f"missing {mpath}")
         return rep
     m = json.load(open(mpath, encoding="utf-8"))
+    # 结构测量型 (kind 显式声明, 或产物含 rows 但无 config) → 不做网格/基线检查
+    is_structural = (m.get("kind") in ("measured_lemma", "theory", "extension_document")
+                     or ("config" not in m and "rows" in m))
+    if is_structural:
+        rep["checks"].append({"id": "S1", "status": "WARN",
+                              "detail": f"结构测量型产物 (kind={m.get('kind')}) —— 无分类目标/网格/基线, "
+                                        f"仅校验可重算性与健康度"})
+        rep["warn"].append("S1")
     is_smoke = bool(m.get("IS_SMOKE_NOT_RESULTS")) or \
         (m.get("protocol_check") or {}).get("status") == "smoke"
     if is_smoke:
@@ -142,18 +157,24 @@ def check(pkg_dir: str, cells_dir: str | None, repo: str,
     # 产物目录可以只有 metrics.json (如 V54_ART_DIR 直落), 代码在 --code 指定的包里
     mod, err = load_audit(code_dir or pkg_dir)
     n_code, how = code_classes(mod)
-    add("F1", n_code is not None, f"audit 可导入={mod is not None} ({err or 'ok'}); n_classes 来源={how}")
+    add("F1", mod is not None,
+        f"模块可导入={mod is not None} ({err or 'ok'}); n_classes 来源={how}"
+        + ("  [结构测量型]" if is_structural else ""))
 
     # ---- L1: n_classes 血缘 ----
     n_rec = cfg.get("n_classes")
-    if n_code is None or n_rec is None:
+    if is_structural:
+        add("L1", True, "结构测量型: n_classes 不适用 (跳过)", warn_only=True)
+    elif n_code is None or n_rec is None:
         add("L1", False, f"无法比对 (code={n_code}, recorded={n_rec})")
     else:
         add("L1", int(n_rec) == int(n_code),
             f"recorded n_classes={n_rec} / code n_classes={n_code} ({how})")
 
     # ---- L2: code_sha ----
-    sha = m.get("code_sha") or cfg.get("code_sha")
+    # code_sha 可能在顶层、config 里、或 provenance 里 (v55 就是第三种)
+    prov = m.get("provenance") or {}
+    sha = m.get("code_sha") or cfg.get("code_sha") or prov.get("code_sha")
     head = git_head(repo)
     if not sha:
         add("L2", False, "产物未记录 code_sha → 无法证明出自哪份代码 (v49–v53 均缺)", warn_only=True)
@@ -168,7 +189,9 @@ def check(pkg_dir: str, cells_dir: str | None, repo: str,
     # ---- L3: 网格完整 ----
     d_list = cfg.get("d_shareds") or []
     n_seeds = cfg.get("seeds")
-    if not d_list or not n_seeds:
+    if is_structural:
+        add("L3", True, f"结构测量型: 网格不适用; rows={len(m.get('rows', []))} 档", warn_only=True)
+    elif not d_list or not n_seeds:
         add("L3", False, f"config 缺 d_shareds/seeds: {list(cfg)}")
     else:
         bad = {k: len(v.get("rows", [])) for k, v in res.items() if len(v.get("rows", [])) != n_seeds}
@@ -200,7 +223,9 @@ def check(pkg_dir: str, cells_dir: str | None, repo: str,
         add("L4", False, "未提供 cells 目录 (跳过体对拍)", warn_only=True)
 
     # ---- B1: 基线口径 ----
-    if n_code and n_rec and int(n_code) != int(n_rec):
+    if is_structural:
+        add("B1", True, "结构测量型: 无分类基线 (跳过)", warn_only=True)
+    elif n_code and n_rec and int(n_code) != int(n_rec):
         b_code, b_rec = baseline(int(n_code)), baseline(int(n_rec))
         add("B1", False,
             f"基线随类别数变化: 代码口径 n={n_code} → 全零={b_code['all_zero']:.4f} "

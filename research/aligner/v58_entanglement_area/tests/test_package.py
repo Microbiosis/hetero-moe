@@ -8,7 +8,7 @@ if _root not in sys.path:
     sys.path.insert(0, _root)
 from research._primitives.testing import run_suite
 
-TITLE = "V58.0 膜 / 面积律算子 — 单元测试 (11 项)"
+TITLE = "V58.0 膜 / 面积律算子 — 单元测试 (13 项)"
 
 import torch
 from research.aligner.v58_entanglement_area.brane import (
@@ -175,6 +175,47 @@ def test_predictions_declared():
     return True
 
 
+
+def test_pure_noise_gives_zero_chi():
+    """★ 回归: 纯噪声的 χ 必须是 0 —— 这条不变量此前没有被测, 导致 v58 全表失效。
+
+    实测事故: 旧 noise_tau 尺度错 5–9 倍, 纯噪声 (n=192, d=10240) 读出 χ=191
+    (= 理论上限 min(n−1, da, db)), 于是真实表征的 χ 剖面与纯噪声**同形**却看不出来。
+    """
+    torch.manual_seed(0)
+    for (n, da, db) in ((96, 2560, 2560), (192, 2560, 2560), (192, 5120, 5120),
+                        (192, 10240, 10240), (192, 10240, 2560)):
+        A, B = torch.randn(n, da), torch.randn(n, db)
+        chi = capacity_needed(A, B)
+        assert chi == 0, (n, da, db, chi)
+    print("[PASS] 五组 (n, da, db) 纯噪声全部 χ=0")
+    return True
+
+
+def test_tau_above_noise_below_signal():
+    """★ 校准不变量: 每个 (n,d) 上 τ 必须**高于纯噪声谱**、**低于共享 1 维的 s_1**。
+
+    这两条同时成立才说明阈值落在可行区间内。实测 40 格全部满足该区间
+    (s_1/s_noise = 5–30 倍), 余量充足。
+    """
+    from research.aligner.v58_entanglement_area.brane import cross_spectrum, noise_tau
+    torch.manual_seed(0)
+    bad = []
+    for n in (96, 512, 2048):
+        for d in (32, 256, 2560):
+            A0, B0 = torch.randn(n, d), torch.randn(n, d)
+            s_noise = float(cross_spectrum(A0, B0).max())
+            Z = torch.randn(n, 1)
+            A = torch.randn(n, d) + Z @ torch.randn(1, d)
+            B = torch.randn(n, d) + Z @ torch.randn(1, d)
+            s1 = float(cross_spectrum(A, B)[0])
+            tau = noise_tau(d, d, n)
+            if not (s_noise < tau < s1):
+                bad.append((n, d, round(s_noise, 3), round(tau, 3), round(s1, 3)))
+    assert not bad, bad
+    print("[PASS] 9 个 (n,d) 上 s_noise < τ < s_1 (阈值落在可行区间)")
+    return True
+
 TESTS = [
     test_independent_blocks_give_zero,
     test_shared_dims_recovered_exactly,
@@ -186,6 +227,8 @@ TESTS = [
     test_lattice_shape_validation,
     test_spectrum_and_tau,
     test_entropy_monotone_in_coupling,
+    test_pure_noise_gives_zero_chi,
+    test_tau_above_noise_below_signal,
     test_predictions_declared,
 ]
 

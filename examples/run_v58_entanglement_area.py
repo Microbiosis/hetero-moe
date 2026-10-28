@@ -101,16 +101,33 @@ def main():
     for p in prof_rg:
         print(f"  cut={p['cut']:>2} |A|={p['size_A']:>6} chi={p['chi']:>4} "
               f"S={p['entropy']:8.3f} s_max={p['spec_max']:.3f} tau={p['tau']:.3f}")
-    # 层间熵: 每层与"最后输出层"的纠缠 (离 IR 越远熵应越大)
-    print("\n  每层 vs 顶层(IR) 的纠缠熵:")
-    ir = L[-1]
+    # ⚠️ 修正 (2026-10-28): 原来算的是「每层 vs 顶层」, 而顶层与自己比恒为 0
+    #    ⇒ 序列末项必为 0 ⇒ 任何"随深度下降"的判据都自动失败 (实测 S 从 23.2 涨到 49.2)。
+    #    正确口径: 相邻层之间的纠缠 S(l, l+1) —— 这才是 RG 步的熵产生量。
+    print("\n  相邻层之间的纠缠熵 S(l, l+1):")
     per_layer_S = []
-    for li in range(nL):
-        S = float(0.5 * (-torch.log1p(
-            -(cross_spectrum(L[li], ir).pow(2) /
-              (cross_spectrum(L[li], ir).pow(2) + n)).clamp(max=1 - 1e-9))).sum())
+    for li in range(nL - 1):
+        a, b = L[li], L[li + 1]
+        spec = cross_spectrum(a, b)
+        rho2 = (spec.pow(2) / (spec.pow(2) + n)).clamp(max=1 - 1e-9)
+        S = float(0.5 * (-torch.log1p(-rho2)).sum())
         per_layer_S.append(S)
-        print(f"    layer {li}: S={S:9.3f}")
+        print(f"    layer {li}→{li+1}: S={S:9.3f}")
+
+    # ---- 纯噪声对照 (必须给出 χ=0, 否则整表失效) ----
+    print("\n" + "=" * 80)
+    print("对照 · 纯噪声 (χ 必须 = 0; 否则阈值把噪声当信号)")
+    print("=" * 80)
+    g = torch.Generator().manual_seed(0)
+    noise = torch.randn(n, nL, n_blk, D // n_blk, generator=g)
+    bs_null = BraneSpace()
+    bs_null.measure(noise, axis=1)
+    null_chi = [p["chi"] for p in bs_null.profile]
+    print(f"  纯噪声 chi={null_chi}  总容量={bs_null.total_capacity}")
+    null_ok = all(c == 0 for c in null_chi)
+    print(f"  → {'通过（阈值有效）' if null_ok else '⛔ 失败：阈值低于噪声，整表不可用'}")
+    if not null_ok:
+        print("  后续所有 χ 读数都不可解释，实验终止。")
 
     # ---- B1 + B3 + B4: 沿 token 方向, natural vs random ----
     print("\n" + "=" * 80)
@@ -147,16 +164,23 @@ def main():
     print("判决")
     print("=" * 80)
     b1 = abs(results["natural"]["corr"]) < 0.5
-    b2 = per_layer_S[0] > per_layer_S[-1]
-    b3 = results["natural"]["chi_mean"] < results["random"]["chi_mean"]
+    # 相邻层熵应随深度**下降** (粗粒化); 用首尾比较, 且要求实质差距
+    b2 = per_layer_S[0] > per_layer_S[-1] * 1.1
+    # ⚠️ 修正 (2026-10-28): 原来只比均值大小。实测 42.07 vs 42.53 = 差 0.46,
+    #    远小于 χ 自身的波动 (剖面在 31–46 之间) ⇒ 这个"小于"没有依据。
+    #    改为要求**实质差距**: 至少 10% 才算 natural 序有结构。
+    nat, rnd = results["natural"]["chi_mean"], results["random"]["chi_mean"]
+    b3 = nat < rnd * 0.9
+    b3_note = f"{nat:.2f} vs {rnd:.2f} (需 nat < 0.9·rnd = {rnd*0.9:.2f})"
     b4 = results["natural"]["n_chi_values"] > 1
     print(f"  B1 面积律 (|corr|<0.5): natural corr={results['natural']['corr']:+.2f} → {'过' if b1 else '未过'}")
-    print(f"  B2 RG 流 (熵随深度下降): layer0 S={per_layer_S[0]:.1f} vs layer{-1} S={per_layer_S[-1]:.1f}"
-          f" → {'过' if b2 else '未过'}")
-    print(f"  B3 顺序有结构 (natural < random): {results['natural']['chi_mean']:.1f} vs "
-          f"{results['random']['chi_mean']:.1f} → {'过' if b3 else '未过'}")
+    print(f"  B2 RG 流 (相邻层熵随深度下降): 首 S={per_layer_S[0]:.1f} vs 尾 S={per_layer_S[-1]:.1f}"
+          f" (需首 > 1.1×尾) → {'过' if b2 else '未过'}")
+    print(f"  B3 顺序有结构: {b3_note} → {'过' if b3 else '未过'}")
     print(f"  B4 非均匀 (χ 取值数>1): {results['natural']['n_chi_values']} 种 → {'过' if b4 else '未过'}")
     print(f"\n  RG 剖面 corr={bs_rg.area_law_ratio()}  uniform={bs_rg.is_uniform}")
+    if not null_ok:
+        print("\n⛔ 纯噪声对照失败 ⇒ 本表所有 χ 读数作废，不作判决。")
 
     os.makedirs(ART, exist_ok=True)
     payload = {
@@ -168,6 +192,8 @@ def main():
         "rg_profile": prof_rg,
         "per_layer_entropy_vs_IR": per_layer_S,
         "token_axis": results,
+        "null_control": {"chi": null_chi, "total": bs_null.total_capacity,
+                         "passed": bool(null_ok)},
         "verdicts": {"B1_area_law": bool(b1), "B2_rg_flow": bool(b2),
                      "B3_order_structure": bool(b3), "B4_nonuniform": bool(b4)},
     }

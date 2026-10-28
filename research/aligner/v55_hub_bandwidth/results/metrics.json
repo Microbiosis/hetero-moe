@@ -4,7 +4,7 @@
   "line": "aligner",
   "kind": "measured_lemma",
   "provenance": {
-    "code_sha": "4023ee5be7419099756c1d33d24f265717d20fbd",
+    "code_sha": "d4b1870ff092d31856e8b4581e40b40a92a3f1cc",
     "torch": "2.10.0+cpu",
     "device": "cpu",
     "seed": 0,
@@ -17,7 +17,7 @@
       1024
     ],
     "rel_tol": 1e-05,
-    "measured_at": "2026-10-27T04:45:25+00:00"
+    "measured_at": "2026-10-27T17:03:52+00:00"
   },
   "note": "v33/v49 融合层在**初始化**处的雅可比结构; P_m 与专家 FFN 在 v33 中冻结, 故一阶响应是架构量",
   "rows": [

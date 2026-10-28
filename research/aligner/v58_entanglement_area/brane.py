@@ -96,19 +96,39 @@ def entanglement_entropy(A: torch.Tensor, B: torch.Tensor, n_null: int = 0) -> f
     return float(0.5 * (-torch.log1p(-rho2)).sum())
 
 
-def noise_tau(da: int, db: int, n: int) -> float:
-    """互协方差矩阵在**独立**假设下的噪声阈值 τ = ω(β)·σ·√max(da,db)。
+def noise_tau(da: int, db: int, n: int, kappa: float = 1.25) -> float:
+    """互协方差谱在**独立**假设下的噪声上包络。
 
-    关键: 因为 `cross_spectrum` 已按列标准化 (‖col‖=√n), 独立时
-        σ = 1/√(n−1)  —— 这是**解析值**, 不需要估计。
+    本式由 `tools/calibrate_v58_tau.py` 在远端扫 40 格
+    (n ∈ {96,192,512,1024,2048} × d ∈ {32..5120}) 拟合而成。
 
-    为什么不能用估计的 σ̂ (v57 那套):
-       GD 的 σ̂ = median(s)/(√max·c_β) 假设"信号稀疏、中位数仍是噪声"。
-       k 接近 ambient 时信号污染中位数 → σ̂ 虚高 → τ 虚高 → 通道被漏掉。
-      实测: k=20 读成 7, k=30 读成 4。改成解析 σ 后全部准确。
+    **被推翻的三个版本** (全部留档, 因为它们各自在某个区间是对的):
+
+    ① τ = ω(β)·√dmax/√n        (v57 遗留)
+       d ≫ n 时低 5–9 倍 ⇒ 纯噪声 n=192,d=10240 读出 χ=191 (= 理论上限)
+    ② τ = 1.6·√(da·db)/n
+       d ≪ n 时高得离谱 ⇒ n=512,d=64 共享 1 维给出 χ=22
+    ③ τ = β·② + (1−β)·①        (凸组合)
+       仍 0/40 通过 —— 两端各对一点, 中间全错
+
+    **实测规律**: 纯噪声谱最大值
+
+        s_noise ≈ (√da + √db)/√n · (1 + dmax/n)^(1/3)
+
+    第一因子是 iid 元素的谱范数 (√da+√db 个 σ=1/√n 的方向叠加);
+    第二因子修正 d≳n 时"秩被 n 限制"带来的增长 —— 实测指数 1/3 在
+    d/n ∈ [0.03, 54] 上稳合 (五组验收误差 <5%)。
+
+    kappa=1.25 留 25% 余量。校准显示可行区间极宽 (s_1/s_noise = 5–30 倍),
+    所以宁可偏保守也不能低于噪声。
+
+    ⚠️ 适用范围: n ∈ [96, 2048], d ∈ [32, 5120]。范围外未检验。
+       不变量: **纯噪声必须给 χ=0** (单测 test_pure_noise_gives_zero_chi)。
     """
-    beta = min(da, db) / max(da, db)
-    return omega(beta) * (1.0 / math.sqrt(max(n - 1, 1))) * math.sqrt(max(da, db))
+    dmax = max(da, db)
+    base = (math.sqrt(max(da, 1)) + math.sqrt(max(db, 1))) / math.sqrt(max(n, 1))
+    grow = (1.0 + dmax / max(n, 1)) ** (1.0 / 3.0)
+    return kappa * base * grow
 
 
 def capacity_needed(A: torch.Tensor, B: torch.Tensor,
