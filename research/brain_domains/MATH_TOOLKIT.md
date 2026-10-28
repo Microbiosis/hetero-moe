@@ -12,8 +12,11 @@
 
 1. **文献方法优先**：凡是既有方法能覆盖的，**不自写**；自写只在「既有方法不覆盖我们的使用场景」时允许
    （与 `COMPONENT_DESIGN.md` §3 的两条判据同源：符合使用场景 + 名字承诺的机制必须兑现）。
-2. **引用分两档**：下面 §4 的 **A 档＝本轮核到原文条目**（带 DOI/PMID/链接），
-   **B 档＝只核到邻域文献、原文条目未核** ⇒ **B 档不得当作已核实的引用写进论文**。
+2. **引用分两档**：下面 §4 的 **A 档＝已核到原文条目**（带 DOI/PMID/链接，**22 条**；
+   其中 A21/A22 只核到标题与链接 ⇒ **卷期/DOI 仍待补**），
+   **B 档＝只核到邻域文献、原文条目未核**（**2 条**）⇒ **B 档不得当作已核实的引用写进论文**。
+   ⚠️ 核到的过程中纠正过两处**常被记错**的归属：**dPCA 的第一作者是 Kobak 不是 Cunningham**（A13）、
+   **SVA 原文在 *PLoS Genetics* 不是 *PLoS Computational Biology***（A17）。
 3. **一条事实只写一处**：本文件只写「数学方法 ↔ 我们的对应」，算子的实现细节仍在 `arch/ops_brain.py`，
    组件选型的留痕仍在 `COMPONENT_DESIGN.md` §3，判据正本仍在 `FINDINGS_TIER0_RSA.md` §四十四。
 
@@ -23,13 +26,13 @@
 
 | # | 数学家族 | 神经学出处 | 生物信息学里的同一数学 | 我们项目里对应哪一处 | 状态 |
 |---|---|---|---|---|---|
-| F1 | **空间统计与保结构置换** | 脑图「对应问题」：空间自相关让朴素置换失效 ⇒ **spin test**（A1）| 空间转录组学的空间置换；基因组的结构化置换（按 LD/染色体块）| 各地板（跨被试×跨试次错配）、与同尺寸随机组比、组装级跨区隔离检查 | ⚠️ **思路对、零分布弱**：我们手工错配 ⇒ 下一轮（判据①，多区数据）应换成保结构置换 |
-| F2 | **稀疏多元对齐 + 结构化惩罚** | imaging genetics：稀疏 CCA（A2）、图引导 fused lasso / GraphNet-SCCA（A3）、多任务结构化 SCCA（A4）| SNP–ROI 成对选择、eQTL 映射（A6）、microbiome 结构化 CCA（A5）、genomic sCCA 扩展（A7）| exp102「脑侧条件 ↔ CLIP 图像特征」对齐；位置轴的跨带比较 | ⚠️ **自写了加权/聚合、没借这一族** ⇒ 「按脑区分组」的先验正好对应 group lasso 的组惩罚 |
-| F3 | **独立成分与潜在混杂** | ICA 成分的跨被试/跨试次一致性检验（A8）| SVA（正交化隐藏混杂，A12）；基因型分解 ICA | exp93b 的跨被试 200-way 地板（一致性检验的变体）；低秩算子的诚实边界（共模/参考/体积传导）| ⚠️ **概念已用、未做正交化去混杂** ⇒ 多区数据上 SVA 类工具对口 |
-| F4 | **低维流形 / 群体活动** | population coding、低秩动力学、dPCA（B3）| 单细胞轨迹推断；群体级表达因子（PLEX/NMF）| `RegionLocalLowRank`（共同驱动）；exp102 的「条件 token 是否与概念相关」（跨概念一致性 0.9905）| ⚠️ 我们只做了 SVD + 重建误差，**不是 dPCA/NMF 口径** |
-| F5 | **稀疏编码与预测** | V1 简单细胞的稀疏编码（A10/A9）、超完备字典 + 稀疏惩罚 | lasso / group lasso / 图引导 fused lasso 在表达与 eQTL 上的应用 | `RegionLocalCenterSurround` 的半波整流 ⇒ 稀疏（量 L0 非零占比）| ⚠️ **我们的稀疏是整流先验，不是能量最小化** ⇒ 引用时要说清（A11 提醒：稀疏度度量受预处理与滤波器尺寸影响）|
-| F6 | **预测编码 / 状态空间 / 因果** | 预测编码（B4）、自由能、Todorov 最优控制（B5）、Granger/DCM 有效连接 | GRN 的 ODE/状态空间；孟德尔随机化（基因组版因果推断）| `PredictiveInterface`（本轮排除）、`TaskContextGate`（沿时间指数衰减的循环状态 = 一阶状态空间）| ⚠️ `TaskContextGate` 的形式**就是**标准一阶状态空间模型 ⇒ 建议按标准形式重述 |
-| F7 | **最优传输 / Wasserstein** | 脉冲串距离（神经响应的分布级比较，B6）| 单细胞批次校正、多组学整合 | 目前**没有**用：地板只比中位数（exp102 生成侧 2-way 中位 0.505 vs 地板 0.500）| ❌ **空缺** ⇒ 加一条分布层面对照，比只比中位强得多 |
+| F1 | **空间统计与保结构置换** | 脑图「对应问题」：空间自相关让朴素置换失效 ⇒ **spin test**（A1）| 空间转录组学的空间受限置换（A21/A22）| 各地板（跨被试×跨试次错配）、与同尺寸随机组比、组装级跨区隔离检查 | ⚠️ **思路对、零分布弱**：我们手工错配 ⇒ 下一轮（判据①，多区数据）应换成保结构置换 |
+| F2 | **稀疏多元对齐 + 结构化惩罚** | imaging genetics：稀疏 CCA（A2）、图引导 fused lasso / GraphNet-SCCA（A3）、多任务结构化 SCCA（A4）| SNP–ROI 成对选择、eQTL 映射（A6）、microbiome 结构化 CCA（A5）、genomic sCCA 扩展（A7）| exp102「脑侧条件 ↔ CLIP 图像特征」对齐；位置轴的跨带比较；表征比较的方法论参照 RSA（A18）| ⚠️ **自写了加权/聚合、没借这一族** ⇒ 「按脑区分组」的先验正好对应 group lasso 的组惩罚 |
+| F3 | **独立成分与潜在混杂** | ICA 成分的跨被试/跨试次一致性检验（A8）| SVA（正交化隐藏混杂，A17）；基因型分解 ICA | exp93b 的跨被试 200-way 地板（一致性检验的变体）；低秩算子的诚实边界（共模/参考/体积传导）| ⚠️ **概念已用、未做正交化去混杂** ⇒ 多区数据上 SVA 类工具对口 |
+| F4 | **低维流形 / 群体活动** | population coding、低秩动力学、**dPCA**（A13）| 单细胞轨迹推断；群体级表达因子（PLEX/NMF）| `RegionLocalLowRank`（共同驱动）；exp102 的「adapter 输出 token 是否与概念相关」（跨概念一致性 0.9905）| ⚠️ 我们只做了 SVD + 重建误差，**不是 dPCA 口径** |
+| F5 | **稀疏编码与预测** | V1 简单细胞的稀疏编码（A10/A9）、超完备字典 + 稀疏惩罚；ICA 是稀疏编码的特殊情形（A16）| lasso / group lasso / 图引导 fused lasso 在表达与 eQTL 上的应用 | `RegionLocalCenterSurround` 的半波整流 ⇒ 稀疏（量 L0 非零占比）| ⚠️ **我们的稀疏是整流先验，不是能量最小化** ⇒ 引用时要说清（A11 提醒：稀疏度度量受预处理与滤波器尺寸影响）|
+| F6 | **预测编码 / 状态空间 / 因果** | 预测编码（A14）、最优控制（Todorov，A15）、Granger/DCM 有效连接 | GRN 的 ODE/状态空间；孟德尔随机化（基因组版因果推断）| `PredictiveInterface`（本轮排除）、`TaskContextGate`（沿时间指数衰减的循环状态 = 一阶状态空间）| ⚠️ `TaskContextGate` 的形式**就是**标准一阶状态空间模型 ⇒ 建议按标准形式重述 |
+| F7 | **最优传输 / Wasserstein** | 脉冲串距离（EMD = Wasserstein，A19）；功能连接矩阵的 Wasserstein 比较 | 单细胞/多组学的 OT 对齐（SCOT+，A20）| 目前**没有**用：地板只比中位数（exp102 生成侧 2-way 中位 0.505 vs 地板 0.500）| ❌ **空缺** ⇒ 加一条分布层面对照，比只比中位强得多 |
 | F8 | **图 / 网络** | connectomics、图匹配 | PPI 网络、代谢网络、GRN | 组内/组间结构图、位置轴的图匹配类比 | ✅ 概念已在用 |
 
 ---
@@ -40,8 +43,8 @@
    - 多元稀疏对齐 ⇒ **sCCA / S-MTL-SCCA / JSCCA**（A2–A7，有 MATLAB/Python 实现、已发表），
      且**我们的「按脑区分组」正好是 group lasso 的组结构**；
    - 多区数据上的零分布 ⇒ **保结构置换 / spin test**（A1，有开源实现）；
-   - 隐藏混杂 ⇒ **SVA**（A12）；
-   - 「群体活动」⇒ **dPCA / NMF**（B3，落笔前需核）。
+   - 隐藏混杂 ⇒ **SVA**（A17）；
+   - 「群体活动」⇒ **dPCA**（A13；NMF 那一支仍待核）。
 2. **我们的空缺**：地板目前只比**中位数** ⇒ 太钝。exp102 的生成侧 2-way 中位 0.505 vs 地板 0.500，
    两个数都贴着机会 ⇒ 建议补一条**分布层面**的对照（OT/Wasserstein，或逐被试分布检验）。
 3. **我们自写、必须自证的部分**（`COMPONENT_DESIGN.md` §3 那张表是对的，缺的是对照面）：
@@ -86,20 +89,23 @@
 | A10 | Olshausen & Field, **"Sparse coding of sensory inputs"**, *Vision Research* 37:3311–3325 (1997)（超完备基 + 稀疏惩罚）| F5 |
 | A11 | Willmore, Watters & Tolhurst, **"A comparison of natural-image-based models of simple-cell coding"**, *Perception* 29(9):1017–40 (2000) — doi **10.1068/p2963**（PMID 11144817）⚠️ **明确指出：稀疏度与离散度度量受预处理、滤波器尺寸、归一化影响 ⇒ 跨实现不可直接比** | F5 |
 | A12 | **"An improved and explicit surrogate variable analysis procedure by coefficient adjustment"**, *Biometrika* 104(2):303 (2017)；同族：**"Unifying and generalizing methods for removing unwanted variation based on negative controls"**（PMC10751021）| F3 |
+| A13 | Kobak, Brendel, Constantinidis, Feierstein, Kepecs, Mainen, Qi, Romo, Uchida, Machens, **"Demixed principal component analysis of neural population data"**, *eLife* 3:e10989 (2014) — doi **10.7554/eLife.10989**（PMC4887222）⚠️ **第一作者是 Kobak，不是 Cunningham**（Cunningham & Yu 2014 是另一篇，被本文引用）| F4 |
+| A14 | Rao, R.P.N. & Ballard, D.H., **"Predictive coding in the visual cortex: a functional interpretation of some extra-classical receptive-field effects"**, *Nature Neuroscience* 2(1):79–87 (1999) — doi **10.1038/4580**（PMID 10195184）| F6 |
+| A15 | Todorov, E., **"Optimality principles in sensorimotor control"**, *Nature Reviews Neuroscience* 7(9):907–15 (2004) — doi **10.1038/nn1309**（PMID 15332089）| F6 |
+| A16 | Bell, A.J. & Sejnowski, T.J., **"The 'independent components' of natural scenes are edge filters"**, *Vision Research* 37(23–24) (1997) — doi **10.1016/s0042-6989(97)00121-1**（1996 年 NeurIPS 版本题名为 "Edges are the Independent Components of Natural Scenes"）| F5 |
+| A17 | Leek, J.T. & Storey, J.D., **"Capturing Heterogeneity in Gene Expression Studies by Surrogate Variable Analysis"**, *PLoS Genetics* 3(9):e161 (2007) — doi **10.1371/journal.pgen.0030161**（PMC1994707）⚠️ **是 PLoS Genetics，不是 PLoS Computational Biology** | F3 |
+| A18 | Kriegeskorte, N., **"Representational similarity analysis – connecting the branches of systems neuroscience"**, *Frontiers in Systems Neuroscience* 2:4 (2008) — doi **10.3389/neuro.06.004.2008**（PMID 19104670；PMC2605405）| F2 |
+| A19 | Sihn, D. & Kim, S.-P., **"A Spike Train Distance Robust to Firing Rate Changes Based on the Earth Mover's Distance"** — PMC6914768（PMID **31920607**；EMD 即 Wasserstein 度量）| F7 |
+| A20 | Baker, Pham, Demetci, Tran, Redko, Sandstede, Singh, **"SCOT+: a comprehensive software suite for single-cell alignment using optimal transport"**, *Bioinformatics Advances* 6(1):vbaf314 (2026) — doi **10.1093/bioadv/vbaf314**（前身为 SCOT）| F7 |
+| A21 | **"Spatial Autocorrelation Aware Resampling Improves Cell-Cell Interaction Inference in Spatial Transcriptomics Data"**（SOAAR）— PMC13370955（**空间自相关感知重采样**：构造保持基因级空间自相关的重采样数据做零分布 ⇒ 假阳性率低于随机置换）⚠️ 卷期/DOI 待补 | F1 |
+| A22 | **"Toward Best Practices for Imaging Transcriptomics of the Human Brain"**, *Biological Psychiatry* (2023)（明确建议区域分析用**空间受限零模型**）⚠️ DOI 待补 | F1 |
 
 ### B 档：**原文条目未核**（只核到邻域文献 ⇒ 落笔前必须再核，当前**不得**当作已核实引用）
 
-| 编号 | 条目 | 家族 |
-|---|---|---|
-| B1 | Varoquaux et al. 2018, "Rotate this to see the problem"（counter-screening；与 A1 的 spin test 属同一问题族）| F1 |
-| B2 | Bell & Sejnowski 1997（ICA 是稀疏编码的特殊情形）| F5 |
-| B3 | dPCA（demixed PCA）/ NMF 群体活动口径 | F4 |
-| B4 | Rao & Ballard 1999（预测编码）| F6 |
-| B5 | Todorov 运动最优控制 | F6 |
-| B6 | 脉冲串距离的 Wasserstein 形式 / 单细胞批次校正的 OT 方法 | F7 |
-| B7 | SVA 原始文献（Leek & Storey 2008/2009）| F3 |
-| B8 | Kriegeskorte 2009 的 RSA；以及跨组织/细胞类型的表达模式相似性 | F2 |
-| B9 | 空间转录组学的空间置换检验的标准出处 | F1 |
+| 编号 | 条目 | 家族 | 处置 |
+|---|---|---|---|
+| B1 | Varoquaux et al. 2018, "Rotate this to see the problem"（counter-screening）；同族还有 "Make it real: fMRI maps and the correspondence problem" | F1 | 两轮检索**均未命中原文条目** ⇒ 保留 B 档；**A1 的 spin test 已覆盖同一问题** ⇒ 若不需要可直接整条删掉 |
+| B2 | 空间转录组学「空间置换检验」的**方法侧原始出处**（本轮只核到 A21/A22 两个应用侧条目）| F1 | 落笔前再核 |
 
 ---
 

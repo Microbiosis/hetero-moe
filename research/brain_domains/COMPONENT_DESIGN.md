@@ -60,10 +60,10 @@
 | 算子 | 用在哪 | 脑科学下的作用 | 我们这里的用法 | 性质测试 | 可对应的文献方法（详见 `MATH_TOOLKIT.md`）|
 |---|---|---|---|---|---|
 | `RegionLocalCenterSurround` | POST 34 | V1 简单细胞中心-周边 + 稀疏编码 | 组内**群体相对**中心-周边：中心 = 本通道，环绕 = **同组其它通道**的公共驱动；半波整流 ⇒ 稀疏 | ✅ 7 项 | 稀疏编码：Olshausen & Field 1997/1996（A9/A10）⚠️ **我们的稀疏是整流先验，不是能量最小化** ⇒ 跨实现不可直接比（A11）|
-| `RegionLocalLowRank` | CENT 14 | 集群活动 / 共同驱动（⚠️ **不是肌肉协同**——那要 EMG/ECoG）| 该组活动投到 rank 维 ⇒ 是否少数成分在驱动（**须与同尺寸随机组比**才有意义）| ✅ 4 项 | 群体活动分解：dPCA / NMF（B3，未核）；隐藏混杂：SVA（A12）⚠️ 我们只做 SVD，**不回答「成分是否携带行为信息」** |
-| `RegionLocalTransient` | POST 34 | ON/OFF 通路 ⇒ V1 简单细胞 ON/OFF 亚群 + 持续成分 | 逐通道分出上升/下降瞬变与持续（250 Hz、250 ms 窗 ⇒ ON 约 100 ms）| ✅ 5 项 | ON/OFF 简单细胞亚群（B2 邻域，未核原文）⚠️ 本轮排除：与中心-周边是**同层正交属性**，不是串联两级 |
-| `TaskContextGate` | FRONT 15 | dlPFC 维持任务集 + **加性** top-down 偏置（Miller & Cohen 2001）| 组内维持：衰减循环状态 ⇒ 偏置向量（g=0 ⇒ 恒等）| ✅ 7 项 | 加性偏置已在 `ops_brain.py` 引 Miller & Cohen 2001 / Buschman & Miller 2007；**状态空间/最优控制**（B5，未核）⇒ 建议按一阶状态空间的标准形式重述 |
-| `PredictiveInterface` | POST 34 **组内层间**（V1→V2→V4→IT）| 预测编码（Rao & Ballard 1999，C5）| 层间上行预测 / 下行误差**物理分开**（初始强预测 ⇒ 误差路只带新信息）| ✅ 7 项 | 预测编码（B4，未核原文）⚠️ 本轮排除：接口是 `(B, D, T)` **信号流**形状，而我们是 **token 化**表示 |
+| `RegionLocalLowRank` | CENT 14 | 集群活动 / 共同驱动（⚠️ **不是肌肉协同**——那要 EMG/ECoG）| 该组活动投到 rank 维 ⇒ 是否少数成分在驱动（**须与同尺寸随机组比**才有意义）| ✅ 4 项 | 群体活动分解：dPCA（Kobak 等 2014, *eLife*，`MATH_TOOLKIT.md` A13）；隐藏混杂：SVA（A17）⚠️ 我们只做 SVD，**不回答「成分是否携带行为信息」** |
+| `RegionLocalTransient` | POST 34 | ON/OFF 通路 ⇒ V1 简单细胞 ON/OFF 亚群 + 持续成分 | 逐通道分出上升/下降瞬变与持续（250 Hz、250 ms 窗 ⇒ ON 约 100 ms）| ✅ 5 项 | ON/OFF 简单细胞亚群（Bell & Sejnowski 1997, *Vision Research*，A16）⚠️ 本轮排除：与中心-周边是**同层正交属性**，不是串联两级 |
+| `TaskContextGate` | FRONT 15 | dlPFC 维持任务集 + **加性** top-down 偏置（Miller & Cohen 2001）| 组内维持：衰减循环状态 ⇒ 偏置向量（g=0 ⇒ 恒等）| ✅ 7 项 | 加性偏置已在 `ops_brain.py` 引 Miller & Cohen 2001 / Buschman & Miller 2007；**最优控制**（Todorov 2004, *Nat Rev Neurosci*，A15）⇒ 建议按一阶状态空间的标准形式重述 |
+| `PredictiveInterface` | POST 34 **组内层间**（V1→V2→V4→IT）| 预测编码（Rao & Ballard 1999，C5）| 层间上行预测 / 下行误差**物理分开**（初始强预测 ⇒ 误差路只带新信息）| ✅ 7 项 | 预测编码（Rao & Ballard 1999, *Nat Neurosci*，A14）⚠️ 本轮排除：接口是 `(B, D, T)` **信号流**形状，而我们是 **token 化**表示 |
 
 **性质测试**（`arch/test_ops_brain.py`，**33 项全绿**）：每个算子三项检查（**退化性 / 关键性质 / 梯度可达**），
 外加一条**组装级跨区隔离**检查（改 B 组输入 ⇒ A 组输出不变）⇒ 「区内混、区间不混」的可测形式。
