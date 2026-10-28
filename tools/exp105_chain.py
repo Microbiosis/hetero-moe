@@ -296,14 +296,76 @@ def build_tasks():
 # ---------------------------------------------------------------------------
 # 调度
 # ---------------------------------------------------------------------------
+# ===========================================================================
+# ⚠️⚠️ **成本闸门**（2026-10-28 加）：上一版链子因为「建 Job 失败就重试 20 次 × 换 6 个 flavor」
+#    空转，**建了 47 个 Job（25 个被取消）** ⇒ 把账户额度烧光（402）⇒
+#    ⇒ 现在：**一次步骤最多建 2 个 Job；402 立即放弃（不重试、不换池）；不换 flavor（排到就等）。**
+# ===========================================================================
+MAX_JOBS_TOTAL = 18          # 整条链子的 Job 预算上限（超过就停并报告）
+LAUNCH_RETRIES = 2            # 单个步骤最多建几次 Job（原来 20 次！）
+JOBS_BUILT = {"n": 0}
+
+
+def launch_safe(name, timeout, cmd, flavor):
+    """建 Job：**最多 LAUNCH_RETRIES 次**；**402 立刻放弃**（那是账户状态，不是瞬时故障）。"""
+    if JOBS_BUILT["n"] >= MAX_JOBS_TOTAL:
+        log(f"!! 预算闸门：已建 {JOBS_BUILT['n']} 个 Job ≥ 上限 {MAX_JOBS_TOTAL} ⇒ 不再建")
+        return False
+    for attempt in range(1, LAUNCH_RETRIES + 1):
+        JOBS_BUILT["n"] += 1
+        try:
+            info = C.api.run_job(image=C.SPACE, command=cmd, env={"OMP_NUM_THREADS": "1"},
+                                volumes=[C.Volume(type="bucket",
+                                                 source="illusion-brain/brain-domains",
+                                                 mount_path="/domains"),
+                                         C.Volume(type="bucket",
+                                                 source="illusion-brain/training-data",
+                                                 mount_path="/training", read_only=True)],
+                                flavor=flavor, timeout=timeout, name=name)
+            log(f"  ⇒ 建好 [{flavor}]（第 {JOBS_BUILT['n']}/{MAX_JOBS_TOTAL}）id={info.id}")
+            return True
+        except Exception as e:                                   # noqa: BLE001
+            msg = str(e)
+            log(f"  try={attempt}/{LAUNCH_RETRIES} [{flavor}] {type(e).__name__}: {msg[:150]}")
+            if "402" in msg:
+                log("  ⚠️ **402 = 账户额度/计费状态 ⇒ 不是瞬时故障 ⇒ 立即放弃，不重试、不换池**")
+                return False
+            if attempt >= LAUNCH_RETRIES:
+                return False
+            time.sleep(8)
+    return False
+
+
+def run_step_safe(prefix, timeout, cmd, budget_s, flavor):
+    """跑一步：**只用 flavor 指定的池**；排到就等（不取消、不换池）；失败最多重试 1 次（同名 ⇒ 会被 attach）。"""
+    for attempt in range(1, 3):
+        live = C.find_live_job([prefix])
+        if live:
+            log(f"  ↺ 挂到已有的 {prefix}（{live[2]}）⇒ 不重建")
+        elif not launch_safe(prefix, timeout, cmd, flavor):
+            log(f"  ✗ {prefix} 建不起来 ⇒ 停（不再试别的池）")
+            return False
+        st = C.wait_for(prefix, budget_s)
+        log(f"{prefix} ⇒ {st}")
+        if st == "COMPLETED":
+            return True
+        if st == "CANCELED" or st == "ERROR":
+            if attempt == 1:
+                log(f"  {st} ⇒ 同名重试 1 次（若同名 Job 还活着会被 attach）")
+                time.sleep(10)
+                continue
+        return False
+    return False
+
+
 def run_one(task):
     prefix = f"t105-{task['name']}"
     log(f"▶ {prefix}")
-    ok = C.run_step(prefix, task["timeout"], task["cmd"], task["budget"],
-                    flavors=task.get("flavors") or FLAVORS,
-                    startup_budget=(None if task.get("hold") else STARTUP_BUDGET),
-                    attach_names=[prefix],
-                    hold=bool(task.get("hold")))
+    flavor = task.get("flavors")
+    if isinstance(flavor, (list, tuple)):
+        flavor = flavor[0]
+    ok = run_step_safe(prefix, task["timeout"], task["cmd"], task["budget"],
+                       flavor or FLAVORS[0])
     log(f"■ {prefix} ⇒ {ok}")
     return ok
 
