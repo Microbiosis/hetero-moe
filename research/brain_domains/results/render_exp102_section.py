@@ -76,7 +76,7 @@ def main():
              f"离线重算：`results/parse_exp102.py`（读逐被试原始记录 ⇒ 与云端逐字对齐）。")
     L.append("")
 
-    L.append("### 四十七·一、**C0 管线自检**")
+    L.append("### 四十八·一、**C0 管线自检**")
     L.append("")
     L.append("| 项 | 值 |")
     L.append("|---|---|")
@@ -87,8 +87,16 @@ def main():
     L.append(f"| C0 总判 | **{bool(v.get('C0_pass'))}** |")
     L.append("")
 
-    L.append("### 四十七·二、**逐被试原始记录**（离线可重算）")
+    L.append("### 四十八·二、**逐被试原始记录**（离线可重算）")
     L.append("")
+    excl = verdict.get("subjects_excluded") or []
+    if excl:
+        L.append(f"> ⚠️ **有被试被剔除**：{excl}"
+                 f"（判据 = **预登记的数据质量闸门**：该被试的条件与真图对不上 ⇒ 其 2-way/50-way 无意义；"
+                 f"**与判决结果无关**，不是挑人。修订留痕见 **§四十四·六 R2**）")
+        L.append(f"> 统计单元 = **{verdict.get('n_subjects_used')}** 个被试"
+                 f"（§四十四·三 要求 ≥ 8）")
+        L.append("")
     L.append("| 被试 | own 2-way | 地板 2-way | Δ | own 50-way | 地板 50-way | Δ | "
              "跨被试同概念 2-way | 条件侧 2-way | CLIP 相似度 |")
     L.append("|---|---|---|---|---|---|---|---|---|---|---|")
@@ -108,7 +116,7 @@ def main():
                  f"{num(g('clip_sim'))} |")
     L.append("")
 
-    L.append("### 四十七·三、**判决**（阈值见 §四十四·三，**一字未改**）")
+    L.append("### 四十八·三、**判决**（阈值见 §四十四·三，**一字未改**）")
     L.append("")
     L.append("| 判据 | 量 | n | 正/负/零 | p（配对符号检验）| 中位 | 过？|")
     L.append("|---|---|---|---|---|---|---|")
@@ -127,7 +135,7 @@ def main():
     L.append(f"**解释**：{v.get('interpretation') or '（C1 通过 ⇒ 条件驱动了生成）'}")
     L.append("")
 
-    L.append("### 四十七·四、**C3（只报）**：传递效率与并排参照")
+    L.append("### 四十八·四、**C3（只报）**：传递效率与并排参照")
     L.append("")
     L.append("| 量 | 值 |")
     L.append("|---|---|")

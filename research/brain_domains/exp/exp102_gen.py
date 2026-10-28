@@ -133,12 +133,20 @@ def two_way_acc(gen_feat, true_feat, neg):
 
 
 def fifty_way_acc(gen_feat, true_feat, group):
-    """50-way top-1：只在**同组**的 50 个候选里比。"""
+    """50-way top-1：只在**同组**的 50 个候选里比。
+
+    ⚠️⚠️ **2026-10-28 修一个真 bug**（云端 judge 第一次真跑时炸出来的）：
+      原第 141 行 `rows = np.flatnonzero(group == np.arange(len(group))[group == gi])`
+      ⇒ `group`（200）与右边（组大小 50）**广播不上** ⇒ ValueError。
+      ⇒ 而且**自测没覆盖 50-way 这条路径** ⇒ 22/22 自测全绿却带着这个 bug 上云。
+    ⇒ 正确含义：生成图第 i 行对应真图第 i 行 ⇒ 「第 i 行该在哪些候选里比」
+      ⇒ 就是 `group == gi` 的那些下标（rows 与 cols 相同）。
+    """
     sim = gen_feat @ true_feat.T
     mask = np.zeros_like(sim, dtype=bool)
     for gi in np.unique(group):
         cols = np.flatnonzero(group == gi)
-        rows = np.flatnonzero(group == np.arange(len(group))[group == gi])
+        rows = cols                      # ⇒ 行 i 对应真图 i ⇒ 同组候选 = 同组下标
         mask[np.ix_(rows, cols)] = True
     simm = np.where(mask, sim, -np.inf)
     return float((simm.argmax(axis=1) == np.arange(len(sim))).mean())
@@ -179,8 +187,12 @@ def judge(records, min_subjects=MIN_SUBJECTS, alpha=ALPHA):
         return out
 
     # ---- C1（主判据）：own2 − floor2 ----
+    # ⚠️⚠️ **2026-10-28 修**：原来用「键是否存在」过滤 ⇒ 被试的 `floor2` 为 **None**
+    #   （它的地板来自被剔除的 donor）时 ⇒ `own2 - None` ⇒ **TypeError**。
+    #   ⇒ 改成按**值是否为 None**过滤（并由 judge step 把这种被试标成 `ok=False`）。
     c1 = {}
-    diffs = [r["own2"] - r["floor2"] for r in ok if "own2" in r and "floor2" in r]
+    diffs = [r["own2"] - r["floor2"] for r in ok
+             if r.get("own2") is not None and r.get("floor2") is not None]
     if diffs:
         v = E101.paired_test(diffs, "two_way_minus_floor", c1)
         v["pass"] = bool(v["n_eff"] >= min_subjects and v["p_sign"] <= alpha
@@ -191,7 +203,7 @@ def judge(records, min_subjects=MIN_SUBJECTS, alpha=ALPHA):
     # ---- C1b（只报）：被试特异性 = own2(s) − own2(donor 同概念) ----
     c1b = {}
     diffs_b = [r["own2"] - r["cross_subject2"] for r in ok
-               if "own2" in r and "cross_subject2" in r]
+               if r.get("own2") is not None and r.get("cross_subject2") is not None]
     if diffs_b:
         E101.paired_test(diffs_b, "two_way_minus_cross_subject", c1b)
     out["C1b_report"] = c1b
@@ -199,7 +211,8 @@ def judge(records, min_subjects=MIN_SUBJECTS, alpha=ALPHA):
 
     # ---- C2：50-way ----
     c2 = {}
-    diffs2 = [r["own50"] - r["floor50"] for r in ok if "own50" in r and "floor50" in r]
+    diffs2 = [r["own50"] - r["floor50"] for r in ok
+              if r.get("own50") is not None and r.get("floor50") is not None]
     if diffs2:
         v = E101.paired_test(diffs2, "fifty_way_minus_floor", c2)
         v["pass"] = bool(v["n_eff"] >= min_subjects and v["p_sign"] <= alpha
@@ -208,8 +221,8 @@ def judge(records, min_subjects=MIN_SUBJECTS, alpha=ALPHA):
     out["C2_pass"] = bool(c2) and all(x.get("pass") for x in c2.values())
 
     # ---- C3（只报）----
-    own2_med = E101.med_up([r["own2"] for r in ok if "own2" in r])
-    floor2_med = E101.med_up([r["floor2"] for r in ok if "floor2" in r])
+    own2_med = E101.med_up([r["own2"] for r in ok if r.get("own2") is not None])
+    floor2_med = E101.med_up([r["floor2"] for r in ok if r.get("floor2") is not None])
     cond2_med = E101.med_up([r["cond2_same_clip"] for r in ok
                              if r.get("cond2_same_clip") is not None])
     eff = (own2_med / cond2_med) if (cond2_med and cond2_med > 0) else None
@@ -554,13 +567,25 @@ def step_judge(args):
         cond2_all[sid] = two_way_acc(l2norm(c), true_clip, neg)
 
     loss_summary = {}
-    curve = out_dir / "train_curve.json"
-    if curve.exists():
+    # ⚠️⚠️ **2026-10-28 修一个真 bug**：损失曲线在**训练输出目录**（`exp102/train_curve.json`），
+    #   而生成产物在 `exp102/gen2/` ⇒ 只在 `out_dir` 里找 ⇒ **找不到** ⇒
+    #   ⇒ C0 的「损失下降」被判成 false ⇒ 判决错成 **C0_FAIL**（其实 C0 是过的：0.080645 → 0.075969）。
+    #   ⇒ 现在**两级都找**（先 out_dir，再 out_dir.parent）。
+    curve = None
+    for cand in (out_dir / "train_curve.json", out_dir.parent / "train_curve.json"):
+        if cand.exists():
+            curve = cand
+            break
+    if curve is None:
+        log(f"[C0] ⚠ 找不到 train_curve.json（试过 {out_dir / 'train_curve.json'} 与 "
+            f"{out_dir.parent / 'train_curve.json'}）⇒ C0 的「损失下降」将判 false")
+    else:
+        log(f"[C0] 损失曲线：{curve}")
         try:
             import exp102_train as T
             loss_summary = T.loss_curve_summary(json.loads(curve.read_text(encoding="utf-8")))
         except Exception as e:                                   # noqa: BLE001
-            log(f"[C0] 损失曲线读不出：{e}")
+            log(f"[C0] 损失曲线读不出：{type(e).__name__}: {e}")
 
     gen_feats = {}
     for sid in TEST_SUBJECTS:
@@ -594,6 +619,14 @@ def step_judge(args):
                "cond2_same_clip": cond2_all.get(sid),
                "clip_sim": float(np.mean(np.sum(g * true_clip[:n], axis=1))),
                "loss_summary": loss_summary}
+        if floor_feat is None:
+            # 它的地板 = donor（=s+1，被试环）自己那批生成图 ⇒ donor 被剔除 ⇒ **地板不存在**
+            # ⇒ ⇒ 这个被试**不能进配对统计**（own2 仍如实报，只是不参与 C1/C2 的配对）
+            rec["ok"] = False
+            rec["ok_reason"] = (f"地板缺失：地板来自 donor sub-{d:02d}，而它被剔除"
+                                f"（对齐闸门未过）⇒ 它的 2-way/50-way 没有地板可比")
+            log(f"[judge] ⚠ sub-{sid:02d} 没有地板（donor sub-{d:02d} 被剔除）"
+                f"⇒ 不进配对统计（own2 仍报）")
         dp_obj = out_dir / f"gen_dist_sub{sid:02d}.pt"
         if dp_obj.exists():
             rec["img_pair_dist"] = torch.load(dp_obj, map_location="cpu",
@@ -780,6 +813,41 @@ def self_test():
     a_bad = two_way_acc(g_bad, t, negs)
     chk("2-way 手算一致（3/4：第一行的生成图指向了别的候选）",
         abs(a_bad - 0.75) < 1e-9)
+
+    # ⑨-bis 50-way：**必须在同组内比**（2026-10-28 补）
+    #   ⚠️ 云端 judge 第一次真跑时炸在这条路径上（行索引算式广播不上 ⇒ ValueError），
+    #   而**自测当时 22/22 全绿** ⇒ ⇒ 说明 50-way 这条路径**当时根本没被自测覆盖**
+    #   ⇒ ⇒ 这类「只在云端真跑才走到」的路径必须补手算用例。
+    g50, _ = build_candidate_structure(200)
+    eye = np.eye(200)
+    chk("50-way：生成图 = 真图 ⇒ 1.0",
+        abs(fifty_way_acc(eye, eye, g50) - 1.0) < 1e-9)
+    half = eye.copy()
+    for gi in np.unique(g50):
+        cols = np.flatnonzero(g50 == gi)
+        for c in cols[25:]:                  # 组内后一半的行 ⇒ 指向组内第一列 ⇒ 错
+            half[c] = 0.0
+            half[c, cols[0]] = 1.0
+    chk("50-way：组内一半的行错位 ⇒ 0.5",
+        abs(fifty_way_acc(half, eye, g50) - 0.5) < 1e-9)
+    oog = eye.copy()
+    oog[0, 100] = 5.0                       # 第 0 行在**组外**放了一个更大的值
+    chk("50-way：组外的更大值不能干扰（只在同组内比）",
+        abs(fifty_way_acc(oog, eye, g50) - 1.0) < 1e-9)
+
+    # ⑩ **无地板**的被试（它的 donor 被剔除 ⇒ 地板不存在）⇒ 不进配对统计，且**不许崩**
+    #   （2026-10-28：donor 被剔除 ⇒ floor2=None ⇒ 原来 `own2 - None` 会 TypeError）
+    recs10 = _fake_records(n=9)
+    recs10[0]["floor2"] = None
+    recs10[0]["floor50"] = None
+    recs10[0]["cross_subject2"] = None
+    recs10[0]["ok"] = False
+    recs10[0]["ok_reason"] = "地板缺失（donor 被剔除）"
+    v10 = judge(recs10)
+    chk("无地板的被试不进配对统计（n_eff = 8 而不是 9）",
+        v10.get("C1", {}).get("two_way_minus_floor", {}).get("n_eff") == 8)
+    chk("无地板的被试 ⇒ 判决照样给出（不崩）",
+        v10.get("verdict") == "CONDITION_DRIVES_GENERATION")
 
     print(f"\n{'全部通过' if fail == 0 else f'{fail} 项失败'}")
     return 1 if fail else 0
