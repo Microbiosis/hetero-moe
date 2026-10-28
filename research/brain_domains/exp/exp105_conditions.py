@@ -219,6 +219,13 @@ def step_clipfeat(args):
 
     import exp102_cache as C
     import exp102_gen as G
+    import exp102_train as T
+
+    # ⚠️⚠️ **Job 镜像里没有 diffusers / transformers** ⇒ 必须在 `load_clip` 之前装
+    # （`exp102_gen.load_clip` 内部是 `from transformers import ...` **在前**、`ensure_deps()` 在后
+    #  ⇒ 光调它自己不够 ⇒ 必须在这里先装）
+    # ⚠️ 2026-10-28 实测：第一次跑 t105-cond-clip 就是 `ModuleNotFoundError: transformers`。
+    T.ensure_deps()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     out_dir = Path(args.out_dir)
