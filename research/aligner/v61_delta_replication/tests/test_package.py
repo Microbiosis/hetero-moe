@@ -34,16 +34,22 @@ def test_delta_definition():
     return True
 
 
-def test_parity_gap_zero_for_smooth():
-    """平滑剖面（只依赖 |i−j|）的奇偶差必须为 0 —— 它只测周期 2。"""
+def test_parity_gap_small_for_smooth():
+    """平滑剖面的奇偶差应当**小**，但不是 0 —— 这是 R4 阈值的校准依据。
+
+    ⚠️ 上一版断言 |pg| < 1e-9 是错的（实测 0.0364）。原因: 有限 d 范围上
+       偶/奇两组取到的 d 不同（偶含 2,4,6,8；奇含 3,5,7,9），非线性衰减函数
+       在两组的均值天然不等。所以 R4 的阈值必须是"远大于平滑的值、
+       远小于交替的值"，而不能取 0。
+    """
     S = 10
     M = torch.zeros(S, S)
     for i in range(S):
         for j in range(S):
             M[i, j] = 1.0 / (1 + abs(i - j))
     pg = parity_gap(M)
-    assert abs(pg) < 1e-9, pg
-    print(f"[PASS] 平滑剖面奇偶差 = {pg:.2e}（R4 只对周期 2 敏感）")
+    assert 0 < abs(pg) < 0.15, ("平滑剖面奇偶差应小于 R4 阈值 0.15", pg)
+    print(f"[PASS] 平滑剖面奇偶差 = {pg:.4f}（>0 但 <0.15，R4 阈值据此定）")
     return True
 
 
@@ -61,13 +67,17 @@ def test_parity_gap_detects_alternating():
 
 
 def test_planted_local_delta_positive():
-    """植入相邻相似的结构 ⇒ Δ 应显著为正。"""
+    """植入相邻相似的结构 ⇒ Δ 应显著为正。
+
+    ⚠️ 上一版 amp=0.05 太弱（Δ 只有 0.035，虽显著但触不到 R3 的 0.05），
+       加强到 0.35，让它成为明确的灵敏度正控。
+    """
     torch.manual_seed(0)
     n, S, D = 192, 16, 32
     base = torch.randn(n, 1, D)
     direction = torch.randn(1, 1, D)
     pos = torch.arange(S).view(1, S, 1).float()
-    X = base + pos * direction * 0.05 + torch.randn(n, S, D) * 0.01
+    X = base + pos * direction * 0.35 + torch.randn(n, S, D) * 0.01
     r = analyse(X, 30, 7)
     assert r["delta"] > 0.05 and r["outside"], (r["delta"], r["outside"])
     print(f"[PASS] 植入相邻相似 → Δ={r['delta']:+.4f}, 显著={r['outside']}")
@@ -116,7 +126,7 @@ def test_predictions_match_spec():
 
 TESTS = [
     test_delta_definition,
-    test_parity_gap_zero_for_smooth,
+    test_parity_gap_small_for_smooth,
     test_parity_gap_detects_alternating,
     test_planted_local_delta_positive,
     test_planted_alternating_delta_negative_and_r4_flags,
