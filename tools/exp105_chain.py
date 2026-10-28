@@ -202,15 +202,21 @@ def main():
 
     # ---- G0：前置闸门 + X3 的 CLIP 特征（X1/X3 的后续步骤都依赖它们）----
     log("=== G0 前置闸门 ===")
-    r = run_parallel([
-        {"prefix": "t105-cond-test", "cmd": cond_testcond_cmd(), "timeout": "2h",
-         "budget": 5400, "startup_budget": 300},
-        {"prefix": "t105-cond-clip", "cmd": cond_clipfeat_cmd(), "timeout": "2h",
-         "budget": 5400, "startup_budget": 300},
-    ])
-    if not all(r.values()):
-        log(f"!! G0 未全过：{r} ⇒ 停下（X1 的闸门没过就不该训）")
-        return 1
+    # ⚠️ **已完成就跳过**（2026-10-28：第一次跑完 G0 后链子因 402 停下 ⇒ 重启会白烧两个 GPU Job）
+    done_gate = C.stage_of_prefix("t105-cond-test")
+    done_clip = C.stage_of_prefix("t105-cond-clip")
+    if done_gate and done_gate[2] == "COMPLETED" and done_clip and done_clip[2] == "COMPLETED":
+        log(f"✓ G0 已完成（{done_gate[0]} / {done_clip[0]} 都是 COMPLETED）⇒ 跳过闸门")
+    else:
+        r = run_parallel([
+            {"prefix": "t105-cond-test", "cmd": cond_testcond_cmd(), "timeout": "2h",
+             "budget": 5400, "startup_budget": 300},
+            {"prefix": "t105-cond-clip", "cmd": cond_clipfeat_cmd(), "timeout": "2h",
+             "budget": 5400, "startup_budget": 300},
+        ])
+        if not all(r.values()):
+            log(f"!! G0 未全过：{r} ⇒ 停下（X1 的闸门没过就不该训）")
+            return 1
 
     # ---- G1/G2：X1 与 X3 的训练（seed 0 ⇒ 与 exp102 逐点同序列）----
     for seg in (1, 2):
