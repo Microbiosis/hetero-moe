@@ -1,37 +1,33 @@
 #!/usr/bin/env python3
-r"""exp105_chain.py — exp105（**三个交叉对照**，§四十九）的**编排链子**。
+r"""exp105_chain.py — exp105（**三个交叉对照**，§四十九）的编排链子。
 
-## 这条链子干什么
+## 编排原则（2026-10-28 重写）
+
+**三个对照（X1 snr / X2 more / X3 oracle）各自跑完整遍，轮流推进、互不挡。**
+
+- **全局并发上限 = 2**（平台同时只跑 2 个 Job）⇒ 用**依赖图 + 就绪队列**调度：
+  每轮取「依赖已满足」的任务里**最多 2 个**并发跑 ⇒ 谁先空出来谁先补上
+  ⇒ ⇒ X2 不会因为排在 X1/X3 后面而干等。
+- **排不到就换池**（`hold=False` + 短 `startup_budget`）：GPU 池经常整池满
+  （实测 `l40sx1` 排 40 分钟没槽位，而 `l4x1` **26 秒**就开跑）
+  ⇒ ⇒ flavor 阶梯**把 l4x1 放前面**，排不到就取消当前 flavor、换下一个池。
+  ⚠️ 但**不回到已排过的 flavor**（否则丢队列位置白排）—— 阶梯循环天然做到。
+- **每个任务都有「完成判据」**（查桶上产物）⇒ 链子可以随时重启，
+  **不会重复烧算力**（2026-10-28 实测：重启时 G0 闸门已跑完却重跑 ⇒ 白烧两个 GPU Job）。
+
+## 任务图
 
 ```
-G0 前置闸门   X1 的条件侧 2-way（avg4 vs rep0）  ∥  X3 的训练图 CLIP 特征
-G1 训练 X1 第 1 段 ∥ 训练 X3 第 1 段      （seed 0 ⇒ 与 exp102 逐点同序列）
-G2 训练 X1 第 2 段 ∥ 训练 X3 第 2 段
-G3 训练 X2 第 1 段（seed 1，新序列）∥ 训练 X2 第 2 段（seed 2）
-G4 生成 X1（10 被试 × 200）∥ 生成 X3（own + floor，各 200）
-G5 生成 X2（10 被试 × 200）
-G6 机制 ×3 ∥ 判决 ×3（CPU）
-G7 取回结果（只下小 JSON）
+train-snr-1 ──┬─► train-snr-2 ──┬─► gen-snr ──┬─► mech-snr ──► judge-snr
+              │                 │             │
+train-oracle-1┴─► train-oracle-2┴─► gen-oracle┴─► mech-oracle► judge-oracle
+              │
+train-more-1 ───► train-more-2 ───► gen-more ───► mech-more ──► judge-more
 ```
-
-## 复用
-
-- **flavor 阶梯 / 抗抢占 / 挂到已有 Job / 排队不取消** ⇒ 直接 `import exp102_chain` 的
-  `run_step` / `launch` ⇒ ⇒ **不重复实现编排逻辑**（一条事实只写一处）。
-- 判据 ⇒ `exp102_gen.judge`；生成口径 ⇒ `exp102_gen` 的常量（RES / DDIM / guidance / 种子）。
-
-## 关键口径（与 §四十九 一致）
-
-| 对照 | 条件 | seed | 步数 | 统计单元 |
-|---|---|---|---|---|
-| X1 snr | 4 rep 输出空间平均 | **0**（= exp102） | 与 exp102 同量级 | 被试 |
-| X2 more | 单 rep（同 exp102） | **1, 2**（新序列） | ≈ 2.5× exp102 | 被试 |
-| X3 oracle | 真图 CLIP 特征 | **0** | 与 exp102 同量级 | 概念 |
 
 ## 用法
 
 ```powershell
-# 用 huggingface-hub 那个解释器跑（它才有 huggingface_hub）
 & 'D:\scoop\persist\uv\tools\versions\huggingface-hub\Scripts\python.exe' tools\exp105_chain.py
 ```
 """
@@ -56,11 +52,20 @@ EXP102_CACHE = "/domains/runs/illusionbrain-align/exp102/cache"
 CPU = C.CPU_FLAVOR
 MAX_PARALLEL = 2
 
-# 训练口径（**与 §四十九·七 一致**；lr / batch / steps-per-epoch 与 exp102 同）
+# ⚠️ **flavor 阶梯：l4x1 排最前**（2026-10-28 实测：l40sx1 排 40 分钟没槽位，
+#    l4x1 26 秒就开跑）⇒ 排不到就换池，而不是死等同一个池。
+FLAVORS = [f.strip() for f in os.environ.get(
+    "EXP105_FLAVORS", "l4x1,l40sx1,a100-large,a10g-large,a10g-small,t4-medium").split(",")
+    if f.strip()]
+# ⚠️ 排多久就换池（换池 = 取消当前排队 Job + 换下一个 flavor ⇒ 不回到已排过的池）
+STARTUP_BUDGET = int(os.environ.get("EXP105_STARTUP_BUDGET", "240"))
+
 TRAIN_COMMON = ["--max-minutes", "100", "--batch", "8", "--lr", "1e-4",
                 "--steps-per-epoch", "50"]
 GEN_TIMEOUT = "2h"
-TRAIN_TIMEOUT = "2h"          # 平台接受 2h（实测）；脚本自己按 --max-minutes 收尾
+TRAIN_TIMEOUT = "2h"
+TRAIN_SEGS = 2                      # 每个对照的训练段数
+N_GEN_SUBJECTS = 10
 
 SCRIPTS = ("exp105_conditions.py", "exp105_train.py", "exp105_gen.py")
 UPLOAD_DIR = Path(os.environ.get("EXP105_UPLOAD_DIR", r"D:\.minimax\tmp\exp105_scripts"))
@@ -71,7 +76,7 @@ def log(*a):
 
 
 # ---------------------------------------------------------------------------
-# 起飞前自检（本地就能抓到的错，不该烧云端 Job）
+# 起飞前自检
 # ---------------------------------------------------------------------------
 def preflight():
     py = C.pick_python()
@@ -90,21 +95,18 @@ def preflight():
             log(f"!! 起飞前自检 [{name}] 跑不起来：{type(e).__name__}: {e}")
             return False
         if r.returncode != 0:
-            log(f"!! 起飞前自检 [{name}] 未过：\n{(r.stdout or '')[-1200:]}\n{(r.stderr or '')[-600:]}")
+            log(f"!! 起飞前自检 [{name}] 未过：\n{(r.stdout or '')[-1200:]}")
             return False
         log(f"✓ 起飞前自检 [{name}] 通过")
     return True
 
 
 def upload_scripts():
-    """把三个脚本传进桶的 `/domains/scripts/`（**只上传，不动别的**）。"""
     from huggingface_hub import sync_bucket
 
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     for name in SCRIPTS:
-        src = REPO / "research/brain_domains/exp" / name
-        shutil.copy2(src, UPLOAD_DIR / name)
-        log(f"[上传] {src} ⇒ {UPLOAD_DIR / name}")
+        shutil.copy2(REPO / "research/brain_domains/exp" / name, UPLOAD_DIR / name)
     for attempt in range(1, 6):
         try:
             sync_bucket(source=str(UPLOAD_DIR),
@@ -112,9 +114,9 @@ def upload_scripts():
             log(f"✓ 脚本已上传（try={attempt}）")
             return True
         except Exception as e:                                   # noqa: BLE001
-            log(f"  [上传] 失败（try={attempt}）：{type(e).__name__}: {str(e)[:160]}")
+            log(f"  [上传] 失败（try={attempt}）：{type(e).__name__}: {str(e)[:140]}")
             time.sleep(12)
-    log("!! 脚本上传失败 ⇒ 不建 Job（Job 会因为脚本不存在而白烧）")
+    log("!! 脚本上传失败 ⇒ 不建 Job")
     return False
 
 
@@ -166,31 +168,116 @@ def judge_cmd(variant):
 
 
 # ---------------------------------------------------------------------------
-# 阶段（每组内并发，最多 MAX_PARALLEL 个）
+# 完成判据（查桶上产物 ⇒ 链子重启不重复烧算力）
 # ---------------------------------------------------------------------------
-def run_parallel(jobs):
-    """jobs: [{prefix, cmd, timeout, budget, flavors, hold, startup_budget}]"""
-    sem = threading.Semaphore(MAX_PARALLEL)
-    results = {}
+def bucket_has(paths):
+    try:
+        from huggingface_hub import get_bucket_paths_info
+        info = list(get_bucket_paths_info("illusion-brain/brain-domains", paths))
+        got = {getattr(p, "path", str(p)) for p in info}
+        return {p: (p in got) for p in paths}
+    except Exception as e:                                       # noqa: BLE001
+        log(f"  [完成判据] 查询失败（按未完成处理）：{type(e).__name__}")
+        return {p: False for p in paths}
 
-    def worker(j):
-        with sem:
-            log(f"▶ {j['prefix']}")
-            ok = C.run_step(j["prefix"], j.get("timeout", "2h"), j["cmd"],
-                            j.get("budget", 7200),
-                            flavors=j.get("flavors"),
-                            startup_budget=j.get("startup_budget"),
-                            attach_names=[j["prefix"]],
-                            hold=j.get("hold", False))
-            log(f"■ {j['prefix']} ⇒ {ok}")
-            results[j["prefix"]] = ok
 
-    ts = [threading.Thread(target=worker, args=(j,)) for j in jobs]
-    for t in ts:
-        t.start()
-    for t in ts:
-        t.join()
-    return results
+def train_done(variant, seg):
+    """第 seg 段训练完成 ⇔ 该段的 checkpoint 落在桶上且曲线在增长。"""
+    if seg < TRAIN_SEGS:
+        # 段内完成：adapter_last.pt 存在（段尾会更新）⇒ 且不是"还在训"的中间态
+        paths = [f"runs/illusionbrain-align/exp105/{variant}/adapter_last.pt",
+                 f"runs/illusionbrain-align/exp105/{variant}/train_curve.json"]
+        st = bucket_has(paths)
+        return st[paths[0]] and st[paths[1]]
+    p = f"runs/illusionbrain-align/exp105/{variant}/adapter_final.pt"
+    return bucket_has([p])[p]
+
+
+def gen_done(variant):
+    if variant == "oracle":
+        paths = [f"runs/illusionbrain-align/exp105/{variant}/gen/gen_clip_own.pt",
+                 f"runs/illusionbrain-align/exp105/{variant}/gen/gen_clip_floor.pt"]
+        st = bucket_has(paths)
+        return all(st.values())
+    paths = [f"runs/illusionbrain-align/exp105/{variant}/gen/gen_clip_sub{s:02d}.pt"
+             for s in range(1, N_GEN_SUBJECTS + 1)]
+    st = bucket_has(paths)
+    return sum(st.values()) >= N_GEN_SUBJECTS
+
+
+def mech_done(variant):
+    p = f"runs/illusionbrain-align/exp105/{variant}/results/mechanism.json"
+    return bucket_has([p])[p]
+
+
+def judge_done(variant):
+    p = f"runs/illusionbrain-align/exp105/{variant}/results/verdict.json"
+    return bucket_has([p])[p]
+
+
+# ---------------------------------------------------------------------------
+# 任务表
+# ---------------------------------------------------------------------------
+def build_tasks():
+    tasks = []
+
+    def add(name, cmd, deps, timeout, done_fn, flavors=None, hold=False, budget=9000):
+        tasks.append({"name": name, "cmd": cmd, "deps": deps, "timeout": timeout,
+                      "done_fn": done_fn, "flavors": flavors, "hold": hold,
+                      "budget": budget})
+
+    # G0：前置闸门（X1 的条件侧闸门 + X3 的 CLIP 特征）
+    add("cond-test", cond_testcond_cmd(), [], "2h",
+        lambda: bucket_has(["runs/illusionbrain-align/exp105/cond_gate.json"])[
+            "runs/illusionbrain-align/exp105/cond_gate.json"],
+        budget=5400)
+    add("cond-clip", cond_clipfeat_cmd(), [], "2h",
+        lambda: bucket_has(["runs/illusionbrain-align/exp105/cache/clip_train.pt"])[
+            "runs/illusionbrain-align/exp105/cache/clip_train.pt"],
+        budget=5400)
+
+    # 训练：每个对照 2 段，段内串行、段间靠 adapter
+    seeds = {"snr": 0, "oracle": 0, "more": 0}
+    for variant in ("snr", "oracle", "more"):
+        prev = None
+        for seg in range(1, TRAIN_SEGS + 1):
+            seed = seeds[variant] if seg == 1 else seg
+            deps = [] if prev is None else [prev]
+            if variant == "more":
+                deps = [] if seg == 1 else [prev]      # more 的第 1 段自带 exp102 起点
+            nm = f"train-{variant}-{seg}"
+            add(nm, train_cmd(variant, seed, seg > 1), deps, TRAIN_TIMEOUT,
+                (lambda v=variant, s=seg: train_done(v, s)))
+            prev = nm
+
+    # 生成：依赖该对照的最后一段训练
+    for variant in ("snr", "oracle", "more"):
+        add(f"gen-{variant}", gen_cmd(variant), [f"train-{variant}-{TRAIN_SEGS}"],
+            GEN_TIMEOUT, (lambda v=variant: gen_done(v)),
+            hold=True, budget=14400)          # 生成可慢慢等（逐被试落盘 ⇒ 不怕被抢占）
+
+    # 机制 + 判决
+    for variant in ("snr", "oracle", "more"):
+        add(f"mech-{variant}", mech_cmd(variant), [f"gen-{variant}"], "60m",
+            (lambda v=variant: mech_done(v)), budget=3600)
+        add(f"judge-{variant}", judge_cmd(variant), [f"mech-{variant}"], "30m",
+            (lambda v=variant: judge_done(v)), flavors=[CPU], budget=1800)
+    return tasks
+
+
+# ---------------------------------------------------------------------------
+# 调度
+# ---------------------------------------------------------------------------
+def run_one(task):
+    prefix = f"t105-{task['name']}"
+    log(f"▶ {prefix}")
+    ok = C.run_step(prefix, task["timeout"], task["cmd"], task["budget"],
+                    flavors=task.get("flavors") or FLAVORS,
+                    startup_budget=(None if task.get("hold") else STARTUP_BUDGET),
+                    attach_names=[prefix],
+                    hold=bool(task.get("hold")))
+    log(f"■ {prefix} ⇒ {ok}")
+    return ok
 
 
 def main():
@@ -200,102 +287,71 @@ def main():
     if not upload_scripts():
         return 1
 
-    # ---- G0：前置闸门 + X3 的 CLIP 特征（X1/X3 的后续步骤都依赖它们）----
-    log("=== G0 前置闸门 ===")
-    # ⚠️ **已完成就跳过**（2026-10-28：第一次跑完 G0 后链子因 402 停下 ⇒ 重启会白烧两个 GPU Job）
-    done_gate = C.stage_of_prefix("t105-cond-test")
-    done_clip = C.stage_of_prefix("t105-cond-clip")
-    if done_gate and done_gate[2] == "COMPLETED" and done_clip and done_clip[2] == "COMPLETED":
-        log(f"✓ G0 已完成（{done_gate[0]} / {done_clip[0]} 都是 COMPLETED）⇒ 跳过闸门")
-    else:
-        r = run_parallel([
-            {"prefix": "t105-cond-test", "cmd": cond_testcond_cmd(), "timeout": "2h",
-             "budget": 5400, "startup_budget": 300},
-            {"prefix": "t105-cond-clip", "cmd": cond_clipfeat_cmd(), "timeout": "2h",
-             "budget": 5400, "startup_budget": 300},
-        ])
-        if not all(r.values()):
-            log(f"!! G0 未全过：{r} ⇒ 停下（X1 的闸门没过就不该训）")
-            return 1
+    tasks = build_tasks()
+    done = set()
+    failed = set()
+    rounds = 0
+    while True:
+        rounds += 1
+        pending = [t for t in tasks if t["name"] not in done and t["name"] not in failed]
+        if not pending:
+            break
+        # ---- 跳过已完成的（查桶上产物）----
+        still = []
+        for t in pending:
+            try:
+                if t["done_fn"]():
+                    log(f"✓ {t['name']} 已完成 ⇒ 跳过")
+                    done.add(t["name"])
+                else:
+                    still.append(t)
+            except Exception as e:                               # noqa: BLE001
+                log(f"  [完成判据] {t['name']} 判不了（按未完成）：{type(e).__name__}")
+                still.append(t)
+        pending = still
+        if not pending:
+            break
+        # ---- 就绪队列：依赖已满足 ----
+        ready = [t for t in pending if all(d in done for d in t["deps"])]
+        if not ready:
+            log(f"!! 没有就绪任务（未完成={ [t['name'] for t in pending] }）⇒ 停")
+            break
+        batch = ready[:MAX_PARALLEL]
+        log(f"=== 第 {rounds} 轮：{ [t['name'] for t in batch] }"
+            f"（就绪队列还有 {len(ready)} 个）===")
+        results = {}
 
-    # ---- G1/G2：X1 与 X3 的训练（seed 0 ⇒ 与 exp102 逐点同序列）----
-    # ⚠️⚠️ **hold=True**：2026-10-28 实测：GPU 池排 300 s 没上槽位 ⇒ 老链子每 5 分钟
-    #    「取消 + 换 flavor」⇒ **每换一个 flavor 就丢一次队列位置** ⇒ 永远排不上
-    #    （§exp102_chain 的同一条教训：取消排队中的 Job = 从队列里挪出去）⇒
-    #    ⇒ 训练也必须**保住队列位置**，只换池不取消。
-    for seg in (1, 2):
-        log(f"=== G{seg} 训练 X1 / X3 第 {seg} 段 ===")
-        r = run_parallel([
-            {"prefix": f"t105-train-snr-s{seg}", "cmd": train_cmd("snr", 0, seg > 1),
-             "timeout": TRAIN_TIMEOUT, "budget": 9000, "startup_budget": 1800,
-             "hold": True},
-            {"prefix": f"t105-train-oracle-s{seg}", "cmd": train_cmd("oracle", 0, seg > 1),
-             "timeout": TRAIN_TIMEOUT, "budget": 9000, "startup_budget": 1800,
-             "hold": True},
-        ])
-        if not all(r.values()):
-            log(f"!! G{seg} 未全过：{r} ⇒ 停下")
-            return 1
+        def worker(t):
+            results[t["name"]] = run_one(t)
 
-    # ---- G3：X2 的训练（新 seed ⇒ 真的增加训练量；从 exp102 的 adapter 起步）----
-    for seg in (1, 2):
-        log(f"=== G3 训练 X2 第 {seg} 段（seed={seg}）===")
-        r = run_parallel([
-            {"prefix": f"t105-train-more-s{seg}", "cmd": train_cmd("more", seg, True),
-             "timeout": TRAIN_TIMEOUT, "budget": 9000, "startup_budget": 1800,
-             "hold": True},
-        ])
-        if not all(r.values()):
-            log(f"!! G3 第 {seg} 段未过：{r} ⇒ 停下")
-            return 1
+        ts = [threading.Thread(target=worker, args=(t,)) for t in batch]
+        for x in ts:
+            x.start()
+        for x in ts:
+            x.join()
+        for t in batch:
+            if results.get(t["name"]):
+                done.add(t["name"])
+            else:
+                failed.add(t["name"])
+                log(f"!! {t['name']} 失败 ⇒ 记为失败（其余继续）")
+        # ---- 失败任务的后继也要跳过（否则死等）----
+        for t in list(tasks):
+            if t["name"] in failed and any(d in failed for d in t["deps"]):
+                failed.add(t["name"])
 
-    # ---- G4：生成 X1 与 X3（X3 只 400 张，最快）----
-    log("=== G4 生成 X1 / X3 ===")
-    r = run_parallel([
-        {"prefix": "t105-gen-snr", "cmd": gen_cmd("snr"), "timeout": GEN_TIMEOUT,
-         "budget": 9000, "hold": True, "startup_budget": 1200},
-        {"prefix": "t105-gen-oracle", "cmd": gen_cmd("oracle"), "timeout": GEN_TIMEOUT,
-         "budget": 9000, "hold": True, "startup_budget": 1200},
-    ])
-    if not all(r.values()):
-        log(f"!! G4 未全过：{r} ⇒ 停下")
-        return 1
-
-    # ---- G5：生成 X2 ----
-    log("=== G5 生成 X2 ===")
-    r = run_parallel([
-        {"prefix": "t105-gen-more", "cmd": gen_cmd("more"), "timeout": GEN_TIMEOUT,
-         "budget": 9000, "hold": True, "startup_budget": 1200},
-    ])
-    if not all(r.values()):
-        log(f"!! G5 未过：{r} ⇒ 停下")
-        return 1
-
-    # ---- G6：机制 + 判决（判决走 CPU）----
-    log("=== G6 机制 + 判决 ===")
-    jobs = []
-    for v in ("snr", "more", "oracle"):
-        jobs.append({"prefix": f"t105-mech-{v}", "cmd": mech_cmd(v), "timeout": "60m",
-                     "budget": 3600, "startup_budget": 300})
-    for v in ("snr", "more", "oracle"):
-        jobs.append({"prefix": f"t105-judge-{v}", "cmd": judge_cmd(v), "timeout": "30m",
-                     "budget": 1800, "flavors": [CPU], "startup_budget": 300})
-    run_parallel(jobs)
-
-    # ---- G7：取回结果（**只下小 JSON**）----
-    log("=== G7 取回结果 ===")
+    # ---- 取回结果（只下小 JSON）----
+    log("=== 取回结果 ===")
     out = Path(os.environ.get("EXP105_OUT", r"D:\.minimax\tmp\exp105_out"))
     out.mkdir(parents=True, exist_ok=True)
     files = []
     for v in ("snr", "more", "oracle"):
-        files.append((f"runs/illusionbrain-align/exp105/{v}/results/verdict.json",
-                      out / f"{v}_verdict.json"))
-        files.append((f"runs/illusionbrain-align/exp105/{v}/results/per_subject.csv",
-                      out / f"{v}_per_subject.csv"))
-        files.append((f"runs/illusionbrain-align/exp105/{v}/results/loss_summary.json",
-                      out / f"{v}_loss_summary.json"))
-        files.append((f"runs/illusionbrain-align/exp105/{v}/results/mechanism.json",
-                      out / f"{v}_mechanism.json"))
+        for fname, outname in (("verdict.json", "verdict.json"),
+                               ("per_subject.csv", "per_subject.csv"),
+                               ("loss_summary.json", "loss_summary.json"),
+                               ("mechanism.json", "mechanism.json")):
+            files.append((f"runs/illusionbrain-align/exp105/{v}/results/{fname}",
+                          out / f"{v}_{outname}"))
     files.append(("runs/illusionbrain-align/exp105/cond_gate.json", out / "cond_gate.json"))
     for attempt in range(1, 6):
         try:
@@ -304,9 +360,9 @@ def main():
             log(f"✓ 结果已取回：{out}")
             break
         except Exception as e:                                   # noqa: BLE001
-            log(f"  [取回] 失败（try={attempt}）：{type(e).__name__}: {str(e)[:160]}")
+            log(f"  [取回] 失败（try={attempt}）：{type(e).__name__}: {str(e)[:140]}")
             time.sleep(15)
-    log("CHAIN DONE")
+    log(f"CHAIN DONE｜完成 {sorted(done)}｜失败 {sorted(failed)}")
     return 0
 
 
