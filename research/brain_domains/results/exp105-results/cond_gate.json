@@ -1,0 +1,305 @@
+{
+  "n_subjects": 10,
+  "rep0": {
+    "two_way_median": 0.765,
+    "n": 10,
+    "per_subject": {
+      "sub-01": 0.85,
+      "sub-02": 0.75,
+      "sub-03": 0.765,
+      "sub-04": 0.78,
+      "sub-05": 0.665,
+      "sub-06": 0.765,
+      "sub-07": 0.825,
+      "sub-08": 0.805,
+      "sub-09": 0.72,
+      "sub-10": 0.73
+    }
+  },
+  "avg4": {
+    "two_way_median": 0.87,
+    "n": 10,
+    "per_subject": {
+      "sub-01": 0.87,
+      "sub-02": 0.85,
+      "sub-03": 0.9,
+      "sub-04": 0.885,
+      "sub-05": 0.82,
+      "sub-06": 0.86,
+      "sub-07": 0.89,
+      "sub-08": 0.905,
+      "sub-09": 0.84,
+      "sub-10": 0.725
+    }
+  },
+  "avg80": {
+    "two_way_median": 0.92,
+    "n": 10,
+    "per_subject": {
+      "sub-01": 0.95,
+      "sub-02": 0.92,
+      "sub-03": 0.925,
+      "sub-04": 0.92,
+      "sub-05": 0.9,
+      "sub-06": 0.92,
+      "sub-07": 0.905,
+      "sub-08": 0.95,
+      "sub-09": 0.92,
+      "sub-10": 0.83
+    }
+  },
+  "x1_gate": {
+    "diff": {
+      "n_eff": 10,
+      "n_pos": 9,
+      "n_neg": 1,
+      "p_sign": 0.021484375,
+      "n_zero": 0,
+      "median": 0.09999999999999998
+    },
+    "pass": true,
+    "rule": "X1 有效 ⇔ avg4 的条件侧 2-way 显著高于 rep0（中位 > 0，p ≤ 0.05，n ≥ 8）"
+  },
+  "records": [
+    {
+      "subject": "sub-01",
+      "reps": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "n_rep_test": 80,
+      "metrics": {
+        "rep0": {
+          "two_way": 0.85,
+          "acc200": 0.075
+        },
+        "avg4": {
+          "two_way": 0.87,
+          "acc200": 0.095
+        },
+        "avg80": {
+          "two_way": 0.95,
+          "acc200": 0.205
+        }
+      }
+    },
+    {
+      "subject": "sub-02",
+      "reps": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "n_rep_test": 80,
+      "metrics": {
+        "rep0": {
+          "two_way": 0.75,
+          "acc200": 0.055
+        },
+        "avg4": {
+          "two_way": 0.85,
+          "acc200": 0.15
+        },
+        "avg80": {
+          "two_way": 0.92,
+          "acc200": 0.175
+        }
+      }
+    },
+    {
+      "subject": "sub-03",
+      "reps": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "n_rep_test": 80,
+      "metrics": {
+        "rep0": {
+          "two_way": 0.765,
+          "acc200": 0.05
+        },
+        "avg4": {
+          "two_way": 0.9,
+          "acc200": 0.12
+        },
+        "avg80": {
+          "two_way": 0.925,
+          "acc200": 0.22
+        }
+      }
+    },
+    {
+      "subject": "sub-04",
+      "reps": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "n_rep_test": 80,
+      "metrics": {
+        "rep0": {
+          "two_way": 0.78,
+          "acc200": 0.06
+        },
+        "avg4": {
+          "two_way": 0.885,
+          "acc200": 0.165
+        },
+        "avg80": {
+          "two_way": 0.92,
+          "acc200": 0.22
+        }
+      }
+    },
+    {
+      "subject": "sub-05",
+      "reps": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "n_rep_test": 80,
+      "metrics": {
+        "rep0": {
+          "two_way": 0.665,
+          "acc200": 0.0
+        },
+        "avg4": {
+          "two_way": 0.82,
+          "acc200": 0.09
+        },
+        "avg80": {
+          "two_way": 0.9,
+          "acc200": 0.165
+        }
+      }
+    },
+    {
+      "subject": "sub-06",
+      "reps": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "n_rep_test": 80,
+      "metrics": {
+        "rep0": {
+          "two_way": 0.765,
+          "acc200": 0.055
+        },
+        "avg4": {
+          "two_way": 0.86,
+          "acc200": 0.115
+        },
+        "avg80": {
+          "two_way": 0.92,
+          "acc200": 0.22
+        }
+      }
+    },
+    {
+      "subject": "sub-07",
+      "reps": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "n_rep_test": 80,
+      "metrics": {
+        "rep0": {
+          "two_way": 0.825,
+          "acc200": 0.07
+        },
+        "avg4": {
+          "two_way": 0.89,
+          "acc200": 0.145
+        },
+        "avg80": {
+          "two_way": 0.905,
+          "acc200": 0.155
+        }
+      }
+    },
+    {
+      "subject": "sub-08",
+      "reps": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "n_rep_test": 80,
+      "metrics": {
+        "rep0": {
+          "two_way": 0.805,
+          "acc200": 0.065
+        },
+        "avg4": {
+          "two_way": 0.905,
+          "acc200": 0.12
+        },
+        "avg80": {
+          "two_way": 0.95,
+          "acc200": 0.27
+        }
+      }
+    },
+    {
+      "subject": "sub-09",
+      "reps": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "n_rep_test": 80,
+      "metrics": {
+        "rep0": {
+          "two_way": 0.72,
+          "acc200": 0.045
+        },
+        "avg4": {
+          "two_way": 0.84,
+          "acc200": 0.12
+        },
+        "avg80": {
+          "two_way": 0.92,
+          "acc200": 0.21
+        }
+      }
+    },
+    {
+      "subject": "sub-10",
+      "reps": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "n_rep_test": 80,
+      "metrics": {
+        "rep0": {
+          "two_way": 0.73,
+          "acc200": 0.02
+        },
+        "avg4": {
+          "two_way": 0.725,
+          "acc200": 0.085
+        },
+        "avg80": {
+          "two_way": 0.83,
+          "acc200": 0.095
+        }
+      }
+    }
+  ]
+}

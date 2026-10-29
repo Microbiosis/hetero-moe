@@ -1,0 +1,60 @@
+{
+  "verdict": {
+    "C0": {
+      "loss_decreased": false,
+      "loss_first10": 0.07737917323239768,
+      "loss_last10": 0.07780952724278904,
+      "images_not_constant": true
+    },
+    "C1": {
+      "margin2_way_minus_floor_concept": {
+        "n_eff": 200,
+        "n_pos": 117,
+        "n_neg": 83,
+        "p_sign": 0.019396944540338374,
+        "n_zero": 0,
+        "median": 0.015020969235073345,
+        "pass": true
+      }
+    },
+    "C1_pass": true,
+    "C2": {
+      "margin50_way_minus_floor_concept": {
+        "n_eff": 200,
+        "n_pos": 121,
+        "n_neg": 79,
+        "p_sign": 0.0036349479525299385,
+        "n_zero": 0,
+        "median": 0.009200957875644261,
+        "pass": true
+      }
+    },
+    "C2_pass": true,
+    "C3_report": {
+      "transfer_efficiency": 1.0,
+      "transfer_efficiency_def": "生成的 2-way 中位 ÷ 条件 2-way（oracle 条件 = 真图 CLIP 特征 ⇒ 条件 2-way = 1.0）",
+      "binary_report_only": {
+        "generated_2way_median": 1.0,
+        "floor_2way_median": 0.0,
+        "generated_50way_median": 0.0,
+        "floor_50way_median": 0.0,
+        "note": "二值版**只报**（主判据用连续 margin，见 R3）"
+      },
+      "unit": "concept"
+    },
+    "stat_unit": "concept",
+    "n_concepts": 200,
+    "C0_pass": false,
+    "verdict": "CONDITION_DRIVES_GENERATION"
+  },
+  "stat_unit": "concept",
+  "n_concepts": 200,
+  "records": [],
+  "loss_summary": {
+    "n_epochs": 148,
+    "k_epochs": 15,
+    "first10_mean": 0.07737917323239768,
+    "last10_mean": 0.07780952724278904,
+    "decreased": false
+  }
+}

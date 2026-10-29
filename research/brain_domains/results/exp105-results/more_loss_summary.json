@@ -1,0 +1,7 @@
+{
+  "n_epochs": 296,
+  "k_epochs": 30,
+  "first10_mean": 0.0805112788598441,
+  "last10_mean": 0.07810742426663636,
+  "decreased": true
+}

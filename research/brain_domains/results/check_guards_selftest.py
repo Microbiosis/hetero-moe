@@ -270,6 +270,18 @@ CASES = [
      "exp90c：top-down 接口的中位被改"),
     (G_NUM, "FINDINGS_TIER0_RSA.md", "−1.0636", "+1.0636",
      "exp90c：背侧流接口的中位被改（全角负号 ⇒ 守卫按归一化后的 ASCII 串比对）"),
+    # --- §四十二（exp101：②③ 线第一个里程碑 · 脑侧条件的可辨识性）---
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**判决 = `CONDITION_USABLE`**",
+     "**判决 = `CONDITION_TOO_WEAK`**",
+     "exp101：判决字符串被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**+0.0589**", "**+0.0089**",
+     "exp101：200-way 条件自检中位被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**+0.7809**", "**+0.2809**",
+     "exp101：2-way 中位被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**+0.1283**", "**-0.1283**",
+     "exp101：50-way 判决量（与机会的差）被改"),
+    (G_NUM, "FINDINGS_TIER0_RSA.md", "**+0.2809**", "**+0.0809**",
+     "exp101：2-way 判决量（与机会的差）被改"),
 ]
 
 

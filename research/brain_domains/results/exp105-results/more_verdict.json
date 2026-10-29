@@ -1,0 +1,316 @@
+{
+  "verdict": {
+    "C0": {
+      "loss_decreased": true,
+      "loss_first10": 0.0805112788598441,
+      "loss_last10": 0.07810742426663636,
+      "img_pair_dist_median": 3610.8255615234375,
+      "images_not_constant": true
+    },
+    "C0_pass": true,
+    "C1": {
+      "two_way_minus_floor": {
+        "n_eff": 8,
+        "n_pos": 4,
+        "n_neg": 4,
+        "p_sign": 1.0,
+        "n_zero": 0,
+        "median": 0.0050000000000000044,
+        "pass": false
+      }
+    },
+    "C1_pass": false,
+    "C1b_report": {
+      "two_way_minus_cross_subject": {
+        "n_eff": 8,
+        "n_pos": 5,
+        "n_neg": 3,
+        "p_sign": 0.7265625,
+        "n_zero": 0,
+        "median": 0.010000000000000009
+      }
+    },
+    "C1b_mean_diff": 0.005624999999999998,
+    "C2": {
+      "fifty_way_minus_floor": {
+        "n_eff": 8,
+        "n_pos": 3,
+        "n_neg": 3,
+        "p_sign": 0.7265625,
+        "n_zero": 2,
+        "median": 0.0,
+        "pass": false
+      }
+    },
+    "C2_pass": false,
+    "C3_report": {
+      "transfer_efficiency": 0.6601307189542484,
+      "transfer_efficiency_def": "生成的 2-way 中位 ÷ 条件的 2-way 中位（**同一个 CLIP** 下的口径）",
+      "generated_2way_median": 0.505,
+      "condition_2way_median_same_clip": 0.765,
+      "floor_2way_median": 0.51,
+      "clip_similarity_mean": 0.26027185422426236,
+      "per_concept_recall_median": 0.5555555555555556,
+      "atm_reference_C_class": {
+        "two_way_pct": 83.1,
+        "fifty_way_top1_pct": 28.4,
+        "fid": 24.6
+      },
+      "exp101_condition_reference": {
+        "two_way_pct_single_trial": 78.09,
+        "two_way_pct_trial_avg": 92.0,
+        "fifty_way_pct_single_trial": 14.83,
+        "fifty_way_pct_trial_avg": 42.0,
+        "two_hundred_way_pct_single_trial": 5.89
+      }
+    },
+    "verdict": "DIRECTION_RIGHT_UNDERPOWERED",
+    "interpretation": "生成 2-way > 地板但不显著 ⇒ 方向对、检验力不足"
+  },
+  "records": [
+    {
+      "subject": "sub-01",
+      "ok": true,
+      "n_images": 200,
+      "shard_lo": 0,
+      "own2": 0.505,
+      "own50": 0.02,
+      "floor2": 0.575,
+      "floor50": 0.01,
+      "cross_subject2": 0.555,
+      "cond2_same_clip": 0.85,
+      "clip_sim": 0.26798204107401274,
+      "loss_summary": {
+        "n_epochs": 296,
+        "k_epochs": 30,
+        "first10_mean": 0.0805112788598441,
+        "last10_mean": 0.07810742426663636,
+        "decreased": true
+      },
+      "img_pair_dist": 3630.61328125,
+      "cross_subject_subject": "sub-02",
+      "per_concept_recall": 0.5555555555555556
+    },
+    {
+      "subject": "sub-02",
+      "ok": true,
+      "n_images": 200,
+      "shard_lo": 0,
+      "own2": 0.555,
+      "own50": 0.01,
+      "floor2": 0.51,
+      "floor50": 0.035,
+      "cross_subject2": 0.505,
+      "cond2_same_clip": 0.75,
+      "clip_sim": 0.2614522568827385,
+      "loss_summary": {
+        "n_epochs": 296,
+        "k_epochs": 30,
+        "first10_mean": 0.0805112788598441,
+        "last10_mean": 0.07810742426663636,
+        "decreased": true
+      },
+      "img_pair_dist": 3964.912841796875,
+      "cross_subject_subject": "sub-03",
+      "per_concept_recall": 0.5555555555555556
+    },
+    {
+      "subject": "sub-03",
+      "ok": true,
+      "n_images": 200,
+      "shard_lo": 0,
+      "own2": 0.505,
+      "own50": 0.02,
+      "floor2": 0.51,
+      "floor50": 0.01,
+      "cross_subject2": 0.465,
+      "cond2_same_clip": 0.765,
+      "clip_sim": 0.2583698067748179,
+      "loss_summary": {
+        "n_epochs": 296,
+        "k_epochs": 30,
+        "first10_mean": 0.0805112788598441,
+        "last10_mean": 0.07810742426663636,
+        "decreased": true
+      },
+      "img_pair_dist": 3546.9127197265625,
+      "cross_subject_subject": "sub-04",
+      "per_concept_recall": 0.5555555555555556
+    },
+    {
+      "subject": "sub-04",
+      "ok": false,
+      "n_images": 200,
+      "shard_lo": 0,
+      "own2": 0.465,
+      "own50": 0.0,
+      "floor2": null,
+      "floor50": null,
+      "cross_subject2": null,
+      "cond2_same_clip": 0.78,
+      "clip_sim": 0.26107777825038225,
+      "loss_summary": {
+        "n_epochs": 296,
+        "k_epochs": 30,
+        "first10_mean": 0.0805112788598441,
+        "last10_mean": 0.07810742426663636,
+        "decreased": true
+      },
+      "ok_reason": "地板缺失：地板来自 donor sub-05（被剔除）⇒ 不进配对统计",
+      "img_pair_dist": 3615.5347900390625,
+      "cross_subject_subject": "sub-05",
+      "per_concept_recall": 0.5555555555555556
+    },
+    {
+      "subject": "sub-06",
+      "ok": true,
+      "n_images": 200,
+      "shard_lo": 0,
+      "own2": 0.51,
+      "own50": 0.01,
+      "floor2": 0.505,
+      "floor50": 0.02,
+      "cross_subject2": 0.52,
+      "cond2_same_clip": 0.765,
+      "clip_sim": 0.2572011515898547,
+      "loss_summary": {
+        "n_epochs": 296,
+        "k_epochs": 30,
+        "first10_mean": 0.0805112788598441,
+        "last10_mean": 0.07810742426663636,
+        "decreased": true
+      },
+      "img_pair_dist": 3610.8255615234375,
+      "cross_subject_subject": "sub-07",
+      "per_concept_recall": 0.5555555555555556
+    },
+    {
+      "subject": "sub-07",
+      "ok": true,
+      "n_images": 200,
+      "shard_lo": 0,
+      "own2": 0.52,
+      "own50": 0.02,
+      "floor2": 0.535,
+      "floor50": 0.02,
+      "cross_subject2": 0.505,
+      "cond2_same_clip": 0.825,
+      "clip_sim": 0.2554893297383908,
+      "loss_summary": {
+        "n_epochs": 296,
+        "k_epochs": 30,
+        "first10_mean": 0.0805112788598441,
+        "last10_mean": 0.07810742426663636,
+        "decreased": true
+      },
+      "img_pair_dist": 3578.41943359375,
+      "cross_subject_subject": "sub-08",
+      "per_concept_recall": 0.5555555555555556
+    },
+    {
+      "subject": "sub-08",
+      "ok": true,
+      "n_images": 200,
+      "shard_lo": 0,
+      "own2": 0.505,
+      "own50": 0.025,
+      "floor2": 0.485,
+      "floor50": 0.035,
+      "cross_subject2": 0.5,
+      "cond2_same_clip": 0.805,
+      "clip_sim": 0.26891356719054993,
+      "loss_summary": {
+        "n_epochs": 296,
+        "k_epochs": 30,
+        "first10_mean": 0.0805112788598441,
+        "last10_mean": 0.07810742426663636,
+        "decreased": true
+      },
+      "img_pair_dist": 3569.049560546875,
+      "cross_subject_subject": "sub-09",
+      "per_concept_recall": 0.5555555555555556
+    },
+    {
+      "subject": "sub-09",
+      "ok": true,
+      "n_images": 200,
+      "shard_lo": 0,
+      "own2": 0.5,
+      "own50": 0.01,
+      "floor2": 0.545,
+      "floor50": 0.01,
+      "cross_subject2": 0.49,
+      "cond2_same_clip": 0.72,
+      "clip_sim": 0.25788417890048765,
+      "loss_summary": {
+        "n_epochs": 296,
+        "k_epochs": 30,
+        "first10_mean": 0.0805112788598441,
+        "last10_mean": 0.07810742426663636,
+        "decreased": true
+      },
+      "img_pair_dist": 3918.1568603515625,
+      "cross_subject_subject": "sub-10",
+      "per_concept_recall": 0.5555555555555556
+    },
+    {
+      "subject": "sub-10",
+      "ok": true,
+      "n_images": 200,
+      "shard_lo": 0,
+      "own2": 0.49,
+      "own50": 0.015,
+      "floor2": 0.455,
+      "floor50": 0.005,
+      "cross_subject2": 0.505,
+      "cond2_same_clip": 0.73,
+      "clip_sim": 0.25488250164324666,
+      "loss_summary": {
+        "n_epochs": 296,
+        "k_epochs": 30,
+        "first10_mean": 0.0805112788598441,
+        "last10_mean": 0.07810742426663636,
+        "decreased": true
+      },
+      "img_pair_dist": 3393.358642578125,
+      "cross_subject_subject": "sub-01",
+      "per_concept_recall": 0.5555555555555556
+    }
+  ],
+  "n_subjects_used": 9,
+  "subjects_used": [
+    "sub-01",
+    "sub-02",
+    "sub-03",
+    "sub-04",
+    "sub-06",
+    "sub-07",
+    "sub-08",
+    "sub-09",
+    "sub-10"
+  ],
+  "subjects_excluded": [
+    5
+  ],
+  "exclusion_reason": [
+    {
+      "subject": 5,
+      "align_acc200": 0.0,
+      "align_acc2": 0.665,
+      "reason": "对齐闸门未过（200-way < 0.01）⇒ 剔除该被试（预登记的数据质量闸门，与判决结果无关）"
+    }
+  ],
+  "variant": "more",
+  "atm_reference_C_class": {
+    "two_way_pct": 83.1,
+    "fifty_way_top1_pct": 28.4,
+    "fid": 24.6
+  },
+  "exp101_condition_reference": {
+    "two_way_pct_single_trial": 78.09,
+    "two_way_pct_trial_avg": 92.0,
+    "fifty_way_pct_single_trial": 14.83,
+    "fifty_way_pct_trial_avg": 42.0,
+    "two_hundred_way_pct_single_trial": 5.89
+  }
+}

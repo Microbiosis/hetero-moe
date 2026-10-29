@@ -201,6 +201,8 @@ hf://buckets/illusion-brain/brain-domains/
 | 文件 | 内容 |
 |---|---|
 | `MODEL_FORM.md` | **模型形态判定书**：脑域线自己的形态判定与目标架构（脑原生三模态 born-native + S1–S4 阶梯 + 阶段 C/D 的定位）|
+| `MATH_TOOLKIT.md` | **数学方法谱系**：神经科学里的数学 ↔ 生物信息学里的应用；每个自写算子对应的**文献方法 / 我们改了什么 / 状态**（引用分「已核到原文」与「原文未核」两档）|
+| `COMPONENT_DESIGN.md` | **组件设计书**：按脑科学定义选组件（算子表带「可对应的文献方法」一列 → 指向 `MATH_TOOLKIT.md`）|
 | `PAPER_DRAFT.md` | **论文草稿**（摘要 + 10 节 + 附录，整合全部结论）|
 | `FINDINGS_SET_THEORY.md` | **集合论审计：标签只解释 0.05% 方差**（统一解释）|
 
