@@ -5882,6 +5882,14 @@ exp102 测到的三件事：
 （n_eff=8 / n_pos=4 / n_neg=4 / p=1.000000 / median=+0.005000；C2 的 3/3/2 与 p=0.726562 也相同）
 ⇒ 补算管线在「有官方答案可对」的那个对照上**零偏差** ⇒ 应用到 snr 上可信。
 
+**复算入口（已在仓库里，离线可跑）**：
+`python research/brain_domains/results/parse_exp105.py --self-test`
+⇒ 读 `results/exp105-results/` 里判决步自己落盘的 16 个产物（三个 `*_verdict.json` /
+`*_per_subject.csv` / `oracle_per_concept.csv` / `*_mechanism.json` / `*_train_curve.json` /
+`*_loss_summary.json` / `cond_gate.json`），重算上面**每一格**并断言三件事：
+① more 的 C1 与官方逐位相同；② 归因表落到「瓶颈 = 脑侧条件的信息量」那一行；
+③ snr 官方判决确实是 `C0_FAIL`（补算的前提）。⇒ 三条全过才 exit 0。
+
 ⚠️ **口径留痕**：snr 的 C1/C2 数字**不是判决步产出的**，是本节用预登记统计量补算的；
   两者在文档里**分开标注**（官方判决 `C0_FAIL`，补算 `DIRECTION_RIGHT_UNDERPOWERED`）。
 
