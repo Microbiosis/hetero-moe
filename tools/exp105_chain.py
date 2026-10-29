@@ -504,8 +504,12 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     files = []
     for v in ("snr", "more", "oracle"):
-        for fname, outname in (("verdict.json", "verdict.json"),
-                               ("per_subject.csv", "per_subject.csv"),
+        # ⚠️ **oracle 的统计单元是「概念」**（§四十九·八 R1）⇒ 它写出的是
+        #   `per_concept.csv`，**没有** `per_subject.csv` ⇒ 原实现一律下 per_subject.csv，
+        #   oracle 白试 3 次 × 10 s 还取不到 X3 的逐概念证据。
+        per = ("per_concept.csv", "per_concept.csv") if v == "oracle" else (
+            ("per_subject.csv", "per_subject.csv"))
+        for fname, outname in (("verdict.json", "verdict.json"), per,
                                ("loss_summary.json", "loss_summary.json"),
                                ("mechanism.json", "mechanism.json")):
             files.append((f"runs/illusionbrain-align/exp105/{v}/results/{fname}",
