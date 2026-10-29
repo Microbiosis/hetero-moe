@@ -5791,6 +5791,9 @@ exp102 测到的三件事：
 | 4 | `exp105_chain.py::gen_done` | 应有数 = `10 − 剔除数`，并打印 `got/need` |
 | 5 | `exp105_chain.py::main` | 删掉「判不了（按未完成）」的 `except` 兜底 ⇒ 判据异常直接让链子停 |
 | 6 | `exp105_gen.py:539` | `sid = int(s.split("-")[1])` 后按无横线格式读（与 524 行同构） |
+| 7 | `exp105_chain.py::n_excluded`（**重启链子时二次修**） | 判「桶上有没有剔除记录」改为看 `dst.exists()`，不再靠 `except` 分辨（见 §五十三·七 第三条） |
+| 8 | `exp105_chain.py` 收尾 | 按 variant 取结果：oracle 写的是 `per_concept.csv`（统计单元是概念），原实现一律下 `per_subject.csv` ⇒ 白试 3 次还取不到 X3 的逐概念证据 |
+| 9 | `exp105_chain.py` 任务表 | `mech-*` 从 a100-large 改 `cpu-upgrade`（实测 mech-snr 全程 39 s ⇒ A100 上利用率最低的那档） |
 
 验证：`py_compile` 两文件 exit=0；`exp105_gen.py --step judge --self-test` **18 通过 / 0 失败**；
 `check_findings_consistency.py` exit=0。
@@ -5801,6 +5804,12 @@ exp102 测到的三件事：
   **拿「未完成」去赌一次的代价是几个 GPU 小时；宁可停一次等人看。**
 - 完成判据的每一处 `except` 都要回答：「这个分支是在说『没有』，还是在说『我不知道』？」
   后者不许变成前者。
+- ⚠️ **修的时候也会踩同一个坑，而且是镜像方向**：`n_excluded()` 第一版想用 `except` 分辨
+  「桶上没有剔除记录」与「查不动」，但 `download_bucket_files` 对**缺失文件只发 UserWarning、
+  不抛异常** ⇒ 本地 `dst` 根本没被创建 ⇒ `dst.read_text()` 抛的 `FileNotFoundError`
+  被当成「查不动」⇒ **整条链子为一个不存在的文件停下来**（重启链子时实测，未建任何 Job）。
+  ⇒ 判「有没有」只能问**下载成功后文件在不在**（`dst.exists()`），**不能问「抛没抛异常」**——
+  上次把「查不动」误当成「没有」，这次把「没有」误当成「查不动」，**两个方向都不许猜**。
 - 产物要**可溯源**：生成/判决类产物必须落一份 adapter 标识（文件名 + 字节数 + 训练步数），
   否则一次覆盖就得靠时间线排他性来证明（本次算运气好，窗口有 66 分钟）。
 
