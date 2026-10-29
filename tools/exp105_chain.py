@@ -346,8 +346,14 @@ def build_tasks():
 
     # 机制 + 判决
     for variant in ("snr", "oracle", "more"):
+        # ⚠️ **mech 改 CPU**（2026-10-29；判据是用户「资源利用率不高就自己先算再选硬件」）：
+        #   实测 `mech-snr`（`6ae2298f…`）在 a100-large 上**全程 39 s**（16:57:59→16:58:38），
+        #   其中一大部分还是 pip install ⇒ 拿一张 A100 跑 39 s 的活 = 利用率最低的那一档。
+        #   mech 只做「adapter 前向 + token 统计」（oracle 读 200 行 true_clip；
+        #   snr/more 用冻结 encoder 编 200 个 EEG 试次）⇒ **不碰 SD/VAE/CLIP 生成** ⇒ CPU 够用
+        #   （Job 超时 60 m 留足余量；判据不变，只换硬件）。
         add(f"mech-{variant}", mech_cmd(variant), [f"gen-{variant}"], "60m",
-            (lambda v=variant: mech_done(v)), budget=3600)
+            (lambda v=variant: mech_done(v)), flavors=[CPU], budget=3600)
         add(f"judge-{variant}", judge_cmd(variant), [f"mech-{variant}"], "30m",
             (lambda v=variant: judge_done(v)), flavors=[CPU], budget=1800)
     return tasks
