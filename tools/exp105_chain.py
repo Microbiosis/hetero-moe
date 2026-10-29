@@ -256,20 +256,33 @@ def n_excluded(variant):
     ⇒ 判据永远不成立 ⇒ 链子会**重跑生成**，而重跑用的是桶上当前的 adapter
     ——本次事故后 more 的 `adapter_final.pt` 已被覆盖成 7,400 步的旧模型，
     一重跑就会拿错模型生成，把 ×2 对照彻底毁掉。
+
+    ⚠️⚠️ **2026-10-29 二次修（第一次修就踩了 §五十三 那个坑的镜像）**：
+       `download_bucket_files` 对「**桶上没有这个文件**」**只发 UserWarning、不抛异常**
+       （实测：`File '...' not found in bucket ... Skipping.`）⇒ 本地 dst 根本没被创建
+       ⇒ 第一次的实现靠 `except` 分辨「没有」与「查不动」，结果 `dst.read_text()` 抛的
+       `FileNotFoundError` 被当成「查不动」⇒ **整条链子为一个不存在的文件停下来**。
+       ⇒ 正确判法只有一条：**下载成功后看 `dst.exists()`**——不存在 ⇒ 确实没有（0 个剔除）；
+       下载本身抛异常 ⇒ 查不动（抛出去让链子停）。
+       这与 §五十三 是同一条纪律的另一个方向：那次把「查不动」误当成「没有」，
+       这次把「没有」误当成「查不动」——**两个方向都不许猜**。
     """
+    import warnings
+
     from huggingface_hub import download_bucket_files
     rel = f"runs/illusionbrain-align/exp105/{variant}/gen/gen_excluded_subjects.json"
     tmp = Path(os.environ.get("EXP105_OUT", r"D:\.minimax\tmp\exp105_out"))
     tmp.mkdir(parents=True, exist_ok=True)
     dst = tmp / f"{variant}_excluded_probe.json"
     try:
-        download_bucket_files("illusion-brain/brain-domains", [(rel, dst)])
-        return len(json.loads(dst.read_text(encoding="utf-8")))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")      # 「桶上没有该文件」只 warn 不 raise ⇒ 屏蔽噪音
+            download_bucket_files("illusion-brain/brain-domains", [(rel, dst)])
     except Exception as e:                                   # noqa: BLE001
-        # 文件不在（还没跑到剔除那一步）⇒ 0 个剔除；查不动 ⇒ 抛异常（不能猜）
-        if "404" in str(e) or "Not Found" in str(e) or "EntryNotFound" in type(e).__name__:
-            return 0
         raise RuntimeError(f"读 {rel} 失败（{type(e).__name__}）⇒ 判不了剔除数") from e
+    if not dst.exists():
+        return 0                        # 桶上确实没有剔除记录 ⇒ 0 个被剔除
+    return len(json.loads(dst.read_text(encoding="utf-8")))
 
 
 def gen_done(variant):
