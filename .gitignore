@@ -45,7 +45,11 @@ docs/research_paper/pages_mf/
 docs/research_paper/pages_zh/
 docs/research_paper/page_*.png
 docs/research_paper/neurips_2025.*
-docs/research_paper/make_figs.py
+# 2026-10-25: 论文的图与制图脚本**改为入库**。
+# 原先 docs/research_paper/{make_figs.py,figs/,figs_zh/} 被忽略, 图源从未提交 →
+# 换台机器就编译不出带图的 PDF (TMLR 变体只能出 21 页缺 4 图的稿子)。
+# 现在: figs/ 与 figs_zh/ 里的**矢量图**入库, make_figs.py 是数据图的绘制脚本,
+# tools/extract_paper_figs.py 负责从已提交的 PDF 里原样抽回示意图 (作为兜底/校验)。
 
 # Build artifacts (rebuilt by latexmk)
 docs/research_paper/*.aux
@@ -56,8 +60,7 @@ docs/research_paper/*.fls
 docs/research_paper/*.log
 docs/research_paper/*.out
 docs/research_paper/*.xdv
-docs/research_paper/figs/
-docs/research_paper/figs_zh/
+# docs/research_paper/figs/ 与 figs_zh/ 已改为入库 (见上)
 
 # Author-only research notes and review logs
 docs/research_paper/related_work_notes*.md
@@ -135,3 +138,9 @@ docs/V5_ALPHA_*.md
 # ─────────────────────────────────────────────────────────────────────
 /.mavis/
 /miniapps/
+# arXiv 上传目录里的 LaTeX 编译中间产物 (arxiv/ 本身入库, 中间产物不入)
+docs/research_paper/arxiv/*.aux
+docs/research_paper/arxiv/*.blg
+docs/research_paper/arxiv/*.log
+docs/research_paper/arxiv/*.out
+docs/research_paper/arxiv/*.bbl.tmp

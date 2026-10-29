@@ -155,6 +155,36 @@ PYEOFCHK
         # V51.0 架构异构线 (v6/v7) 融合收益审计: 目标置换对照 + 有意义空间 + 探针
         python3 examples/run_v51_arch_fusion_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
         ;;
+    v52)
+        # V52.0 独立复算 v50/v51 的探针结论 (重写实现 + 预登记判决 C1a/C1b/C1c/C2/C3)
+        python3 examples/run_v52_independent_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
+    v53)
+        # V53.0 第三审: 独立复算 (值域分割 + 三族探针 + 残差抬升 + 跨底座一致性)
+        python3 examples/run_v53_third_audit.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
+    v54)
+        # V54.0 评价器换轨: MSE → {高斯 NLL, CE} | 同网格, 三档配对, 不降级
+        # 先自检产物血缘: python3 tools/check_artifacts.py research/aligner/v54_evaluator_swap
+        python3 examples/run_v54_evaluator_swap.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
+    v58)
+        # V58.0 膜/面积律: S(A) 与 chi 在真实表征上的读数 (RT 公式的可算形式)
+        python3 examples/run_v58_entanglement_area.py 2>&1 | grep -v -i "warning\|UserWarning"
+        ;;
+    v57)
+        # V57.0 自适应维度: 空间优先, 维度是状态 (r(t) 轨迹)
+        python3 examples/run_v57_adaptive_dimension.py 2>&1 | grep -v -i "warning\|UserWarning"
+        ;;
+    v54-smoke)
+        # 不用模型权重的冒烟 (只验证训练/判决逻辑)
+        V54_SMOKE=1 V54_SEEDS=1 V54_STEPS=8 V54_DSHARED=96 \
+            python3 examples/run_v54_evaluator_swap.py 2>&1 | grep -v -i "warning\|UserWarning"
+        ;;
+    v55)
+        # V55.0 中枢带宽: 融合算子的秩判据 (只读实测, 不训练, 不加载底座权重, ~40s)
+        python3 research/aligner/v55_hub_bandwidth/measure.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"
+        ;;
     e2e)
         # §8.1-8.3 端到端仿真
         python3 examples/run_e2e_simulation.py 2>&1 | grep -v -i "warning\|numpy: No\|functional_tensor\|_conversion\|UserWarning"

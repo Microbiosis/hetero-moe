@@ -1,0 +1,183 @@
+"""V61 单测（远端跑）。核心是确认判据实现与 SPEC 一致。"""
+import os
+import sys
+
+_ROOT = os.path.dirname(os.path.abspath(__file__))
+while _ROOT != "/" and not (os.path.isdir(os.path.join(_ROOT, "research"))
+                            and os.path.isdir(os.path.join(_ROOT, "examples"))):
+    _ROOT = os.path.dirname(_ROOT)
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+import torch
+
+from research.aligner.v60_token_locality.locality import cos_matrix
+from examples.run_v61_delta_replication import (
+    delta_d1, parity_gap, _stable_seed, analyse, PREDICTIONS,
+)
+
+
+def test_delta_definition():
+    """Δ = M̄(1) − mean(M̄(2..S−1))。用手算可验证的矩阵。"""
+    # M[i,j] = |i-j| 的递减函数: 相邻最相似
+    S = 6
+    M = torch.zeros(S, S)
+    for i in range(S):
+        for j in range(S):
+            M[i, j] = 1.0 / (1 + abs(i - j))
+    d = delta_d1(M)
+    d1 = sum(float(M[i, i + 1]) for i in range(S - 1)) / (S - 1)
+    rest = [float(M[i, i + dd]) for dd in range(2, S) for i in range(S - dd)]
+    expect = d1 - sum(rest) / len(rest)
+    assert abs(d - expect) < 1e-9 and d > 0
+    print(f"[PASS] Δ 定义正确: Δ={d:.4f} (相邻更相似 → 正)")
+    return True
+
+
+def test_parity_gap_small_for_smooth():
+    """平滑剖面的奇偶差应当**小**，但不是 0 —— 这是 R4 阈值的校准依据。
+
+    ⚠️ 上一版断言 |pg| < 1e-9 是错的（实测 0.0364）。原因: 有限 d 范围上
+       偶/奇两组取到的 d 不同（偶含 2,4,6,8；奇含 3,5,7,9），非线性衰减函数
+       在两组的均值天然不等。所以 R4 的阈值必须是"远大于平滑的值、
+       远小于交替的值"，而不能取 0。
+    """
+    S = 10
+    M = torch.zeros(S, S)
+    for i in range(S):
+        for j in range(S):
+            M[i, j] = 1.0 / (1 + abs(i - j))
+    pg = parity_gap(M)
+    assert 0 < abs(pg) < 0.15, ("平滑剖面奇偶差应小于 R4 阈值 0.15", pg)
+    print(f"[PASS] 平滑剖面奇偶差 = {pg:.4f}（>0 但 <0.15，R4 阈值据此定）")
+    return True
+
+
+def test_parity_gap_detects_alternating():
+    """周期 2 的交替结构必须被 R4 抓住。"""
+    S = 10
+    M = torch.zeros(S, S)
+    for i in range(S):
+        for j in range(S):
+            M[i, j] = 1.0 if (i - j) % 2 == 0 else -1.0
+    pg = parity_gap(M)
+    assert abs(pg) > 1.5, pg
+    print(f"[PASS] 交替结构奇偶差 = {pg:.2f}（大幅偏离 0）")
+    return True
+
+
+def test_planted_local_delta_positive():
+    """植入相邻相似的结构 ⇒ Δ 应显著为正。
+
+    ⚠️ 上一版 amp=0.05 太弱（Δ 只有 0.035，虽显著但触不到 R3 的 0.05），
+       加强到 0.35，让它成为明确的灵敏度正控。
+    """
+    torch.manual_seed(0)
+    n, S, D = 192, 16, 32
+    base = torch.randn(n, 1, D)
+    direction = torch.randn(1, 1, D)
+    pos = torch.arange(S).view(1, S, 1).float()
+    X = base + pos * direction * 0.35 + torch.randn(n, S, D) * 0.01
+    r = analyse(X, 30, 7)
+    assert r["delta"] > 0.05 and r["outside"], (r["delta"], r["outside"])
+    print(f"[PASS] 植入相邻相似 → Δ={r['delta']:+.4f}, 显著={r['outside']}")
+    return True
+
+
+def test_planted_alternating_delta_negative_and_r4_flags():
+    """植入周期 2 结构 ⇒ Δ 为负，**且 R4 必须报警**（这正是 R4 的用途）。"""
+    torch.manual_seed(0)
+    n, S, D = 192, 16, 32
+    alt = torch.randn(n, 1, D)
+    sign = torch.tensor([1.0 if t % 2 == 0 else -1.0 for t in range(S)]).view(1, S, 1)
+    X = alt * sign * 2.0 + torch.randn(n, S, D) * 0.05
+    r = analyse(X, 30, 11)
+    assert r["delta"] < -0.05, ("交替结构的 Δ 应为负", r["delta"])
+    assert abs(r["parity_gap"]) >= 0.05, ("R4 应报警", r["parity_gap"])
+    print(f"[PASS] 周期 2 结构: Δ={r['delta']:+.4f}, 奇偶差={r['parity_gap']:+.4f}（R4 会拦下）")
+    return True
+
+
+def test_pure_noise_null():
+    """纯噪声上 Δ 不应显著。"""
+    torch.manual_seed(0)
+    X = torch.randn(128, 12, 32)
+    r = analyse(X, 30, 3)
+    assert not r["outside"], (r["delta"], r["null_lo"], r["null_hi"])
+    print(f"[PASS] 纯噪声 Δ={r['delta']:+.4f} 不显著")
+    return True
+
+
+def test_stable_seed_deterministic():
+    """seed 必须可复现（不能用内置 hash）。"""
+    a = _stable_seed("big", 16, "raw")
+    b = _stable_seed("big", 16, "raw")
+    c = _stable_seed("big", 32, "raw")
+    assert a == b and a != c
+    print(f"[PASS] _stable_seed 可复现: {a} == {b}, 且与不同参数区分 ({c})")
+    return True
+
+
+def test_centering_induces_parity_gap():
+    """★ 机制怀疑: `centered` 臂的奇偶差污染是否由**中心化本身**引起。
+
+    中心化强制 Σ_t x_t = 0，于是
+        Σ_{i≠j} x_i·x_j = −Σ_i |x_i|²  < 0
+    即所有非对角点积被压到**负偏置**上。cos 在接近 −1 时高度非线性，
+    不同 d 的点数 (S−d) 不同，于是偏置被非线性放大成奇偶差异。
+
+    本测试若成立 ⇒ v61 中 centered 的 11 个 R4 违规是**构造性伪影**，
+    与模型的表征无关 —— 这解释了为什么 raw 与 detrend 都干净。
+    """
+    torch.manual_seed(0)
+    n, S, D = 192, 16, 32
+    X = torch.randn(n, S, D) * 0.5 + torch.randn(n, 1, D) * 3.0   # 强共同因
+    raw = parity_gap(cos_matrix(X))
+    cen_M = cos_matrix(X - X.mean(dim=1, keepdim=True))
+    cen = parity_gap(cen_M)
+
+    # 中心化后非对角均值必须显著为负 (Σ x_t = 0 的直接推论)
+    off = float((cen_M.sum() - cen_M.diagonal().sum()) / (S * (S - 1)))
+    assert abs(raw) < 0.15, ("raw 应干净", round(raw, 4))
+    assert off < -0.02, ("中心化后非对角应整体为负", round(off, 4))
+    print(f"[观察] raw 奇偶差={raw:+.4f}（干净）→ centered 奇偶差={cen:+.5f}")
+    print(f"       centered 非对角均值={off:+.4f}（Σx=0 的直接推论，负偏置）")
+    if abs(cen) >= 0.15:
+        print("       ⇒ centered 的 R4 违规是中心化的构造性伪影，不是模型表征")
+    else:
+        print("       ⇒ 本合成样例未复现该量级，仍待查（不可据此排除）")
+    return True
+
+
+def test_predictions_match_spec():
+    assert set(PREDICTIONS) == {"R0", "R1", "R2", "R3", "R4"}
+    print(f"[PASS] 五条预登记判据齐全: {list(PREDICTIONS)}")
+    return True
+
+
+TESTS = [
+    test_delta_definition,
+    test_parity_gap_small_for_smooth,
+    test_parity_gap_detects_alternating,
+    test_planted_local_delta_positive,
+    test_planted_alternating_delta_negative_and_r4_flags,
+    test_pure_noise_null,
+    test_stable_seed_deterministic,
+    test_centering_induces_parity_gap,
+    test_predictions_match_spec,
+]
+
+TITLE = "V61.0 Δ 跨模型复制 — 单元测试 (9 项)"
+
+if __name__ == "__main__":
+    print(f"=== {TITLE} ===")
+    ok = 0
+    for fn in TESTS:
+        try:
+            if fn():
+                ok += 1
+        except Exception as e:
+            print(f"[FAIL] {fn.__name__}: {e}")
+    print("---")
+    print(f"合计: {ok}/{len(TESTS)} {'✓ ALL PASS' if ok == len(TESTS) else '✗ HAS FAIL'}")
+    sys.exit(0 if ok == len(TESTS) else 1)

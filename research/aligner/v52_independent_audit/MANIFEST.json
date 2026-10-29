@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "version": "52.0",
+  "package": "v52_independent_audit",
+  "line": "aligner",
+  "title": "独立复算 v50/v51 的探针结论 (重写实现 + 未见组合留出 + 岭回归探针 + 预登记判决)",
+  "generation": {
+    "one_mechanism_added": "一个**独立**的复算包: 新数据生成器(奇偶划分→未见组合留出) + 新抬升(MLP+LayerNorm+GELU, 参数对齐) + 新探针(闭式岭回归) + 新种子(1000+) + D_shared 三档扫描; 并给 C1a/C1b/C1c/C2/C3 五条**预登记判决**与阈值",
+    "parent": "51.0",
+    "children": []
+  },
+  "lineage": {"line_parent": "10.0", "line_children": [],
+    "note": "aligner 线第 8 个成员; 审计链: v50 (审 v33 线) → v51 (审 v6/v7 线) → v52 (独立复算 v50/v51)"},
+  "implementation": {"location": "self", "lifted_to": null, "modules": ["audit.py"],
+    "note": "刻意**不 import** v49/v50/v51 的实现 (数据/抬升/探针/训练循环全部重写); 只保留被审计的对象: 三个真实底座 + v33 融合层"},
+  "claim": {
+    "asserts": "独立复算**通过**: v50/v51 的核心结论在新实现/新数据/新探针/新种子/三档 D_shared 上全部复现 —— (1) 冻结随机空间里融合输出的源身份可解码性 1.000 而目标类别仅 0.31-0.40 (C1a 通过); (2) 目标置换对 margin 影响为 **0.0 个百分点** (C1b 通过, 且随机化目标给出**完全相同**的数字 → 冻结空间里模型的输出与目标无关); (3) 换成有意义空间后 margin 从 +23.0%/+32.9% 塌到 -0.0%/+0.2%, 绝对误差降约 100 倍 (C1c 通过); (4) **随机目标臂**的目标类别可解码仅 0.31-0.43 ≤ 0.50 (C2 通过) → 探针有效, v50/v51 的读数不是探针假象",
+    "metric": "held_out_fuse_mse",
+    "direction": "lower_is_better",
+    "value": 0.0712,
+    "baseline": {"ref": "frozen_random @D256", "value": 6.3804},
+    "delta_pct": -98.9,
+    "seeds": 5,
+    "outcome_label": "clean",
+    "note": "outcome_label=clean (指**审计通过**: 被审计的结论被独立复现)。诚实边界: 仍只覆盖一个合成协议; 探针是线性(岭回归); '有意义空间'未再拆'非线性/可训练'两因子; 本包自身仍需第三个独立复算才算结清(三审制) → 论文相关表述应保持 'pending independent audit'"
+  },
+  "protocol": {
+    "eval_set": "held-out = **未见组合** (每类 16x16 网格按 (i1+i2) 奇偶划分, 两边组合零交集; 每个槽位取值两边都出现) —— 比 v50/v51 的'换扰动种子'更严",
+    "input": "三个真实底座 (MSA-4B 浅层1层 + embedding-0.6b + reranker-0.6b); 8 类 × 16 文本 = 128 文本/底座; D_shared ∈ {128,256,512}; 5 seeds (基址 1000); 200 步",
+    "caveat": "类别数 8 → 目标块的随机基线是 1/8=0.125; 随机目标臂测得 0.31-0.43 (高于随机基线) → 冻结随机投影本身残留了一些类别信息, 但模型无法利用它 —— 这一点在 SPEC 里如实记录"
+  },
+  "acceptance": {
+    "criterion": "预登记判决: C1a (源−类别可解码 ≥0.30, ≥4/5 seeds) / C1b (目标置换后 margin 变化 ≤10pp) / C1c (有意义空间 margin ≤ 冻结臂一半) / C2 (随机目标臂类别可解码 ≤0.50) 在每个 D_shared 上全过 → V1 审计通过",
+    "outcome": "通过: D128 与 D256 上 C1a/C1b/C1c/C2 全部满足 (D256: C1a 逐seed差 0.57-0.61; C1b +32.9%→+32.9%; C1c +32.9%→+0.2%; C2 随机目标臂 0.39-0.43); D512 结果见 results/metrics.json",
+    "note": "更强的附带发现: 冻结随机臂下 A(对齐)/B(置换)/D(随机化) 三臂的 held-out 数字**逐位相同** → 冻结空间里模型的输出与目标无关, 它根本没在做这个任务 (fuse 7.18 vs 平凡基线 0.125, 差 57 倍)"
+  },
+  "leakage_audit": {
+    "status": "pending",
+    "audits": [],
+    "note": "本包是**对 v50/v51 的审计**, 自身仍需第三个独立复算才结清 (三审制); 在此之前论文相关表述保持 'pending independent audit'"
+  },
+  "falsified": [
+    {"hypothesis": "『v50/v51 的探针读数是探针假象 (探针测的是别的东西)』",
+     "verdict": "证伪 —— C2 反向对照: 目标逐样本随机化后, 目标类别可解码仅 0.31-0.43 (≤0.50 阈值), 而冻结臂的源身份可解码是 1.000 → 探针不会制造高准确率, 源可解码性是输出的真实性质",
+     "evidence": "results/metrics.json → randomized_target 臂的 probe.class 列"}
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v52_independent_audit.py",
+    "forwarder_spec": "docs/V52_0_INDEPENDENT_AUDIT.md"
+  },
+  "_needs_human": ["leakage_audit.status"],
+  "_extracted_from": ["research/aligner/README.md"]
+}

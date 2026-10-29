@@ -1,0 +1,1622 @@
+==============================================================================
+V54.0 — 评价器换轨: MSE → {高斯 NLL, CE} | 同网格, 配对, 不降级
+==============================================================================
+code_sha=a32eda6  code_fp=aeafb1d1f4fc54c8  SMOKE=False  device=cpu
+D=[96, 252, 384] arms=['frozen_random', 'permuted_target', 'learned_lift', 'randomized_target'] evaluators=('mse', 'gauss_nll', 'ce') seeds=5 steps=200
+
+解析基线 (块状 one-hot, 精确值):
+  mse        all_zero=+0.1667  predict_mean=+0.1389
+  gauss_nll  all_zero=-0.3959  predict_mean=-0.4870
+  ce         uniform=+1.7918  perfect=+0.0000  uniform_pred_mse=+0.1389
+
+训练 96 条 / 留出 96 条 (文本交集 0)
+  [大] 加载 MSA-4B 浅层 (1层, 非完整36层)...
+    完成 7.4s | D=2560 layers=1/36 | missing=0 unexpected=0
+  [小] 加载 embedding-0.6b ...
+    完成 0.2s | D=1024 layers=28 vocab=151669
+  [小] 加载 reranker-0.6b ...
+    完成 0.1s | D=1024 layers=28 vocab=151669
+  [大] 加载 MSA-4B 浅层 (1层, 非完整36层)...
+    完成 7.3s | D=2560 layers=1/36 | missing=0 unexpected=0
+  [小] 加载 embedding-0.6b ...
+    完成 0.1s | D=1024 layers=28 vocab=151669
+  [小] 加载 reranker-0.6b ...
+    完成 0.1s | D=1024 layers=28 vocab=151669
+编码完成 (56s)  big=[96, 8, 2560] small1=[96, 8, 1024] small2=[96, 8, 1024]
+
+协议锁: match  sha=559ec41467efeb3a
+[  1/180] D96   mse        frozen_random      seed=2000 fuse=8.6990 单专家=9.5097 acc=0.135 源=1.000 类=0.341 (61s)
+[  2/180] D96   mse        frozen_random      seed=2001 fuse=7.2671 单专家=9.8928 acc=0.174 源=0.998 类=0.364 (66s)
+[  3/180] D96   mse        frozen_random      seed=2002 fuse=7.0723 单专家=10.4666 acc=0.163 源=1.000 类=0.345 (70s)
+[  4/180] D96   mse        frozen_random      seed=2003 fuse=7.0742 单专家=8.7748 acc=0.167 源=1.000 类=0.321 (75s)
+[  5/180] D96   mse        frozen_random      seed=2004 fuse=7.1467 单专家=8.9392 acc=0.153 源=0.998 类=0.341 (80s)
+[  6/180] D96   gauss_nll  frozen_random      seed=2000 fuse=7.9053 单专家=9.3877 acc=0.142 源=1.000 类=0.334 (85s)
+[  7/180] D96   gauss_nll  frozen_random      seed=2001 fuse=7.5272 单专家=9.9373 acc=0.174 源=0.998 类=0.362 (89s)
+[  8/180] D96   gauss_nll  frozen_random      seed=2002 fuse=7.2167 单专家=10.3897 acc=0.156 源=1.000 类=0.338 (94s)
+[  9/180] D96   gauss_nll  frozen_random      seed=2003 fuse=7.6999 单专家=9.5705 acc=0.153 源=1.000 类=0.321 (99s)
+[ 10/180] D96   gauss_nll  frozen_random      seed=2004 fuse=7.5188 单专家=8.9547 acc=0.132 源=1.000 类=0.325 (104s)
+[ 11/180] D96   ce         frozen_random      seed=2000 fuse=0.1417 单专家=0.1463 acc=0.170 源=0.670 类=0.178 (109s)
+[ 12/180] D96   ce         frozen_random      seed=2001 fuse=0.1400 单专家=0.1414 acc=0.229 源=0.575 类=0.208 (114s)
+[ 13/180] D96   ce         frozen_random      seed=2002 fuse=0.1415 单专家=0.1457 acc=0.163 源=0.581 类=0.150 (119s)
+[ 14/180] D96   ce         frozen_random      seed=2003 fuse=0.1421 单专家=0.1457 acc=0.156 源=0.868 类=0.158 (123s)
+[ 15/180] D96   ce         frozen_random      seed=2004 fuse=0.1426 单专家=0.1441 acc=0.149 源=0.540 类=0.187 (128s)
+[ 16/180] D96   mse        permuted_target    seed=2000 fuse=8.6990 单专家=9.5097 acc=0.135 源=1.000 类=0.341 (132s)
+[ 17/180] D96   mse        permuted_target    seed=2001 fuse=7.2671 单专家=9.8928 acc=0.174 源=0.998 类=0.364 (137s)
+[ 18/180] D96   mse        permuted_target    seed=2002 fuse=7.0723 单专家=10.4666 acc=0.163 源=1.000 类=0.345 (142s)
+[ 19/180] D96   mse        permuted_target    seed=2003 fuse=7.0742 单专家=8.7748 acc=0.167 源=1.000 类=0.321 (147s)
+[ 20/180] D96   mse        permuted_target    seed=2004 fuse=7.1467 单专家=8.9392 acc=0.153 源=0.998 类=0.341 (152s)
+[ 21/180] D96   gauss_nll  permuted_target    seed=2000 fuse=7.9053 单专家=9.3877 acc=0.142 源=1.000 类=0.334 (157s)
+[ 22/180] D96   gauss_nll  permuted_target    seed=2001 fuse=7.5272 单专家=9.9373 acc=0.174 源=0.998 类=0.362 (162s)
+[ 23/180] D96   gauss_nll  permuted_target    seed=2002 fuse=7.2167 单专家=10.3897 acc=0.156 源=1.000 类=0.338 (166s)
+[ 24/180] D96   gauss_nll  permuted_target    seed=2003 fuse=7.6999 单专家=9.5705 acc=0.153 源=1.000 类=0.321 (171s)
+[ 25/180] D96   gauss_nll  permuted_target    seed=2004 fuse=7.5188 单专家=8.9547 acc=0.132 源=1.000 类=0.325 (175s)
+[ 26/180] D96   ce         permuted_target    seed=2000 fuse=0.1417 单专家=0.1463 acc=0.170 源=0.670 类=0.178 (180s)
+[ 27/180] D96   ce         permuted_target    seed=2001 fuse=0.1400 单专家=0.1414 acc=0.229 源=0.575 类=0.208 (185s)
+[ 28/180] D96   ce         permuted_target    seed=2002 fuse=0.1415 单专家=0.1457 acc=0.163 源=0.581 类=0.150 (189s)
+[ 29/180] D96   ce         permuted_target    seed=2003 fuse=0.1421 单专家=0.1457 acc=0.156 源=0.868 类=0.158 (194s)
+[ 30/180] D96   ce         permuted_target    seed=2004 fuse=0.1426 单专家=0.1441 acc=0.149 源=0.540 类=0.187 (198s)
+[ 31/180] D96   mse        learned_lift       seed=2000 fuse=0.1646 单专家=0.1640 acc=0.219 源=0.933 类=0.343 (206s)
+[ 32/180] D96   mse        learned_lift       seed=2001 fuse=0.1664 单专家=0.1658 acc=0.226 源=0.931 类=0.299 (213s)
+[ 33/180] D96   mse        learned_lift       seed=2002 fuse=0.1682 单专家=0.1675 acc=0.236 源=0.950 类=0.312 (220s)
+[ 34/180] D96   mse        learned_lift       seed=2003 fuse=0.1681 单专家=0.1672 acc=0.233 源=0.944 类=0.293 (227s)
+[ 35/180] D96   mse        learned_lift       seed=2004 fuse=0.1648 单专家=0.1643 acc=0.219 源=0.920 类=0.280 (234s)
+[ 36/180] D96   gauss_nll  learned_lift       seed=2000 fuse=0.1647 单专家=0.1644 acc=0.226 源=0.954 类=0.312 (242s)
+[ 37/180] D96   gauss_nll  learned_lift       seed=2001 fuse=0.1650 单专家=0.1649 acc=0.212 源=0.957 类=0.278 (250s)
+[ 38/180] D96   gauss_nll  learned_lift       seed=2002 fuse=0.1665 单专家=0.1663 acc=0.215 源=0.978 类=0.284 (257s)
+[ 39/180] D96   gauss_nll  learned_lift       seed=2003 fuse=0.1661 单专家=0.1659 acc=0.208 源=0.957 类=0.328 (265s)
+[ 40/180] D96   gauss_nll  learned_lift       seed=2004 fuse=0.1645 单专家=0.1639 acc=0.233 源=0.967 类=0.289 (272s)
+[ 41/180] D96   ce         learned_lift       seed=2000 fuse=0.1870 单专家=0.1867 acc=0.233 源=0.512 类=0.200 (280s)
+[ 42/180] D96   ce         learned_lift       seed=2001 fuse=0.1854 单专家=0.1851 acc=0.247 源=0.518 类=0.247 (287s)
+[ 43/180] D96   ce         learned_lift       seed=2002 fuse=0.1855 单专家=0.1854 acc=0.247 源=0.525 类=0.243 (294s)
+[ 44/180] D96   ce         learned_lift       seed=2003 fuse=0.1861 单专家=0.1860 acc=0.240 源=0.495 类=0.217 (301s)
+[ 45/180] D96   ce         learned_lift       seed=2004 fuse=0.1814 单专家=0.1814 acc=0.260 源=0.488 类=0.228 (308s)
+[ 46/180] D96   mse        randomized_target  seed=2000 fuse=8.6990 单专家=9.5097 acc=0.135 源=1.000 类=0.341 (313s)
+[ 47/180] D96   mse        randomized_target  seed=2001 fuse=7.2671 单专家=9.8928 acc=0.174 源=0.998 类=0.364 (318s)
+[ 48/180] D96   mse        randomized_target  seed=2002 fuse=7.0723 单专家=10.4666 acc=0.163 源=1.000 类=0.345 (322s)
+[ 49/180] D96   mse        randomized_target  seed=2003 fuse=7.0742 单专家=8.7748 acc=0.167 源=1.000 类=0.321 (327s)
+[ 50/180] D96   mse        randomized_target  seed=2004 fuse=7.1467 单专家=8.9392 acc=0.153 源=0.998 类=0.341 (331s)
+[ 51/180] D96   gauss_nll  randomized_target  seed=2000 fuse=7.9053 单专家=9.3877 acc=0.142 源=1.000 类=0.334 (336s)
+[ 52/180] D96   gauss_nll  randomized_target  seed=2001 fuse=7.5272 单专家=9.9373 acc=0.174 源=0.998 类=0.362 (341s)
+[ 53/180] D96   gauss_nll  randomized_target  seed=2002 fuse=7.2167 单专家=10.3897 acc=0.156 源=1.000 类=0.338 (346s)
+[ 54/180] D96   gauss_nll  randomized_target  seed=2003 fuse=7.6999 单专家=9.5705 acc=0.153 源=1.000 类=0.321 (350s)
+[ 55/180] D96   gauss_nll  randomized_target  seed=2004 fuse=7.5188 单专家=8.9547 acc=0.132 源=1.000 类=0.325 (355s)
+[ 56/180] D96   ce         randomized_target  seed=2000 fuse=0.1417 单专家=0.1463 acc=0.170 源=0.670 类=0.178 (360s)
+[ 57/180] D96   ce         randomized_target  seed=2001 fuse=0.1400 单专家=0.1414 acc=0.229 源=0.575 类=0.208 (366s)
+[ 58/180] D96   ce         randomized_target  seed=2002 fuse=0.1415 单专家=0.1457 acc=0.163 源=0.581 类=0.150 (371s)
+[ 59/180] D96   ce         randomized_target  seed=2003 fuse=0.1421 单专家=0.1457 acc=0.156 源=0.868 类=0.158 (376s)
+[ 60/180] D96   ce         randomized_target  seed=2004 fuse=0.1426 单专家=0.1441 acc=0.149 源=0.540 类=0.187 (381s)
+[ 61/180] D252  mse        frozen_random      seed=2000 fuse=5.5631 单专家=9.1712 acc=0.177 源=1.000 类=0.471 (395s)
+[ 62/180] D252  mse        frozen_random      seed=2001 fuse=5.7827 单专家=9.7103 acc=0.156 源=1.000 类=0.475 (409s)
+[ 63/180] D252  mse        frozen_random      seed=2002 fuse=5.6042 单专家=9.4603 acc=0.205 源=1.000 类=0.482 (423s)
+[ 64/180] D252  mse        frozen_random      seed=2003 fuse=6.1018 单专家=9.9397 acc=0.188 源=1.000 类=0.486 (438s)
+[ 65/180] D252  mse        frozen_random      seed=2004 fuse=5.8511 单专家=9.4491 acc=0.128 源=1.000 类=0.471 (452s)
+[ 66/180] D252  gauss_nll  frozen_random      seed=2000 fuse=6.5412 单专家=9.7445 acc=0.160 源=1.000 类=0.490 (467s)
+[ 67/180] D252  gauss_nll  frozen_random      seed=2001 fuse=6.3692 单专家=9.5130 acc=0.188 源=1.000 类=0.488 (482s)
+[ 68/180] D252  gauss_nll  frozen_random      seed=2002 fuse=5.9435 单专家=9.5064 acc=0.149 源=1.000 类=0.477 (496s)
+[ 69/180] D252  gauss_nll  frozen_random      seed=2003 fuse=7.2760 单专家=10.2146 acc=0.153 源=1.000 类=0.469 (510s)
+[ 70/180] D252  gauss_nll  frozen_random      seed=2004 fuse=6.6151 单专家=9.6521 acc=0.191 源=1.000 类=0.486 (524s)
+[ 71/180] D252  ce         frozen_random      seed=2000 fuse=0.1431 单专家=0.1426 acc=0.219 源=0.501 类=0.187 (539s)
+[ 72/180] D252  ce         frozen_random      seed=2001 fuse=0.1438 单专家=0.1437 acc=0.188 源=0.377 类=0.202 (553s)
+[ 73/180] D252  ce         frozen_random      seed=2002 fuse=0.1449 单专家=0.1432 acc=0.167 源=0.560 类=0.180 (570s)
+[ 74/180] D252  ce         frozen_random      seed=2003 fuse=0.1433 单专家=0.1415 acc=0.194 源=0.605 类=0.171 (585s)
+[ 75/180] D252  ce         frozen_random      seed=2004 fuse=0.1451 单专家=0.1471 acc=0.205 源=0.377 类=0.204 (600s)
+[ 76/180] D252  mse        permuted_target    seed=2000 fuse=5.5631 单专家=9.1712 acc=0.177 源=1.000 类=0.471 (614s)
+[ 77/180] D252  mse        permuted_target    seed=2001 fuse=5.7827 单专家=9.7103 acc=0.156 源=1.000 类=0.475 (628s)
+[ 78/180] D252  mse        permuted_target    seed=2002 fuse=5.6042 单专家=9.4603 acc=0.205 源=1.000 类=0.482 (643s)
+[ 79/180] D252  mse        permuted_target    seed=2003 fuse=6.1018 单专家=9.9397 acc=0.188 源=1.000 类=0.486 (656s)
+[ 80/180] D252  mse        permuted_target    seed=2004 fuse=5.8511 单专家=9.4491 acc=0.128 源=1.000 类=0.471 (670s)
+[ 81/180] D252  gauss_nll  permuted_target    seed=2000 fuse=6.5412 单专家=9.7445 acc=0.160 源=1.000 类=0.490 (685s)
+[ 82/180] D252  gauss_nll  permuted_target    seed=2001 fuse=6.3692 单专家=9.5130 acc=0.188 源=1.000 类=0.488 (700s)
+[ 83/180] D252  gauss_nll  permuted_target    seed=2002 fuse=5.9435 单专家=9.5064 acc=0.149 源=1.000 类=0.477 (715s)
+[ 84/180] D252  gauss_nll  permuted_target    seed=2003 fuse=7.2760 单专家=10.2146 acc=0.153 源=1.000 类=0.469 (729s)
+[ 85/180] D252  gauss_nll  permuted_target    seed=2004 fuse=6.6151 单专家=9.6521 acc=0.191 源=1.000 类=0.486 (743s)
+[ 86/180] D252  ce         permuted_target    seed=2000 fuse=0.1431 单专家=0.1426 acc=0.219 源=0.501 类=0.187 (757s)
+[ 87/180] D252  ce         permuted_target    seed=2001 fuse=0.1438 单专家=0.1437 acc=0.188 源=0.377 类=0.202 (773s)
+[ 88/180] D252  ce         permuted_target    seed=2002 fuse=0.1449 单专家=0.1432 acc=0.167 源=0.560 类=0.180 (786s)
+[ 89/180] D252  ce         permuted_target    seed=2003 fuse=0.1433 单专家=0.1415 acc=0.194 源=0.605 类=0.171 (802s)
+[ 90/180] D252  ce         permuted_target    seed=2004 fuse=0.1451 单专家=0.1471 acc=0.205 源=0.377 类=0.204 (816s)
+[ 91/180] D252  mse        learned_lift       seed=2000 fuse=0.1627 单专家=0.1617 acc=0.229 源=0.972 类=0.377 (834s)
+[ 92/180] D252  mse        learned_lift       seed=2001 fuse=0.1631 单专家=0.1624 acc=0.240 源=0.970 类=0.371 (853s)
+[ 93/180] D252  mse        learned_lift       seed=2002 fuse=0.1586 单专家=0.1569 acc=0.250 源=0.965 类=0.367 (872s)
+[ 94/180] D252  mse        learned_lift       seed=2003 fuse=0.1635 单专家=0.1627 acc=0.240 源=0.970 类=0.375 (890s)
+[ 95/180] D252  mse        learned_lift       seed=2004 fuse=0.1620 单专家=0.1614 acc=0.212 源=0.961 类=0.351 (909s)
+[ 96/180] D252  gauss_nll  learned_lift       seed=2000 fuse=0.1621 单专家=0.1612 acc=0.226 源=0.970 类=0.403 (929s)
+[ 97/180] D252  gauss_nll  learned_lift       seed=2001 fuse=0.1590 单专家=0.1583 acc=0.208 源=0.983 类=0.369 (948s)
+[ 98/180] D252  gauss_nll  learned_lift       seed=2002 fuse=0.1608 单专家=0.1605 acc=0.233 源=0.980 类=0.397 (966s)
+[ 99/180] D252  gauss_nll  learned_lift       seed=2003 fuse=0.1572 单专家=0.1569 acc=0.229 源=0.957 类=0.390 (985s)
+[100/180] D252  gauss_nll  learned_lift       seed=2004 fuse=0.1594 单专家=0.1588 acc=0.219 源=0.974 类=0.364 (1004s)
+[101/180] D252  ce         learned_lift       seed=2000 fuse=0.1872 单专家=0.1867 acc=0.226 源=0.549 类=0.176 (1022s)
+[102/180] D252  ce         learned_lift       seed=2001 fuse=0.1885 单专家=0.1880 acc=0.229 源=0.512 类=0.252 (1041s)
+[103/180] D252  ce         learned_lift       seed=2002 fuse=0.1868 单专家=0.1866 acc=0.229 源=0.497 类=0.221 (1059s)
+[104/180] D252  ce         learned_lift       seed=2003 fuse=0.1899 单专家=0.1896 acc=0.222 源=0.456 类=0.197 (1077s)
+[105/180] D252  ce         learned_lift       seed=2004 fuse=0.1832 单专家=0.1832 acc=0.250 源=0.490 类=0.223 (1095s)
+[106/180] D252  mse        randomized_target  seed=2000 fuse=5.5631 单专家=9.1712 acc=0.177 源=1.000 类=0.471 (1110s)
+[107/180] D252  mse        randomized_target  seed=2001 fuse=5.7827 单专家=9.7103 acc=0.156 源=1.000 类=0.475 (1124s)
+[108/180] D252  mse        randomized_target  seed=2002 fuse=5.6042 单专家=9.4603 acc=0.205 源=1.000 类=0.482 (1138s)
+[109/180] D252  mse        randomized_target  seed=2003 fuse=6.1018 单专家=9.9397 acc=0.188 源=1.000 类=0.486 (1152s)
+[110/180] D252  mse        randomized_target  seed=2004 fuse=5.8511 单专家=9.4491 acc=0.128 源=1.000 类=0.471 (1166s)
+[111/180] D252  gauss_nll  randomized_target  seed=2000 fuse=6.5412 单专家=9.7445 acc=0.160 源=1.000 类=0.490 (1181s)
+[112/180] D252  gauss_nll  randomized_target  seed=2001 fuse=6.3692 单专家=9.5130 acc=0.188 源=1.000 类=0.488 (1195s)
+[113/180] D252  gauss_nll  randomized_target  seed=2002 fuse=5.9435 单专家=9.5064 acc=0.149 源=1.000 类=0.477 (1208s)
+[114/180] D252  gauss_nll  randomized_target  seed=2003 fuse=7.2760 单专家=10.2146 acc=0.153 源=1.000 类=0.469 (1222s)
+[115/180] D252  gauss_nll  randomized_target  seed=2004 fuse=6.6151 单专家=9.6521 acc=0.191 源=1.000 类=0.486 (1236s)
+[116/180] D252  ce         randomized_target  seed=2000 fuse=0.1431 单专家=0.1426 acc=0.219 源=0.501 类=0.187 (1250s)
+[117/180] D252  ce         randomized_target  seed=2001 fuse=0.1438 单专家=0.1437 acc=0.188 源=0.377 类=0.202 (1264s)
+[118/180] D252  ce         randomized_target  seed=2002 fuse=0.1449 单专家=0.1432 acc=0.167 源=0.560 类=0.180 (1279s)
+[119/180] D252  ce         randomized_target  seed=2003 fuse=0.1433 单专家=0.1415 acc=0.194 源=0.605 类=0.171 (1293s)
+[120/180] D252  ce         randomized_target  seed=2004 fuse=0.1451 单专家=0.1471 acc=0.205 源=0.377 类=0.204 (1308s)
+[121/180] D384  mse        frozen_random      seed=2000 fuse=5.5800 单专家=9.3815 acc=0.115 源=1.000 类=0.540 (1334s)
+[122/180] D384  mse        frozen_random      seed=2001 fuse=5.9090 单专家=10.1306 acc=0.181 源=1.000 类=0.529 (1361s)
+[123/180] D384  mse        frozen_random      seed=2002 fuse=5.3991 单专家=9.0835 acc=0.194 源=1.000 类=0.514 (1386s)
+[124/180] D384  mse        frozen_random      seed=2003 fuse=5.9870 单专家=10.5586 acc=0.184 源=1.000 类=0.497 (1412s)
+[125/180] D384  mse        frozen_random      seed=2004 fuse=5.4199 单专家=9.8802 acc=0.163 源=1.000 类=0.503 (1436s)
+[126/180] D384  gauss_nll  frozen_random      seed=2000 fuse=6.8462 单专家=9.7128 acc=0.128 源=1.000 类=0.538 (1463s)
+[127/180] D384  gauss_nll  frozen_random      seed=2001 fuse=7.8551 单专家=9.0391 acc=0.174 源=1.000 类=0.531 (1488s)
+[128/180] D384  gauss_nll  frozen_random      seed=2002 fuse=7.0585 单专家=9.7862 acc=0.177 源=1.000 类=0.490 (1516s)
+[129/180] D384  gauss_nll  frozen_random      seed=2003 fuse=8.6412 单专家=9.9902 acc=0.174 源=1.000 类=0.490 (1541s)
+[130/180] D384  gauss_nll  frozen_random      seed=2004 fuse=6.7586 单专家=10.1738 acc=0.139 源=1.000 类=0.497 (1566s)
+[131/180] D384  ce         frozen_random      seed=2000 fuse=0.1532 单专家=0.1542 acc=0.226 源=0.594 类=0.193 (1591s)
+[132/180] D384  ce         frozen_random      seed=2001 fuse=0.1466 单专家=0.1489 acc=0.198 源=0.393 类=0.169 (1615s)
+[133/180] D384  ce         frozen_random      seed=2002 fuse=0.1466 单专家=0.1436 acc=0.170 源=0.549 类=0.176 (1641s)
+[134/180] D384  ce         frozen_random      seed=2003 fuse=0.1514 单专家=0.1537 acc=0.184 源=0.685 类=0.202 (1665s)
+[135/180] D384  ce         frozen_random      seed=2004 fuse=0.1445 单专家=0.1416 acc=0.212 源=0.616 类=0.193 (1689s)
+[136/180] D384  mse        permuted_target    seed=2000 fuse=5.5800 单专家=9.3815 acc=0.115 源=1.000 类=0.540 (1715s)
+[137/180] D384  mse        permuted_target    seed=2001 fuse=5.9090 单专家=10.1306 acc=0.181 源=1.000 类=0.529 (1739s)
+[138/180] D384  mse        permuted_target    seed=2002 fuse=5.3991 单专家=9.0835 acc=0.194 源=1.000 类=0.514 (1764s)
+[139/180] D384  mse        permuted_target    seed=2003 fuse=5.9870 单专家=10.5586 acc=0.184 源=1.000 类=0.497 (1788s)
+[140/180] D384  mse        permuted_target    seed=2004 fuse=5.4199 单专家=9.8802 acc=0.163 源=1.000 类=0.503 (1812s)
+[141/180] D384  gauss_nll  permuted_target    seed=2000 fuse=6.8462 单专家=9.7128 acc=0.128 源=1.000 类=0.538 (1839s)
+[142/180] D384  gauss_nll  permuted_target    seed=2001 fuse=7.8551 单专家=9.0391 acc=0.174 源=1.000 类=0.531 (1866s)
+[143/180] D384  gauss_nll  permuted_target    seed=2002 fuse=7.0585 单专家=9.7862 acc=0.177 源=1.000 类=0.490 (1890s)
+[144/180] D384  gauss_nll  permuted_target    seed=2003 fuse=8.6412 单专家=9.9902 acc=0.174 源=1.000 类=0.490 (1916s)
+[145/180] D384  gauss_nll  permuted_target    seed=2004 fuse=6.7586 单专家=10.1738 acc=0.139 源=1.000 类=0.497 (1941s)
+[146/180] D384  ce         permuted_target    seed=2000 fuse=0.1532 单专家=0.1542 acc=0.226 源=0.594 类=0.193 (1965s)
+[147/180] D384  ce         permuted_target    seed=2001 fuse=0.1466 单专家=0.1489 acc=0.198 源=0.393 类=0.169 (1990s)
+[148/180] D384  ce         permuted_target    seed=2002 fuse=0.1466 单专家=0.1436 acc=0.170 源=0.549 类=0.176 (2014s)
+[149/180] D384  ce         permuted_target    seed=2003 fuse=0.1514 单专家=0.1537 acc=0.184 源=0.685 类=0.202 (2039s)
+[150/180] D384  ce         permuted_target    seed=2004 fuse=0.1445 单专家=0.1416 acc=0.212 源=0.616 类=0.193 (2064s)
+[151/180] D384  mse        learned_lift       seed=2000 fuse=0.1596 单专家=0.1592 acc=0.229 源=0.985 类=0.449 (2096s)
+[152/180] D384  mse        learned_lift       seed=2001 fuse=0.1585 单专家=0.1578 acc=0.243 源=0.978 类=0.414 (2128s)
+[153/180] D384  mse        learned_lift       seed=2002 fuse=0.1583 单专家=0.1578 acc=0.222 源=0.972 类=0.427 (2159s)
+[154/180] D384  mse        learned_lift       seed=2003 fuse=0.1649 单专家=0.1641 acc=0.226 源=0.963 类=0.419 (2189s)
+[155/180] D384  mse        learned_lift       seed=2004 fuse=0.1584 单专家=0.1580 acc=0.236 源=0.985 类=0.406 (2223s)
+[156/180] D384  gauss_nll  learned_lift       seed=2000 fuse=0.1582 单专家=0.1573 acc=0.247 源=0.987 类=0.443 (2255s)
+[157/180] D384  gauss_nll  learned_lift       seed=2001 fuse=0.1582 单专家=0.1570 acc=0.236 源=0.972 类=0.434 (2286s)
+[158/180] D384  gauss_nll  learned_lift       seed=2002 fuse=0.1582 单专家=0.1571 acc=0.243 源=0.974 类=0.423 (2319s)
+[159/180] D384  gauss_nll  learned_lift       seed=2003 fuse=0.1570 单专家=0.1568 acc=0.233 源=0.972 类=0.416 (2352s)
+[160/180] D384  gauss_nll  learned_lift       seed=2004 fuse=0.1582 单专家=0.1578 acc=0.229 源=0.963 类=0.408 (2384s)
+[161/180] D384  ce         learned_lift       seed=2000 fuse=0.1828 单专家=0.1828 acc=0.257 源=0.555 类=0.213 (2414s)
+[162/180] D384  ce         learned_lift       seed=2001 fuse=0.1866 单专家=0.1863 acc=0.253 源=0.453 类=0.217 (2446s)
+[163/180] D384  ce         learned_lift       seed=2002 fuse=0.1864 单专家=0.1863 acc=0.233 源=0.531 类=0.226 (2477s)
+[164/180] D384  ce         learned_lift       seed=2003 fuse=0.1869 单专家=0.1860 acc=0.250 源=0.518 类=0.215 (2507s)
+[165/180] D384  ce         learned_lift       seed=2004 fuse=0.1869 单专家=0.1868 acc=0.229 源=0.505 类=0.215 (2536s)
+[166/180] D384  mse        randomized_target  seed=2000 fuse=5.5800 单专家=9.3815 acc=0.115 源=1.000 类=0.540 (2560s)
+[167/180] D384  mse        randomized_target  seed=2001 fuse=5.9090 单专家=10.1306 acc=0.181 源=1.000 类=0.529 (2584s)
+[168/180] D384  mse        randomized_target  seed=2002 fuse=5.3991 单专家=9.0835 acc=0.194 源=1.000 类=0.514 (2607s)
+[169/180] D384  mse        randomized_target  seed=2003 fuse=5.9870 单专家=10.5586 acc=0.184 源=1.000 类=0.497 (2630s)
+[170/180] D384  mse        randomized_target  seed=2004 fuse=5.4199 单专家=9.8802 acc=0.163 源=1.000 类=0.503 (2655s)
+[171/180] D384  gauss_nll  randomized_target  seed=2000 fuse=6.8462 单专家=9.7128 acc=0.128 源=1.000 类=0.538 (2679s)
+[172/180] D384  gauss_nll  randomized_target  seed=2001 fuse=7.8551 单专家=9.0391 acc=0.174 源=1.000 类=0.531 (2702s)
+[173/180] D384  gauss_nll  randomized_target  seed=2002 fuse=7.0585 单专家=9.7862 acc=0.177 源=1.000 类=0.490 (2727s)
+[174/180] D384  gauss_nll  randomized_target  seed=2003 fuse=8.6412 单专家=9.9902 acc=0.174 源=1.000 类=0.490 (2751s)
+[175/180] D384  gauss_nll  randomized_target  seed=2004 fuse=6.7586 单专家=10.1738 acc=0.139 源=1.000 类=0.497 (2776s)
+[176/180] D384  ce         randomized_target  seed=2000 fuse=0.1532 单专家=0.1542 acc=0.226 源=0.594 类=0.193 (2800s)
+[177/180] D384  ce         randomized_target  seed=2001 fuse=0.1466 单专家=0.1489 acc=0.198 源=0.393 类=0.169 (2824s)
+[178/180] D384  ce         randomized_target  seed=2002 fuse=0.1466 单专家=0.1436 acc=0.170 源=0.549 类=0.176 (2849s)
+[179/180] D384  ce         randomized_target  seed=2003 fuse=0.1514 单专家=0.1537 acc=0.184 源=0.685 类=0.202 (2873s)
+[180/180] D384  ce         randomized_target  seed=2004 fuse=0.1445 单专家=0.1416 acc=0.212 源=0.616 类=0.193 (2898s)
+
+==============================================================================
+预登记判决 E1–E6 (闸门: only_ev 也由预登记固定)
+==============================================================================
+  D252: E1=未过(10/15)  E2=过(4/5)  E3=过(15/15)  E4=未过(0/5)  E5=未过(0/15)  E6=未过(0/15)
+  D384: E1=未过(10/15)  E2=过(4/5)  E3=过(15/15)  E4=未过(0/5)  E5=未过(0/15)  E6=未过(0/15)
+  D96: E1=未过(10/15)  E2=过(4/5)  E3=过(15/15)  E4=未过(0/5)  E5=未过(0/15)  E6=未过(0/15)
+
+完整性: COMPLETE: 网格完备且所有判据有结论
+
+指标已落盘: /app/research/aligner/v54_evaluator_swap/results/metrics.json  (code_sha=a32eda6, 180 格, 2898s)
+闸门: COMPLETE: 网格完备且所有判据有结论 → all_pass=False
+  已推桶: redmingwei/hetero-moe-jobs/v54-a32eda6-cpu8/metrics.json
+
+===== STDERR =====
+
+Fetching 11 files:   0%|          | 0/11 [00:00<?, ?it/s]
+Fetching 11 files: 100%|██████████| 11/11 [00:00<00:00, 1766.70it/s]
+/usr/local/lib/python3.11/site-packages/transformers/configuration_utils.py:720: FutureWarning: `rope_scaling` is deprecated and will be removed in a future version. Set `rope_parameters` instead, with `rope_type` and `rope_theta` included.
+  warnings.warn(
+
+Loading weights:   0%|          | 0/310 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 310/310 [00:00<00:00, 5562.05it/s]
+
+Loading weights:   0%|          | 0/310 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 310/310 [00:00<00:00, 5503.36it/s]
+
+Loading weights:   0%|          | 0/310 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 310/310 [00:00<00:00, 4872.40it/s]
+
+Loading weights:   0%|          | 0/310 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 310/310 [00:00<00:00, 5419.52it/s]
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 4.92kB / 4.92kB            [A[A
+
+
+                              : 100%|██████████| 4.92kB / 4.92kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.92kB / 4.92kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 4.92kB / 4.92kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 4.92kB / 4.92kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.92kB / 4.92kB,   491B/s  
+
+New Data Upload               : 100%|██████████| 4.92kB / 4.92kB,   491B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 4.92kB / 4.92kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.42kB / 5.42kB            [A[A
+
+
+                              : 100%|██████████| 5.42kB / 5.42kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.42kB / 5.42kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.42kB / 5.42kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.42kB / 5.42kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.42kB / 5.42kB,   540B/s  
+
+New Data Upload               : 100%|██████████| 5.42kB / 5.42kB,   540B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.42kB / 5.42kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   538B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   538B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.40kB / 5.40kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 4.93kB / 4.93kB            [A[A
+
+
+                              : 100%|██████████| 4.93kB / 4.93kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.93kB / 4.93kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 4.93kB / 4.93kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 4.93kB / 4.93kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.93kB / 4.93kB,   491B/s  
+
+New Data Upload               : 100%|██████████| 4.93kB / 4.93kB,   491B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 4.93kB / 4.93kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.43kB / 5.43kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.43kB / 5.43kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.43kB / 5.43kB,   538B/s  
+
+New Data Upload               : 100%|██████████| 5.43kB / 5.43kB,   538B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.43kB / 5.43kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   539B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   539B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.40kB / 5.40kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.04kB / 5.04kB            [A[A
+
+
+                              : 100%|██████████| 5.04kB / 5.04kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.04kB / 5.04kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.04kB / 5.04kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.04kB / 5.04kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.04kB / 5.04kB,   502B/s  
+
+New Data Upload               : 100%|██████████| 5.04kB / 5.04kB,   502B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.04kB / 5.04kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.63kB / 5.63kB            [A[A
+
+
+                              : 100%|██████████| 5.63kB / 5.63kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.63kB / 5.63kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.63kB / 5.63kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.63kB / 5.63kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.63kB / 5.63kB,   561B/s  
+
+New Data Upload               : 100%|██████████| 5.63kB / 5.63kB,   561B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.63kB / 5.63kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.39kB / 5.39kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.39kB / 5.39kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.39kB / 5.39kB,   537B/s  
+
+New Data Upload               : 100%|██████████| 5.39kB / 5.39kB,   537B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.39kB / 5.39kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 4.93kB / 4.93kB            [A[A
+
+
+                              : 100%|██████████| 4.93kB / 4.93kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.93kB / 4.93kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 4.93kB / 4.93kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 4.93kB / 4.93kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.93kB / 4.93kB,   491B/s  
+
+New Data Upload               : 100%|██████████| 4.93kB / 4.93kB,   491B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 4.93kB / 4.93kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.43kB / 5.43kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.43kB / 5.43kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.43kB / 5.43kB,   542B/s  
+
+New Data Upload               : 100%|██████████| 5.43kB / 5.43kB,   542B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.43kB / 5.43kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.41kB / 5.41kB            [A[A
+
+
+                              : 100%|██████████| 5.41kB / 5.41kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.41kB / 5.41kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.41kB / 5.41kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.41kB / 5.41kB            [A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.41kB / 5.41kB            [A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.41kB / 5.41kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.41kB / 5.41kB,   525B/s  
+
+New Data Upload               : 100%|██████████| 5.41kB / 5.41kB,   525B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.41kB / 5.41kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 4.86kB / 4.86kB            [A[A
+
+
+                              : 100%|██████████| 4.86kB / 4.86kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.86kB / 4.86kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 4.86kB / 4.86kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 4.86kB / 4.86kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.86kB / 4.86kB,   484B/s  
+
+New Data Upload               : 100%|██████████| 4.86kB / 4.86kB,   484B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 4.86kB / 4.86kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.39kB / 5.39kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.39kB / 5.39kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.39kB / 5.39kB,   536B/s  
+
+New Data Upload               : 100%|██████████| 5.39kB / 5.39kB,   536B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.39kB / 5.39kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.39kB / 5.39kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.39kB / 5.39kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.39kB / 5.39kB,   539B/s  
+
+New Data Upload               : 100%|██████████| 5.39kB / 5.39kB,   539B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.39kB / 5.39kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 4.86kB / 4.86kB            [A[A
+
+
+                              : 100%|██████████| 4.86kB / 4.86kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.86kB / 4.86kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 4.86kB / 4.86kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 4.86kB / 4.86kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.86kB / 4.86kB,   484B/s  
+
+New Data Upload               : 100%|██████████| 4.86kB / 4.86kB,   484B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 4.86kB / 4.86kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.39kB / 5.39kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.39kB / 5.39kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.39kB / 5.39kB,   538B/s  
+
+New Data Upload               : 100%|██████████| 5.39kB / 5.39kB,   538B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.39kB / 5.39kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   539B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   539B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.40kB / 5.40kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.08kB / 5.08kB            [A[A
+
+
+                              : 100%|██████████| 5.08kB / 5.08kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.08kB / 5.08kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.08kB / 5.08kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.08kB / 5.08kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.08kB / 5.08kB,   505B/s  
+
+New Data Upload               : 100%|██████████| 5.08kB / 5.08kB,   505B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.08kB / 5.08kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.63kB / 5.63kB            [A[A
+
+
+                              : 100%|██████████| 5.63kB / 5.63kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.63kB / 5.63kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.63kB / 5.63kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.63kB / 5.63kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.63kB / 5.63kB,   561B/s  
+
+New Data Upload               : 100%|██████████| 5.63kB / 5.63kB,   561B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.63kB / 5.63kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   538B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   538B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.40kB / 5.40kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 4.87kB / 4.87kB            [A[A
+
+
+                              : 100%|██████████| 4.87kB / 4.87kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.87kB / 4.87kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 4.87kB / 4.87kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 4.87kB / 4.87kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.87kB / 4.87kB,   486B/s  
+
+New Data Upload               : 100%|██████████| 4.87kB / 4.87kB,   486B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 4.87kB / 4.87kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.39kB / 5.39kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.39kB / 5.39kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.39kB / 5.39kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.39kB / 5.39kB,   538B/s  
+
+New Data Upload               : 100%|██████████| 5.39kB / 5.39kB,   538B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.39kB / 5.39kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   538B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   538B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.40kB / 5.40kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 4.88kB / 4.88kB            [A[A
+
+
+                              : 100%|██████████| 4.88kB / 4.88kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.88kB / 4.88kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 4.88kB / 4.88kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 4.88kB / 4.88kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.88kB / 4.88kB,   487B/s  
+
+New Data Upload               : 100%|██████████| 4.88kB / 4.88kB,   487B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 4.88kB / 4.88kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   537B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   537B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.40kB / 5.40kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.43kB / 5.43kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.43kB / 5.43kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.43kB / 5.43kB,   541B/s  
+
+New Data Upload               : 100%|██████████| 5.43kB / 5.43kB,   541B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.43kB / 5.43kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 4.89kB / 4.89kB            [A[A
+
+
+                              : 100%|██████████| 4.89kB / 4.89kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.89kB / 4.89kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 4.89kB / 4.89kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 4.89kB / 4.89kB            [A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 4.89kB / 4.89kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.89kB / 4.89kB,   483B/s  
+
+New Data Upload               : 100%|██████████| 4.89kB / 4.89kB,   483B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 4.89kB / 4.89kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.40kB / 5.40kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.40kB / 5.40kB,   538B/s  
+
+New Data Upload               : 100%|██████████| 5.40kB / 5.40kB,   538B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.40kB / 5.40kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.43kB / 5.43kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.43kB / 5.43kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.43kB / 5.43kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.43kB / 5.43kB,   541B/s  
+
+New Data Upload               : 100%|██████████| 5.43kB / 5.43kB,   541B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.43kB / 5.43kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.10kB / 5.10kB            [A[A
+
+
+                              : 100%|██████████| 5.10kB / 5.10kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.10kB / 5.10kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.10kB / 5.10kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.10kB / 5.10kB            [A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.10kB / 5.10kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.10kB / 5.10kB,   503B/s  
+
+New Data Upload               : 100%|██████████| 5.10kB / 5.10kB,   503B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.10kB / 5.10kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.67kB / 5.67kB            [A[A
+
+
+                              : 100%|██████████| 5.67kB / 5.67kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.67kB / 5.67kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.67kB / 5.67kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.67kB / 5.67kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.67kB / 5.67kB,   565B/s  
+
+New Data Upload               : 100%|██████████| 5.67kB / 5.67kB,   565B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.67kB / 5.67kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.42kB / 5.42kB            [A[A
+
+
+                              : 100%|██████████| 5.42kB / 5.42kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.42kB / 5.42kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.42kB / 5.42kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.42kB / 5.42kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.42kB / 5.42kB,   539B/s  
+
+New Data Upload               : 100%|██████████| 5.42kB / 5.42kB,   539B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.42kB / 5.42kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 4.89kB / 4.89kB            [A[A
+
+
+                              : 100%|██████████| 4.89kB / 4.89kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.89kB / 4.89kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 4.89kB / 4.89kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 4.89kB / 4.89kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 4.89kB / 4.89kB,   488B/s  
+
+New Data Upload               : 100%|██████████| 4.89kB / 4.89kB,   488B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 4.89kB / 4.89kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.41kB / 5.41kB            [A[A
+
+
+                              : 100%|██████████| 5.41kB / 5.41kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.41kB / 5.41kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.41kB / 5.41kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.41kB / 5.41kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.41kB / 5.41kB,   535B/s  
+
+New Data Upload               : 100%|██████████| 5.41kB / 5.41kB,   535B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.41kB / 5.41kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+                              : 100%|██████████| 5.44kB / 5.44kB            [A[A
+
+
+                              : 100%|██████████| 5.44kB / 5.44kB            [A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.44kB / 5.44kB,   ???B/s  
+
+New Data Upload               : 100%|██████████| 5.44kB / 5.44kB,   ???B/s  [A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+
+Validating                    :           |   0%            [A[A[A
+
+
+                              : 100%|██████████| 5.44kB / 5.44kB            [A[A
+
+
+
+Validating                    : ██████████| 100%            [A[A[A
+Processing Files (1 / 1)      : 100%|██████████| 5.44kB / 5.44kB,   542B/s  
+
+New Data Upload               : 100%|██████████| 5.44kB / 5.44kB,   542B/s  
+
+Validating                    : ██████████| 100%            
+
+                              : 100%|██████████| 5.44kB / 5.44kB            
+
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+
+  ...swap/results/metrics.json: 100%|██████████|  213kB /  213kB            [A[A
+
+
+
+  ...luator_swap/MANIFEST.json: 100%|██████████| 5.76kB / 5.76kB            [A[A[A
+
+
+
+
+  ...r_swap/protocol.lock.json: 100%|██████████| 1.40kB / 1.40kB            [A[A[A[A
+
+
+
+
+
+  ...54_evaluator_swap/SPEC.md: 100%|██████████| 12.5kB / 12.5kB            [A[A[A[A[A
+
+
+  ...swap/results/metrics.json: 100%|██████████|  213kB /  213kB            [A[A
+
+
+
+  ...luator_swap/MANIFEST.json: 100%|██████████| 5.76kB / 5.76kB            [A[A[A
+
+
+
+
+  ...r_swap/protocol.lock.json: 100%|██████████| 1.40kB / 1.40kB            [A[A[A[A
+
+
+
+
+
+  ...54_evaluator_swap/SPEC.md: 100%|██████████| 12.5kB / 12.5kB            [A[A[A[A[A
+Processing Files (4 / 4)      : 100%|██████████|  232kB /  232kB,   ???B/s  
+
+New Data Upload               : 100%|██████████|  232kB /  232kB,   ???B/s  [A
+
+
+
+
+
+
+Validating                    :           |   0%            [A[A[A[A[A[A
+
+
+
+
+
+
+Validating                    :           |   0%            [A[A[A[A[A[A
+
+
+  ...swap/results/metrics.json: 100%|██████████|  213kB /  213kB            [A[A
+
+
+
+  ...luator_swap/MANIFEST.json: 100%|██████████| 5.76kB / 5.76kB            [A[A[A
+
+
+
+
+  ...r_swap/protocol.lock.json: 100%|██████████| 1.40kB / 1.40kB            [A[A[A[A
+
+
+
+
+
+  ...54_evaluator_swap/SPEC.md: 100%|██████████| 12.5kB / 12.5kB            [A[A[A[A[A
+
+
+
+
+
+
+Validating                    : ██████████| 100%            [A[A[A[A[A[A
+Processing Files (4 / 4)      : 100%|██████████|  232kB /  232kB, 23.1kB/s  
+
+New Data Upload               : 100%|██████████|  232kB /  232kB, 23.1kB/s  
+
+Validating                    : ██████████| 100%            
+
+  ...swap/results/metrics.json: 100%|██████████|  213kB /  213kB            
+
+  ...luator_swap/MANIFEST.json: 100%|██████████| 5.76kB / 5.76kB            
+
+  ...r_swap/protocol.lock.json: 100%|██████████| 1.40kB / 1.40kB            
+
+  ...54_evaluator_swap/SPEC.md: 100%|██████████| 12.5kB / 12.5kB            

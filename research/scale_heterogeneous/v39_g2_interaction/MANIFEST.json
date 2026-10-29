@@ -7,7 +7,9 @@
   "generation": {
     "one_mechanism_added": "γ2 加性 vs 交互融合框架",
     "parent": "38.0",
-    "children": []
+    "children": [
+      "56.0"
+    ]
   },
   "lineage": {
     "line_parent": "6.0",

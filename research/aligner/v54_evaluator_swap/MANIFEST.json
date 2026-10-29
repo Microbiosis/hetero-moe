@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "version": "54.0",
+  "package": "v54_evaluator_swap",
+  "line": "aligner",
+  "title": "评价器换轨: MSE → {高斯 NLL, Cross-Entropy} (同网格, 三档配对, 不降级)",
+  "generation": {
+    "one_mechanism_added": "把**评价器**从一个 (MSE) 变成三个 (MSE 对照 / 高斯 NLL / cross-entropy), 三档共用同一 seed、初始化与批顺序 (配对), 数据/划分/探针/抬升 import v53 同一份代码 | 全网格 36 格完成 (cpu-upgrade, 49 min)",
+    "parent": "53.0",
+    "children": [
+      "55.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线第 10 个成员; 审计链 v50→v51→v52→v53 收口之后的第一代; 本代不再审计结论, 而是审计**尺子本身**"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "audit.py",
+      "tests/test_package.py"
+    ],
+    "note": "刻意 import v53 的 make_split / probe_accuracy_all / ResidualLift / LinearLift (同线复用, 保证协议逐位不变); 只新增评价器头与解析基线; 产物血缘检查器在仓库级 tools/check_artifacts.py (非包内文件)"
+  },
+  "claim": {
+    "asserts": "换尺子的结果: **全部三档评价器 × 三个 D 上, 「有意义空间」都差于\"预测类别均值\"这个零参数基线 (13.7%–34.7%)** ⇒ 它学到的只是\"预测一个接近类别均值的常数\", 不是类别结构; 配合值域分割协议 (留出域词汇训练中从未出现) 看, 这是该协议下的最优策略, 而非融合机制的失败。正面量仍成立: 跨底座一致性 +0.016 → +0.574/+0.616/+0.632, 但有意义空间把三底座压进同一个 ~7 维子空间 (秩与 d_shared 无关), 一致到的内容里没有可泛化的类别结构。另: NLL 方差头 train +0.96 → held-out −0.23~−0.30 (反号, 过拟合)。",
+    "metric": "held_out_fuse_mse_after_evaluator_head",
+    "direction": "lower_is_better",
+    "value": 0.1646,
+    "baseline": {
+      "ref": "zero_parameter_predict_mean",
+      "value": 0.138889
+    },
+    "delta_pct": 19.8,
+    "seeds": 5,
+    "outcome_label": "negative",
+    "note": "E1 10/15 (仅 CE 档不过, 因 CE 下冻结臂饱和成均匀分布=零参数最优常数预测器); E2 4/5 ✓; E3 15/15 ✓; E4 0/5 ✗; E5 0/15 ✗ (判据方向写反: 学习是降秩去噪, 秩不增); E6 0/15 ✗。all_pass=False, 完备 36 格/180 观测。详见 FINDINGS.md"
+  },
+  "protocol": {
+    "eval_set": "复用 v53 值域分割: 训练只见 slot1∈前8∧slot2∈前8, 留出只见 slot1∈后8∧slot2∈后8 (零重叠); 6 类 × 16 = 96 文本/底座",
+    "input": "三个真实底座 (MSA-4B 浅层1层 + embedding-0.6b + reranker-0.6b); D_shared ∈ {96, 252, 384} (6 类必须整除; v52 的 256 不可用); 5 seeds (基址 2000); 200 步; minibatch 288; 三档评价器 × 4 臂 = 180 格",
+    "caveat": "三档的 loss 量纲不同, **不可直接互比**; 跨档唯一可比的量是每档都报的 mse (同一个输出张量经过各自评价器头后的绝对误差)。CE 档必须把输出压到单纯形, 否则其 MSE 与 MSE 档不可比 (未压时实测 1.97 vs 0.1528)"
+  },
+  "acceptance": {
+    "criterion": "预登记 E1 (三档全部: 有意义空间 < 冻结随机) / E2 (CE 下冻结臂 ≈ chance±0.05) / E3 (融合 vs 最优单专家 CE 准确率差 ≤5pp) / E4 (NLL logvar 与平方误差 Spearman ≥0.2, 退化则该档作废) / E5 (有效秩: 有意义 > 随机) / E6 (**冒烟后新增**: 有意义空间 < 该档自己的零参数基线)",
+    "outcome": "完备负面结果: E1 ✗(10/15) E2 ✓ E3 ✓ E4 ✗ E5 ✗ E6 ✗ → all_pass=False",
+    "note": "E1 保留不改 (预登记纪律); E6 是**新增**而非修改, 由来记录在 audit.py 的 PREDICTIONS_V54 注释里"
+  },
+  "leakage_audit": {
+    "status": "pending",
+    "audits": [],
+    "note": "值域分割协议本身是防泄漏设计(训练/留出域槽位词汇零重叠), 但 v42 那套目标泄漏审计流程本代未执行"
+  },
+  "falsified": [
+    {
+      "hypothesis": "『v53 的有意义空间把误差降到平凡基线以下』",
+      "verdict": "**证伪**: 记录里的平凡基线 0.125 出自错误的 n_classes=8; 真实 n_classes=6 → 全零基线 0.1667, 预测类别均值基线 0.1389。v53 的 0.1617 只比全零好 3.0%, 比预测均值差 16.4%",
+      "evidence": "research/aligner/v53_third_audit/CORRECTION.md + tools/check_artifacts.py 输出"
+    },
+    {
+      "hypothesis": "『三档评价器的读数不可比, 所以换尺子会改变结论』",
+      "verdict": "**部分证伪**: 不可比是**实现的错**而非评价器的错。CE 输出压到单纯形 + 推理读数过同一层头之后, 三档配对读数 0.1504/0.1507/0.1500, 差 <0.5%",
+      "evidence": "research/aligner/v54_evaluator_swap/SPEC.md §7.1"
+    },
+    {
+      "hypothesis": "『冻结随机臂在任何评价器下都是坏模型, 因此可作通用对照』",
+      "verdict": "**证伪 (对 CE 档)**: CE 下它饱和到均匀分布, 恰是零参数最优常数预测器 (0.1389 = predict_mean 基线) → E1 的 'learned < frozen' 对 CE 档结构上不成立",
+      "evidence": "冒烟产物: D96 CE frozen_random fuse=0.1389 = baselines('ce')['uniform_pred_mse']"
+    },
+    {
+      "hypothesis": "『有意义空间把误差降到零参数基线以下 ⇒ 空间学到了类别结构』",
+      "verdict": "**证伪**: 三档 × 三个 D 全部**高于** predict_mean 基线 13.7%–34.7%; 只略好于'预测全零'",
+      "evidence": "FINDINGS.md §2 (D384/mse 0.1599 vs 0.138889)"
+    },
+    {
+      "hypothesis": "『有意义空间的有效秩高于冻结随机空间』(E5 的预登记方向)",
+      "verdict": "**证伪, 且是判据方向写反**: 7.0 vs 10.6–13.9; 学习的作用是降秩去噪。有意义空间秩恒为 ~7 且与 d_shared 无关, 与 v49 的 4/19 维独立吻合",
+      "evidence": "FINDINGS.md §3"
+    },
+    {
+      "hypothesis": "『NLL 的方差头能给出可迁移的不确定性』",
+      "verdict": "**证伪**: train Spearman +0.96, held-out −0.23~−0.30 反号 → 学的是训练集噪声结构",
+      "evidence": "FINDINGS.md §4"
+    }
+  ],
+  "superseded_by": null,
+  "tests_status": "present",
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v54_evaluator_swap.py",
+    "forwarder_spec": "docs/V54_0_EVALUATOR_SWAP.md",
+    "findings": "FINDINGS.md"
+  },
+  "_needs_human": [
+    "leakage_audit 需补 v42 流程",
+    "E5 若重做应改成'秩是否随 D 饱和'的诊断而非方向性判据"
+  ],
+  "_extracted_from": [
+    "research/aligner/README.md"
+  ],
+  "status": "complete"
+}

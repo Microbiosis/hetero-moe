@@ -13,6 +13,7 @@ PAPER = os.path.join(ROOT, "docs/research_paper")
 METRICS = os.path.join(ROOT, "research/aligner/v50_fusion_gain_audit/results/metrics.json")
 V49 = os.path.join(ROOT, "research/aligner/v49_projection_space/results/metrics.json")
 V51 = os.path.join(ROOT, "research/aligner/v51_arch_fusion_audit/results/metrics.json")
+V53 = os.path.join(ROOT, "research/aligner/v53_third_audit/results/metrics.json")
 
 
 def load(path):
@@ -157,6 +158,26 @@ def main():
         # ⚠️ 占位符替换必须在 v51 段落插入**之后** (v51 段里也带占位符)
         for k, v in PLACEHOLDERS:
             section = section.replace(k, str(v))
+    m53 = load(V53)
+    if m53:
+        R53 = m53["results"]
+
+        def c53(key):
+            rows = R53[key]["rows"]
+            n = len(rows)
+            g = lambda k: sum(r["held_out"][k] for r in rows) / n
+            margin = (g("best_single") - g("fuse")) / max(g("best_single"), 1e-9) * 100
+            return dict(margin=margin,
+                        cons_out=sum(r["consistency"]["output"] for r in rows) / n,
+                        cons_in=sum(r["consistency"]["input"] for r in rows) / n)
+        A96, B96, C96 = (c53(f"D96:{a}") for a in ("frozen_random", "permuted_target", "learned_lift"))
+        A384, B384, C384 = (c53(f"D384:{a}") for a in ("frozen_random", "permuted_target", "learned_lift"))
+        for k, v in (("@V53_A96@", f"{A96['margin']:+.1f}"), ("@V53_B96@", f"{B96['margin']:+.1f}"),
+                     ("@V53_C96@", f"{C96['margin']:+.1f}"), ("@V53_A384@", f"{A384['margin']:+.1f}"),
+                     ("@V53_B384@", f"{B384['margin']:+.1f}"), ("@V53_C384@", f"{C384['margin']:+.1f}"),
+                     ("@V53_CONS96@", f"{C96['cons_out']:+.2f}"), ("@V53_CONS384@", f"{C384['cons_out']:+.2f}"),
+                     ("@V53_RAND96@", f"{A96['cons_out']:+.2f}"), ("@V53_RAND384@", f"{A384['cons_out']:+.2f}")):
+            section = section.replace(k, v)
     for fn in ("reconstruct.tex", "reconstruct_tmlr.tex"):
         path = os.path.join(PAPER, fn)
         if not os.path.exists(path):
@@ -248,6 +269,15 @@ def main():
              "evaluation---but a later projection-space audit (\\S\\ref{sec:projection-space}) qualifies what it "
              "measures: the attention path's lead is a property of the frozen random shared space, and it largely "
              "disappears once that space is learned."),
+            # 第三审: "pending independent audit" 那句
+            ("as the positive ones, and we mark the audit as pending a fully independent re-derivation.",
+             "as the positive ones. We re-derive the finding with three independent implementations---"
+             "differing in the data split, the probe family, the lifting architecture, the seeds, and "
+             "the shared width---and the conclusion holds in all three. The third pass also supplies "
+             "the positive control the first two lacked: in a learned space the three bases' outputs "
+             "for the same text agree far more than in a frozen random space, so the shared space "
+             "genuinely makes heterogeneous bases meet. One pre-registered check did not pass as "
+             "written, and we report it rather than re-specify it after the fact (\\S\\ref{sec:projection-space})."),
             # 结论
             ("the cross-architecture fusion gain concentrates in the attention path, a claim that survives held-out evaluation.",
              "the cross-architecture fusion gain concentrates in the attention path, a concentration we later show to "
