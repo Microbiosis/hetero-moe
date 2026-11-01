@@ -1,9 +1,10 @@
-"""V62.1 — 维度投影空间 单元测试 (15 项)。
+"""V62.2 — 维度投影空间 单元测试 (16 项)。
 
 只依赖 torch 即可跑；涉及 transformers 的那一项在缺依赖时自动 SKIP。
 每个 test_* 必须在末尾 return True（run_suite 以返回真值判定通过）。
 """
 import json
+import math
 import os
 import sys
 
@@ -23,7 +24,7 @@ from research.aligner.v62_dimension_projection_space.projspace import (
 )
 from research.aligner.v62_dimension_projection_space.fusion import FusionOverProjSpace
 
-TITLE = "V62.1 维度投影空间 — 单元测试 (15 项)"
+TITLE = "V62.2 维度投影空间 — 单元测试 (16 项)"
 
 _DS = 256
 _B, _S = 2, 12
@@ -117,14 +118,36 @@ def test_recombine():
 
 
 # ---------------------------------------------------------------- 6
-def test_router_topk():
-    """6. 路由是 top-k 稀疏的"""
+def test_router_dense_distribution():
+    """6. 槽门控是**全槽软分布**，不是 top-k 稀疏。
+
+    v62.1 曾对槽做 top-k=2，实测每 token 最大权重均值 0.9933、熵 0.0209
+    （top-2 理论上界才 0.5），等价于只剩一个槽。四个槽的投影在门控前
+    已经算完，top-k 在这里不省算力、只丢信息，故改为全槽软门控。
+    """
     op = DimProjectionSpace(_DS)
     _, _, alpha = op(_feats())
+    # 1) 全槽都应有非零权重（软门控）
     nz = (alpha > 0).sum(-1)
-    assert (nz <= op.top_k).all(), nz.max()
-    assert (nz >= 1).all()
-    print(f'[PASS] test_router_topk (每 token 非零专家数 ≤ {op.top_k})')
+    assert (nz == op.n_slots).all(), f'应全槽非零，实测 {nz.unique().tolist()}'
+    # 2) 每 token 权重和为 1
+    assert torch.allclose(alpha.sum(-1), torch.ones_like(alpha.sum(-1)), atol=1e-5)
+    print(f'[PASS] test_router_dense_distribution (全 {op.n_slots} 槽软分布, 和为 1)')
+    return True
+
+
+def test_slot_entropy_loss():
+    """6b. slot_entropy_loss 能正确表达「熵越低惩罚越大」。"""
+    op = DimProjectionSpace(_DS)
+    uniform = torch.full((2, 4, 4), 0.25)
+    peaked = torch.zeros(2, 4, 4)
+    peaked[..., 0] = 1.0
+    l_uniform = float(op.slot_entropy_loss(uniform))
+    l_peaked = float(op.slot_entropy_loss(peaked))
+    assert l_uniform < l_peaked, (l_uniform, l_peaked)
+    # 4 类均匀分布的熵 = ln4 = 1.3863（未归一化）→ loss = -1.3863
+    assert abs(l_uniform + math.log(4)) < 1e-4, l_uniform
+    print(f'[PASS] test_slot_entropy_loss (均匀 {l_uniform:.4f} < 尖峰 {l_peaked:.4f})')
     return True
 
 
@@ -307,8 +330,9 @@ def test_slot_gating_sums_to_one():
     eff = eff / (eff.sum(-1, keepdim=True) + 1e-9)
     s = eff.sum(-1)
     assert torch.allclose(s, torch.ones_like(s), atol=1e-5), s
-    assert (aux['alpha'] > 0).sum(-1).max() <= op.top_k
-    print('[PASS] test_slot_gating_sums_to_one (门控和为 1, top-k 稀疏)')
+    # 槽门控是全槽软分布（v62.2），不再要求 top-k 稀疏
+    assert (aux['alpha'] > 0).sum(-1).min() == op.n_slots
+    print('[PASS] test_slot_gating_sums_to_one (门控和为 1, 全槽软分布)')
     return True
 
 
@@ -318,7 +342,8 @@ TESTS = [
     test_token_count_preserved,
     test_separate,
     test_recombine,
-    test_router_topk,
+    test_router_dense_distribution,
+    test_slot_entropy_loss,
     test_route_slots_derived_from_measurement,
     test_consistency_loss_decreases,
     test_three_path_agreement,

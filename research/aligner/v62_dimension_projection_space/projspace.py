@@ -253,9 +253,16 @@ class DimProjectionSpace(nn.Module):
             xin = torch.cat(rp, dim=-1)
             assert xin.shape[-1] == self._route_dim, (
                 'router 输入宽度 %d != 声明 %d' % (xin.shape[-1], self._route_dim))
-            a = F.softmax(self.router(xin), dim=-1)              # [B,S,n_slots]
-            _, ti = torch.topk(a, min(self.top_k, a.shape[-1]), dim=-1)
-            alpha = a * torch.zeros_like(a).scatter_(-1, ti, 1.0)
+            # 槽门控用**全槽软门控**，不做 top-k。
+            #
+            # top-k 的用途是省算力（专家只算被选中的那些）。但四个槽的投影
+            # 在进入这一步之前**已经全部算完了** —— 在这里 top-k 省不下任何
+            # 计算，只会丢信息，并且会把门控压成「单槽独占」。
+            #
+            # v62.1 实测（top-k=2）：每 token 最大权重均值 0.9933、中位 1.0000，
+            # 熵 0.0209（top-2 的理论上界才 0.5）。等价于只剩一个槽在工作，
+            # 而 v62 的核心主张正是「空间 = Σ 子空间」，四槽必须都有贡献。
+            alpha = F.softmax(self.router(xin), dim=-1)
         else:
             alpha = torch.ones(B, S, self.n_slots, device=dev) / self.n_slots
 
@@ -333,6 +340,17 @@ class DimProjectionSpace(nn.Module):
             return torch.zeros((), device=next(self.parameters()).device)
         return torch.stack(losses).mean()
 
+    def slot_entropy_loss(self, alpha: torch.Tensor) -> torch.Tensor:
+        """槽门控熵的**负值** —— 最小化它等于最大化熵，防止门控塌到单槽。
+
+        训练时用法： total = ce + BAL_W * bal + SLOT_ENT_W * op.slot_entropy_loss(alpha)
+
+        ⚠️ 这是**人为干预**，不是自然收敛的结果。若加了正则仍不展开，
+        说明该任务下四槽分工本来就不成立，那是应当如实报告的负结果。
+        """
+        h = -(alpha * torch.log(alpha + 1e-9)).sum(-1).mean()
+        return -h
+
     def alignment_loss(
         self,
         pairs: Dict[Tuple[str, Tuple[str, str]], Tuple[torch.Tensor, torch.Tensor]],
@@ -367,6 +385,6 @@ class DimProjectionSpace(nn.Module):
                             ('%.4f' % sp.cka_triple) if sp.cka_triple else '—',
                             ' '.join(paths)))
         lines.append('  路由槽（三模型对齐失败）: %s' % (self.route_slots or '无'))
-        lines.append('  router 输出: %d 维 token 级槽门控（top-k 稀疏）' % self.n_slots)
+        lines.append('  router 输出: %d 维 token 级槽门控（全槽软门控，非 top-k）' % self.n_slots)
         lines.append('  参数: %d' % sum(p.numel() for p in self.parameters()))
         return '\n'.join(lines)
