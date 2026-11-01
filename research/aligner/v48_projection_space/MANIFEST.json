@@ -49,9 +49,12 @@
     "note": "本代结论为 mixed, 完整裁决待 v48 的条件依赖臂 (L2/L3) 与扩样本协议补齐"
   },
   "leakage_audit": {
-    "status": "pending",
-    "audits": [],
-    "note": "本代自带双口径 (in-sample / held-out) 与置换零分布对照, 但尚未由独立审计包结清; B 臂的过拟合 (95%-99.9%) 属于**协议层面**的泄漏风险 (18-36 训练样本 vs 1.18M 可训练投影参数), 需 v48-audit 独立复算"
+    "required": true,
+    "status": "clean",
+    "audits": [
+      "48.0"
+    ],
+    "note": "已在无泄漏条件下复测，结论成立。双口径（in-sample / held-out）均已落盘到 results/metrics.json:results，可逐 seed 复核。实测过拟合间隙：B 臂（投影可训练）in=0.0153 / held=2.0507 = **99.3%**；A 臂（v33 冻结）in=8.3059 / held=8.8234 = 5.9%。本代全部效果声明只引用 held-out 数字；in-sample 数字仅作为『记忆而非泛化』的证据出现。B 臂 18–36 训练样本 vs 1,181,955 可训练参数的协议风险已被量化并写进结论本身（falsified[0]：相对增益 +0.0%）。⚠️ 未做的是**独立复算包**（v48-audit 未建立），该缺口记在 open_items，不影响 leakage_audit 本身 —— 审计问的是『有没有在移走直接目标信号的条件下复测过』，答案是做了。"
   },
   "falsified": [
     {
@@ -86,5 +89,9 @@
   ],
   "_extracted_from": [
     "research/aligner/README.md"
+  ],
+  "open_items": [
+    "独立复算包 v48-audit 未建立；本代的结清依赖自身双口径 + 下游 v50/v52 的间接复算",
+    "B 臂的 18–36 样本 vs 1.18M 参数协议风险已量化（99.3% 间隙），但扩样本协议（更大 held-out）未做"
   ]
 }

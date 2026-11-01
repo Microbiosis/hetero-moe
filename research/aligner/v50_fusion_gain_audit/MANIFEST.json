@@ -49,9 +49,14 @@
     "note": "探针自身的有效性由 4 项单元测试保证 (可分数据上 train acc 0.98; 噪声上接近随机 0.44)"
   },
   "leakage_audit": {
-    "status": "pending",
-    "audits": [],
-    "note": "本代自带双口径 + 文本零交集 + 置换零分布 + 探针自检 (可分/噪声对照), 但尚未由独立审计包结清。⚠️ 论文改写基于本代结论 → 在独立复算前, 论文里应把该改写标为 'pending independent audit'"
+    "required": true,
+    "status": "clean",
+    "audits": [
+      "52.0"
+    ],
+    "audited_in": "52.0",
+    "note": "已由 v52 独立复算通过（重写实现 + 未见组合留出 + 岭回归探针 + 新种子 + D_shared ∈ {128,256,512}）。C1a（源−类别可解码 ≥0.30）/ C1b（目标置换后 margin 变化 ≤10pp）/ C1c（有意义空间 margin ≤ 冻结臂一半）在三档 D 上**全部通过**，无未过项（见 research/aligner/v52_independent_audit/results/metrics.json:verdicts）。本包结论：论文『融合优于单专家』的 margin 主要来自源身份可识别性而非融合机制。v52 的更强证据：冻结随机臂下 A/B/D 三臂 held-out 数字逐位相同 → 模型根本没在做该任务。",
+    "supersedes_note": "v52 是对本包的独立复算，不是替代；本包保留原始读数"
   },
   "falsified": [
     {
