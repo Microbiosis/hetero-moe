@@ -8,7 +8,8 @@
     "one_mechanism_added": "把维度从超参变成**被观测的状态**: 状态是正交基 V, 维度 r = V 的列数; 扩张由残差谱的 Gavish–Donoho 阈值触发, 坍缩由方向能量跌到 MP 噪声地板以下且持续 window 步触发; 并提供把参数定义在 environment 空间、有效秩随空间自动变的算子 P_V·W·P_V",
     "parent": "56.0",
     "children": [
-      "58.0"
+      "58.0",
+      "62.0"
     ]
   },
   "lineage": {
