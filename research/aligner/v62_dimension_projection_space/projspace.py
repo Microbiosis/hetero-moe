@@ -136,8 +136,10 @@ class DimProjectionSpace(nn.Module):
         _rd = sum(self.subspaces[k].dim for k in self.route_slots
                   for m in self.subspaces[k].models
                   if f'{k}|{m}' in self.proj)
+        # 输出是 **逐 token 的槽门控**（n_slots 维），不是专家选择。
+        # v62.1 前这里写成 n_experts，且结果未被使用（死代码），已修。
         if _rd > 0:
-            self.router = nn.Linear(_rd, n_experts, bias=False)
+            self.router = nn.Linear(_rd, self.n_slots, bias=False)
             nn.init.normal_(self.router.weight, std=0.01)
         else:
             self.router = None
@@ -214,26 +216,23 @@ class DimProjectionSpace(nn.Module):
             idx = torch.linspace(0, v.shape[1] - 1, s_min).long().to(v.device)
             return v[:, idx, :]
 
-        gate = F.softmax(self.slot_gate, dim=0)
-        canonical = torch.cat(
-            [_pool(per_slot[k]) * gate[i] if k in per_slot
-             else torch.zeros(B, s_min, self.subspaces[k].dim, device=dev)
-             for i, k in enumerate(self.subspaces)],
-            dim=-1)
         S = s_min
+        gate = F.softmax(self.slot_gate, dim=0)          # 全局槽权重 [n_slots]
 
-        # 结构化 token
-        D = max(sp.dim for sp in self.subspaces.values())
-        struct = torch.zeros(B, S, self.n_slots, D, device=dev, dtype=canonical.dtype)
-        for i, (k, sp) in enumerate(self.subspaces.items()):
-            if k in per_slot:
-                struct[:, :, i, :sp.dim] = _pool(per_slot[k])
-
-        # 路由（只用三模型对齐失败的槽）
+        # ---------- 路由：token 级槽门控 ----------
         #
-        # 关键：按**声明**的模型数固定宽度，缺失的模态用零向量占位。
-        # 否则「只给文本不给图像」会让 router 输入宽度变化、权重对不上。
-        # 零占位语义正确：nn.Linear 无 bias，零输入 → 零贡献 = 「该模态缺席」。
+        # v62.1 修复：此前 router 的输出 alpha 只被返回、从未参与计算，
+        # canonical 只乘了全局的 slot_gate ⇒ router 是死代码，
+        # 梯度不会流向它，训练出的权重无意义，报告里的「专家负载/路由熵」
+        # 统计的也是这个装饰品。
+        #
+        # 现在 router 的输出作为 **token 级槽门控** 真正乘进 canonical：
+        #   slot_gate  : 全局，哪些槽整体更重要（[n_slots]）
+        #   alpha      : 逐 token，这个 token 更该看哪几个槽（[B,S,n_slots]，top-k 稀疏）
+        # 有效门控 = 全局 × 逐 token，再归一化。
+        #
+        # 语义边界：router 只读 route_slots（三模型对齐失败的槽）的投影，
+        # 但门控作用在**全部槽**上 —— 它学的是「哪些槽值得看」。
         rp: List[torch.Tensor] = []
         for k in self.route_slots:
             for m in self.subspaces[k].models:
@@ -242,7 +241,7 @@ class DimProjectionSpace(nn.Module):
                     continue
                 if m not in feats or k not in feats[m]:
                     rp.append(torch.zeros(B, S, self.subspaces[k].dim,
-                                          device=dev, dtype=canonical.dtype))
+                                          device=dev, dtype=next(self.parameters()).dtype))
                     continue
                 v = self.proj[key](feats[m][k])
                 if v.shape[1] != S:
@@ -254,12 +253,28 @@ class DimProjectionSpace(nn.Module):
             xin = torch.cat(rp, dim=-1)
             assert xin.shape[-1] == self._route_dim, (
                 'router 输入宽度 %d != 声明 %d' % (xin.shape[-1], self._route_dim))
-            logits = self.router(xin)
-            a = F.softmax(logits, dim=-1)
-            _, ti = torch.topk(a, self.top_k, dim=-1)
+            a = F.softmax(self.router(xin), dim=-1)              # [B,S,n_slots]
+            _, ti = torch.topk(a, min(self.top_k, a.shape[-1]), dim=-1)
             alpha = a * torch.zeros_like(a).scatter_(-1, ti, 1.0)
         else:
-            alpha = torch.zeros(B, S, self.n_experts, device=dev)
+            alpha = torch.ones(B, S, self.n_slots, device=dev) / self.n_slots
+
+        # 有效门控 = 全局槽权重 × 逐 token 槽激活，归一化到和为 1
+        eff = gate.view(1, 1, -1) * alpha                        # [B,S,n_slots]
+        eff = eff / (eff.sum(-1, keepdim=True) + 1e-9)
+
+        canonical = torch.cat(
+            [_pool(per_slot[k]) * eff[..., i:i + 1] if k in per_slot
+             else torch.zeros(B, S, self.subspaces[k].dim, device=dev)
+             for i, k in enumerate(self.subspaces)],
+            dim=-1)
+
+        # 结构化 token（同样按有效门控缩放，保证两条出口一致）
+        D = max(sp.dim for sp in self.subspaces.values())
+        struct = torch.zeros(B, S, self.n_slots, D, device=dev, dtype=canonical.dtype)
+        for i, (k, sp) in enumerate(self.subspaces.items()):
+            if k in per_slot:
+                struct[:, :, i, :sp.dim] = _pool(per_slot[k]) * eff[..., i:i + 1]
 
         if return_aux:
             return struct, canonical, {
@@ -352,5 +367,6 @@ class DimProjectionSpace(nn.Module):
                             ('%.4f' % sp.cka_triple) if sp.cka_triple else '—',
                             ' '.join(paths)))
         lines.append('  路由槽（三模型对齐失败）: %s' % (self.route_slots or '无'))
+        lines.append('  router 输出: %d 维 token 级槽门控（top-k 稀疏）' % self.n_slots)
         lines.append('  参数: %d' % sum(p.numel() for p in self.parameters()))
         return '\n'.join(lines)

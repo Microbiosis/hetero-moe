@@ -1,4 +1,4 @@
-"""V62.0 — 维度投影空间 单元测试 (12 项)。
+"""V62.1 — 维度投影空间 单元测试 (15 项)。
 
 只依赖 torch 即可跑；涉及 transformers 的那一项在缺依赖时自动 SKIP。
 每个 test_* 必须在末尾 return True（run_suite 以返回真值判定通过）。
@@ -23,7 +23,7 @@ from research.aligner.v62_dimension_projection_space.projspace import (
 )
 from research.aligner.v62_dimension_projection_space.fusion import FusionOverProjSpace
 
-TITLE = "V62.0 维度投影空间 — 单元测试 (12 项)"
+TITLE = "V62.1 维度投影空间 — 单元测试 (15 项)"
 
 _DS = 256
 _B, _S = 2, 12
@@ -244,6 +244,74 @@ def test_partial_modality():
     return True
 
 
+# ---------------------------------------------------------------- 13
+def test_router_actually_affects_output():
+    """13. router 必须真的影响输出 —— 净室抓到的死代码 bug 回归测试。
+
+    v62.0 的 bug：router 算出 alpha 后只 return，never 参与 canonical 计算。
+    梯度不流向它，训练出的权重是随机的，而报告里的「专家负载/路由熵」
+    统计的正是这个装饰品。本测试通过「改权重 → 看输出变不变」直接抓它。
+    """
+    torch.manual_seed(0)
+    op = DimProjectionSpace(_DS)
+    assert op.router is not None, 'router 应存在'
+
+    torch.manual_seed(0)
+    feats = {m: {k: torch.randn(_B, _S, _DS) for k in MEASURED_SUBSPACES}
+             for m in ['Qwen', 'BERT', 'ViT']}
+    with torch.no_grad():
+        _, canon_a, aux_a = op(feats, return_aux=True)
+
+    # 把 router 权重放大 50 倍 —— 若它真的参与计算，输出必然大改
+    with torch.no_grad():
+        op.router.weight.mul_(50.0)
+        _, canon_b, aux_b = op(feats, return_aux=True)
+
+    d_canon = float((canon_b - canon_a).abs().max())
+    assert d_canon > 1e-4, (
+        f'router 权重改了 50 倍，canonical 却只变 {d_canon:.3e} —— router 是死代码')
+    print(f'[PASS] test_router_actually_affects_output (Δcanonical={d_canon:.4f})')
+    return True
+
+
+# ---------------------------------------------------------------- 14
+def test_router_receives_gradient():
+    """14. 梯度必须能到达 router。死代码时梯度为 0 或不存在。"""
+    torch.manual_seed(0)
+    op = DimProjectionSpace(_DS)
+    torch.manual_seed(0)
+    feats = {m: {k: torch.randn(_B, _S, _DS) for k in MEASURED_SUBSPACES}
+             for m in ['Qwen', 'BERT', 'ViT']}
+    op.zero_grad()
+    _, canon, _ = op(feats)
+    canon.pow(2).mean().backward()
+    g = op.router.weight.grad
+    assert g is not None, 'router 没有 gradient'
+    gs = float(g.abs().sum())
+    assert gs > 0, f'router 梯度为 0 —— 说明输出不依赖它'
+    print(f'[PASS] test_router_receives_gradient (|grad|={gs:.4f})')
+    return True
+
+
+# ---------------------------------------------------------------- 15
+def test_slot_gating_sums_to_one():
+    """15. 有效门控（全局 × 逐 token）归一化后每 token 和为 1。"""
+    torch.manual_seed(0)
+    op = DimProjectionSpace(_DS)
+    torch.manual_seed(0)
+    feats = {m: {k: torch.randn(_B, _S, _DS) for k in MEASURED_SUBSPACES}
+             for m in ['Qwen', 'BERT', 'ViT']}
+    with torch.no_grad():
+        _, _, aux = op(feats, return_aux=True)
+    eff = aux['slot_gate'].view(1, 1, -1) * aux['alpha']
+    eff = eff / (eff.sum(-1, keepdim=True) + 1e-9)
+    s = eff.sum(-1)
+    assert torch.allclose(s, torch.ones_like(s), atol=1e-5), s
+    assert (aux['alpha'] > 0).sum(-1).max() <= op.top_k
+    print('[PASS] test_slot_gating_sums_to_one (门控和为 1, top-k 稀疏)')
+    return True
+
+
 TESTS = [
     test_specs_match_metrics,
     test_forward_shapes,
@@ -257,6 +325,9 @@ TESTS = [
     test_fusion_over_projspace,
     test_vit_naming_reversible,
     test_partial_modality,
+    test_router_actually_affects_output,
+    test_router_receives_gradient,
+    test_slot_gating_sums_to_one,
 ]
 
 
