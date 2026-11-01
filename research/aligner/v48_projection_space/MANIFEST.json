@@ -7,7 +7,9 @@
   "generation": {
     "one_mechanism_added": "把 v33 的冻结随机正交投影变成可训练的三臂对照 (A/B/C), 并加 training-free 的空间尺寸诊断 (谱 / 有效维数 / CKA+零分布 / K 网格三指标)",
     "parent": "33.0",
-    "children": []
+    "children": [
+      "49.0"
+    ]
   },
   "lineage": {
     "line_parent": "10.0",

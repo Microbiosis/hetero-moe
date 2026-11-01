@@ -7,18 +7,32 @@
   "generation": {
     "one_mechanism_added": "一个**独立**的复算包: 新数据生成器(奇偶划分→未见组合留出) + 新抬升(MLP+LayerNorm+GELU, 参数对齐) + 新探针(闭式岭回归) + 新种子(1000+) + D_shared 三档扫描; 并给 C1a/C1b/C1c/C2/C3 五条**预登记判决**与阈值",
     "parent": "51.0",
-    "children": []
+    "children": [
+      "53.0"
+    ]
   },
-  "lineage": {"line_parent": "10.0", "line_children": [],
-    "note": "aligner 线第 8 个成员; 审计链: v50 (审 v33 线) → v51 (审 v6/v7 线) → v52 (独立复算 v50/v51)"},
-  "implementation": {"location": "self", "lifted_to": null, "modules": ["audit.py"],
-    "note": "刻意**不 import** v49/v50/v51 的实现 (数据/抬升/探针/训练循环全部重写); 只保留被审计的对象: 三个真实底座 + v33 融合层"},
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线第 8 个成员; 审计链: v50 (审 v33 线) → v51 (审 v6/v7 线) → v52 (独立复算 v50/v51)"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "audit.py"
+    ],
+    "note": "刻意**不 import** v49/v50/v51 的实现 (数据/抬升/探针/训练循环全部重写); 只保留被审计的对象: 三个真实底座 + v33 融合层"
+  },
   "claim": {
     "asserts": "独立复算**通过**: v50/v51 的核心结论在新实现/新数据/新探针/新种子/三档 D_shared 上全部复现 —— (1) 冻结随机空间里融合输出的源身份可解码性 1.000 而目标类别仅 0.31-0.40 (C1a 通过); (2) 目标置换对 margin 影响为 **0.0 个百分点** (C1b 通过, 且随机化目标给出**完全相同**的数字 → 冻结空间里模型的输出与目标无关); (3) 换成有意义空间后 margin 从 +23.0%/+32.9% 塌到 -0.0%/+0.2%, 绝对误差降约 100 倍 (C1c 通过); (4) **随机目标臂**的目标类别可解码仅 0.31-0.43 ≤ 0.50 (C2 通过) → 探针有效, v50/v51 的读数不是探针假象",
     "metric": "held_out_fuse_mse",
     "direction": "lower_is_better",
     "value": 0.0712,
-    "baseline": {"ref": "frozen_random @D256", "value": 6.3804},
+    "baseline": {
+      "ref": "frozen_random @D256",
+      "value": 6.3804
+    },
     "delta_pct": -98.9,
     "seeds": 5,
     "outcome_label": "clean",
@@ -40,9 +54,11 @@
     "note": "本包是**对 v50/v51 的审计**, 自身仍需第三个独立复算才结清 (三审制); 在此之前论文相关表述保持 'pending independent audit'"
   },
   "falsified": [
-    {"hypothesis": "『v50/v51 的探针读数是探针假象 (探针测的是别的东西)』",
-     "verdict": "证伪 —— C2 反向对照: 目标逐样本随机化后, 目标类别可解码仅 0.31-0.43 (≤0.50 阈值), 而冻结臂的源身份可解码是 1.000 → 探针不会制造高准确率, 源可解码性是输出的真实性质",
-     "evidence": "results/metrics.json → randomized_target 臂的 probe.class 列"}
+    {
+      "hypothesis": "『v50/v51 的探针读数是探针假象 (探针测的是别的东西)』",
+      "verdict": "证伪 —— C2 反向对照: 目标逐样本随机化后, 目标类别可解码仅 0.31-0.43 (≤0.50 阈值), 而冻结臂的源身份可解码是 1.000 → 探针不会制造高准确率, 源可解码性是输出的真实性质",
+      "evidence": "results/metrics.json → randomized_target 臂的 probe.class 列"
+    }
   ],
   "superseded_by": null,
   "tests_status": "present",
@@ -53,6 +69,10 @@
     "forwarder_tests": "tests/test_v52_independent_audit.py",
     "forwarder_spec": "docs/V52_0_INDEPENDENT_AUDIT.md"
   },
-  "_needs_human": ["leakage_audit.status"],
-  "_extracted_from": ["research/aligner/README.md"]
+  "_needs_human": [
+    "leakage_audit.status"
+  ],
+  "_extracted_from": [
+    "research/aligner/README.md"
+  ]
 }

@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "version": "60.0",
+  "package": "v60_token_locality",
+  "line": "aligner",
+  "title": "观测量换成位置对余弦相似度：预登记判据全败，但暴露两个方向相反的信号",
+  "generation": {
+    "one_mechanism_added": "把 v59 的谱型耦合换成**位置对余弦相似度** corr(d, M̄(d))，并加 P2 置换可分判据（打乱 token 顺序）来挡掉 M 矩阵自身的量级结构。实测 P1/P2 全败，但 P2 抓到 P1 的三处假阳性",
+    "parent": "59.0",
+    "children": [
+      "61.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线第 15 个成员；本代的补充分析（v60.1）直接引出 v61 的预登记检验"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "locality.py"
+    ],
+    "note": "三臂 raw / centered / detrend；观测量为位置对余弦相似度矩阵 M 与距离 d 的相关"
+  },
+  "consumers": [],
+  "claim": {
+    "asserts": "在线性相关意义下，token 轴上不存在局部结构（P1/P2 全败）；方向反而是远端更相似。补充分析（事后，非预登记）发现 Δ ≡ M̄(1) − mean(M̄(2..S−1)) 有稳定效应，但三臂方向分裂 —— 位置通用成分平滑、样本特异成分反相关",
+    "metric": "P1_and_P2_both_pass_count",
+    "direction": "higher_is_better",
+    "value": 0,
+    "baseline": {
+      "ref": "P0 纯噪声正控（corr=+0.048，通过）",
+      "value": null
+    },
+    "seeds": 1,
+    "outcome_label": "negative"
+  },
+  "protocol": {
+    "eval_set": "train_distribution",
+    "input": "真实表征，8 层，三臂 raw / centered / detrend；位置对余弦相似度矩阵 M [S×S]",
+    "caveat": "v60.1 的判据 D0–D3 是在看到主结果之后才定的（事后探索），因此不能用于支撑『v60 证明了局部性』；要变成结论需下一代预登记"
+  },
+  "acceptance": {
+    "criterion": "P0 正控 / P1 距离衰减 corr<−0.5 / P2 置换可分 / P3 局部性差 / P1+P2 同时过",
+    "outcome": "fail",
+    "note": "P0 通过；P1 0/8（raw）、3/8（centered）、0/8（detrend）；P2 三臂全 0/8；P1+P2 同时过 0/8。按预登记判 fail。补充分析不改变判决"
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "clean",
+    "audited_in": "60.0",
+    "note": "P2（打乱 token 顺序的置换零分布）本身就是泄漏防护：它抓到了 P1 的三处假阳性。centered 臂 layer2/3/4 的 corr 是 −0.524/−0.544/−0.491 按 P1 会判过，但置换零分布下界是 −0.925/−0.903 —— 打乱顺序后相关能到 −0.9，说明该负相关与相邻性无关。若没有 P2 会误判出不存在的局部性"
+  },
+  "falsified": [
+    {
+      "hypothesis": "token 轴上存在位置局部性（相邻更相似）",
+      "verdict": "证伪（线性相关口径）— P1+P2 同时过 0/8，且方向相反（远端更相似）",
+      "evidence": "results/metrics.json: main_verdicts"
+    },
+    {
+      "hypothesis": "centered 臂的负相关（−0.524/−0.544/−0.491）是局部性证据",
+      "verdict": "证伪 — 置换零分布下界 −0.925/−0.903，打乱 token 顺序后相关更强",
+      "evidence": "results/metrics.json: p2_caught_p1_false_positive"
+    },
+    {
+      "hypothesis": "谱范数型耦合能测出位置结构",
+      "verdict": "证伪 — 逐列标准化到 ‖col‖=√n 抹掉幅度信息，植入 X[t]=base+t·direction 后剖面起伏仅 1.26%",
+      "evidence": "tests: test_v1_spectral_coupling_is_blind"
+    },
+    {
+      "hypothesis": "共同因会压缩余弦随距离的斜率",
+      "verdict": "证伪 — 实测斜率反而增强（−0.933→−0.973）；推导显示 cos ≈ 1 − c·(i−j)²/(2·scale²|base|²)，幅度效应取决于位置项形式而非普遍性质",
+      "evidence": "results/metrics.json: methodology_lessons[1]"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v60_token_locality.py",
+    "forwarder_spec": "docs/V60_0_TOKEN_LOCALITY.md"
+  },
+  "tests_status": "present",
+  "supplementary_analysis": {
+    "id": "v60.1",
+    "status": "post_hoc",
+    "usable_as_evidence_for_claim": false,
+    "reason": "判据 D0–D3 在看到主结果之后才定",
+    "handed_to": "61.0（预登记 Δ 并跨模型/层数/长度重复）"
+  }
+}

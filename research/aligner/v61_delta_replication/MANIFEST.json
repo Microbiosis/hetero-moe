@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0",
+  "version": "61.0",
+  "package": "v61_delta_replication",
+  "line": "aligner",
+  "title": "Δ（最邻近效应）跨模型复制：R1/R2 全过 48/48，但主结论被文献削弱",
+  "generation": {
+    "one_mechanism_added": "把 v60.1 的事后探索改为**预登记**检验：固定 Δ ≡ M̄(1) − mean(M̄(2..S−1))，在 3 个模型 × 2 个 token 长度 × 8 层上重复，并加 R4 非交替判据挡住『逐位置交替』这个替代解释",
+    "parent": "60.0",
+    "children": [],
+    "note": "v62 的 generation.parent 是 57.0 而不是本代 —— v62 接的是 v57 『维度是被观测的状态』这条线，本代的 Δ 结论属于位置局部性，两条线在 v62 处分叉。故本代 children 为空"
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线第 16 个成员；v62 接过『空间由什么张成』这条线，不再沿 Δ 往下走"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "delta_replicate.py"
+    ],
+    "note": "三臂 raw / centered / detrend；R0 纯噪声正控 + R1/R2 方向 + R3 效应量 + R4 非交替"
+  },
+  "consumers": [],
+  "claim": {
+    "asserts": "token 轴上的位置结构稳定地分成两层且方向相反：跨样本共享的位置成分使相邻位置更相似（raw/centered Δ>0），剥掉该成分后样本特异偏离在相邻位置反相关（detrend Δ<0，主导效应）。该结构跨 3 模型 × 2 长度 × 8 层共 48 次独立测量复现，方向无一例外",
+    "metric": "R1_R2_direction_consistency",
+    "direction": "higher_is_better",
+    "value": 48,
+    "baseline": {
+      "ref": "R0 纯噪声正控 6/6 条件全部 |Δ|<0.002 且不显著",
+      "value": 0
+    },
+    "seeds": 1,
+    "outcome_label": "mixed",
+    "caveat": "主结论已被文献大幅削弱（见 literature）。raw 臂的『相邻更相似』是 Song & Zhong 2023 的已有结论，且据 Zuo et al. 2025 可能只是因果注意力掩码的架构副产物。本代价值退化为稳健复制 + detrend 臂的反相关读数"
+  },
+  "protocol": {
+    "eval_set": "train_distribution",
+    "input": "3 模型（MSA-4B D=2560 / Qwen3-0.6B D=1024，左臂 big/emb/rer 为三配置）× 2 长度（S=16/32）× 8 层 = 144 个 (条件,臂,层) 记录；padding_free 全部为『无』",
+    "caveat": "R4 按字面未通过（违规全在 centered 臂）。detrend 臂的反相关只有描述、没有机制；且『位置通用成分平滑』一项属重发现而非新发现"
+  },
+  "acceptance": {
+    "criterion": "R0 纯噪声正控 / R1 detrend Δ<0 / R2 raw Δ>0 / R3 中位|Δ|>0.05 / R4 每条件下非交替 <0.15",
+    "outcome": "fail",
+    "note": "R0 6/6、R1 48/48、R2 48/48、R3 中位|Δ|=0.1334 全过；R4 按字面**未通过**（centered 臂 11/48 违规）。不修改判据，如实记 fail。但需注意 R1/R2 依赖的 detrend 与 raw 两臂在 R4 上完全干净（0.0183 / 0.0344，距阈值 ≥4× 余量）"
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "clean",
+    "audited_in": "61.0",
+    "note": "R0 纯噪声正控 6/6 条件通过（|Δ|<0.002 且不显著）—— 排除管线自身制造效应。另有一处过程缺陷已记账：runner 的 R4 阈值是 0.05 而 SPEC 写 0.15，主运行实际按更严的 0.05 判；已在保存的 144 个记录上按预登记值 0.15 重算（对既有数据应用预登记阈值，不是新实验），runner 已修正"
+  },
+  "falsified": [
+    {
+      "hypothesis": "token 轴上存在线性相关意义下的局部性",
+      "verdict": "仍成立（未被本代推翻）— v60 的 P1/P2 判据继续全败",
+      "evidence": "results/metrics.json: cannot_claim"
+    },
+    {
+      "hypothesis": "『Δ 的三臂方向分裂』是本项目的新发现",
+      "verdict": "大幅削弱 — Song & Zhong (2023) 已给出 h=μ+pos_t+ctx_c+resid 的分解，三臂正好对应三项",
+      "evidence": "results/metrics.json: literature.most_relevant"
+    },
+    {
+      "hypothesis": "raw 臂的相邻更相似与位置编码（RoPE）有关",
+      "verdict": "应当撤回 — 据 Zuo et al. (2025) 可能只是因果注意力掩码的架构副产物",
+      "evidence": "results/metrics.json: literature.architectural_artifact_risk"
+    },
+    {
+      "hypothesis": "centered 的 0.188 奇偶差源于余弦在接近 −1 时非线性放大（H3）",
+      "verdict": "证伪 — 换 dot 与 rank 两种观测量都显著为正（S=16: +254417 / +10.70），不是余弦的错",
+      "evidence": "results/metrics.json: diagnostics_on_0188"
+    },
+    {
+      "hypothesis": "中心化强制 Σx=0 → 非对角点积负偏置 → 奇偶差",
+      "verdict": "未能证实 — 合成数据上非对角均值确为 −0.0657，但奇偶差只有 −0.00187，差两个数量级。0.188 仍待解释",
+      "evidence": "results/metrics.json: r4_failure.mechanism_hypothesis_not_confirmed"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v61_delta_replication.py",
+    "forwarder_spec": "docs/V61_0_DELTA_REPLICATION.md",
+    "literature": "LITERATURE.md"
+  },
+  "tests_status": "present",
+  "literature_note": {
+    "searched_at": "2026-10-28",
+    "timing": "v58–v61 全程未做过文献检索，检索发生在 v61 之后",
+    "impact": "主结论从『发现』降级为『重发现 + 跨模型稳健复制』；RoPE 猜测撤回",
+    "to_read_first": "LITERATURE.md"
+  }
+}

@@ -7,7 +7,9 @@
   "generation": {
     "one_mechanism_added": "两个新仪器: (a) 无标签 proxy 跨底座对齐预训练 (给出'语义对齐但不自适应'的对照空间); (b) 融合输出上的双线性探针 (源专家身份 vs 目标类别)",
     "parent": "49.0",
-    "children": []
+    "children": [
+      "51.0"
+    ]
   },
   "lineage": {
     "line_parent": "10.0",
@@ -17,7 +19,9 @@
   "implementation": {
     "location": "self",
     "lifted_to": null,
-    "modules": ["mechanism.py"],
+    "modules": [
+      "mechanism.py"
+    ],
     "note": "协议/数据/机制复用 v49_projection_space; runner 在 examples/run_v50_fusion_gain_audit.py"
   },
   "claim": {
@@ -74,5 +78,7 @@
     "claim.outcome_label",
     "leakage_audit.status"
   ],
-  "_extracted_from": ["research/aligner/README.md"]
+  "_extracted_from": [
+    "research/aligner/README.md"
+  ]
 }

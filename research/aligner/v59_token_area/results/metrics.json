@@ -1,0 +1,70 @@
+{
+  "_meta": {
+    "version": "59.0",
+    "measured_at": "2026-10-31",
+    "run": {"space": "redmingwei/hetero-moe", "hardware": "cpu-upgrade", "runtime_s": 290.6,
+            "bucket": "redmingwei/hetero-moe-jobs/v59-area2/"},
+    "unit_tests": "10/10 (v59t-8)",
+    "note": "本代是负结果：token 轴上没有可读出的切口结构。同时给出一个影响 v58 的方法学修正"
+  },
+
+  "verdicts": {
+    "N4_positive_control": {"criterion": "纯噪声全部切口 χ=0", "result": "8/8 通过"},
+    "N0_same_source_control": {"criterion": "样本打乱后 χ=0", "result": "8/8 通过"},
+    "N1_cut_sensitivity": {"criterion": "≥3/15 切口落在置换零分布外", "result": "0/8 通过"},
+    "N2_area_law": {"criterion": "|corr| < 0.5", "result": {"raw": "0/8", "centered": "2/8"}},
+    "N3_non_uniform": {"criterion": "≥3 种取值", "result": {"raw": "8/8", "centered": "0/8"}}
+  },
+
+  "main_result": {
+    "conclusion": "在 token 轴上不存在可被本统计量读出的切口结构。χ 在任意切口、任意层、任意 token 子集上都约等于常数，因此『面积律』平凡成立 —— 它不携带信息",
+    "logic": "N4 与 N0 都过说明管线正确、相关性来自同一样本；但 N1 全败 ⇒ N2 不可解释（v58 的教训正是这一条）",
+    "chi_by_layer": {
+      "raw": [1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6],
+      "centered": [1.9, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.9]
+    },
+    "permutation_null_centered_layer0": [1.85, 2.0],
+    "three_things_hold": [
+      "χ 与 |A| 无关：15 个切口从 1 到 15 个 token，全平",
+      "χ 与层无关：8 层全平",
+      "χ 与 token 子集无关：置换分布中心 ≈ natural"
+    ],
+    "residual_meaning": "剩下的 ~2 个通道是一个全局的、与二分无关的分量，只依赖『两侧来自同一样本』（N0 打乱即归零），不依赖『在哪里切』"
+  },
+
+  "methodology_correction": {
+    "finding": "iid 零分布系统性低估谱尾部",
+    "evidence": {
+      "centered_iid_vs_matched": {
+        "layer0": [10.9, 1.9], "layer1": [6.9, 2.0], "layer2": [7.3, 2.0], "layer3": [7.9, 2.0],
+        "layer4": [7.9, 2.0], "layer5": [8.7, 2.0], "layer6": [9.9, 2.0], "layer7": [10.3, 1.9]
+      },
+      "raw_iid_vs_matched": {
+        "layer0": [1.7, 1.6], "layer1": [2.7, 1.6], "layer2": [2.9, 1.6], "layer3": [3.3, 1.6],
+        "layer4": [3.5, 1.6], "layer5": [3.5, 1.6], "layer6": [3.1, 1.6], "layer7": [4.1, 1.6]
+      },
+      "max_multiplier": 5.7
+    },
+    "reading": "iid 口径的读数随层漂移（centered 6.9–10.9，raw 1.7–4.1），匹配口径恒为 1.6–2.0 ⇒ iid 口径下那些『随深度变化的结构』全部是零分布不匹配带来的伪影。iid 口径还给出一条驼峰形剖面 (10,10,11,12,12,12,12,11,11,10,10,10,11,11,10)，看起来像面积律成立；匹配口径下它是平线",
+    "impact_on_v58": {
+      "absolute_values_unusable": "v58 的绝对 χ 值（10/15/17/19/19/19/16）不可用于跨代比较",
+      "qualitative_unaffected": "但 v58 的定性结论（B2 熵上升、B3 两臂相同、膜假说不成立）不受影响 —— 那两个判据失败的方向与阈值无关"
+    }
+  },
+
+  "invariants_fixed_by_tests": [
+    {"test": "test_iid_null_underestimates_with_correlated_columns",
+     "content": "iid 假阳性 = 4 个通道；匹配零分布同数据 raw=8 / shuf=0"},
+    {"test": "test_token_grams_equals_direct",
+     "content": "加速路径与朴素路径同谱（3 形状 × 3 切口）"},
+    {"test": "test_pure_noise_zero_all_cuts",
+     "content": "3 seed × 7 切口全 0"}
+  ],
+
+  "performance": {
+    "optimization": "TokenGrams：按列标准化后 A_std A_stdᵀ = Σ_{t∈idx} W_t W_tᵀ，每个 token 的 M_t = W_t W_tᵀ 只算一次",
+    "complexity_before": "O(n²d) per spectrum",
+    "complexity_after": "O(n³)，d 完全退出热路径",
+    "wall_clock": "约 5 万次谱计算：数小时 → 290.6s"
+  }
+}

@@ -7,7 +7,9 @@
   "generation": {
     "one_mechanism_added": "把 v48 的三个悬案 (非线性映射 / 条件依赖 / 样本量) 同时做成 2x2 析因 + 样本量自变量, 并用 shuffle-c 做条件轴的判决性对照",
     "parent": "48.0",
-    "children": []
+    "children": [
+      "50.0"
+    ]
   },
   "lineage": {
     "line_parent": "10.0",
