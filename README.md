@@ -10,7 +10,7 @@
 | 找什么 | 去哪 |
 |---|---|
 | **可加载的模型** | [HeteroMoEProjSpace-v2](https://huggingface.co/redmingwei/HeteroMoEProjSpace-v2) · 645.19M |
-| **HF 全部产物** | [Hetero-MoE 研究档案 Collection](https://huggingface.co/collections/redmingwei/hetero-moe-6ae6b67d79b0423227575c99) · 14 个仓库 |
+| **HF 全部产物** | [Hetero-MoE 研究档案 Collection](https://huggingface.co/collections/redmingwei/hetero-moe-6ae6b67d79b0423227575c99) · 8 个仓库（5 model + 3 dataset） |
 | **仓库逐个说明** | [`docs/HF_ARTIFACTS.md`](docs/HF_ARTIFACTS.md) |
 | **最新一代** | [`research/aligner/v62_dimension_projection_space/`](research/aligner/v62_dimension_projection_space/) |
 
