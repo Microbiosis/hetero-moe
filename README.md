@@ -2,15 +2,25 @@
 
 > 异构架构底座做专家的 MoE — Heterogeneous-Bases Mixture-of-Experts
 > 规范基线: **v4.0 Final (冻结)**
-> 工程实现: **v4.0 → v40 (8 条研究线, 35+ 子包)**
+> 工程实现: **v4.0 → v62 (8 条研究线, 56 个子包)**
 > GitHub: https://github.com/Microbiosis/hetero-moe
+
+**产物入口**
+
+| 找什么 | 去哪 |
+|---|---|
+| **可加载的模型** | [HeteroMoEProjSpace-v2](https://huggingface.co/redmingwei/HeteroMoEProjSpace-v2) · 645.19M |
+| **HF 全部产物** | [Hetero-MoE 研究档案 Collection](https://huggingface.co/collections/redmingwei/hetero-moe-6ae6b67d79b0423227575c99) · 14 个仓库 |
+| **仓库逐个说明** | [`docs/HF_ARTIFACTS.md`](docs/HF_ARTIFACTS.md) |
+| **最新一代** | [`research/aligner/v62_dimension_projection_space/`](research/aligner/v62_dimension_projection_space/) |
 
 ## 5 秒理解
 
 - **干什么**: 把多个异构底座 (BERT + LLaMA + ViT 等不同架构) 通过共享路由融合, 然后蒸馏到单一独立模型
 - **核心结论**: 融合层 (mixture aligner) 比纯线性投影 MSE -77%, 单教师蒸馏可超教师 +47.5%, 最优中枢模式依赖数据规模
-- **测试状态**: **430/430 ALL GREEN** ✓ (52 个测试文件)
-- **结构完整性**: **41/41 包零错误、零警告** ✓; **泄漏审计 41/41 全部结清** (v47 样本外审计: 9 个补跑实测 + 7 个核实原生留出协议)
+- **测试状态**: 由 `./run.sh` 全量扫描 `tests/test_*.py`（67 个文件）实测，此不写死数字 —— 每代新增包都会变
+- **结构校验**: `python tools/validate_generations.py` → **56 包 / 错误 0 / 警告 0** ✓；`python tools/check_self_containment.py --strict` → **53/53**
+- **泄漏审计**: **56/56 全部结清**（L2 交付自包含口径：53 个有 `status` 字段，3 个 archive 老包无该字段故不计入）。结清依据与逐包判定见 [`docs/LEAKAGE_AUDIT_CHAIN.md`](docs/LEAKAGE_AUDIT_CHAIN.md)
 - **注**(2026-10-11 更新):`research/scale_heterogeneous/`、`results/`、`archive/`、`docs/_archive/` 原为公开排除(理由是依赖专有辅助模型)。经核实所依赖的四个模型 (EverMind-AI/MSA-4B、skillcorpus-embedding-0.6b、skillcorpus-reranker-0.6b、occams/Xiaomi-TabLDM) **全部公开可下**,排除理由已不成立,四个目录均已恢复入库。
 - **论文**(2026-10-12 更新):`microfusion` + `paper` 已合并重构为单一长稿 `docs/research_paper/reconstruct.tex` / `reconstruct_zh.tex`(23 / 24 页),旧稿三份 `.tex` 标记 DEPRECATED。v47 审计使摘要里一条无支撑的「规模异构增益存活」主张暴露出来,已补 §6.3 实验。入口见 [`docs/research_paper/PAPER_README.md`](docs/research_paper/PAPER_README.md)。
 - **注**(2026-10-11 更新):v47 样本外审计在补 held-out 时挖出**五个此前无人发现的缺陷**—— v12 / v19 / v35 的 runner **从未真正跑起来** (函数体用了未导入的裸名)、v19 声称的「容量对照臂」与基线逐位同构、attn 专家的输出投影不受种子控制 (跨进程不可复现)。均已修复并记录在案,详见 [`docs/V47_0_HELDOUT_AUDIT.md`](docs/V47_0_HELDOUT_AUDIT.md)。
