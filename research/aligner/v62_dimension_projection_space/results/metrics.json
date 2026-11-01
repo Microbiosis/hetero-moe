@@ -6,16 +6,39 @@
     "backbone_slices": "https://huggingface.co/redmingwei/backbone-slices",
     "note": "本文件四个主键由 measure.py 复算；consistency / control / subspace_union / end_to_end / packaging 由同批脚本产出，来源逐项标注"
   },
-
   "functional_slots": {
     "method": "按 nn.Module 结构对齐，不按参数名",
     "slots": {
-      "Q": {"Qwen": "self_attn.q_proj", "BERT": "attention.self.query", "ViT": "attention.q_proj"},
-      "K": {"Qwen": "self_attn.k_proj", "BERT": "attention.self.key", "ViT": "attention.k_proj"},
-      "V": {"Qwen": "self_attn.v_proj", "BERT": "attention.self.value", "ViT": "attention.v_proj"},
-      "O": {"Qwen": "self_attn.o_proj", "BERT": "attention.output.dense", "ViT": "attention.o_proj"},
-      "expand": {"Qwen": "mlp.up_proj + mlp.gate_proj", "BERT": "intermediate.dense", "ViT": "mlp.fc1"},
-      "contract": {"Qwen": "mlp.down_proj", "BERT": "output.dense", "ViT": "mlp.fc2"}
+      "Q": {
+        "Qwen": "self_attn.q_proj",
+        "BERT": "attention.self.query",
+        "ViT": "attention.q_proj"
+      },
+      "K": {
+        "Qwen": "self_attn.k_proj",
+        "BERT": "attention.self.key",
+        "ViT": "attention.k_proj"
+      },
+      "V": {
+        "Qwen": "self_attn.v_proj",
+        "BERT": "attention.self.value",
+        "ViT": "attention.v_proj"
+      },
+      "O": {
+        "Qwen": "self_attn.o_proj",
+        "BERT": "attention.output.dense",
+        "ViT": "attention.o_proj"
+      },
+      "expand": {
+        "Qwen": "mlp.up_proj + mlp.gate_proj",
+        "BERT": "intermediate.dense",
+        "ViT": "mlp.fc1"
+      },
+      "contract": {
+        "Qwen": "mlp.down_proj",
+        "BERT": "output.dense",
+        "ViT": "mlp.fc2"
+      }
     },
     "form_differences": {
       "norm_position": "Qwen/ViT 是 pre-norm；BERT 是 post-norm",
@@ -24,12 +47,86 @@
       "bias": "Qwen/ViT 的 o_proj 有 bias；BERT 每个投影都有 bias"
     },
     "shapes_layer0": {
-      "Qwen": {"Q": [896,896], "K": [128,896], "V": [128,896], "O": [896,896], "expand": [4864,896], "contract": [896,4864]},
-      "BERT": {"Q": [256,256], "K": [256,256], "V": [256,256], "O": [256,256], "expand": [1024,256], "contract": [256,1024]},
-      "ViT":  {"Q": [768,768], "K": [768,768], "V": [768,768], "O": [768,768], "expand": [3072,768], "contract": [768,3072]}
+      "Qwen": {
+        "Q": [
+          896,
+          896
+        ],
+        "K": [
+          128,
+          896
+        ],
+        "V": [
+          128,
+          896
+        ],
+        "O": [
+          896,
+          896
+        ],
+        "expand": [
+          4864,
+          896
+        ],
+        "contract": [
+          896,
+          4864
+        ]
+      },
+      "BERT": {
+        "Q": [
+          256,
+          256
+        ],
+        "K": [
+          256,
+          256
+        ],
+        "V": [
+          256,
+          256
+        ],
+        "O": [
+          256,
+          256
+        ],
+        "expand": [
+          1024,
+          256
+        ],
+        "contract": [
+          256,
+          1024
+        ]
+      },
+      "ViT": {
+        "Q": [
+          768,
+          768
+        ],
+        "K": [
+          768,
+          768
+        ],
+        "V": [
+          768,
+          768
+        ],
+        "O": [
+          768,
+          768
+        ],
+        "expand": [
+          3072,
+          768
+        ],
+        "contract": [
+          768,
+          3072
+        ]
+      }
     }
   },
-
   "spectral": {
     "metric": "normalized singular-value spectra 上的 Jensen-Shannon 散度",
     "layers_per_model": 4,
@@ -50,14 +147,25 @@
     },
     "reading": "同功能跨架构的权重谱显著更相似（p=0.0002），但效应量中等（d=0.25）。各槽通用性差异大：contract/O 最通用，Q/K 最特异"
   },
-
   "alignment": {
     "protocol": "单个共享等维变换 256×256；表示先归一化到单位尺度",
     "pairwise": {
-      "Q": {"Qwen×BERT": 0.9892589449882507, "Qwen×ViT": 0.9883362054824829, "BERT×ViT": 0.987889289855957},
-      "O": {"Qwen×BERT": 0.9898117780685425, "Qwen×ViT": 0.9889633655548096, "BERT×ViT": 0.9876090884208679},
-      "K": {"BERT×ViT": 0.9872695207595825},
-      "V": {"BERT×ViT": 0.9881786108016968}
+      "Q": {
+        "Qwen×BERT": 0.9892589449882507,
+        "Qwen×ViT": 0.9883362054824829,
+        "BERT×ViT": 0.987889289855957
+      },
+      "O": {
+        "Qwen×BERT": 0.9898117780685425,
+        "Qwen×ViT": 0.9889633655548096,
+        "BERT×ViT": 0.9876090884208679
+      },
+      "K": {
+        "BERT×ViT": 0.9872695207595825
+      },
+      "V": {
+        "BERT×ViT": 0.9881786108016968
+      }
     },
     "triple": {
       "Q": 0.6766622265179952,
@@ -69,57 +177,139 @@
     },
     "reading": "两两全部 0.987+；三模型共用一个变换失败（Q 0.677 / O 0.717）。去掉 Qwen 立刻回到 0.988 —— 不是 Qwen 的 GQA 结构有问题，是一个变换对 3 个模型过定。K/V 只有两模型参与，所以「看起来」更容易对齐"
   },
-
   "rank_sweep": {
     "protocol": "共享变换，K/V 槽，BERT+ViT，layer1；秩=95% 方差口径",
     "by_slot": {
       "K": {
-        "8":   {"cka": 0.9981564283370972, "fidelity": 0.06025019288063049},
-        "24":  {"cka": 0.9981776475906372, "fidelity": 0.16511806845664978},
-        "28":  {"cka": 0.9982039928436279, "fidelity": 0.19120442867279053},
-        "64":  {"cka": 0.9981724023818970, "fidelity": 0.40080949664115906},
-        "128": {"cka": 0.9982175827026367, "fidelity": 0.7117210924625397},
-        "192": {"cka": 0.9982273578643799, "fidelity": 0.9337534606456757},
-        "256": {"cka": 0.9981991052627563, "fidelity": 0.9998273849487305},
-        "384": {"cka": 0.9982111454010010, "fidelity": 0.9999912679195404},
-        "512": {"cka": 0.9982373118400574, "fidelity": 0.9999954700469971},
-        "768": {"cka": 0.9982711672782898, "fidelity": 0.9999973773956299}
+        "8": {
+          "cka": 0.9981564283370972,
+          "fidelity": 0.06025019288063049
+        },
+        "24": {
+          "cka": 0.9981776475906372,
+          "fidelity": 0.16511806845664978
+        },
+        "28": {
+          "cka": 0.9982039928436279,
+          "fidelity": 0.19120442867279053
+        },
+        "64": {
+          "cka": 0.998172402381897,
+          "fidelity": 0.40080949664115906
+        },
+        "128": {
+          "cka": 0.9982175827026367,
+          "fidelity": 0.7117210924625397
+        },
+        "192": {
+          "cka": 0.9982273578643799,
+          "fidelity": 0.9337534606456757
+        },
+        "256": {
+          "cka": 0.9981991052627563,
+          "fidelity": 0.9998273849487305
+        },
+        "384": {
+          "cka": 0.998211145401001,
+          "fidelity": 0.9999912679195404
+        },
+        "512": {
+          "cka": 0.9982373118400574,
+          "fidelity": 0.9999954700469971
+        },
+        "768": {
+          "cka": 0.9982711672782898,
+          "fidelity": 0.9999973773956299
+        }
       },
       "V": {
-        "8":   {"cka": 0.9983707666397095, "fidelity": 0.054956287145614624},
-        "24":  {"cka": 0.9984602928161621, "fidelity": 0.15407684445381165},
-        "28":  {"cka": 0.9984413385391235, "fidelity": 0.17836153507232666},
-        "64":  {"cka": 0.9980395436286926, "fidelity": 0.3776220381259918},
-        "128": {"cka": 0.9981602430343628, "fidelity": 0.6865658164024353},
-        "192": {"cka": 0.9981086850166321, "fidelity": 0.9139992892742157},
-        "256": {"cka": 0.9978399872779846, "fidelity": 0.9998376667499542},
-        "384": {"cka": 0.9978824853897095, "fidelity": 0.9999954402446747},
-        "512": {"cka": 0.9979175329208374, "fidelity": 0.9999977946281433},
-        "768": {"cka": 0.9979461431503296, "fidelity": 0.9999987185001373}
+        "8": {
+          "cka": 0.9983707666397095,
+          "fidelity": 0.054956287145614624
+        },
+        "24": {
+          "cka": 0.9984602928161621,
+          "fidelity": 0.15407684445381165
+        },
+        "28": {
+          "cka": 0.9984413385391235,
+          "fidelity": 0.17836153507232666
+        },
+        "64": {
+          "cka": 0.9980395436286926,
+          "fidelity": 0.3776220381259918
+        },
+        "128": {
+          "cka": 0.9981602430343628,
+          "fidelity": 0.6865658164024353
+        },
+        "192": {
+          "cka": 0.9981086850166321,
+          "fidelity": 0.9139992892742157
+        },
+        "256": {
+          "cka": 0.9978399872779846,
+          "fidelity": 0.9998376667499542
+        },
+        "384": {
+          "cka": 0.9978824853897095,
+          "fidelity": 0.9999954402446747
+        },
+        "512": {
+          "cka": 0.9979175329208374,
+          "fidelity": 0.9999977946281433
+        },
+        "768": {
+          "cka": 0.9979461431503296,
+          "fidelity": 0.9999987185001373
+        }
       }
     },
     "reading": "CKA 与维度无关（8→768 全程 0.998）；保真度才是维度的函数：24 维只剩 0.165，128 维 0.712，256 维 0.9998，384+ 无额外收益。⇒ 等维对齐无损，压维丢信息，升维无收益"
   },
-
   "control": {
     "_source": "control 实验（rank_shared 同批）",
     "protocol": "共享等维变换；秩 = 95% 方差；CKA = 对齐后一致性",
     "real_align": {
-      "K": {"rank_before": 168, "rank_after": 30, "cka": 0.9872284531593323, "A_eff_rank": 115},
-      "V": {"rank_before": 182, "rank_after": 24, "cka": 0.9918431043624878, "A_eff_rank": 101}
+      "K": {
+        "rank_before": 168,
+        "rank_after": 30,
+        "cka": 0.9872284531593323,
+        "A_eff_rank": 115
+      },
+      "V": {
+        "rank_before": 182,
+        "rank_after": 24,
+        "cka": 0.9918431043624878,
+        "A_eff_rank": 101
+      }
     },
     "fake_align": {
-      "K×V": {"rank_before": 200, "rank_after": 198, "cka": 0.4141272157430649, "A_eff_rank": 256},
-      "Q×O": {"rank_before": 218, "rank_after": 219, "cka": 0.40331343611081444, "A_eff_rank": 256}
+      "K×V": {
+        "rank_before": 200,
+        "rank_after": 198,
+        "cka": 0.4141272157430649,
+        "A_eff_rank": 256
+      },
+      "Q×O": {
+        "rank_before": 218,
+        "rank_after": 219,
+        "cka": 0.40331343611081444,
+        "A_eff_rank": 256
+      }
     },
-    "random_baseline": {"rank_before": 676, "rank_after": 666, "cka": 0.05695137629906336, "A_eff_rank": 256},
+    "random_baseline": {
+      "rank_before": 676,
+      "rank_after": 666,
+      "cka": 0.05695137629906336,
+      "A_eff_rank": 256
+    },
     "reading": "随机表示对齐后 CKA 仅 0.057，秩几乎不降；假对齐（跨功能混合）秩也不降。⇒ 真对齐的秩下降与高 CKA 不是变换本身制造的"
   },
-
   "consistency": {
     "_source": "环路一致性约束实验",
     "loss_before": 0.007817,
-    "loss_after": 0.000000,
+    "loss_after": 0.0,
     "alignment_after": {
       "Qwen→BERT": 0.9926,
       "ViT→BERT_direct": 0.9925,
@@ -128,52 +318,206 @@
     "two_path_diff": 0.003807,
     "reading": "consistency_loss 让 A_ac ≡ A_bc ∘ A_ab；三模型对齐从 0.677 提到 0.9925，直达与复合路径差 0.0038。这是「三模型对齐失败」的直接修复项"
   },
-
   "subspace_union": {
     "_source": "多子空间并集秩实验（4 层 × 4 槽）",
     "protocol": "共享线性对齐后，各槽表示并集的有效秩（95% 方差）",
     "per_slot_rank_before_after": {
-      "Q": [[166,151],[195,166],[195,166],[198,166]],
-      "K": [[154,34],[168,30],[160,33],[175,27]],
-      "V": [[179,24],[182,24],[187,23],[184,24]],
-      "O": [[194,165],[205,170],[208,172],[209,173]]
+      "Q": [
+        [
+          166,
+          151
+        ],
+        [
+          195,
+          166
+        ],
+        [
+          195,
+          166
+        ],
+        [
+          198,
+          166
+        ]
+      ],
+      "K": [
+        [
+          154,
+          34
+        ],
+        [
+          168,
+          30
+        ],
+        [
+          160,
+          33
+        ],
+        [
+          175,
+          27
+        ]
+      ],
+      "V": [
+        [
+          179,
+          24
+        ],
+        [
+          182,
+          24
+        ],
+        [
+          187,
+          23
+        ],
+        [
+          184,
+          24
+        ]
+      ],
+      "O": [
+        [
+          194,
+          165
+        ],
+        [
+          205,
+          170
+        ],
+        [
+          208,
+          172
+        ],
+        [
+          209,
+          173
+        ]
+      ]
     },
-    "full_space_rank_before_after": [[212,139],[220,139],[221,136],[225,131]],
+    "full_space_rank_before_after": [
+      [
+        212,
+        139
+      ],
+      [
+        220,
+        139
+      ],
+      [
+        221,
+        136
+      ],
+      [
+        225,
+        131
+      ]
+    ],
     "avg_reduction": 0.4959808332705814,
     "avg_full_rank": 136.25,
     "reading": "K/V 对齐后秩降到 24-34（降 78-88%）；Q/O 只降 9-17%。全空间从 212-225 降到 131-139（占 256 的 53%）"
   },
-
   "end_to_end": {
     "_source": "真实数据端到端训练（ag_news 4 分类）",
-    "data": {"n_text": 10000, "n_image": 5000, "split": "按类别分层 80/20",
-             "train": 7998, "val": 2002,
-             "class_balance_train": [2018,1870,1981,2129],
-             "class_balance_val": [505,468,496,533]},
-    "model": {"proj_space_params": 2762766, "fusion_params": 50343940},
-    "hparams": {"lr": 0.0002, "steps": 1500, "bs": 32, "bal_w": 0.01},
+    "data": {
+      "n_text": 10000,
+      "n_image": 5000,
+      "split": "按类别分层 80/20",
+      "train": 7998,
+      "val": 2002,
+      "class_balance_train": [
+        2018,
+        1870,
+        1981,
+        2129
+      ],
+      "class_balance_val": [
+        505,
+        468,
+        496,
+        533
+      ]
+    },
+    "model": {
+      "proj_space_params": 2762766,
+      "fusion_params": 50343940
+    },
+    "hparams": {
+      "lr": 0.0002,
+      "steps": 1500,
+      "bs": 32,
+      "bal_w": 0.01
+    },
     "held_out_acc": 0.9015984015984015,
     "chance": 0.25,
-    "expert_load": [0.5449043144355644, 0.47808051323676326, 0.4835633116883117, 0.49345186063936064],
+    "expert_load": [
+      0.5449043144355644,
+      0.47808051323676326,
+      0.4835633116883117,
+      0.49345186063936064
+    ],
     "route_entropy": 0.5016248504636067,
     "balance": 0.8773659882921168,
     "caveat": "专家**解冻**（偏离 v33 原设定）；专家权重随机初始化而非从真实 FFN 抽取；任务是 ag_news 分类而非 v33 的 fuse_mse。**不能**与 v33 的 +26.7% 直接比较"
   },
-
   "packaging": {
-    "_source": "完整模型打包 + 往返验证",
+    "_source": "完整模型打包 + 净室验证",
     "repo": "https://huggingface.co/redmingwei/HeteroMoEProjSpace-v2",
     "total_params": 645190802,
     "size_gb": 2.582176886,
     "components": {
-      "qwen": 494032768, "bert": 11170560, "vit": 86389248,
-      "proj_space": 2762766, "fusion": 50343940
+      "qwen": 494032768,
+      "bert": 11170560,
+      "vit": 86389248,
+      "proj_space": 2762766,
+      "fusion": 50343940
     },
-    "load_report": {"missing": 0, "unexpected": 0},
+    "load_report": {
+      "missing": 0,
+      "unexpected": 0
+    },
     "self_consistency_delta": 0.0,
-    "cross_instance_max_dy": 9.537e-07,
-    "cross_instance_max_dalpha": 1.192e-07,
-    "caveat": "跨实例不是 bit 级一致（9.5e-07）。原因是打包时 ViT 走 BERT 风格命名、重建时走 HF ViT 命名，数学等价但浮点路径不同。加载后模型**自身**完全自洽（Δ=0.000e+00）",
-    "vit_naming_note": "部分 transformers 版本用 encoder.layer.N.attention.attention.query，另一些用 layers.N.attention.q_proj；model.remap_vit_state 负责互转，加载时必须先转换再灌权重"
+    "cross_instance_max_dy": 7.911e-05,
+    "cross_version_max_dy": 9.537e-07,
+    "caveat": "跨实例 Δ=7.9e-05 来自 transformers 版本差异（expected_y 在 5.21.0 下生成，净室 5.16.1）。同一实例内两次前向 Δ=0.000e+00，权重 missing 0 / unexpected 0。需 bit 级一致时请 pin transformers==5.21.0",
+    "vit_naming_note": "部分 transformers 版本用 encoder.layer.N.attention.attention.query，另一些用 layers.N.attention.q_proj；model.remap_vit_state 负责互转",
+    "auto_map": {
+      "AutoConfig": "modeling_hetero_moe_projspace.HeteroMoEProjSpaceConfig",
+      "AutoModel": "modeling_hetero_moe_projspace.HeteroMoEProjSpaceModel"
+    }
+  },
+  "cleanroom": {
+    "_source": "cleanroom.py — 干净目录 + 只从 GitHub/Hub 拉取，8 步",
+    "commit": "8330a7a",
+    "env": {
+      "torch": "2.10.0",
+      "transformers": "5.16.1"
+    },
+    "steps": {
+      "1a_clone": true,
+      "1b_files": true,
+      "2a_versions": true,
+      "3a_import_forward": true,
+      "4a_package_tests": "12/12",
+      "5a_trust_remote_code": true,
+      "6a_reproduce": 7.911e-05,
+      "6b_partial_modality": true
+    },
+    "pass": 8,
+    "total": 8,
+    "bugs_found_and_fixed": [
+      {
+        "bug": "trust_remote_code=True 无法工作",
+        "symptom": "ValueError: model type `hetero_moe_projspace` not recognized",
+        "root_cause": "Hub 上只有 config.json 与权重，没有建模代码，config 也没写 auto_map。save_pretrained 不保存 Python 文件。",
+        "fix": "生成自包含单文件 modeling_hetero_moe_projspace.py（内联 projspace/fusion/model，不 import 仓库任何模块），config.json 加 auto_map 指向它"
+      },
+      {
+        "bug": "只给文本不给图像时模型崩溃",
+        "symptom": "AssertionError: router 输入宽度 1024 != 声明 1536",
+        "root_cause": "router 宽度在 __init__ 按声明模型数算死（Q/O 各 3 模型 = 1536），前向只传 Qwen+BERT 时只有 1024",
+        "fix": "按声明模型数固定宽度，缺失模态用零向量占位（无 bias 的 Linear，零输入 = 零贡献 = 该模态缺席）；已补为第 12 项回归测试 test_partial_modality"
+      }
+    ]
   }
 }

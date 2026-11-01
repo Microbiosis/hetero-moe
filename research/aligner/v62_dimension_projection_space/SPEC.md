@@ -298,19 +298,86 @@ v62 换成真实分类任务（交叉熵 + 真实标签），路由与专家才�
 python research/aligner/v62_dimension_projection_space/measure.py
 
 # 权威测试
-pytest research/aligner/v62_dimension_projection_space/tests/test_package.py -v
+python research/aligner/v62_dimension_projection_space/tests/test_package.py
 
-# 加载打包模型
-python -c "
+# 净室验证：干净 clone + 只从 Hub 下载，检验「别人拿到能不能用」
+python research/aligner/v62_dimension_projection_space/cleanroom.py --json /tmp/cr.json
+```
+
+加载打包模型（`trust_remote_code=True` 需要 Hub 上的 `modeling_hetero_moe_projspace.py`）：
+
+```python
 from transformers import AutoModel
 m = AutoModel.from_pretrained('redmingwei/HeteroMoEProjSpace-v2', trust_remote_code=True)
 print(m.describe())
-"
 ```
 
 ---
 
+## 13b. 净室验证（第三方能不能用起来）
+
+`cleanroom.py` 在**干净目录**里只靠 `git clone` + Hub 下载跑 8 步，与 `tests/test_package.py`
+分开：后者验**实现对不对**（作者本机），前者验**交付能不能被用起来**。
+
+| 步骤 | 内容 | 结果 |
+|---|---|---|
+| 1a | 从 GitHub `--depth 1` clone | ✓ commit 8330a7a |
+| 1b | 子包 9 个必备文件齐全 | ✓ |
+| 2a | 版本：torch 2.10.0 / transformers 5.16.1 | — |
+| 3a | clone 出来的包直接 import + 前向 | ✓ 路由槽 Q,O |
+| 4a | 包内权威测试在 clone 里跑通 | ✓ 12/12 |
+| 5a | `AutoModel.from_pretrained(trust_remote_code=True)` | ✓ 645.19M |
+| 6a | 用 Hub 的 example_inputs 复现 expected_y | ✓ Δ=7.9e-05 |
+| 6b | 缺模态可用（只给 Qwen） | ✓ |
+
+### 净室暴露并修掉的两个真问题
+
+**问题一：`trust_remote_code=True` 当时根本无法工作。**
+第一次净室跑第 5 步就失败：
+
+```
+ValueError: The checkpoint you are trying to load has model type
+`hetero_moe_projspace` but Transformers does not recognize this architecture.
+```
+
+原因：Hub 上只有 `config.json` 和权重，**没有建模代码**，`auto_map` 也没写。
+`save_pretrained` 只保存配置与权重，不保存 Python 文件。
+修法：生成一个**自包含单文件** `modeling_hetero_moe_projspace.py`（把
+projspace.py / fusion.py / model.py 内联，不 import 仓库任何模块），
+并在 config.json 加 `auto_map` 指向它。
+
+**问题二：只给文本、不给图像时模型直接崩。**
+
+```
+AssertionError: router 输入宽度 1024 != 声明 1536（实际可用模型与声明不符）
+```
+
+router 宽度在 `__init__` 里按「声明的全部模型」算死（Q/O 槽各 3 个模型 = 1536），
+但前向时只传入 Qwen+BERT 就只有 1024 维。
+修法：按**声明**的模型数固定宽度，缺失的模态用零向量占位
+（`nn.Linear` 无 bias，零输入 → 零贡献 = 「该模态缺席」，语义正确）。
+已补为第 12 项回归测试 `test_partial_modality`（5 种输入组合）。
+
+### 精度：权重完美，但数值复现受版本影响
+
+| 项 | 结果 |
+|---|---|
+| 权重加载 | missing 0 / unexpected 0 |
+| 同实例两次前向 | Δ = 0.000e+00（确定性） |
+| 跨实例复现 expected_y | Δ = 7.911e-05 |
+
+`expected_y` 在 **transformers 5.21.0** 下生成，净室环境是 **5.16.1**。
+同一实例内完全确定（Δ=0），说明差异来自不同版本骨干 forward 的实现细节，
+不是加载错误。`cleanroom.py` 的容差设为 1e-3（相对量级约 2e-6），
+既能抓住真错，也不会因版本漂移误报。
+
+> 复现方若要 bit 级一致，需 pin `transformers==5.21.0`。
+
+---
+
 ## 14. 未做的事（明确列出）
+
+- **没做**：bit 级跨版本复现（需 pin transformers 版本；实测 5.16.1 vs 5.21.0 差 7.9e-05）
 
 - **没做**：把 v48–v61 的其它观测量（面积律、token 局部性）纳入本算子
 - **没做**：在 v33 的真实 fuse_mse 协议上重跑（本代用的是 ag_news 分类）

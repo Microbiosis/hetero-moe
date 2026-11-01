@@ -1,4 +1,4 @@
-"""V62.0 — 维度投影空间 单元测试 (11 项)。
+"""V62.0 — 维度投影空间 单元测试 (12 项)。
 
 只依赖 torch 即可跑；涉及 transformers 的那一项在缺依赖时自动 SKIP。
 每个 test_* 必须在末尾 return True（run_suite 以返回真值判定通过）。
@@ -23,7 +23,7 @@ from research.aligner.v62_dimension_projection_space.projspace import (
 )
 from research.aligner.v62_dimension_projection_space.fusion import FusionOverProjSpace
 
-TITLE = "V62.0 维度投影空间 — 单元测试 (11 项)"
+TITLE = "V62.0 维度投影空间 — 单元测试 (12 项)"
 
 _DS = 256
 _B, _S = 2, 12
@@ -219,6 +219,31 @@ def test_vit_naming_reversible():
     return True
 
 
+# ---------------------------------------------------------------- 12
+def test_partial_modality():
+    """12. 缺模态可用 —— 净室测试发现的真 bug（只给文本时 router 宽度算错）"""
+    op = DimProjectionSpace(_DS)
+    torch.manual_seed(0)
+    allm = {m: {k: torch.randn(_B, _S, _DS) for k in MEASURED_SUBSPACES}
+            for m in ['Qwen', 'BERT', 'ViT']}
+    cases = {
+        '三模态': ['Qwen', 'BERT', 'ViT'],
+        '仅文本': ['Qwen', 'BERT'],
+        '仅 Qwen': ['Qwen'],
+        '仅 BERT': ['BERT'],
+        '仅 ViT': ['ViT'],
+    }
+    shapes = set()
+    for name, ms in cases.items():
+        struct, canon, alpha = op({m: allm[m] for m in ms})
+        # 关键：输出宽度必须与三模态时一致，否则下游权重对不上
+        shapes.add((canon.shape[-1], alpha.shape[-1]))
+        assert struct.shape[2] == op.n_slots
+    assert shapes == {(op.total_dim, op.n_experts)}, shapes
+    print(f'[PASS] test_partial_modality ({len(cases)} 种输入组合, 输出宽度一致)')
+    return True
+
+
 TESTS = [
     test_specs_match_metrics,
     test_forward_shapes,
@@ -231,6 +256,7 @@ TESTS = [
     test_three_path_agreement,
     test_fusion_over_projspace,
     test_vit_naming_reversible,
+    test_partial_modality,
 ]
 
 

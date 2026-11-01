@@ -230,6 +230,10 @@ class DimProjectionSpace(nn.Module):
                 struct[:, :, i, :sp.dim] = _pool(per_slot[k])
 
         # 路由（只用三模型对齐失败的槽）
+        #
+        # 关键：按**声明**的模型数固定宽度，缺失的模态用零向量占位。
+        # 否则「只给文本不给图像」会让 router 输入宽度变化、权重对不上。
+        # 零占位语义正确：nn.Linear 无 bias，零输入 → 零贡献 = 「该模态缺席」。
         rp: List[torch.Tensor] = []
         for k in self.route_slots:
             for m in self.subspaces[k].models:
@@ -237,6 +241,8 @@ class DimProjectionSpace(nn.Module):
                 if key not in self.proj:
                     continue
                 if m not in feats or k not in feats[m]:
+                    rp.append(torch.zeros(B, S, self.subspaces[k].dim,
+                                          device=dev, dtype=canonical.dtype))
                     continue
                 v = self.proj[key](feats[m][k])
                 if v.shape[1] != S:
@@ -247,8 +253,7 @@ class DimProjectionSpace(nn.Module):
         if self.route_slots and rp and self.router is not None:
             xin = torch.cat(rp, dim=-1)
             assert xin.shape[-1] == self._route_dim, (
-                'router 输入宽度 %d != 声明 %d（实际可用模型与声明不符）'
-                % (xin.shape[-1], self._route_dim))
+                'router 输入宽度 %d != 声明 %d' % (xin.shape[-1], self._route_dim))
             logits = self.router(xin)
             a = F.softmax(logits, dim=-1)
             _, ti = torch.topk(a, self.top_k, dim=-1)
