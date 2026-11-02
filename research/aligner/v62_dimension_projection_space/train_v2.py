@@ -38,7 +38,7 @@ STEPS   = int(os.environ.get('STEPS','1500'))
 BS      = int(os.environ.get('BS','32'))
 BAL_W   = float(os.environ.get('BAL_W','0.01'))
 SLOT_ENT_W = float(os.environ.get('SLOT_ENT_W','0.05'))
-VER     = os.environ.get('VER','62.2')
+VER     = os.environ.get('VER','62.4')
 
 # ============ 载入真实数据 ============
 print('\n[1/5] 载入缓存 ...', flush=True)
@@ -370,7 +370,9 @@ print(json.dumps(report['eval'],indent=2,ensure_ascii=False), flush=True)
 if HFT:
     api=HfApi(token=HFT)
     # 版本化路径，避免不同版本互相覆盖
-    CKPT_DIR = os.environ.get('CKPT_DIR','checkpoints/v62.2')
+    # 目录由 VER 推导 —— 此前 CKPT_DIR 硬编码成 'checkpoints/v62.2'，
+    # 于是每次重训都覆盖同一个目录，出现「目录名是 v62.2、内容却是 v62.3」的错位。
+    CKPT_DIR = os.environ.get('CKPT_DIR', 'checkpoints/v%s' % VER)
     for f in ['heteromoe_projspace_v2.pt','report.json']:
         api.upload_file(path_or_fileobj=f'{OUT}/{f}',
                         path_in_repo=f'{CKPT_DIR}/{f}',
