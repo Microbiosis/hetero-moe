@@ -457,15 +457,11 @@
     "best_val_step": null,
     "slot_gate": {
       "_what": "proj_space.router 的输出 —— 全槽软门控（四槽各贡献多少，和=1）",
-      "load": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "entropy": 0.6927695073159106,
-      "balance": 0.9999999989999999,
-      "reading": "熵 0.6928（上界 1.0），四槽激活率均 100% ⇒ 四个槽真正都在工作。这是加熵正则后的人为干预结果，不是自然收敛；若不加正则会塌到 0.0209。"
+      "load": null,
+      "entropy": null,
+      "balance": null,
+      "reading": "v62.1/v62.2 的槽门控数字全部作废：那个 router 从未被训练。v62.3 修好 lazy 问题后重训，数字以新报告为准。",
+      "status": "INVALIDATED（v62.1/v62.2）— 见 _invalidated"
     },
     "expert": {
       "_what": "fusion.W_router 的输出 —— 专家选择（4 选 top-2）",
@@ -477,7 +473,8 @@
       ],
       "entropy": 0.4762617950189395,
       "balance": 0.4918578764508696,
-      "reading": "专家 1 承担 73.1%，专家 0 只有 36.0%；不塌缩但不均衡"
+      "reading": "专家选择不受 lazy bug 影响 —— fusion.W_router 是 nn.Parameter，从 __init__ 起就在 trainable 里。",
+      "status": "有效（fusion.W_router 一直在 optimizer 里）"
     },
     "caveat": "专家**解冻**（偏离 v33 原设定）；专家权重随机初始化而非从真实 FFN 抽取；任务是 ag_news 分类而非 v33 的 fuse_mse。**不能**与 v33 的 +26.7% 直接比较。",
     "version_history": {
@@ -496,6 +493,15 @@
         "slot_entropy": 0.6927695073159106,
         "note": "全槽软门控 + 熵正则；准确率降 0.004，换来四槽真正分工"
       }
+    },
+    "_invalidated": {
+      "affected_versions": [
+        "62.1",
+        "62.2"
+      ],
+      "reason": "训练脚本的 proj_space.router 是 lazy 创建（__init__ 里 s.router=None，首次 forward 才建）。后果三连：① load_state_dict 时 proj_space.router.weight 被判为 unexpected，权重根本加载不上；② trainable/optimizer 在 router 存在之前就取好，router 从未被优化；③ 熵正则的梯度流向 router 却不在 optimizer 里，被丢弃。⇒ 槽门控完全由一个**随机初始化**的 router 决定，「四槽激活率 100%」不成立。",
+      "evidence": "对照测试：训练脚本模型与打包模型在同一输入上给出 alpha[0,0] = [0.2082,0.1385,0.1008,0.5525] vs [0.4139,0.3244,0.1828,0.0788]；unexpected_keys 含 proj_space.router.weight；named_parameters 里只有 fusion.W_router，没有 proj_space.router。",
+      "fixed_in": "62.3"
     }
   },
   "packaging": {
