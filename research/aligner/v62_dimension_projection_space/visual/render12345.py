@@ -339,57 +339,101 @@ def act4(ax, t):
 
 # ============================================================ ⑤ 环路闭合
 def act5(ax, t):
-    p = seg(t, 0.0, 0.06)
+    """⑤ 环路一闭合，三个就回来了 —— 动态。
+
+    几何上三条路径的终点本来就是同一个节点，所以「缝」不能画成几何缺口。
+    准确的说法是：**两条路径到达同一节点，但携带的结果不同**。
+    因此画两个结果标记（折线路径的结果 / 直达边的结果）在节点旁错开，
+    施加环路一致性约束后两者合拢 —— 那是「被拉到一起」，不是「缺口补上」。
+    """
+    p = seg(t, 0.0, 0.05)
     ax.text(50, 59, '⑤ 环路一闭合，三个就回来了', color=VIOLET, fontsize=14,
             weight='bold', alpha=p, ha='center', va='center')
 
-    # 三角形
-    tri = [(30, 44), (18, 26), (42, 26)]     # A, B, C
+    tri = [(30, 44), (18, 26), (42, 26)]     # Qwen, BERT, ViT
     labels = ['Qwen', 'BERT', 'ViT']
-    a1 = seg(t, 0.08, 0.20)
+    cols = [GOLD, ICE, GREEN]
+    edges = [(0, 1), (1, 2), (0, 2)]          # A→B, B→C, A→C
+
+    # ---------------- 三节点 ----------------
+    a1 = seg(t, 0.06, 0.20)
     if a1 > 0.01:
-        for (x, y), lb, c in zip(tri, labels, [GOLD, ICE, GREEN]):
+        for (x, y), lb, c in zip(tri, labels, cols):
             ax.add_patch(Circle((x, y), 3.4, color=c, alpha=a1 * 0.85))
             ax.text(x, y, lb, color='#0a0c10', fontsize=8.5, ha='center',
                     va='center', alpha=a1, weight='bold')
 
-    # 三条边
-    edges = [(0, 1, 'A_Qwen→BERT'), (1, 2, 'A_BERT→ViT'), (0, 2, 'A_Qwen→ViT')]
-    for i, (ia, ib, _) in enumerate(edges):
-        a = seg(t, 0.20 + i * 0.06, 0.32 + i * 0.06)
-        if a <= 0.01: continue
+    # ---------------- 三条边依次画出 ----------------
+    for i, (ia, ib) in enumerate(edges):
+        a = seg(t, 0.20 + i * 0.055, 0.31 + i * 0.055)
+        if a <= 0.01:
+            continue
         (x1, y1), (x2, y2) = tri[ia], tri[ib]
         ax.plot([x1, x2], [y1, y2], color=VIOLET, lw=2.0, alpha=a)
 
-    # 缝
-    a2 = seg(t, 0.40, 0.52)
-    if a2 > 0.01:
-        ax.text(50, 19, '走两条边 ≠ 走一条直达 —— 三角形有道缝',
-                color=RED, fontsize=10.5, ha='center', alpha=a2, va='center')
-        ax.text(50, 14, f'缝宽 {CON["two_path_diff"]:.4f}',
-                color=RED, fontsize=9.5, ha='center', alpha=a2, va='center')
+    # ---------------- 两个结果标记（错开 = 缝）----------------
+    # 折线路径 A→B→C 的结果 vs 直达边 A→C 的结果
+    GAP = 4.2
+    a2 = seg(t, 0.38, 0.52)
+    tighten = seg(t, 0.64, 0.80)              # 约束收紧
+    gap = GAP * (1 - tighten)
 
-    # 约束
-    a3 = seg(t, 0.54, 0.64)
+    vx, vy = tri[2]                            # ViT 节点
+    if a2 > 0.01:
+        # 两个结果标记放在 ViT 节点**右侧**，垂直错开（避开节点本身）
+        m1 = (vx + 8.0, vy - gap * 0.5)
+        m2 = (vx + 8.0, vy + gap * 0.5)
+        ax.add_patch(Rectangle((m1[0] - 1.1, m1[1] - 1.1), 2.2, 2.2,
+                               color=ICE, alpha=a2 * 0.9))
+        ax.add_patch(Rectangle((m2[0] - 1.1, m2[1] - 1.1), 2.2, 2.2,
+                               color=GOLD, alpha=a2 * 0.9))
+        # 从 ViT 节点连到各自的标记
+        ax.plot([vx, m1[0]], [vy, m1[1]], color=ICE, lw=1.2, alpha=a2 * 0.8)
+        ax.plot([vx, m2[0]], [vy, m2[1]], color=GOLD, lw=1.2, alpha=a2 * 0.8)
+        lab_a = a2 * (1 - seg(t, 0.64, 0.74))   # 收紧时淡出，避免与合拢提示撞
+        ax.text(m1[0] + 2.0, m1[1], '走两条边', color=ICE, fontsize=9,
+                ha='left', va='center', alpha=lab_a)
+        ax.text(m2[0] + 2.0, m2[1], '走一条直达', color=GOLD, fontsize=9,
+                ha='left', va='center', alpha=lab_a)
+
+    # 缝的文字（收紧时淡出）
+    a2b = a2 * (1 - seg(t, 0.66, 0.78))
+    if a2b > 0.01:
+        ax.text(50, 18.5, '同一个终点，走法不同 ⇒ 结果不同',
+                color=RED, fontsize=10.5, ha='center', alpha=a2b, va='center')
+        ax.text(50, 13.5, f'缝宽 {CON["two_path_diff"]:.4f}',
+                color=RED, fontsize=9.5, ha='center', alpha=a2b, va='center')
+
+    # ---------------- 约束公式 ----------------
+    a3 = seg(t, 0.52, 0.62)
     if a3 > 0.01:
-        ax.text(50, 20.5, 'A_ac  ≡  A_bc ∘ A_ab', color=VIOLET, fontsize=13,
+        ax.text(50, 53.0, 'A_ac  ≡  A_bc ∘ A_ab', color=VIOLET, fontsize=13.5,
                 ha='center', alpha=a3, va='center')
-        ax.text(50, 15.5, '环路一致性约束：三条路径必须自洽',
+        ax.text(50, 48.8, '环路一致性约束：三条路径必须自洽',
                 color=DIM, fontsize=9.5, ha='center', alpha=a3, va='center')
 
-    # 闭合
-    a4 = seg(t, 0.66, 0.78)
-    if a4 > 0.01:
-        for (x, y), lb, c in zip(tri, labels, [GOLD, ICE, GREEN]):
-            ax.add_patch(Circle((x, y), 3.4 + 0.5 * a4, color=c, alpha=0.9))
-            ax.text(x, y, lb, color='#0a0c10', fontsize=8.5, ha='center',
-                    va='center', alpha=a4, weight='bold')
-        for i, (ia, ib, _) in enumerate(edges):
+    # ---------------- 收紧：两个标记合拢 + 边发光 ----------------
+    if tighten > 0.01:
+        for i, (ia, ib) in enumerate(edges):
             (x1, y1), (x2, y2) = tri[ia], tri[ib]
-            ax.plot([x1, x2], [y1, y2], color=VIOLET, lw=2.6, alpha=a4)
+            ax.plot([x1, x2], [y1, y2], color=VIOLET,
+                    lw=2.0 + 1.6 * tighten, alpha=0.95)
+        if a2 > 0.01:
+            m1 = (vx + 8.0, vy - gap * 0.5)
+            m2 = (vx + 8.0, vy + gap * 0.5)
+            ax.add_patch(Rectangle((m1[0] - 1.1, m1[1] - 1.1), 2.2, 2.2,
+                                   color=ICE, alpha=0.9))
+            ax.add_patch(Rectangle((m2[0] - 1.1, m2[1] - 1.1), 2.2, 2.2,
+                                   color=GOLD, alpha=0.9))
+            ax.plot([vx, m1[0]], [vy, m1[1]], color=ICE, lw=1.2, alpha=0.85)
+            ax.plot([vx, m2[0]], [vy, m2[1]], color=GOLD, lw=1.2, alpha=0.85)
+            if tighten > 0.75:
+                ax.text(vx + 8.0, vy - 4.6, '两个结果合到一处', color=GREEN,
+                        fontsize=10, ha='left', va='center',
+                        alpha=seg(tighten, 0.75, 1.0))
 
-    # 结果
-    a5 = seg(t, 0.80, 0.90)
+    # ---------------- 结果 ----------------
+    a5 = seg(t, 0.82, 0.92)
     if a5 > 0.01:
         ax.text(26, 8, '0.6767', color=RED, fontsize=13, ha='center', alpha=a5, va='center')
         ax.annotate('', xy=(44, 8), xytext=(34, 8),
@@ -397,10 +441,8 @@ def act5(ax, t):
         ax.text(50, 8, '0.9925', color=GREEN, fontsize=15, ha='center',
                 alpha=a5, va='center', weight='bold')
         ax.text(72, 8, '三模型', color=DIM, fontsize=10, ha='center', alpha=a5, va='center')
-    ax.text(50, 3, f'一致性损失 {CON["loss_before"]:.6f} → {CON["loss_after"]:.6f}',
-            color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.86, 0.96), va='center')
-
-
+    ax.text(50, 13.5, f'一致性损失 {CON["loss_before"]:.6f} → {CON["loss_after"]:.6f}',
+            color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.88, 0.97), va='center')
 
 
 # ============================================================ ⑧ 收尾
