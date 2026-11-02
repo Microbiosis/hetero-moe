@@ -16,7 +16,9 @@ DATA = str(_HERE / 'data')
 FRAMES = str(_HERE / 'frames')
 import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
-from matplotlib.patches import Rectangle, Circle, FancyArrowPatch
+from matplotlib.patches import Rectangle
+import style as ST
+from matplotlib.patches import Circle, FancyArrowPatch
 
 for f in ['/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
           '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf']:
@@ -33,13 +35,14 @@ AL = MM['alignment']
 RS = MM['rank_sweep']['by_slot']['K']
 CON = MM['consistency']
 
-BG='#0a0c10'; FG='#e8eaed'; DIM='#5b6572'
-GOLD='#F0873B'; ICE='#64E3F6'; GREEN='#35D0BA'; RED='#CF3655'; VIOLET='#b085f5'
-MOD_COL = {'Qwen': GOLD, 'BERT': ICE, 'ViT': GREEN}
+# 视觉风格见 style.py（借鉴 3b1b/manim 色板）
+BG=ST.BG; FG=ST.WHITE; DIM=ST.GREY_C
+GOLD=ST.GOLD; ICE=ST.BLUE; GREEN=ST.GREEN; RED=ST.RED; VIOLET=ST.PURPLE
+MOD_COL = {'Qwen': ST.MOD_GRAD[0], 'BERT': ST.MOD_GRAD[1], 'ViT': ST.MOD_GRAD[2]}
 MOD_DIM = dict(zip(['Qwen','BERT','ViT'], M['dims_native']))
 MOD_EN = dict(zip(['Qwen','BERT','ViT'], M['energy_keep']))
 SLOT_NAMES = ['Q','K','V','O']
-SLOT_COL = [GOLD, ICE, GREEN, VIOLET]
+SLOT_COL = list(ST.SLOT_GRAD)
 W, H = 100, 62
 
 
@@ -57,9 +60,18 @@ def frame(fi, total, fn, out, which=None):
     ax = fig.add_axes([0, 0, 1, 1]); ax.set_facecolor(BG)
     ax.set_xlim(0, W); ax.set_ylim(0, H); ax.axis('off')
     t = fi / max(total - 1, 1)
+    # 背景：中心微亮的柔和暗场
+    grad = np.linspace(0, 1, 256).reshape(-1, 1)
+    ax.imshow(grad, extent=[0, W, 0, H], aspect='auto', zorder=-10,
+              cmap=matplotlib.colors.LinearSegmentedColormap.from_list(
+                  'bg', [ST.BG_DEEP, ST.BG, ST.BG_DEEP]),
+              interpolation='bilinear')
     fn(ax, t)
     if which:
         draw_subs(ax, which, seg(t, 0.0, 0.06))
+        ST.watermark(ax, 'v62 · 维度投影空间')
+    # 镜头极缓慢推近
+    ST.camera(ax, zoom=1.0 + 0.022 * t)
     fig.savefig(f'{out}/f{fi:05d}.png', facecolor=BG, dpi=100)
     plt.close(fig)
 
@@ -88,7 +100,7 @@ def draw_subs(ax, which, alpha):
     if alpha <= 0.01:
         return
     zh, en = SUBS[which][0]
-    ax.add_patch(Rectangle((0, 0), W, 7.0, color='#000000', alpha=0.55 * alpha))
+    ST.rbox(ax, (0, 0), W, 7.0, fc='#000000', ec='#000000', lw=1.6, alpha=0.55 * alpha, fill_alpha=0.45, z=2)
     ax.text(50, 4.6, zh, color=FG, fontsize=13.5, ha='center', va='center', alpha=alpha)
     ax.text(50, 1.8, en, color=DIM, fontsize=9, ha='center', va='center', alpha=alpha * 0.9)
 
@@ -97,7 +109,7 @@ def act1(ax, t):
     """① 三个底座的宽度差 3.5 倍 —— 三条带子依次流过 P 闸门。"""
     p = seg(t, 0.0, 0.05)
     ax.text(50, 60, '① 三个底座的宽度差 3.5 倍', color=GOLD, fontsize=14,
-            weight='bold', alpha=p, ha='center', va='center')
+            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(GOLD))
 
     MODELS = ['Qwen', 'BERT', 'ViT']
     MAXD = 896
@@ -107,9 +119,9 @@ def act1(ax, t):
     # ---- 闸门 ----
     ag = seg(t, 0.05, 0.15)
     if ag > 0.01:
-        ax.add_patch(Rectangle((X_GATE, 30), 4.5, 24, color=FG, alpha=ag * 0.16))
+        ST.rbox(ax, (X_GATE, 30), 4.5, 24, fc=FG, ec=FG, lw=1.6, alpha=ag * 0.16, fill_alpha=0.45, z=2)
         ax.text(X_GATE + 2.25, 55.5, 'P', color=FG, fontsize=13,
-                ha='center', alpha=ag, weight='bold')
+                ha='center', alpha=ag, weight='bold', path_effects=ST.text_glow(FG))
 
     # ---- 每条带子占 1/3 时间依次通过 ----
     for i, m in enumerate(MODELS):
@@ -122,8 +134,7 @@ def act1(ax, t):
         # 入口段：带子从左长出
         head = seg(a, 0.0, 0.55)                     # 0→1 表示走到闸门
         x_end = X_IN + (X_GATE - X_IN) * head
-        ax.add_patch(Rectangle((X_IN, y), max(x_end - X_IN, 0.01), 4.4,
-                               color=MOD_COL[m], alpha=0.85))
+        ST.rbox(ax, (X_IN, y), max(x_end - X_IN, 0.01), 4.4, fc=MOD_COL[m], ec=MOD_COL[m], lw=1.6, alpha=0.85, fill_alpha=0.45, z=2)
         # 模态名与维度放在同一行（放在带子下方会压到下一条带子）
         ax.text(X_IN + 2, y + 6.8, f'{m}  {MOD_DIM[m]}', color=MOD_COL[m],
                 fontsize=10, va='center', alpha=a)
@@ -131,8 +142,7 @@ def act1(ax, t):
         if head > 0.62:
             b = seg(a, 0.55, 0.9)
             wout = SLEN * 256 / MAXD
-            ax.add_patch(Rectangle((X_OUT, y), wout * b, 4.4, color=MOD_COL[m],
-                                   alpha=0.85))
+            ST.rbox(ax, (X_OUT, y), wout * b, 4.4, fc=MOD_COL[m], ec=MOD_COL[m], lw=1.6, alpha=0.85, fill_alpha=0.45, z=2)
             ax.text(X_OUT + wout * b + 1.6, y + 2.2, '256', color=MOD_COL[m],
                     fontsize=9.5, va='center', alpha=a)
         # 闸门处的箭头
@@ -142,15 +152,14 @@ def act1(ax, t):
                                         lw=1.2, alpha=a * min(1, (head - 0.4) * 4)))
 
     # ---- 能量保留 ----
-    ae = seg(t, 0.58, 0.76)
+    ae = seg(t, 0.58, 0.72)
     if ae > 0.01:
+        # 三行一起出现（逐个淡入会让未出现的行看着像残留）
         for i, m in enumerate(MODELS):
-            a = ae * (1 if i == 0 else 1)
             x = 22 + i * 20
-            ax.text(x, 21, m, color=MOD_COL[m], fontsize=9.5, ha='center',
-                    alpha=seg(t, 0.58 + i * 0.05, 0.68 + i * 0.05))
+            ax.text(x, 21, m, color=MOD_COL[m], fontsize=9.5, ha='center', alpha=ae)
             ax.text(x, 17, f'保留能量 {MOD_EN[m]*100:.0f}%', color=FG, fontsize=10,
-                    ha='center', alpha=seg(t, 0.63 + i * 0.05, 0.73 + i * 0.05))
+                    ha='center', alpha=ae)
     ax.text(50, 12, 'BERT 的能量一分不丢，Qwen 丢掉 46%，ViT 丢掉 41%',
             color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.74, 0.86), va='center')
     ax.text(50, 6, '三个模态的序列长度也不同：文本 128，图像 197',
@@ -162,12 +171,12 @@ def act2(ax, t):
     """② 一个 token 分成四个视角 —— 柱体裂开成四条并行轨道。"""
     p = seg(t, 0.0, 0.05)
     ax.text(50, 60, '② 一个 token 分成四个视角', color=ICE, fontsize=14,
-            weight='bold', alpha=p, ha='center', va='center')
+            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(ICE))
 
     # ---- token 柱 ----
     a1 = seg(t, 0.06, 0.20)
     if a1 > 0.01:
-        ax.add_patch(Rectangle((7, 30), 4.5, 20 * a1, color=FG, alpha=0.35))
+        ST.rbox(ax, (7, 30), 4.5, 20 * a1, fc=FG, ec=FG, lw=1.6, alpha=0.35, fill_alpha=0.45, z=2)
         ax.text(9.2, 27.5, 'token', color=FG, fontsize=9.5, ha='center', alpha=a1)
 
     # ---- 裂开：四条轨道从一点分出并伸长 ----
@@ -182,8 +191,7 @@ def act2(ax, t):
         # 轨道完全展开后连接线淡出，否则四根斜线交叉显乱
         conn = a2 * 0.75 * (1 - seg(t, 0.42, 0.53))
         ax.plot([11.5, x_now], [40, y_now], color=SLOT_COL[i], lw=1.2, alpha=conn)
-        ax.add_patch(Rectangle((16, y_now - 2.2), max(x_now - 16, 0.01), 4.4,
-                               color=SLOT_COL[i], alpha=a2 * 0.75))
+        ST.rbox(ax, (16, y_now - 2.2), max(x_now - 16, 0.01), 4.4, fc=SLOT_COL[i], ec=SLOT_COL[i], lw=1.6, alpha=a2 * 0.75, fill_alpha=0.45, z=2)
         ax.text(18, y_now + 5.2, f'{sl}  子空间（256 维）', color=SLOT_COL[i],
                 fontsize=9.5, va='center', alpha=a2)
 
@@ -207,7 +215,7 @@ def act2(ax, t):
                 color=DIM, fontsize=9.5, ha='center', alpha=a4, va='center')
     a5 = seg(t, 0.80, 0.92)
     ax.text(50, 9.5, '空间 = Σ_s S_s  =  4 × 256  =  1024 维',
-            color=GREEN, fontsize=13, ha='center', alpha=a5, va='center', weight='bold')
+            color=GREEN, fontsize=13, ha='center', alpha=a5, va='center', weight='bold', path_effects=ST.text_glow(GREEN))
     ax.text(50, 4.5, 'token 数不变 —— 合并发生在模型轴，不在 token 轴',
             color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.86, 0.97), va='center')
 
@@ -221,7 +229,7 @@ def act3(ax, t):
     """
     p = seg(t, 0.0, 0.05)
     ax.text(50, 60, '③ 两两之间，本来就能对齐', color=GREEN, fontsize=14,
-            weight='bold', alpha=p, ha='center', va='center')
+            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(GREEN))
     ax.text(50, 55.5, 'Q 槽', color=DIM, fontsize=9.5, ha='center',
             alpha=seg(t, 0.04, 0.10), va='center')
 
@@ -239,7 +247,7 @@ def act3(ax, t):
         # 端点圆
         if a > 0.01:
             for (xx, yy, mm) in ((x1, y1, m1), (x2, y2, m2)):
-                ax.add_patch(Circle((xx, yy), 2.0, color=MOD_COL[mm], alpha=a * 0.85))
+                ST.glow_dot(ax, (xx, yy), 2.0, MOD_COL[mm], alpha=a * 0.85)
                 ax.text(xx, yy - 4.2, mm, color=MOD_COL[mm], fontsize=8.5,
                         ha='center', va='center', alpha=a)
         # 桥生长
@@ -247,9 +255,9 @@ def act3(ax, t):
             g = seg(a, 0.15, 1.0)
             xm = x1 + (x2 - x1) * g
             ax.plot([x1, xm], [y1, y1], color=GREEN, lw=2.6, alpha=0.95)
-            ax.add_patch(Circle((xm, y1), 0.75, color=GREEN, alpha=a))
+            ST.glow_dot(ax, (xm, y1), 0.75, GREEN, alpha=a)
             ax.text((x1 + x2) / 2, y1 + 3.0, f'{tgt[key] * g:.4f}', color=GREEN,
-                    fontsize=11.5, ha='center', alpha=a, weight='bold')
+                    fontsize=11.5, ha='center', alpha=a, weight='bold', path_effects=ST.text_glow(GREEN))
 
     # ---- 全部接通 ----
     a4 = seg(t, 0.52, 0.66)
@@ -275,7 +283,7 @@ def act4(ax, t):
     """
     p = seg(t, 0.0, 0.05)
     ax.text(50, 59, '④ 三个一起，垮了', color=RED, fontsize=14,
-            weight='bold', alpha=p, ha='center', va='center')
+            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(RED))
 
     X0, X1 = 10.0, 88.0          # 流的起点 / 终点
     LX, LW = 46.0, 7.0           # 透镜
@@ -290,7 +298,7 @@ def act4(ax, t):
     # 阶段 A 的箭头与标签随流推进淡出（否则与流里的模态名重复）
     fade_a = 1.0 - seg(t, 0.20, 0.40)
     if a1 > 0.01 and fade_a > 0.01:
-        ax.add_patch(Rectangle((LX, 26), LW, 26, color=FG, alpha=a1 * 0.16))
+        ST.rbox(ax, (LX, 26), LW, 26, fc=FG, ec=FG, lw=1.6, alpha=a1 * 0.16, fill_alpha=0.45, z=2)
         ax.text(LX + LW / 2, 53.5, '单一变换', color=FG, fontsize=10.5,
                 ha='center', alpha=a1)
         for i, m in enumerate(MODELS):
@@ -305,9 +313,8 @@ def act4(ax, t):
     a2 = seg(t, 0.18, 0.58)
     if a2 > 0.01:
         front = seg(a2 * 1.12, 0.0, 1.0)      # 流前端的整体位置 0→1
-        ax.add_patch(Rectangle((LX, 26), LW, 26, color=FG, alpha=a2 * 0.14))
-        ax.add_patch(Rectangle((LX, 26), LW, 26, fill=False, edgecolor=FG,
-                               lw=1.0, alpha=a2 * 0.32))
+        ST.rbox(ax, (LX, 26), LW, 26, fc=FG, ec=FG, lw=1.6, alpha=a2 * 0.14, fill_alpha=0.45, z=2)
+        ST.rbox(ax, (LX, 26), LW, 26, fc=FG, ec=FG, lw=1.0, alpha=a2 * 0.32, fill_alpha=0.45, z=2, fill=False)
         ax.text(LX + LW / 2, 53.5, '单一变换', color=FG, fontsize=10.5,
                 ha='center', alpha=a2)
 
@@ -322,8 +329,7 @@ def act4(ax, t):
                 x = X0 + (X1 - X0) * pos
                 over = max(0.0, min(1.0, (pos - P_LENS) / max(1e-6, 1 - P_LENS)))
                 y = y0 + dirn * SHEAR * (over ** 0.8)
-                ax.add_patch(Rectangle((x, y), 3.2, 4.4, color=MOD_COL[m],
-                                       alpha=0.62))
+                ST.rbox(ax, (x, y), 3.2, 4.4, fc=MOD_COL[m], ec=MOD_COL[m], lw=0.8, r=0.12, alpha=0.88, fill_alpha=0.95, z=2)
                 # 正在被撕的地方画一道红痕
                 if 0.03 < over < 0.90 and dirn != 0:
                     ax.plot([x, x], [y0, y], color=RED, lw=1.2,
@@ -341,10 +347,10 @@ def act4(ax, t):
     if a3 > 0.01:
         ax.text(20, 17.0, '两两', color=DIM, fontsize=10, ha='right', alpha=a3, va='center')
         ax.text(22, 17.0, '0.9893', color=GREEN, fontsize=13, ha='left', alpha=a3,
-                va='center', weight='bold')
+                va='center', weight='bold', path_effects=ST.text_glow(GREEN))
         ax.text(20, 7.0, '三模型', color=DIM, fontsize=10, ha='right', alpha=a3, va='center')
         ax.text(38, 7.0, '0.6767', color=RED, fontsize=13, ha='left', alpha=a3,
-                va='center', weight='bold')
+                va='center', weight='bold', path_effects=ST.text_glow(RED))
         ax.annotate('', xy=(36, 7.0), xytext=(36, 17.0),
                     arrowprops=dict(arrowstyle='->', color=RED, lw=1.4, alpha=a3))
 
@@ -357,10 +363,8 @@ def act4(ax, t):
             dirn = i - 1
             if m == 'Qwen':
                 # 淡出
-                ax.add_patch(Rectangle((X0, 41.8), 26, 4.4, color=BG, alpha=a4 * 0.94))
-                ax.add_patch(Rectangle((X0, 41.8), 26, 4.4, fill=False,
-                                       edgecolor=MOD_COL['Qwen'], lw=0.8,
-                                       alpha=a4 * 0.35, linestyle='--'))
+                ST.rbox(ax, (X0, 41.8), 26, 4.4, fc=BG, ec=BG, lw=1.6, alpha=a4 * 0.94, fill_alpha=0.45, z=2)
+                ST.rbox(ax, (X0, 41.8), 26, 4.4, fc=FG, ec=MOD_COL['Qwen'], lw=0.8, alpha=a4 * 0.35, fill_alpha=0.45, z=2, fill=False)
                 ax.text(X0 + 13, 44.0, 'Qwen 退出', color=DIM, fontsize=9.5,
                         ha='center', va='center', alpha=a4)
                 continue
@@ -370,12 +374,11 @@ def act4(ax, t):
                 x = X0 + (X1 - X0) * pos
                 over = max(0.0, min(1.0, (pos - P_LENS) / max(1e-6, 1 - P_LENS)))
                 y = y0 + dirn * SHEAR * (over ** 0.8) * (1 - refocus)
-                ax.add_patch(Rectangle((x, y), 3.2, 4.4, color=MOD_COL[m],
-                                       alpha=0.62))
+                ST.rbox(ax, (x, y), 3.2, 4.4, fc=MOD_COL[m], ec=MOD_COL[m], lw=0.8, r=0.12, alpha=0.88, fill_alpha=0.95, z=2)
         ax.text(20, 12.0, '去掉 Qwen 后', color=DIM, fontsize=10, ha='right',
                 alpha=a4, va='center')
         ax.text(22, 12.0, '0.9879', color=GREEN, fontsize=13, ha='left',
-                alpha=a4, va='center', weight='bold')
+                alpha=a4, va='center', weight='bold', path_effects=ST.text_glow(GREEN))
 
     a5 = seg(t, 0.88, 0.96)
     ax.text(50, 4, '不是 Qwen 的 GQA 结构有问题 —— 是一个变换要同时满足三对约束',
@@ -393,7 +396,7 @@ def act5(ax, t):
     """
     p = seg(t, 0.0, 0.05)
     ax.text(50, 59, '⑤ 环路一闭合，三个就回来了', color=VIOLET, fontsize=14,
-            weight='bold', alpha=p, ha='center', va='center')
+            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(VIOLET))
 
     tri = [(30, 44), (18, 26), (42, 26)]     # Qwen, BERT, ViT
     labels = ['Qwen', 'BERT', 'ViT']
@@ -404,7 +407,7 @@ def act5(ax, t):
     a1 = seg(t, 0.06, 0.20)
     if a1 > 0.01:
         for (x, y), lb, c in zip(tri, labels, cols):
-            ax.add_patch(Circle((x, y), 3.4, color=c, alpha=a1 * 0.85))
+            ST.glow_dot(ax, (x, y), 3.4, c, alpha=a1 * 0.85)
             ax.text(x, y, lb, color='#0a0c10', fontsize=8.5, ha='center',
                     va='center', alpha=a1, weight='bold')
 
@@ -428,10 +431,8 @@ def act5(ax, t):
         # 两个结果标记放在 ViT 节点**右侧**，垂直错开（避开节点本身）
         m1 = (vx + 8.0, vy - gap * 0.5)
         m2 = (vx + 8.0, vy + gap * 0.5)
-        ax.add_patch(Rectangle((m1[0] - 1.1, m1[1] - 1.1), 2.2, 2.2,
-                               color=ICE, alpha=a2 * 0.9))
-        ax.add_patch(Rectangle((m2[0] - 1.1, m2[1] - 1.1), 2.2, 2.2,
-                               color=GOLD, alpha=a2 * 0.9))
+        ST.rbox(ax, (m1[0] - 1.1, m1[1] - 1.1), 2.2, 2.2, fc=ICE, ec=ICE, lw=1.6, alpha=a2 * 0.9, fill_alpha=0.45, z=2)
+        ST.rbox(ax, (m2[0] - 1.1, m2[1] - 1.1), 2.2, 2.2, fc=GOLD, ec=GOLD, lw=1.6, alpha=a2 * 0.9, fill_alpha=0.45, z=2)
         # 从 ViT 节点连到各自的标记
         ax.plot([vx, m1[0]], [vy, m1[1]], color=ICE, lw=1.2, alpha=a2 * 0.8)
         ax.plot([vx, m2[0]], [vy, m2[1]], color=GOLD, lw=1.2, alpha=a2 * 0.8)
@@ -462,14 +463,13 @@ def act5(ax, t):
         for i, (ia, ib) in enumerate(edges):
             (x1, y1), (x2, y2) = tri[ia], tri[ib]
             ax.plot([x1, x2], [y1, y2], color=VIOLET,
-                    lw=2.0 + 1.6 * tighten, alpha=0.95)
+                lw=2.0 + 1.6 * tighten, alpha=0.95,
+                path_effects=ST.line_glow(VIOLET, lw=5, alpha=0.4))
         if a2 > 0.01:
             m1 = (vx + 8.0, vy - gap * 0.5)
             m2 = (vx + 8.0, vy + gap * 0.5)
-            ax.add_patch(Rectangle((m1[0] - 1.1, m1[1] - 1.1), 2.2, 2.2,
-                                   color=ICE, alpha=0.9))
-            ax.add_patch(Rectangle((m2[0] - 1.1, m2[1] - 1.1), 2.2, 2.2,
-                                   color=GOLD, alpha=0.9))
+            ST.rbox(ax, (m1[0] - 1.1, m1[1] - 1.1), 2.2, 2.2, fc=ICE, ec=ICE, lw=1.6, alpha=0.9, fill_alpha=0.45, z=2)
+            ST.rbox(ax, (m2[0] - 1.1, m2[1] - 1.1), 2.2, 2.2, fc=GOLD, ec=GOLD, lw=1.6, alpha=0.9, fill_alpha=0.45, z=2)
             ax.plot([vx, m1[0]], [vy, m1[1]], color=ICE, lw=1.2, alpha=0.85)
             ax.plot([vx, m2[0]], [vy, m2[1]], color=GOLD, lw=1.2, alpha=0.85)
             if tighten > 0.75:
@@ -484,7 +484,7 @@ def act5(ax, t):
         ax.annotate('', xy=(44, 8), xytext=(34, 8),
                     arrowprops=dict(arrowstyle='->', color=GREEN, lw=1.8, alpha=a5))
         ax.text(50, 8, '0.9925', color=GREEN, fontsize=15, ha='center',
-                alpha=a5, va='center', weight='bold')
+                alpha=a5, va='center', weight='bold', path_effects=ST.text_glow(GREEN))
         ax.text(72, 8, '三模型', color=DIM, fontsize=10, ha='center', alpha=a5, va='center')
     ax.text(50, 13.5, f'一致性损失 {CON["loss_before"]:.6f} → {CON["loss_after"]:.6f}',
             color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.88, 0.97), va='center')
@@ -495,7 +495,7 @@ def act8(ax, t):
     """⑧ 收尾 —— 逐行淡入，最后一句从中心展开。"""
     p = seg(t, 0.0, 0.05)
     ax.text(50, 56, 'v62 · 维度投影空间', color=GREEN, fontsize=16,
-            weight='bold', alpha=p, ha='center', va='center')
+            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(GREEN))
 
     rows = [
         ('两两对齐',   '0.9879 – 0.9898', GREEN),
@@ -512,7 +512,7 @@ def act8(ax, t):
         slide = (1 - a) * 8
         ax.text(28 - slide, y, k, color=DIM, fontsize=11, ha='right', alpha=a, va='center')
         ax.text(32 - slide, y, v, color=c, fontsize=13, ha='left', alpha=a,
-                va='center', weight='bold')
+                va='center', weight='bold', path_effects=ST.text_glow(c))
 
     a5 = seg(t, 0.56, 0.68)
     ax.text(50, 15, '645,190,802 参数  ·  held-out 0.9101  ·  三个真实骨干',

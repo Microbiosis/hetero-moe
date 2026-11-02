@@ -14,7 +14,9 @@ DATA = str(_HERE / 'data')
 FRAMES = str(_HERE / 'frames')
 import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
-from matplotlib.patches import Rectangle, FancyArrowPatch, Circle
+from matplotlib.patches import Rectangle
+import style as ST
+from matplotlib.patches import Circle, FancyArrowPatch
 
 for f in ['/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
           '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf']:
@@ -31,8 +33,8 @@ _E = R['report']['expert']['ent']
 BAL = min(_L) / (max(_L) + 1e-9)
 
 BG='#0a0c10'; FG='#e8eaed'; DIM='#5b6572'
-SLOT_COL = ['#F0873B', '#64E3F6', '#35D0BA', '#b085f5']   # Q K V O
-EXP_COL  = ['#F0873B', '#64E3F6', '#35D0BA', '#b085f5']
+SLOT_COL = list(ST.SLOT_GRAD)   # Q K V O
+EXP_COL  = list(ST.EXP_GRAD)
 SLOT_NAMES = ['Q', 'K', 'V', 'O']
 
 W, H = 100, 62
@@ -59,7 +61,7 @@ SUBS = {
 def draw_subs(ax, which, alpha):
     if alpha <= 0.01: return
     zh, en = SUBS[which][0]
-    ax.add_patch(Rectangle((0, 0), W, 7.0, color='#000000', alpha=0.55 * alpha))
+    ST.rbox(ax, (0, 0), W, 7.0, fc='#000000', ec='#000000', lw=1.6, alpha=0.55 * alpha, fill_alpha=0.45, z=2)
     ax.text(50, 4.6, zh, color=FG, fontsize=13.5, ha='center', va='center', alpha=alpha)
     ax.text(50, 1.8, en, color=DIM, fontsize=9, ha='center', va='center', alpha=alpha * 0.9)
 
@@ -69,9 +71,18 @@ def frame(fi, total, fn, out, which=None):
     ax = fig.add_axes([0, 0, 1, 1]); ax.set_facecolor(BG)
     ax.set_xlim(0, W); ax.set_ylim(0, H); ax.axis('off')
     t = fi / max(total - 1, 1)
+    # 背景：中心微亮的柔和暗场
+    grad = np.linspace(0, 1, 256).reshape(-1, 1)
+    ax.imshow(grad, extent=[0, W, 0, H], aspect='auto', zorder=-10,
+              cmap=matplotlib.colors.LinearSegmentedColormap.from_list(
+                  'bg', [ST.BG_DEEP, ST.BG, ST.BG_DEEP]),
+              interpolation='bilinear')
     fn(ax, t)
     if which:
         draw_subs(ax, which, seg(t, 0.0, 0.06))
+        ST.watermark(ax, 'v62 · 维度投影空间')
+    # 镜头极缓慢推近
+    ST.camera(ax, zoom=1.0 + 0.022 * t)
     fig.savefig(f'{out}/f{fi:05d}.png', facecolor=BG, dpi=100)
     plt.close(fig)
 
@@ -94,8 +105,7 @@ def act6(ax, t):
                 fontsize=10, alpha=a1, va='center', ha='center')
         base, bh, bw = 33.0, 13.0, 8.0
         for i, v in enumerate([0.9995, 0.0002, 0.0001, 0.0002]):
-            ax.add_patch(Rectangle((14 + i * 18, base), bw, max(bh * v, 0.15),
-                                   color=SLOT_COL[i], alpha=a1 * 0.9))
+            ST.rbox(ax, (14 + i * 18, base), bw, max(bh * v, 0.15), fc=SLOT_COL[i], ec=SLOT_COL[i], lw=1.6, alpha=a1 * 0.9, fill_alpha=0.45, z=2)
             ax.text(14 + i * 18 + bw / 2, base - 2.4, SLOT_NAMES[i],
                     color=DIM, fontsize=11, ha='center', alpha=a1)
         ax.text(50, 22.0, '一个槽吃掉几乎全部权重', color='#CF3655',
@@ -122,9 +132,9 @@ def act6(ax, t):
             grow = a2 * seg(t, 0.30 + i * 0.02, 0.40 + i * 0.02)
             hgt = max(maxh * v * grow, 0.35)
             x = 8 + i * 22
-            ax.add_patch(Rectangle((x, base), bw, hgt, color=SLOT_COL[i], alpha=0.92))
+            ST.rbox(ax, (x, base), bw, hgt, fc=SLOT_COL[i], ec=SLOT_COL[i], lw=1.6, alpha=0.92, fill_alpha=0.45, z=2)
             ax.text(x + bw / 2, base - 2.6, SLOT_NAMES[i], color=SLOT_COL[i],
-                    fontsize=12, ha='center', alpha=a2, weight='bold')
+                    fontsize=12, ha='center', alpha=a2, weight='bold', path_effects=ST.text_glow(SLOT_COL[i]))
             ax.text(x + bw / 2, base + hgt + 2.2, f'{v:.3f}', color=FG,
                     fontsize=12, ha='center', alpha=a2 * grow)
         # token 序号
@@ -143,18 +153,17 @@ def act6(ax, t):
         fly = seg(t, 0.80, 0.92)
         # 左块：token 5 的 K 槽
         lx = 8 + (34 - 8) * fly
-        ax.add_patch(Rectangle((lx, 7), 11, 6, color='#64E3F6', alpha=a4 * 0.32))
+        ST.rbox(ax, (lx, 7), 11, 6, fc='#64E3F6', ec='#64E3F6', lw=1.6, alpha=a4 * 0.32, fill_alpha=0.45, z=2)
         ax.text(lx + 5.5, 10, 'token5 的 K', color='#64E3F6', fontsize=9,
                 ha='center', va='center', alpha=a4)
         # 右块：token 0 的 O 槽
         rx = 66 - (66 - 60) * fly
-        ax.add_patch(Rectangle((rx, 7), 11, 6, color='#b085f5', alpha=a4 * 0.32))
+        ST.rbox(ax, (rx, 7), 11, 6, fc='#b085f5', ec='#b085f5', lw=1.6, alpha=a4 * 0.32, fill_alpha=0.45, z=2)
         ax.text(rx + 5.5, 10, 'token0 的 O', color='#b085f5', fontsize=9,
                 ha='center', va='center', alpha=a4)
         # 中间合成
         if fly > 0.85:
-            ax.add_patch(Rectangle((46, 6), 8, 8, color=FG,
-                                   alpha=seg(fly, 0.85, 1.0) * 0.16))
+            ST.rbox(ax, (46, 6), 8, 8, fc=FG, ec=FG, lw=1.6, alpha=seg(fly, 0.85, 1.0) * 0.16, fill_alpha=0.45, z=2)
             ax.text(50, 10, '新 token', color=FG, fontsize=9.5, ha='center',
                     va='center', alpha=seg(fly, 0.85, 1.0))
             ax.annotate('', xy=(45.5, 10), xytext=(38, 10),
@@ -183,7 +192,7 @@ def act7(ax, t):
     # ---------- canonical 带 ----------
     a1 = seg(t, 0.04, 0.14)
     if a1 > 0.01:
-        ax.add_patch(Rectangle((4, 48), 22, 5, color='#64E3F6', alpha=a1 * 0.22))
+        ST.rbox(ax, (4, 48), 22, 5, fc='#64E3F6', ec='#64E3F6', lw=1.6, alpha=a1 * 0.22, fill_alpha=0.45, z=2)
         ax.text(15, 50.5, 'canonical 1024', color='#64E3F6', fontsize=9,
                 ha='center', va='center', alpha=a1)
 
@@ -191,8 +200,7 @@ def act7(ax, t):
     a2 = seg(t, 0.08, 0.18)
     if a2 > 0.01:
         for e in range(4):
-            ax.add_patch(Rectangle((EXP[e], 44), 10, 11, fill=False,
-                                   edgecolor=EXP_COL[e], lw=1.3, alpha=a2))
+            ST.rbox(ax, (EXP[e], 44), 10, 11, fc=FG, ec=EXP_COL[e], lw=1.3, alpha=a2, fill_alpha=0.45, z=2, fill=False)
             ax.text(EXP[e] + 5, 49.5, f'专家{e}', color=EXP_COL[e], fontsize=9,
                     ha='center', va='center', alpha=a2)
 
@@ -214,7 +222,7 @@ def act7(ax, t):
                 my = y0 - 4.0
                 x = (1 - tk) ** 2 * 26 + 2 * (1 - tk) * tk * mx + tk ** 2 * xe
                 y = (1 - tk) ** 2 * y0 + 2 * (1 - tk) * tk * my + tk ** 2 * ye
-                ax.add_patch(Circle((x, y), 0.9, color=EXP_COL[e], alpha=0.95))
+                ST.glow_dot(ax, (x, y), 0.9, EXP_COL[e], alpha=0.95)
 
     # ---------- 真实负载柱 ----------
     a4 = seg(t, 0.52, 0.66)
@@ -223,11 +231,10 @@ def act7(ax, t):
         for e in range(4):
             x = 12 + e * 21
             hgt = maxh * load[e] * a4
-            ax.add_patch(Rectangle((x, base), bw, maxh, fill=False,
-                                   edgecolor=EXP_COL[e], lw=0.8, alpha=a4 * 0.35))
-            ax.add_patch(Rectangle((x, base), bw, hgt, color=EXP_COL[e], alpha=0.9))
+            ST.rbox(ax, (x, base), bw, maxh, fc=FG, ec=EXP_COL[e], lw=0.8, alpha=a4 * 0.35, fill_alpha=0.45, z=2, fill=False)
+            ST.rbox(ax, (x, base), bw, hgt, fc=EXP_COL[e], ec=EXP_COL[e], lw=1.6, alpha=0.9, fill_alpha=0.45, z=2)
             ax.text(x + bw / 2, base - 2.6, f'专家{e}', color=EXP_COL[e],
-                    fontsize=10.5, ha='center', alpha=a4, weight='bold')
+                    fontsize=10.5, ha='center', alpha=a4, weight='bold', path_effects=ST.text_glow(EXP_COL[e]))
             ax.text(x + bw / 2, base + hgt + 2.0, f'{load[e]:.3f}', color=FG,
                     fontsize=11, ha='center', alpha=a4)
 
@@ -237,7 +244,7 @@ def act7(ax, t):
         ax.text(12 + bw / 2, base + maxh * load[0] + 6.5,
                 '36%', color=DIM, fontsize=10, ha='center', alpha=a5)
 
-        ax.text(50, 6.2,
+        ax.text(50, 9.5,
                 f'均衡 {BAL:.3f}  ·  熵 {_E:.3f}  ·  top-k={R["top_k"]}（每 token 只跑 2 个专家）',
                 color=DIM, fontsize=9.5, ha='center', alpha=a4, va='center')
 
@@ -251,8 +258,8 @@ def act7(ax, t):
 
     # ---------- 底部对照条 ----------
     a8 = seg(t, 0.88, 0.97)
-    ax.add_patch(Rectangle((6, 1.5), 88, 3.0, color='#64E3F6', alpha=a8 * 0.09))
-    ax.text(50, 3.0,
+    ST.rbox(ax, (6, 17.5), 88, 3.0, fc='#64E3F6', ec='#64E3F6', lw=1.6, alpha=a8 * 0.09, fill_alpha=0.45, z=2)
+    ax.text(50, 19.1,
             '槽门控：全槽软分布（四个都参与）    |    专家选择：top-k=2（真的省算力）',
             color='#64E3F6', fontsize=9.5, ha='center', alpha=a8, va='center')
 
