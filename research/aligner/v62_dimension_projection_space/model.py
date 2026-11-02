@@ -106,6 +106,7 @@ class HeteroMoEProjSpaceConfig(PretrainedConfig):
 class ProjSpaceOutput(ModelOutput):
     y: torch.FloatTensor = None
     alpha: torch.FloatTensor = None
+    slot_alpha: torch.FloatTensor = None
 
 
 class HeteroMoEProjSpaceModel(PreTrainedModel):
@@ -185,7 +186,10 @@ class HeteroMoEProjSpaceModel(PreTrainedModel):
                  for m in projs}
         _struct, canonical, _aux = self.proj_space(feats, return_aux=True)
         y, alpha = self.fusion.forward_with_routing(canonical)
-        return ProjSpaceOutput(y=y, alpha=alpha)
+        # alpha      : 专家选择 [B,S,n_experts]，top-k 稀疏（真的省算力）
+        # slot_alpha : 槽门控   [B,S,n_slots]  ，全槽软分布（四个槽各贡献多少）
+        # 两者都是 4 维，但语义完全不同，必须分开给出，否则会被误读。
+        return ProjSpaceOutput(y=y, alpha=alpha, slot_alpha=_aux['alpha'])
 
     def describe(self) -> str:
         n = lambda mod: sum(p.numel() for p in mod.parameters())
