@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
 from matplotlib.patches import Rectangle
 import style as ST
+import motion as MO
 from matplotlib.patches import Circle, FancyArrowPatch
 
 for f in ['/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
@@ -78,10 +79,20 @@ def frame(fi, total, fn, out, which=None):
               cmap=matplotlib.colors.LinearSegmentedColormap.from_list(
                   'bg', [ST.BG_DEEP, ST.BG, ST.BG_DEEP]),
               interpolation='bilinear')
+    # 环境层：缓慢飘动的微粒 —— 整片一直有低频运动，画面不死
+    MO.dust(ax, t, n=90, seed=7 + (ord(which) if which else 0) * 13)
     fn(ax, t)
     if which:
-        draw_subs(ax, which, seg(t, 0.0, 0.06))
+        draw_subs(ax, which, seg(t, 0.0, 0.05))
         ST.watermark(ax, 'v62 · 维度投影空间')
+    # 转场：幕首淡入（黑幕压一下），幕尾淡出
+    if which:
+        head = MO.fade(t, 0.0, 0.05)      # 幕首：从黑浮起
+        tail = MO.fade(t, 0.95, 0.05)     # 幕尾：沉入黑
+        ov = max(1.0 - head, tail) * 0.85
+        if ov > 0.01:
+            ax.add_patch(Rectangle((0, 0), W, H, fc=BG, ec='none',
+                                   alpha=ov, zorder=50))
     # 镜头极缓慢推近
     ST.camera(ax, zoom=1.0 + 0.022 * t)
     fig.savefig(f'{out}/f{fi:05d}.png', facecolor=BG, dpi=100)
@@ -91,10 +102,10 @@ def frame(fi, total, fn, out, which=None):
 # ============================================================ 幕 ⑥
 def act6(ax, t):
     """⑥ 一个 token 的结构：四个槽各贡献多少（紧凑时间线）。"""
-    p = seg(t, 0.0, 0.03)
-    ax.text(50, 58, '⑥ 一个 token 的结构：四个槽各贡献多少', color='#35D0BA',
-            fontsize=14, weight='bold', alpha=p, va='center', ha='center',
-            path_effects=ST.text_glow('#35D0BA'))
+    p = MO.pop(t, 0.0, 0.10, 'out_back')
+    MO.pop_text(ax, 50, 58, '⑥ 一个 token 的结构：四个槽各贡献多少',
+                   t, 0.0, 0.10, color='#35D0BA', fontsize=14,
+                   path_effects=ST.text_glow('#35D0BA'))
 
     sa = D['slot_alpha']
     ent = -np.sum(sa * np.log(sa + 1e-12), -1) / np.log(4)
@@ -180,10 +191,10 @@ def act6(ax, t):
 # ============================================================ 幕 ⑦
 def act7(ax, t):
     """⑦ 1024 维 → 4 个专家：谁在干活（紧凑时间线）。"""
-    p = seg(t, 0.0, 0.03)
-    ax.text(50, 60, '⑦ 1024 维 → 4 个专家：谁在干活', color='#35D0BA',
-            fontsize=14, weight='bold', alpha=p, va='center', ha='center',
-            path_effects=ST.text_glow('#35D0BA'))
+    p = MO.pop(t, 0.0, 0.10, 'out_back')
+    MO.pop_text(ax, 50, 60, '⑦ 1024 维 → 4 个专家：谁在干活',
+                   t, 0.0, 0.10, color='#35D0BA', fontsize=14,
+                   path_effects=ST.text_glow('#35D0BA'))
 
     load = R['report']['expert']['load']
     EA = D['expert_alpha']
@@ -229,8 +240,9 @@ def act7(ax, t):
                     alpha=0.9, fill_alpha=0.45, z=2)
             ax.text(x + bw / 2, base - 2.6, f'专家{e}', color=EXP_COL[e],
                     fontsize=10.5, ha='center', alpha=a4, weight='bold')
-            ax.text(x + bw / 2, base + hgt + 2.0, f'{load[e]:.3f}', color=FG,
-                    fontsize=11, ha='center', alpha=a4)
+            MO.counter(ax, x + bw / 2, base + hgt + 2.0, load[e], t,
+                       0.38 + e * 0.015, 0.13, fmt='{:.3f}', color=FG,
+                       fontsize=11, alpha=a4)
 
         a5 = seg(t, 0.50, 0.60)
         ax.text(12 + 21 + bw / 2, base + maxh * load[1] + 6.5, '承担 73%',

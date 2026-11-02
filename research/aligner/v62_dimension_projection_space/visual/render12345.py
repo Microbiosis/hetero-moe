@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
 from matplotlib.patches import Rectangle
 import style as ST
+import motion as MO
 from matplotlib.patches import Circle, FancyArrowPatch
 
 for f in ['/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
@@ -67,10 +68,20 @@ def frame(fi, total, fn, out, which=None):
               cmap=matplotlib.colors.LinearSegmentedColormap.from_list(
                   'bg', [ST.BG_DEEP, ST.BG, ST.BG_DEEP]),
               interpolation='bilinear')
+    # 环境层：缓慢飘动的微粒 —— 整片一直有低频运动，画面不死
+    MO.dust(ax, t, n=90, seed=7 + (ord(which) if which else 0) * 13)
     fn(ax, t)
     if which:
-        draw_subs(ax, which, seg(t, 0.0, 0.06))
+        draw_subs(ax, which, seg(t, 0.0, 0.05))
         ST.watermark(ax, 'v62 · 维度投影空间')
+    # 转场：幕首淡入（黑幕压一下），幕尾淡出
+    if which:
+        head = MO.fade(t, 0.0, 0.05)      # 幕首：从黑浮起
+        tail = MO.fade(t, 0.95, 0.05)     # 幕尾：沉入黑
+        ov = max(1.0 - head, tail) * 0.85
+        if ov > 0.01:
+            ax.add_patch(Rectangle((0, 0), W, H, fc=BG, ec='none',
+                                   alpha=ov, zorder=50))
     # 镜头极缓慢推近
     ST.camera(ax, zoom=1.0 + 0.022 * t)
     fig.savefig(f'{out}/f{fi:05d}.png', facecolor=BG, dpi=100)
@@ -113,9 +124,10 @@ def act1(ax, t):
     右半：点明「256 不是空间」—— 空间 = 四槽张成 = 1024（机制在 ② 幕展开）。
     底  ：能量保留，说明投影是等距的。
     """
-    p = seg(t, 0.0, 0.035)
-    ax.text(50, 60, '① 三个底座宽度差 3.5 倍', color=GOLD, fontsize=14,
-            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(GOLD))
+    p = MO.pop(t, 0.0, 0.10, 'out_back')
+    MO.pop_text(ax, 50, 60, '① 三个底座宽度差 3.5 倍',
+                   t, 0.0, 0.10, color=GOLD, fontsize=14,
+                   path_effects=ST.text_glow(GOLD))
 
     MODELS = ['Qwen', 'BERT', 'ViT']
     MAXD = 896
@@ -127,7 +139,7 @@ def act1(ax, t):
     ag = seg(t, 0.03, 0.09)
     if ag > 0.01:
         ST.rbox(ax, (X_GATE, 28), 4.0, 20, fc=FG, ec=FG, lw=1.6,
-                alpha=ag * 0.16, fill_alpha=0.45, z=2)
+                alpha=ag * 0.10, fill_alpha=0.30, z=2)
         ax.text(X_GATE + 2.0, 50.5, 'P', color=FG, fontsize=12,
                 ha='center', alpha=ag, weight='bold', path_effects=ST.text_glow(FG))
         ax.text(X_GATE + 2.0, 25.5, '正交投影 · 保范数', color=DIM, fontsize=7.5,
@@ -194,9 +206,10 @@ def act1(ax, t):
 # ============================================================ ② 四视角
 def act2(ax, t):
     """② 一个 token 分成四个视角 —— 柱体裂开成四条轨道（紧凑时间线）。"""
-    p = seg(t, 0.0, 0.03)
-    ax.text(50, 58.5, '② 一个 token 分成四个视角', color=ICE, fontsize=14,
-            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(ICE))
+    p = MO.pop(t, 0.0, 0.10, 'out_back')
+    MO.pop_text(ax, 50, 58.5, '② 一个 token 分成四个视角',
+                   t, 0.0, 0.10, color=ICE, fontsize=14,
+                   path_effects=ST.text_glow(ICE))
 
     a1 = seg(t, 0.02, 0.10)
     if a1 > 0.01:
@@ -246,9 +259,10 @@ def act2(ax, t):
 # ============================================================ ③ 两两对齐
 def act3(ax, t):
     """③ 两两之间，本来就能对齐 —— 三座桥依次接通（紧凑时间线）。"""
-    p = seg(t, 0.0, 0.03)
-    ax.text(50, 58.5, '③ 两两之间，本来就能对齐', color=GREEN, fontsize=14,
-            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(GREEN))
+    p = MO.pop(t, 0.0, 0.10, 'out_back')
+    MO.pop_text(ax, 50, 58.5, '③ 两两之间，本来就能对齐',
+                   t, 0.0, 0.10, color=GREEN, fontsize=14,
+                   path_effects=ST.text_glow(GREEN))
     ax.text(50, 54.5, 'Q 槽', color=DIM, fontsize=9, ha='center',
             alpha=seg(t, 0.02, 0.07), va='center')
 
@@ -276,13 +290,14 @@ def act3(ax, t):
             ax.add_patch(Circle((xx, yy), 2.0, color=MOD_COL[mm], alpha=a * 0.85))
             ax.text(xx, yy - 3.6, mm, color=MOD_COL[mm], fontsize=8.5,
                     ha='center', va='center', alpha=a)
-        g = seg(a, 0.10, 1.0)
+        # out_back：桥到位时轻微过冲 —— follow-through
+        g = MO.ease((t - t0) / 0.13, 'out_back') if t >= t0 else 0.0
         x_end = x1 + (x2 - x1) * g
         ax.plot([x1, x_end], [y1, y1], color=GREEN, lw=2.4, alpha=0.95)
         ax.add_patch(Circle((x_end, y1), 0.75, color=GREEN, alpha=a))
-        ax.text((x1 + x2) / 2, y1 + 3.4, f'{tgt[key] * g:.4f}', color=GREEN,
-                fontsize=11.5, ha='center', alpha=a, weight='bold',
-                path_effects=ST.text_glow(GREEN))
+        MO.counter(ax, (x1 + x2) / 2, y1 + 3.4, tgt[key], t, t0 + 0.05, 0.16,
+                   fmt='{:.4f}', color=GREEN, fontsize=11.5, alpha=a,
+                   path_effects=ST.text_glow(GREEN))
 
     a4 = seg(t, 0.25, 0.38)
     if a4 > 0.01:
@@ -299,9 +314,10 @@ def act3(ax, t):
 # ============================================================ ④ 三模型崩
 def act4(ax, t):
     """④ 三个一起，垮了 —— 流穿越透镜时逐块被剪开（紧凑时间线）。"""
-    p = seg(t, 0.0, 0.03)
-    ax.text(50, 58.5, '④ 三个一起，垮了', color=RED, fontsize=14,
-            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(RED))
+    p = MO.pop(t, 0.0, 0.10, 'out_back')
+    MO.pop_text(ax, 50, 58.5, '④ 三个一起，垮了',
+                   t, 0.0, 0.10, color=RED, fontsize=14,
+                   path_effects=ST.text_glow(RED))
 
     X0, X1_ = 10.0, 88.0
     LX, LW = 46.0, 7.0
@@ -311,15 +327,21 @@ def act4(ax, t):
     a1 = seg(t, 0.02, 0.10)
     if a1 > 0.01:
         ST.rbox(ax, (LX, 26), LW, 24, fc=FG, ec=FG, lw=1.5,
-                alpha=a1 * 0.16, fill_alpha=0.45, z=2)
+                alpha=a1 * 0.10, fill_alpha=0.30, z=2)
         ax.text(LX + LW / 2, 51.5, '单一变换', color=FG, fontsize=10,
                 ha='center', alpha=a1)
 
     a2 = seg(t, 0.08, 0.44)
     if a2 > 0.01:
         ST.rbox(ax, (LX, 26), LW, 24, fc=FG, ec=FG, lw=1.5,
-                alpha=a2 * 0.16, fill_alpha=0.45, z=2)
-        front = seg(a2 * 1.18, 0.0, 1.0)
+                alpha=a2 * 0.10, fill_alpha=0.30, z=2)
+        # 三拍速度：快 → 慢 → 快（张弛对比，而不是匀速推到底）
+        _u = a2 * 1.18
+        if _u < 0.45:
+            _f = MO.ease(_u / 0.45, 'out_quad') * 0.52
+        else:
+            _f = 0.52 + MO.ease((_u - 0.45) / 0.55, 'in_out_cubic') * 0.48
+        front = _f
         for i, m in enumerate(MODELS):
             y0 = 44 - i * 7
             dirn = i - 1
@@ -347,11 +369,13 @@ def act4(ax, t):
     a3 = seg(t, 0.40, 0.52)
     if a3 > 0.01:
         ax.text(20, 21.0, '两两', color=DIM, fontsize=10, ha='right', alpha=a3, va='center')
-        ax.text(22, 21.0, '0.9893', color=GREEN, fontsize=13, ha='left', alpha=a3,
-                va='center', weight='bold', path_effects=ST.text_glow(GREEN))
+        MO.counter(ax, 22, 21.0, 0.9893, t, 0.40, 0.14, fmt='{:.4f}',
+                   color=GREEN, fontsize=13, ha='left', alpha=a3,
+                   path_effects=ST.text_glow(GREEN))
         ax.text(20, 15.5, '三模型', color=DIM, fontsize=10, ha='right', alpha=a3, va='center')
-        ax.text(38, 15.5, '0.6767', color=RED, fontsize=13, ha='left', alpha=a3,
-                va='center', weight='bold', path_effects=ST.text_glow(RED))
+        MO.counter(ax, 38, 15.5, 0.6767, t, 0.42, 0.14, fmt='{:.4f}',
+                   color=RED, fontsize=13, ha='left', alpha=a3,
+                   path_effects=ST.text_glow(RED))
         ax.annotate('', xy=(36, 15.5), xytext=(36, 21.0),
                     arrowprops=dict(arrowstyle='->', color=RED, lw=1.4, alpha=a3))
 
@@ -364,8 +388,9 @@ def act4(ax, t):
                 va='center', alpha=a4 * 0.75)
         ax.text(20, 10.0, '去掉 Qwen 后', color=DIM, fontsize=10, ha='right',
                 alpha=a4, va='center')
-        ax.text(22, 10.0, '0.9879', color=GREEN, fontsize=13, ha='left',
-                alpha=a4, va='center', weight='bold', path_effects=ST.text_glow(GREEN))
+        MO.counter(ax, 22, 10.0, 0.9879, t, 0.52, 0.12, fmt='{:.4f}',
+                   color=GREEN, fontsize=13, ha='left', alpha=a4,
+                   path_effects=ST.text_glow(GREEN))
 
     a5 = seg(t, 0.64, 0.80)
     ax.text(76, 11.0, '不是 Qwen 的 GQA 结构有问题\n而是一个变换要同时满足三对约束',
@@ -375,9 +400,10 @@ def act4(ax, t):
 # ============================================================ ⑤ 环路闭合
 def act5(ax, t):
     """⑤ 环路一闭合，三个就回来了（紧凑时间线）。"""
-    p = seg(t, 0.0, 0.03)
-    ax.text(50, 58.5, '⑤ 环路一闭合，三个就回来了', color=VIOLET, fontsize=14,
-            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(VIOLET))
+    p = MO.pop(t, 0.0, 0.10, 'out_back')
+    MO.pop_text(ax, 50, 58.5, '⑤ 环路一闭合，三个就回来了',
+                   t, 0.0, 0.10, color=VIOLET, fontsize=14,
+                   path_effects=ST.text_glow(VIOLET))
 
     tri = [(30, 44), (18, 26), (42, 26)]
     labels = ['Qwen', 'BERT', 'ViT']
@@ -437,11 +463,13 @@ def act5(ax, t):
 
     a5 = seg(t, 0.62, 0.78)
     if a5 > 0.01:
-        ax.text(26, 10.0, '0.6767', color=RED, fontsize=13, ha='center', alpha=a5, va='center')
+        MO.counter(ax, 26, 10.0, 0.6767, t, 0.62, 0.12, fmt='{:.4f}',
+                   color=RED, fontsize=13, ha='center', alpha=a5)
         ax.annotate('', xy=(44, 10.0), xytext=(34, 10.0),
                     arrowprops=dict(arrowstyle='->', color=GREEN, lw=1.8, alpha=a5))
-        ax.text(50, 10.0, '0.9925', color=GREEN, fontsize=15, ha='center',
-                alpha=a5, va='center', weight='bold', path_effects=ST.text_glow(GREEN))
+        MO.counter(ax, 50, 10.0, 0.9925, t, 0.66, 0.12, fmt='{:.4f}',
+                   color=GREEN, fontsize=15, ha='center', alpha=a5,
+                   path_effects=ST.text_glow(GREEN))
         ax.text(72, 10.0, '三模型', color=DIM, fontsize=10, ha='center', alpha=a5, va='center')
     ax.text(50, 13.5, f'一致性损失 {CON["loss_before"]:.6f} → {CON["loss_after"]:.6f}',
             color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.66, 0.86), va='center')
@@ -450,9 +478,10 @@ def act5(ax, t):
 # ============================================================ ⑧ 收尾
 def act8(ax, t):
     """⑧ 收尾（紧凑时间线）。"""
-    p = seg(t, 0.0, 0.04)
-    ax.text(50, 55, 'v62 · 维度投影空间', color=GREEN, fontsize=16,
-            weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(GREEN))
+    p = MO.pop(t, 0.0, 0.10, 'out_back')
+    MO.pop_text(ax, 50, 55, 'v62 · 维度投影空间',
+                   t, 0.0, 0.10, color=GREEN, fontsize=16,
+                   path_effects=ST.text_glow(GREEN))
 
     rows = [
         ('两两对齐',   '0.9879 – 0.9898', GREEN),

@@ -63,6 +63,13 @@ def glow(lw=8, color=None, alpha=0.55):
             pe.Stroke(linewidth=lw * 0.55, foreground=c, alpha=alpha * 0.8),
             pe.Normal()]
 
+def breathing_glow(color, t, freq=1.6, base=1.8, amp=0.9):
+    """呼吸辉光：强度随时间脉动，让静态元素也有生命。"""
+    import math
+    k = base + amp * (0.5 + 0.5 * math.sin(2 * math.pi * freq * t))
+    return text_glow(color, lw=k, alpha=0.30 + 0.25 * (k - base) / max(amp, 1e-6))
+
+
 def text_glow(color, lw=1.8, alpha=0.45):
     """文字辉光：同色细描边（在字下方），模拟 3B1B 的发光数字。
 
