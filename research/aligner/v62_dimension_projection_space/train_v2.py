@@ -55,17 +55,23 @@ print('\n[2/5] 构建模型 ...', flush=True)
 # 于是训练出的权重加载不上、router 从未被优化。
 # 单一实现，从根上消除这类问题。
 #
-# 云端单文件运行时仓库不存在，这里先 clone。
+# 取文件的方式：优先 git clone 整个仓库（便于复算），但 **checkout 可能不完整**
+# —— Kaggle 上实测过：clone 成功、git tree 里也有 research/，工作区却缺文件
+# （git status 全是 "deleted:"）。所以再用 raw 下载兜底，只补缺失的算子文件。
 import importlib.util as _ilu
 import subprocess as _sp
 import sys as _sys
+import urllib.request as _ur
 from pathlib import Path as _Path
 
 _URL = 'https://github.com/Microbiosis/hetero-moe.git'
+_RAW = 'https://raw.githubusercontent.com/Microbiosis/hetero-moe/main'
+_REL = 'research/aligner/v62_dimension_projection_space'
+_FILES = {'projspace.py': 'v62_projspace', 'fusion.py': 'v62_fusion'}
 
 
 def _find_repo():
-    """找到仓库根：脚本在 research/<line>/<pkg>/ 下，往上找含 research/ 的目录。
+    """找仓库根：脚本在 research/<line>/<pkg>/ 下，往上找含 research/ 的目录。
 
     notebook（Kaggle）里没有 __file__，所以候选里也要放 cwd 与 /kaggle/working。
     """
@@ -84,11 +90,29 @@ def _find_repo():
     return None
 
 
+def _fetch_ops(repo):
+    """确保 repo 下有两个算子文件；缺的就从 raw 补。"""
+    for fn in _FILES:
+        dst = repo / _REL / fn
+        if dst.exists() and dst.stat().st_size > 1000:
+            continue
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        print('[0/5] 补齐 %s ...' % fn, flush=True)
+        _ur.urlretrieve('%s/%s/%s' % (_RAW, _REL, fn), dst)
+        if dst.stat().st_size < 1000:
+            raise RuntimeError('取不到 %s' % fn)
+
+
 _REPO = _find_repo()
 if _REPO is None:
     _REPO = _Path('/kaggle/working/hetero-moe')
     print('[0/5] clone 仓库 ...', flush=True)
-    _sp.run(['git', 'clone', '--depth', '1', _URL, str(_REPO)], check=True)
+    try:
+        _sp.run(['git', 'clone', '--depth', '1', _URL, str(_REPO)], check=True)
+    except Exception as e:
+        print('    clone 失败（%s），改用 raw 取文件' % e, flush=True)
+        _REPO.mkdir(parents=True, exist_ok=True)
+_fetch_ops(_REPO)
 _sys.path.insert(0, str(_REPO))
 
 
@@ -101,10 +125,8 @@ def _load(name, rel):
     return mod
 
 
-_ps = _load('v62_projspace',
-            'research/aligner/v62_dimension_projection_space/projspace.py')
-_fu = _load('v62_fusion',
-            'research/aligner/v62_dimension_projection_space/fusion.py')
+_ps = _load('v62_projspace', _REL + '/projspace.py')
+_fu = _load('v62_fusion', _REL + '/fusion.py')
 DimProjectionSpace = _ps.DimProjectionSpace
 FusionOverProjSpace = _fu.FusionOverProjSpace
 MEASURED = _ps.MEASURED_SUBSPACES
