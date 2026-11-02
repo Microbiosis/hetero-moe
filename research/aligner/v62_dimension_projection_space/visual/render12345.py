@@ -94,130 +94,175 @@ def draw_subs(ax, which, alpha):
 
 # ============================================================ ① 真实尺度
 def act1(ax, t):
-    p = seg(t, 0.0, 0.06)
-    ax.text(50, 59, '① 三个底座的宽度差 3.5 倍', color=GOLD, fontsize=14,
+    """① 三个底座的宽度差 3.5 倍 —— 三条带子依次流过 P 闸门。"""
+    p = seg(t, 0.0, 0.05)
+    ax.text(50, 60, '① 三个底座的宽度差 3.5 倍', color=GOLD, fontsize=14,
             weight='bold', alpha=p, ha='center', va='center')
 
-    # 三条按真实比例的带子
-    a1 = seg(t, 0.06, 0.18)
-    if a1 > 0.01:
-        maxd = 896
-        for i, m in enumerate(['Qwen', 'BERT', 'ViT']):
-            y = 46 - i * 7
-            wlen = 46 * MOD_DIM[m] / maxd
-            ax.add_patch(Rectangle((8, y), wlen * a1, 3.6, color=MOD_COL[m], alpha=0.85))
-            # 标签放在条子上方：放在右端会与固定位置的箭头重叠
-            ax.text(8 + wlen * a1 + 1.5, y + 5.4, f'{m} {MOD_DIM[m]}',
-                    color=MOD_COL[m], fontsize=10.5, va='center', alpha=a1)
+    MODELS = ['Qwen', 'BERT', 'ViT']
+    MAXD = 896
+    SLEN = 46.0                 # 满宽条子的长度
+    X_IN, X_GATE, X_OUT = 8.0, 56.0, 66.0
 
-    # P 闸门
-    a2 = seg(t, 0.28, 0.38)
-    if a2 > 0.01:
-        ax.add_patch(Rectangle((58, 32), 4, 22, color=FG, alpha=a2 * 0.16))
-        ax.text(60, 55.5, 'P', color=FG, fontsize=14, ha='center', alpha=a2, weight='bold')
-        ax.text(60, 29.5, '正交投影 · 冻结', color=DIM, fontsize=8.5, ha='center', alpha=a2)
-        for i, m in enumerate(['Qwen', 'BERT', 'ViT']):
-            y = 46 - i * 7
-            ax.annotate('', xy=(58, y + 1.8), xytext=(56, y + 1.8),
-                        arrowprops=dict(arrowstyle='->', color=DIM, lw=1, alpha=a2))
+    # ---- 闸门 ----
+    ag = seg(t, 0.05, 0.15)
+    if ag > 0.01:
+        ax.add_patch(Rectangle((X_GATE, 30), 4.5, 24, color=FG, alpha=ag * 0.16))
+        ax.text(X_GATE + 2.25, 55.5, 'P', color=FG, fontsize=13,
+                ha='center', alpha=ag, weight='bold')
 
-    # 出口三条等宽
-    a3 = seg(t, 0.42, 0.56)
-    if a3 > 0.01:
-        for i, m in enumerate(['Qwen', 'BERT', 'ViT']):
-            y = 46 - i * 7
-            wlen = 46 * 256 / 896
-            ax.add_patch(Rectangle((66, y), wlen * a3, 3.6, color=MOD_COL[m], alpha=0.85))
-            ax.text(66 + wlen * a3 + 1.2, y + 5.4, '256',
-                    color=MOD_COL[m], fontsize=10.5, va='center', alpha=a3)
-            ax.annotate('', xy=(66, y + 1.8), xytext=(62, y + 1.8),
-                        arrowprops=dict(arrowstyle='->', color=FG, lw=1.2, alpha=a3))
+    # ---- 每条带子占 1/3 时间依次通过 ----
+    for i, m in enumerate(MODELS):
+        t0 = 0.08 + i * 0.16
+        a = seg(t, t0, t0 + 0.14)
+        if a <= 0.01:
+            continue
+        y = 46 - i * 8
+        wlen = SLEN * MOD_DIM[m] / MAXD
+        # 入口段：带子从左长出
+        head = seg(a, 0.0, 0.55)                     # 0→1 表示走到闸门
+        x_end = X_IN + (X_GATE - X_IN) * head
+        ax.add_patch(Rectangle((X_IN, y), max(x_end - X_IN, 0.01), 4.4,
+                               color=MOD_COL[m], alpha=0.85))
+        # 模态名与维度放在同一行（放在带子下方会压到下一条带子）
+        ax.text(X_IN + 2, y + 6.8, f'{m}  {MOD_DIM[m]}', color=MOD_COL[m],
+                fontsize=10, va='center', alpha=a)
+        # 出口段：等宽 256
+        if head > 0.62:
+            b = seg(a, 0.55, 0.9)
+            wout = SLEN * 256 / MAXD
+            ax.add_patch(Rectangle((X_OUT, y), wout * b, 4.4, color=MOD_COL[m],
+                                   alpha=0.85))
+            ax.text(X_OUT + wout * b + 1.6, y + 2.2, '256', color=MOD_COL[m],
+                    fontsize=9.5, va='center', alpha=a)
+        # 闸门处的箭头
+        if head > 0.4:
+            ax.annotate('', xy=(X_GATE + 5.5, y + 2.2), xytext=(X_GATE - 2, y + 2.2),
+                        arrowprops=dict(arrowstyle='->', color=MOD_COL[m],
+                                        lw=1.2, alpha=a * min(1, (head - 0.4) * 4)))
 
-    # 能量保留
-    a4 = seg(t, 0.62, 0.74)
-    if a4 > 0.01:
-        for i, m in enumerate(['Qwen', 'BERT', 'ViT']):
+    # ---- 能量保留 ----
+    ae = seg(t, 0.58, 0.76)
+    if ae > 0.01:
+        for i, m in enumerate(MODELS):
+            a = ae * (1 if i == 0 else 1)
             x = 22 + i * 20
-            ax.text(x, 22, f'{m}', color=MOD_COL[m], fontsize=9.5, ha='center', alpha=a4)
-            ax.text(x, 18, f'保留能量 {MOD_EN[m]*100:.0f}%', color=FG,
-                    fontsize=10, ha='center', alpha=a4)
-    ax.text(50, 12.5, 'BERT 的能量一分不丢，Qwen 丢掉 46%，ViT 丢掉 41%',
+            ax.text(x, 21, m, color=MOD_COL[m], fontsize=9.5, ha='center',
+                    alpha=seg(t, 0.58 + i * 0.05, 0.68 + i * 0.05))
+            ax.text(x, 17, f'保留能量 {MOD_EN[m]*100:.0f}%', color=FG, fontsize=10,
+                    ha='center', alpha=seg(t, 0.63 + i * 0.05, 0.73 + i * 0.05))
+    ax.text(50, 12, 'BERT 的能量一分不丢，Qwen 丢掉 46%，ViT 丢掉 41%',
             color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.74, 0.86), va='center')
-    ax.text(50, 4, '三个模态的序列长度也不同：文本 128，图像 197',
-            color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.80, 0.92), va='center')
+    ax.text(50, 6, '三个模态的序列长度也不同：文本 128，图像 197',
+            color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.82, 0.95), va='center')
 
 
 # ============================================================ ② 四视角
 def act2(ax, t):
-    p = seg(t, 0.0, 0.06)
-    ax.text(50, 59, '② 一个 token 分成四个视角', color=ICE, fontsize=14,
+    """② 一个 token 分成四个视角 —— 柱体裂开成四条并行轨道。"""
+    p = seg(t, 0.0, 0.05)
+    ax.text(50, 60, '② 一个 token 分成四个视角', color=ICE, fontsize=14,
             weight='bold', alpha=p, ha='center', va='center')
 
-    # 左侧 token 柱
-    a1 = seg(t, 0.08, 0.20)
+    # ---- token 柱 ----
+    a1 = seg(t, 0.06, 0.20)
     if a1 > 0.01:
-        ax.add_patch(Rectangle((6, 34), 4, 18, color=FG, alpha=a1 * 0.35))
-        ax.text(8, 29, 'token', color=FG, fontsize=10, ha='center', alpha=a1)
+        ax.add_patch(Rectangle((7, 30), 4.5, 20 * a1, color=FG, alpha=0.35))
+        ax.text(9.2, 27.5, 'token', color=FG, fontsize=9.5, ha='center', alpha=a1)
 
-    # 四条轨道
-    for i, s in enumerate(SLOT_NAMES):
-        a = seg(t, 0.22 + i * 0.06, 0.34 + i * 0.06)
-        if a <= 0.01: continue
-        y = 46 - i * 8
-        ax.add_patch(Rectangle((18, y), 58, 4.4, color=SLOT_COL[i], alpha=a * 0.16))
-        ax.add_patch(Rectangle((18, y), 58 * a, 4.4, color=SLOT_COL[i], alpha=0.55))
-        ax.text(20, y + 6.2, f'{s}  子空间（256 维）', color=SLOT_COL[i],
-                fontsize=10, va='center', alpha=a)
-        ax.annotate('', xy=(18, y + 2.2), xytext=(10, 43),
-                    arrowprops=dict(arrowstyle='->', color=DIM, lw=0.9, alpha=a * 0.7))
+    # ---- 裂开：四条轨道从一点分出并伸长 ----
+    a2 = seg(t, 0.20, 0.48)
+    grow = seg(a2, 0.0, 1.0)
+    split = seg(a2, 0.15, 0.75)
+    for i, sl in enumerate(SLOT_NAMES):
+        y_end = 46 - i * 8
+        y_start = 40                              # 从 token 柱中部出发
+        y_now = y_start + (y_end - y_start) * split
+        x_now = 16 + (72 - 16) * grow
+        # 轨道完全展开后连接线淡出，否则四根斜线交叉显乱
+        conn = a2 * 0.75 * (1 - seg(t, 0.42, 0.53))
+        ax.plot([11.5, x_now], [40, y_now], color=SLOT_COL[i], lw=1.2, alpha=conn)
+        ax.add_patch(Rectangle((16, y_now - 2.2), max(x_now - 16, 0.01), 4.4,
+                               color=SLOT_COL[i], alpha=a2 * 0.75))
+        ax.text(18, y_now + 5.2, f'{sl}  子空间（256 维）', color=SLOT_COL[i],
+                fontsize=9.5, va='center', alpha=a2)
 
-    a2 = seg(t, 0.56, 0.66)
-    if a2 > 0.01:
-        ax.text(50, 22, '四条轨道各有自己的投影矩阵，互不相交',
-                color=ICE, fontsize=11.5, ha='center', alpha=a2, va='center')
-        ax.text(50, 17.5, '不是把一个 256 维空间切成四块',
-                color=DIM, fontsize=10, ha='center', alpha=a2, va='center')
-    a3 = seg(t, 0.72, 0.84)
-    ax.text(50, 11, '空间 = Σ_s S_s  =  4 × 256  =  1024 维',
-            color=GREEN, fontsize=13, ha='center', alpha=a3, va='center', weight='bold')
-    ax.text(50, 5, 'token 数不变 —— 合并发生在模型轴，不在 token 轴',
-            color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.80, 0.92), va='center')
+    # ---- 轨道上流动的亮点（token 内容流过）----
+    a3 = seg(t, 0.44, 0.74)
+    if a3 > 0.01:
+        for i, sl in enumerate(SLOT_NAMES):
+            y = 46 - i * 8
+            for k in range(3):
+                ph = (a3 * 2.2 + k / 3.0) % 1.0
+                x = 18 + (68 - 18) * ph
+                ax.add_patch(Circle((x, y), 0.85, color=SLOT_COL[i],
+                                    alpha=a3 * 0.9))
+
+    # ---- 收束 ----
+    a4 = seg(t, 0.72, 0.86)
+    if a4 > 0.01:
+        ax.text(50, 21, '四条轨道各有自己的投影矩阵，互不相交',
+                color=ICE, fontsize=11, ha='center', alpha=a4, va='center')
+        ax.text(50, 16.5, '不是把一个 256 维空间切成四块',
+                color=DIM, fontsize=9.5, ha='center', alpha=a4, va='center')
+    a5 = seg(t, 0.80, 0.92)
+    ax.text(50, 9.5, '空间 = Σ_s S_s  =  4 × 256  =  1024 维',
+            color=GREEN, fontsize=13, ha='center', alpha=a5, va='center', weight='bold')
+    ax.text(50, 4.5, 'token 数不变 —— 合并发生在模型轴，不在 token 轴',
+            color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.86, 0.97), va='center')
 
 
 # ============================================================ ③ 两两对齐
 def act3(ax, t):
-    p = seg(t, 0.0, 0.06)
-    ax.text(50, 59, '③ 两两之间，本来就能对齐', color=GREEN, fontsize=14,
+    """③ 两两之间，本来就能对齐 —— 三座桥依次接通，数值同步爬升。
+
+    每座桥独立成一条水平带（两端用小圆点标出模态名），
+    避免桥横穿模态方块。
+    """
+    p = seg(t, 0.0, 0.05)
+    ax.text(50, 60, '③ 两两之间，本来就能对齐', color=GREEN, fontsize=14,
             weight='bold', alpha=p, ha='center', va='center')
-    ax.text(50, 55, 'Q 槽', color=DIM, fontsize=10, ha='center',
+    ax.text(50, 55.5, 'Q 槽', color=DIM, fontsize=9.5, ha='center',
             alpha=seg(t, 0.04, 0.10), va='center')
 
-    pairs = [('Qwen', 'BERT', 'Qwen×BERT', 30),
-             ('Qwen', 'ViT',  'Qwen×ViT',  24),
-             ('BERT', 'ViT',  'BERT×ViT',  18)]
-    for i, (m1, m2, key, y) in enumerate(pairs):
-        a = seg(t, 0.12 + i * 0.10, 0.26 + i * 0.10)
-        if a <= 0.01: continue
-        v = AL['pairwise']['Q'][key]
-        x1 = 18 if m1 == 'Qwen' else (32 if m1 == 'BERT' else 46)
-        x2 = 18 if m2 == 'Qwen' else (32 if m2 == 'BERT' else 46)
-        ax.add_patch(Rectangle((x1, y), 10, 5, color=MOD_COL[m1], alpha=a * 0.3))
-        ax.text(x1 + 5, y + 2.5, m1, color=MOD_COL[m1], fontsize=9.5,
-                ha='center', va='center', alpha=a)
-        ax.add_patch(Rectangle((x2, y), 10, 5, color=MOD_COL[m2], alpha=a * 0.3))
-        ax.text(x2 + 5, y + 2.5, m2, color=MOD_COL[m2], fontsize=9.5,
-                ha='center', va='center', alpha=a)
-        # 桥
-        ax.plot([x1 + 10, x2], [y + 2.5, y + 2.5], color=GREEN, lw=2.2, alpha=a)
-        # 标签放在**桥的中点**正上方（桥从 x1+10 连到 x2），否则会压在盒子上
-        ax.text((x1 + 10 + x2) / 2, y + 6.4, f'{v:.4f}', color=GREEN,
-                fontsize=11, ha='center', alpha=a, weight='bold')
+    tgt = {'Qwen×BERT': AL['pairwise']['Q']['Qwen×BERT'],
+           'Qwen×ViT':  AL['pairwise']['Q']['Qwen×ViT'],
+           'BERT×ViT':  AL['pairwise']['Q']['BERT×ViT']}
+    # 每座桥：两端的 (x, y) 与标签
+    BR = [('Qwen', 'BERT', 'Qwen×BERT', 20, 44, 48, 44),
+          ('Qwen', 'ViT',  'Qwen×ViT',  20, 76, 32, 32),
+          ('BERT', 'ViT',  'BERT×ViT',  44, 76, 16, 16)]
 
-    a4 = seg(t, 0.50, 0.60)
+    for i, (m1, m2, key, x1, x2, y1, y2) in enumerate(BR):
+        t0 = 0.10 + i * 0.12
+        a = seg(t, t0, t0 + 0.11)
+        # 端点圆
+        if a > 0.01:
+            for (xx, yy, mm) in ((x1, y1, m1), (x2, y2, m2)):
+                ax.add_patch(Circle((xx, yy), 2.0, color=MOD_COL[mm], alpha=a * 0.85))
+                ax.text(xx, yy - 4.2, mm, color=MOD_COL[mm], fontsize=8.5,
+                        ha='center', va='center', alpha=a)
+        # 桥生长
+        if a > 0.01:
+            g = seg(a, 0.15, 1.0)
+            xm = x1 + (x2 - x1) * g
+            ax.plot([x1, xm], [y1, y1], color=GREEN, lw=2.6, alpha=0.95)
+            ax.add_patch(Circle((xm, y1), 0.75, color=GREEN, alpha=a))
+            ax.text((x1 + x2) / 2, y1 + 3.0, f'{tgt[key] * g:.4f}', color=GREEN,
+                    fontsize=11.5, ha='center', alpha=a, weight='bold')
+
+    # ---- 全部接通 ----
+    a4 = seg(t, 0.52, 0.66)
+    if a4 > 0.01:
+        for m1, m2, key, x1, x2, y1, y2 in BR:
+            ax.plot([x1, x2], [y1, y1], color=GREEN, lw=3.2, alpha=a4)
+
+    a5 = seg(t, 0.64, 0.76)
     ax.text(50, 8, '三座桥全绿 —— 看起来一切顺利',
-            color=GREEN, fontsize=11.5, ha='center', alpha=a4, va='center')
-    ax.text(50, 3.5, 'Qwen×BERT 0.9893   Qwen×ViT 0.9883   BERT×ViT 0.9879',
-            color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.56, 0.68), va='center')
+            color=GREEN, fontsize=11.5, ha='center', alpha=a5, va='center')
+    ax.text(50, 4,
+            '   '.join(f'{k} {v:.4f}' for k, v in tgt.items()),
+            color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.72, 0.86), va='center')
 
 
 # ============================================================ ④ 三模型崩
@@ -447,8 +492,9 @@ def act5(ax, t):
 
 # ============================================================ ⑧ 收尾
 def act8(ax, t):
-    p = seg(t, 0.0, 0.06)
-    ax.text(50, 55, 'v62 · 维度投影空间', color=GREEN, fontsize=16,
+    """⑧ 收尾 —— 逐行淡入，最后一句从中心展开。"""
+    p = seg(t, 0.0, 0.05)
+    ax.text(50, 56, 'v62 · 维度投影空间', color=GREEN, fontsize=16,
             weight='bold', alpha=p, ha='center', va='center')
 
     rows = [
@@ -458,20 +504,28 @@ def act8(ax, t):
         ('专家',       '4 个都在用  ·  均衡 0.492', GOLD),
     ]
     for i, (k, v, c) in enumerate(rows):
-        a = seg(t, 0.10 + i * 0.12, 0.24 + i * 0.12)
-        if a <= 0.01: continue
-        y = 46 - i * 7
-        ax.text(28, y, k, color=DIM, fontsize=11, ha='right', alpha=a, va='center')
-        ax.text(32, y, v, color=c, fontsize=13, ha='left', alpha=a, va='center',
-                weight='bold')
+        # 逐行从左滑入
+        a = seg(t, 0.08 + i * 0.11, 0.20 + i * 0.11)
+        if a <= 0.01:
+            continue
+        y = 47 - i * 7
+        slide = (1 - a) * 8
+        ax.text(28 - slide, y, k, color=DIM, fontsize=11, ha='right', alpha=a, va='center')
+        ax.text(32 - slide, y, v, color=c, fontsize=13, ha='left', alpha=a,
+                va='center', weight='bold')
 
-    a5 = seg(t, 0.62, 0.74)
-    ax.text(50, 14, '645,190,802 参数  ·  held-out 0.9101  ·  三个真实骨干',
+    a5 = seg(t, 0.56, 0.68)
+    ax.text(50, 15, '645,190,802 参数  ·  held-out 0.9101  ·  三个真实骨干',
             color=FG, fontsize=10.5, ha='center', alpha=a5, va='center')
 
-    a6 = seg(t, 0.80, 0.92)
-    ax.text(50, 7, '空间不是一个大小的数，而是按功能槽张成的一组子空间之和',
-            color=ICE, fontsize=12, ha='center', alpha=a6, va='center')
+    # 末句：从中心展开
+    a6 = seg(t, 0.68, 0.90)
+    if a6 > 0.01:
+        txt = '空间不是一个大小的数，而是按功能槽张成的一组子空间之和'
+        w = len(txt) * 0.62
+        ax.text(50, 8.5, txt[:int(len(txt) * min(1.0, a6 * 1.3))],
+                color=ICE, fontsize=12, ha='center', alpha=a6, va='center')
+
 
 if __name__ == '__main__':
     import sys
