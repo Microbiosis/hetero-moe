@@ -1,0 +1,254 @@
+{
+  "_meta": {
+    "version": "61.0",
+    "measured_at": "2026-10-31",
+    "run": {
+      "space": "redmingwei/hetero-moe",
+      "hardware": "cpu-upgrade",
+      "runtime_s": 417,
+      "bucket_main": "redmingwei/hetero-moe-jobs/v61-run2/metrics.json",
+      "bucket_tests": "v61t-4/ (9/9)"
+    },
+    "preregistration": {
+      "commit": "3241f78",
+      "r4_threshold_revision": "d4f66a3",
+      "note": "两处改动均在任何真实数据运行之前"
+    },
+    "unit_tests": "9/9",
+    "records": "144 个 (条件, 臂, 层) 记录"
+  },
+  "preregistered_verdicts": {
+    "R0_positive_control_noise": {
+      "criterion": "纯噪声 |Δ|<0.002 且不显著",
+      "result": "通过 6/6 条件"
+    },
+    "R1_detrend_delta_negative": {
+      "criterion": "Δ<0",
+      "result": "通过 6/6 条件 × 8/8 层 = 48/48"
+    },
+    "R2_raw_delta_positive": {
+      "criterion": "Δ>0",
+      "result": "通过 6/6 条件 × 8/8 层 = 48/48"
+    },
+    "R3_effect_size": {
+      "criterion": "中位 |Δ| > 0.05",
+      "result": "通过，中位 |Δ| = 0.1334"
+    },
+    "R4_non_alternating": {
+      "criterion": "每条件下 |mean(偶 d) − mean(奇 d≥3)| < 0.15",
+      "result": "未通过"
+    }
+  },
+  "conditions": {
+    "design": "2 个模型家族（MSA-4B D=2560；Qwen3-0.6B D=1024）× 2 个长度（S=16/32）× 8 层；左臂名 big/emb/rer 为三个配置",
+    "padding_free_all_conditions": true,
+    "delta_detrend": {
+      "big_S16": [
+        -0.33,
+        -0.322,
+        -0.314,
+        -0.315,
+        -0.312,
+        -0.324,
+        -0.316,
+        -0.266
+      ],
+      "big_S32": [
+        -0.359,
+        -0.356,
+        -0.344,
+        -0.339,
+        -0.34,
+        -0.336,
+        -0.328,
+        -0.292
+      ],
+      "emb_S16": [
+        -0.29,
+        -0.274,
+        -0.275,
+        -0.258,
+        -0.265,
+        -0.253,
+        -0.207,
+        -0.183
+      ],
+      "emb_S32": [
+        -0.345,
+        -0.317,
+        -0.315,
+        -0.305,
+        -0.304,
+        -0.289,
+        -0.257,
+        -0.243
+      ],
+      "rer_S16": [
+        -0.329,
+        -0.308,
+        -0.312,
+        -0.296,
+        -0.312,
+        -0.298,
+        -0.261,
+        -0.252
+      ],
+      "rer_S32": [
+        -0.357,
+        -0.332,
+        -0.329,
+        -0.321,
+        -0.323,
+        -0.313,
+        -0.282,
+        -0.27
+      ]
+    },
+    "delta_raw": {
+      "big_S16": [
+        0.086,
+        0.061,
+        0.088,
+        0.095,
+        0.098,
+        0.076,
+        0.078,
+        0.137
+      ],
+      "big_S32": [
+        0.058,
+        0.042,
+        0.068,
+        0.078,
+        0.082,
+        0.073,
+        0.076,
+        0.129
+      ],
+      "emb_S16": [
+        0.082,
+        0.08,
+        0.086,
+        0.089,
+        0.084,
+        0.083,
+        0.146,
+        0.173
+      ],
+      "emb_S32": [
+        0.057,
+        0.076,
+        0.078,
+        0.087,
+        0.086,
+        0.097,
+        0.15,
+        0.17
+      ],
+      "rer_S16": [
+        0.079,
+        0.089,
+        0.099,
+        0.097,
+        0.086,
+        0.095,
+        0.148,
+        0.171
+      ],
+      "rer_S32": [
+        0.055,
+        0.079,
+        0.082,
+        0.089,
+        0.089,
+        0.101,
+        0.146,
+        0.163
+      ]
+    }
+  },
+  "r4_failure": {
+    "by_arm_max_abs_parity_gap": {
+      "raw": 0.0344,
+      "detrend": 0.0183,
+      "centered": 0.1881
+    },
+    "by_arm_violations": {
+      "raw": "0/48",
+      "detrend": "0/48",
+      "centered": "11/48"
+    },
+    "critical_point": "R1 依赖 detrend、R2 依赖 raw，这两个臂在 R4 上完全干净（最大值 0.0183 / 0.0344，距阈值 ≥4 倍余量）。但 R4 的字面表述是『每个条件下』，因此按字面未通过。不修改判据，如实记录",
+    "centered_violations": {
+      "count": 11,
+      "all_at_S16": true,
+      "values": {
+        "big_layer7": 0.18775,
+        "emb_layer3": 0.1881,
+        "emb_layer4": 0.18806,
+        "emb_layer5": 0.18806,
+        "emb_layer6": 0.18797,
+        "emb_layer7": 0.18793,
+        "rer_layer3": 0.18812,
+        "rer_layer4": 0.18809,
+        "rer_layer5": 0.18807,
+        "rer_layer6": 0.18799,
+        "rer_layer7": 0.18795
+      },
+      "span": 0.0004,
+      "reading": "三个架构完全不同的模型（D=2560 vs D=1024，不同厂商、不同用途）给出同一数值到小数点后四位，跨度仅 0.0004 ⇒ 该值由构造决定，与表征内容无关。量级接近 3/16 = 0.1875（S=16）"
+    },
+    "mechanism_hypothesis_not_confirmed": {
+      "hypothesis": "中心化强制 Σ_t x_t = 0，使所有非对角点积被压到负偏置，cos 在接近 −1 时非线性放大，形成奇偶差",
+      "test": "test_centering_induces_parity_gap",
+      "result": "合成数据上 centered 的非对角均值确实为 −0.0657（≈ −1/15，Σx=0 的直接推论），但奇偶差只有 −0.00187，没有复现 0.188 的量级",
+      "verdict": "假设不成立，centered 的 0.188 仍待解释。测试如实记录为『未复现，不可据此排除』，没有硬掰成通过"
+    }
+  },
+  "diagnostics_on_0188": {
+    "question": "0.188 是不是余弦在接近 −1 时非线性放大的产物（H3）",
+    "answer": "不是。同一批数据、同一 centered 变换，只换观测量，三种都显著为正",
+    "readings": {
+      "S16": {
+        "cos": 0.1881,
+        "dot": 254417,
+        "rank": 10.7
+      },
+      "S32": {
+        "cos": 0.09005,
+        "dot": 61272,
+        "rank": 19.09
+      }
+    },
+    "note": "dot 与 rank 量纲不同，看符号与是否显著，不看绝对值。由 centered 引入，随 S 近似 1/S 缩放，机制仍未解释"
+  },
+  "threshold_bug": {
+    "what": "runner 里的 R4 阈值是 0.05，而 SPEC 里写的是 0.15",
+    "when": "d4f66a3 只改了 SPEC 与单测，忘了改 runner 的实现",
+    "consequence": "v61 主运行实际按 0.05 判 R4，比预登记更严",
+    "handling": "在已保存的 144 个记录上按 0.15 重算（对既有数据应用预登记阈值，不是新实验）；runner 已修正为 R4_THR = 0.15",
+    "why_015": "合成校准显示 M=1/(1+|i−j|) 这类平滑剖面的奇偶差是 0.036，0.05 会把平滑误判成交替；而周期 2 结构给 2.00。取 0.15 距两端各有 ≥4× 余量。此改动发生在任何真实表征运行之前"
+  },
+  "defensible_claim": "在 3 个模型 × 2 个 token 长度 × 8 层的 48 次独立测量中，token 轴上的位置结构稳定地分成两层且方向相反：跨样本共享的位置成分使相邻位置更相似（Δ 中位 0.086），而剥掉该成分后，相邻位置的表征互相区分（Δ 中位 0.313，主导效应）。该结构跨两个模型家族复现，不受 S=16/32 影响",
+  "cannot_claim": [
+    "不能声称『token 轴有局部性』—— v60 的线性相关判据仍然全败",
+    "不能声称 R4 通过 —— 按字面未通过",
+    "不能解释 centered 臂的 0.188 奇偶差"
+  ],
+  "literature": {
+    "searched_at": "2026-10-28",
+    "note": "在此之前 v58–v61 全程未做过文献检索",
+    "most_relevant": {
+      "ref": "Song & Zhong, 'Uncovering hidden geometry in Transformers via disentangling position and context', arXiv:2310.04861 (2023)",
+      "their_decomposition": "h_{c,t} = μ + pos_t + ctx_c + resid_{c,t}",
+      "correspondence": "raw = 全式；detrend = X − mean_over_samples（去掉 pos_t）；centered = X − mean_over_positions（去掉 ctx_c）—— 三条臂正好是他们分解的三项",
+      "overlap": "『pos_t 低维、连续、常呈螺旋形』= 本代 raw Δ>0 与 centered Δ>0 ⇒ **重发现**"
+    },
+    "architectural_artifact_risk": {
+      "ref": "Zuo et al. (2025)",
+      "claim": "相邻更相似可能只是因果注意力掩码的架构副产物（随机初始化即可复现，不需要位置编码）",
+      "impact": "本代关于 RoPE 的猜测应当撤回"
+    },
+    "verdict": "主结论已被文献大幅削弱：raw 臂的『相邻更相似』是已有结论且可能是架构副产物。本代的价值退化为『跨 3 模型 × 2 长度 × 8 层的稳健复制』与 detrend 臂的反相关读数"
+  }
+}

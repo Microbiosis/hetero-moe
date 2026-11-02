@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "version": "59.0",
+  "package": "v59_token_area",
+  "line": "aligner",
+  "title": "面积律（token 轴）+ 共同因诊断：负结果，并证伪 v58 的阈值方法",
+  "generation": {
+    "one_mechanism_added": "把 v58 在隐维/层轴上的面积律算子搬到 token 轴，并加三条对照（N4 纯噪声正控 / N0 样本打乱 / N1 切口敏感）。实测发现 χ 与切口无关 ⇒ 面积律在 token 轴上平凡成立、不携带信息",
+    "parent": "58.0",
+    "children": [
+      "60.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线第 14 个成员；本代同时给出影响 v58 的方法学修正（iid 零分布低估谱尾部）"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "token_area.py"
+    ],
+    "note": "新增 TokenGrams 加速：按列标准化后 A_std A_stdᵀ = Σ W_t W_tᵀ，单次谱计算从 O(n²d) 降到 O(n³)，d 退出热路径"
+  },
+  "consumers": [],
+  "claim": {
+    "asserts": "在 token 轴上不存在可被本统计量读出的切口结构。χ 在任意切口、任意层、任意 token 子集上都约等于常数，因此面积律平凡成立、不携带信息。同时确认 iid 零分布系统性低估谱尾部（最高 5.7×），v58 的公式阈值属同族错误",
+    "metric": "N1_cut_sensitivity_pass_count",
+    "direction": "higher_is_better",
+    "value": 0,
+    "baseline": {
+      "ref": "N4 纯噪声正控（8/8 通过）与 N0 同源对照（8/8 通过）",
+      "value": 8
+    },
+    "seeds": 1,
+    "outcome_label": "negative"
+  },
+  "protocol": {
+    "eval_set": "train_distribution",
+    "input": "真实表征，8 层；15 个 token 切口（|A| 从 1 到 15）；三臂 raw / centered / detrend",
+    "caveat": "互协方差只测线性耦合；N1 用的是匹配零分布（打乱 token 子集），不是 iid 零分布"
+  },
+  "acceptance": {
+    "criterion": "N4 纯噪声 χ=0 / N0 打乱后 χ=0 / N1 ≥3/15 切口落在置换零分布外 / N2 |corr|<0.5 / N3 ≥3 种取值",
+    "outcome": "fail",
+    "note": "N4 8/8 与 N0 8/8 通过 —— 管线正确、相关性确实来自同一样本。但 N1 0/8 全败 ⇒ N2 不可解释（v58 的教训正是这一条）。按预登记判 fail。N3 在 raw 上 8/8 通过、centered 上 0/8，但 N1 已使 N3 失去意义"
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "clean",
+    "audited_in": "59.0",
+    "note": "本代不涉及目标任务标签，只测算子与表征几何。三道对照排除『相关性来自样本错配』：N4 纯噪声全 0；N0 样本打乱后全 0；N1 用打乱 token 子集的匹配零分布。三条同时成立说明管线没有泄漏，χ≈常数是真实读数而非伪影"
+  },
+  "falsified": [
+    {
+      "hypothesis": "v58 的公式阈值（1.25·(√da+√db)/√n·(1+dmax/n)^(1/3)）可用于比较绝对 χ",
+      "verdict": "证伪 — 该阈值假设列间独立，与 iid 零分布同族，系统性低估谱尾部（centered 口径最高 5.7×）",
+      "evidence": "results/metrics.json: methodology_correction"
+    },
+    {
+      "hypothesis": "token 轴上存在面积律式的切口结构",
+      "verdict": "证伪 — N1 0/8 全败，χ 与切口大小、层、token 子集全都无关",
+      "evidence": "results/metrics.json: verdicts / main_result"
+    },
+    {
+      "hypothesis": "iid 口径下 χ 随层的变化（驼峰形剖面）反映真实结构",
+      "verdict": "证伪 — 匹配口径下它是平线 1.6–2.0，峰形是零分布不匹配的伪影",
+      "evidence": "results/metrics.json: methodology_correction.evidence"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v59_token_area.py",
+    "forwarder_spec": "docs/V59_0_TOKEN_AREA.md"
+  },
+  "tests_status": "present",
+  "impact_on_prior_generation": {
+    "target": "58.0",
+    "absolute_values": "v58 的绝对 χ 值（10/15/17/19/19/19/16）不可跨代比较",
+    "qualitative": "v58 的定性结论（B2 熵上升、B3 两臂相同、膜假说不成立）不受影响"
+  }
+}

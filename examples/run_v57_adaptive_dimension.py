@@ -71,7 +71,10 @@ def main():
 
     # 拼接后的环境空间 = 文本侧 + 表格侧
     d_all = d_h + d_c
-    B = torch.linalg.qr(torch.randn(d_all, min(d_all, 512)))[0]  # 随机把两侧混到同一坐标系
+    # 随机把两侧混到同一坐标系。
+    # 必须用 mode="complete": 默认的 reduced 模式对 (3072, 512) 只返回 Q∈R^{3072×512},
+    # 于是 Z 的宽度是 512 而 AdaptiveSubspace 按 ambient=3072 建基 → 第一步 cat 就崩。
+    B = torch.linalg.qr(torch.randn(d_all, min(d_all, 512)), mode="complete")[0]
     def embed(h, c=None):
         if c is None:
             x = torch.cat([h, torch.zeros(h.shape[0], d_c)], 1)

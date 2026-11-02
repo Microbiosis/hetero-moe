@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "version": "62.0",
+  "package": "v62_dimension_projection_space",
+  "line": "aligner",
+  "title": "维度投影空间：空间是按功能槽张成的和，不是一个大小的数",
+  "generation": {
+    "one_mechanism_added": "把「共享空间」从单一 256 维矩阵改成 Σ_s S_s —— 每个功能槽一个子空间，每个模型在每个子空间里有独立投影，模型之间用**成对可复合**的对齐（A_ac = A_bc ∘ A_ab），并加环路一致性约束使多条路径自洽",
+    "parent": "57.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [],
+    "note": "aligner 线接 v48→v49→v50→v51→v52→v53→v57→v58→v59→v60→v61。v58–v61 转向面积律/局部性观测量，本代回到 v48 的「投影空间」问题但换问法"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "projspace.py",
+      "fusion.py",
+      "model.py",
+      "measure.py",
+      "cleanroom.py"
+    ],
+    "note": "projspace.py 是算子本体；model.py 是完整打包模型（三骨干 + 投影空间 + 融合层）；measure.py 可离线复算 results/metrics.json 的四个主键；cleanroom.py 在干净目录里只靠 clone + Hub 下载验证交付可用性"
+  },
+  "consumers": [],
+  "claim": {
+    "asserts": "投影空间不是单一尺寸的超参，而是按功能槽张成的一组子空间之和；单变换对齐三个模型必然失败（过定），用成对可复合对齐加环路一致性可以修复；等维对齐无损而压维丢信息",
+    "metric": "three_model_alignment_cka",
+    "direction": "higher_is_better",
+    "value": 0.9925,
+    "baseline": {
+      "ref": "单一共享变换对齐三个模型",
+      "value": 0.6767
+    },
+    "delta_pct": 46.7,
+    "seeds": 2
+  },
+  "protocol": {
+    "eval_set": "train_distribution",
+    "input": "三个真实预训练骨干（Qwen2.5-0.5B D=896 / BERT-L4-H256 D=256 / ViT-base-16 D=768）的 layer0-3 权重切片，经随机正交 P_m 投到 256 维共享空间后测对齐",
+    "caveat": "对齐 CKA 是在**合成输入**（标准正态）上测的表示对齐，不是下游任务精度；端到端数字（held-out 0.9076，v62.3）来自 ag_news 4 分类，与 v33 的 fuse_mse 协议不同，两者不可直接比较"
+  },
+  "acceptance": {
+    "criterion": "① 成对对齐 CKA ≥ 0.98；② 环路一致性约束后三模型对齐 ≥ 0.99；③ 等维保真度 ≥ 0.999；④ 端到端 held-out 显著高于随机且专家不塌缩；⑤ 净室 8 步全过（含 trust_remote_code 与缺模态）",
+    "outcome": "pass",
+    "note": "①两两 0.9873~0.9898 ②0.9925 ③0.9998 ④0.9076 vs 0.25，专家均衡 0.612 ⑤cleanroom.py 8/8，包内测试 16/16"
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "clean",
+    "audited_in": "62.0",
+    "note": "本代做过三道对照（见 results/metrics.json: control）：(a) 随机表示对齐后 CKA 仅 0.057、秩几乎不降 —— 证明变换本身不能凭空对齐；(b) 跨功能混合的假对齐（K×V / Q×O）秩不降、CKA 0.40 —— 证明真对齐的秩下降（168→30）不是变换制造的；(c) held-out 按类别分层 80/20，四类比例对齐（train 2018/1870/1981/2129，val 505/468/496/533）—— 排除了顺序切分造成的分布偏移。先前一次用顺序切分得到的 0.937 因此被作废，改用 0.9016"
+  },
+  "falsified": [
+    {
+      "hypothesis": "Q/O 跨架构对不齐，所以这两槽应该走路由",
+      "verdict": "证伪 — 两两对齐 0.9876~0.9898，与 K/V（0.9873/0.9882）无差别",
+      "evidence": "results/metrics.json: alignment.pairwise"
+    },
+    {
+      "hypothesis": "Qwen 的 GQA 结构（14 Q 头 / 2 KV 头）导致跨架构对齐失败",
+      "verdict": "证伪 — 去掉 Qwen 后 CKA 回到 0.988；单对 Qwen×BERT 也有 0.9893",
+      "evidence": "results/metrics.json: alignment.triple_after_removing_qwen"
+    },
+    {
+      "hypothesis": "K/V 更通用，所以比 Q/O 更容易融合",
+      "verdict": "证伪 — K/V 只是恰好只有 2 个模型参与（Qwen 的 K/V 是 [128,896] 非方阵被跳过），失败变量是模型数不是功能类型",
+      "evidence": "results/metrics.json: functional_slots.shapes_layer0"
+    },
+    {
+      "hypothesis": "压维到 24/28 可以省参数且不掉效果",
+      "verdict": "证伪 — 24 维保真度仅 0.165（丢 83% 信息），而 CKA 指标全程 0.998 看不见这个损失",
+      "evidence": "results/metrics.json: rank_sweep"
+    },
+    {
+      "hypothesis": "升维（>256）能增强表达",
+      "verdict": "证伪 — 256 已无损（0.9998），384/512/768 无额外收益",
+      "evidence": "results/metrics.json: rank_sweep"
+    },
+    {
+      "hypothesis": "专家冻结时路由仍能学到内容结构",
+      "verdict": "证伪 — 探针准确率 ≈ 0.25（随机），坍塌到 2 个专家；根因是专家随机且冻结时路由拿不到内容梯度",
+      "evidence": "results/metrics.json: end_to_end（对照三次失败实验见 SPEC §9）"
+    },
+    {
+      "hypothesis": "顺序切分得到的 held-out 0.937 可信",
+      "verdict": "作废 — 分层重测后为 0.9016，顺序切分抬高了结果",
+      "evidence": "results/metrics.json: end_to_end.data.split"
+    },
+    {
+      "hypothesis": "save_pretrained 出来的目录别人能直接 AutoModel.from_pretrained 加载",
+      "verdict": "证伪 — Hub 上没有建模代码时 trust_remote_code 无从加载；且 router 宽度按声明的全部模型算死，缺模态会崩",
+      "evidence": "cleanroom.py 步骤 5a / 6b；results/metrics.json: cleanroom.bugs_found_and_fixed"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v62_dimension_projection_space.py",
+    "forwarder_spec": "docs/V62_0_DIMENSION_PROJECTION_SPACE.md"
+  },
+  "tests_status": "present",
+  "external_artifacts": {
+    "packed_model": "https://huggingface.co/redmingwei/HeteroMoEProjSpace-v2",
+    "backbone_slices": "https://huggingface.co/redmingwei/backbone-slices",
+    "hidden_state_cache": "https://huggingface.co/datasets/redmingwei/hetero-moe-cache",
+    "note": "打包模型 645.19M 参数 / 2.58GB 不入仓库；权重切片 295MB、隐藏状态缓存 4.46GB 同样不入仓库，measure.py 与训练脚本按需下载"
+  }
+}

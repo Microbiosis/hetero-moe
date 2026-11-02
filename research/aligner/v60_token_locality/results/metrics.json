@@ -1,0 +1,127 @@
+{
+  "_meta": {
+    "version": "60.0",
+    "measured_at": "2026-10-31",
+    "baseline": {
+      "space": "redmingwei/hetero-moe",
+      "hardware": "cpu-upgrade",
+      "runtime_s": 75,
+      "bucket": "redmingwei/hetero-moe-jobs/v60-area1/"
+    },
+    "supplement": {
+      "runtime_s": 73,
+      "bucket": "v60-d1-1/d1.json",
+      "note": "事后探索，非预登记"
+    },
+    "unit_tests": "8/8 (v60t-5)",
+    "note": "主判据全败（预登记结论：token 轴无局部性）；补充分析发现 Δ 有稳定效应但三臂方向分裂，属事后探索"
+  },
+  "main_verdicts": {
+    "P0_positive_control": {
+      "raw": "通过（corr=+0.048）"
+    },
+    "P1_distance_decay": {
+      "raw": "0/8",
+      "centered": "3/8",
+      "detrend": "0/8"
+    },
+    "P2_permutation_separable": {
+      "raw": "0/8",
+      "centered": "0/8",
+      "detrend": "0/8"
+    },
+    "P3_locality_gap": {
+      "raw": "4/8",
+      "centered": "8/8",
+      "detrend": "0/8"
+    },
+    "P1_and_P2_both": {
+      "raw": "0/8",
+      "centered": "0/8",
+      "detrend": "0/8"
+    }
+  },
+  "main_conclusion": "按预登记，token 轴上不存在局部结构。且方向是反的：raw 与 detrend 臂的 corr(d, M̄(d)) 都为正（+0.32…+0.68 / +0.43…+0.50），即远端位置反而更相似",
+  "p2_caught_p1_false_positive": {
+    "reading": "centered 臂 layer2/3/4 的 corr 是 −0.524 / −0.544 / −0.491，按 P1 的 corr < −0.5 字面会判『过』；但 P2 全部失败",
+    "permutation_null_lower_bound": {
+      "layer2": -0.925,
+      "layer3": -0.903
+    },
+    "why": "打乱 token 顺序后相关可以到 −0.9，说明这个负相关与『谁和谁相邻』无关，是 M 矩阵自身的量级结构（某些行列整体偏高）造成的。若没有 P2，会误判出一个不存在的局部性"
+  },
+  "supplement_v60_1": {
+    "status": "事后探索，判据 D0–D3 在看到主结果之后才定，不得引用为『v60 证明了局部性』",
+    "definition": "Δ ≡ M̄(1) − mean(M̄(2..S−1))，正值 = 相邻更相似",
+    "criteria": "D0 正控 / D1 落在置换零分布外 / D2 ≥6/8 同号 / D3 |Δ|>0.05",
+    "by_arm": {
+      "raw": {
+        "delta_by_layer": [
+          0.089,
+          0.05,
+          0.08,
+          0.09,
+          0.095,
+          0.078,
+          0.079,
+          0.14
+        ],
+        "D1": "7/8",
+        "D2": "8/8",
+        "direction": "相邻更相似"
+      },
+      "centered": {
+        "delta_by_layer": [
+          0.114,
+          0.102,
+          0.223,
+          0.231,
+          0.218,
+          0.177,
+          0.11,
+          0.134
+        ],
+        "D1": "6/8",
+        "D2": "8/8",
+        "direction": "相邻更相似"
+      },
+      "detrend": {
+        "delta_by_layer": [
+          -0.288,
+          -0.283,
+          -0.277,
+          -0.278,
+          -0.274,
+          -0.282,
+          -0.279,
+          -0.229
+        ],
+        "D1": "8/8",
+        "D2": "8/8",
+        "direction": "相邻更不相似"
+      }
+    },
+    "D0_positive_control": "通过（纯噪声上 Δ 不显著）",
+    "explains_main_failure": "两个方向相反的效应在同一个 M 里互相抵消。线性相关 corr(d, M̄(d)) 把 d=1 的离群值和 d=2..15 的缓变混在一起，得到没有意义的中庸值（raw 甚至变成 +0.66，方向还反了）",
+    "interpretation": {
+      "raw_centered": "位置通用成分 p_t 是平滑的（相邻位置向量相近）",
+      "detrend": "去掉 p_t 后，剩下的样本特异偏离在相邻位置上反相关（相邻 token 互相区分）",
+      "conclusion": "『位置结构』不是一个标量，取决于你控制了什么"
+    }
+  },
+  "methodology_lessons": [
+    {
+      "lesson": "谱范数型耦合对位置结构失明",
+      "detail": "逐列标准化到 ‖col‖=√n 会抹掉幅度信息；植入 X[t]=base+t·direction 后剖面起伏仅 1.26%",
+      "fixed_by": "test_v1_spectral_coupling_is_blind"
+    },
+    {
+      "lesson": "共同因的效应不能凭直觉断言",
+      "detail": "先后猜错两次：① 猜『不改斜率』→ 实测 0.776→0.730；② 猜『压缩斜率』→ 实测 −0.933→−0.973（反而增强）。推导后明白：共同因足够大时分母被常数化，cos ≈ 1 − c·(i−j)²/(2·scale²|base|²)，即 |i−j|² 的纯净抛物线 ⇒ 幅度效应取决于位置项形式，不是普遍性质"
+    },
+    {
+      "lesson": "线性相关会漏掉『只在最邻近出现』的结构",
+      "detail": "下一代判据应改为 Spearman 秩相关，或直接检验 M̄(1) 相对 {M̄(2..S−1)} 的偏离而非整体斜率"
+    }
+  ]
+}

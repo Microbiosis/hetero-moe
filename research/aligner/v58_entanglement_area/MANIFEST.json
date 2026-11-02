@@ -7,7 +7,9 @@
   "generation": {
     "one_mechanism_added": "把 v57 的全局标量 r 拆成**逐切口的 χ 剖面**: 用 Ryu–Takayanagi 的面积律定规则 —— 每个切口的维数由跨越它的净耦合通道数决定。全高斯态下 S(A)=½Σlog(1/(1−ρ̃²)) 是可算的恒等式, χ = 互协方差谱超噪声阈值的个数",
     "parent": "57.0",
-    "children": []
+    "children": [
+      "59.0"
+    ]
   },
   "lineage": {
     "line_parent": "10.0",
@@ -23,17 +25,17 @@
     "note": "复用 v57 的 Gavish–Donoho 系数 ω(β), 但阈值改用**解析 σ** (=1/√(n−1), 因为互协方差已按列标准化), 由三条失败路径反推出来"
   },
   "claim": {
-    "asserts": "v57 只有一个全局 r, 无法表达『这里维度多、那里维度少』。膜结构要求逐切口的 χ, 且 χ 由边界面积 (跨界通道数) 而非块内体积决定。实测: 独立块 χ=0; 共享 k 维时 k∈{1,2,5,12} 全部精确还原; 面积律 corr=0.00、体积律 corr=+0.97、单热点读出 [0,0,0,0,2,7,2,0,0,0,0]。",
+    "asserts": "算子本身可精确恢复逐切口通道数（独立块 χ=0；共享 k∈{1,2,5,12} 全部精确 = k；面积律 corr=0.00 / 体积律 corr=+0.97 / 单热点剖面 [0,0,0,0,2,7,2,0,0,0,0] 非均匀）。但把该算子当作**真实表征的结构假设**检验时失败：膜假说不成立（B2/B3 未过）",
     "metric": "chi_recovery_exactness",
     "direction": "exact_match",
     "value": 4,
     "baseline": {
-      "ref": "v57 scalar r",
+      "ref": "v57 全局标量 r（恒定 χ 剖面是它的特例）",
       "value": null
     },
     "seeds": 1,
-    "outcome_label": "positive",
-    "note": "单元测试 11/11; 真实表征上的 B1–B4 判决正在 HF Space 跑 (前缀 v58-area2)。精度边界: k≥20 时低估 (噪声地板消失)"
+    "outcome_label": "positive_on_operator_negative_on_hypothesis",
+    "note": "单元测试 13/13；真实表征 B1–B4 已完成（Space 全量重跑 1269s，commit a93ecec）：B1 纯噪声对照通过，但 B2 未过（熵上升）、B3 未过（两臂相同）⇒ 膜假说不成立。精度边界：k≥20 时低估（信号占满 ambient，噪声地板消失）"
   },
   "protocol": {
     "eval_set": "合成: 相邻 site 定宽耦合 (面积律) / 共享数随位置增长 (体积律) / 单热点",
@@ -42,7 +44,8 @@
   },
   "acceptance": {
     "criterion": "B1 面积律 |corr|<0.5 / B2 RG 流熵随深度下降 / B3 natural χ < random χ / B4 χ 剖面非均匀",
-    "outcome": "合成侧全部验证 (11/11); 真实表征判决待落桶"
+    "outcome": "fail",
+    "note": "合成侧算子验证 13/13 全过（见 results/metrics.json: synthetic）；但真实表征上 B2 未过（熵上升）、B3 未过（两臂相同），方向均与假设相反 ⇒ 膜假说不成立。按预登记判据记为 fail，不因合成侧漂亮而改判"
   },
   "leakage_audit": {
     "status": "not_applicable",
@@ -64,6 +67,16 @@
       "hypothesis": "『所有 site 共享同一组全局方向 = 体积律』",
       "verdict": "错误构造: 那样给出的是**恒定** χ (任何切口的跨协方差只经过同一组方向, 与块大小无关)。真体积律需共享数随位置增长",
       "evidence": "tests/test_package.py::test_volume_law_detected 注释"
+    },
+    {
+      "hypothesis": "维度按边界面积分配的『膜』结构在真实表征上成立",
+      "verdict": "证伪 — 真实表征 B2（熵应下降）实测上升、B3（natural 应小于 random）实测两臂相同",
+      "evidence": "results/metrics.json: real_representations.verdicts；commit a93ecec 全量重跑"
+    },
+    {
+      "hypothesis": "本代的公式阈值（1.25·(√da+√db)/√n·(1+dmax/n)^(1/3)）可用于跨代比较绝对 χ",
+      "verdict": "证伪（由 v59 给出）— 该阈值假设列间独立，与 iid 零分布同族，系统性低估谱尾部",
+      "evidence": "research/aligner/v59_token_area/FINDINGS.md「顺带证伪了 v58 的阈值」"
     }
   ],
   "superseded_by": null,
@@ -71,15 +84,13 @@
   "artifacts": {
     "spec": "SPEC.md",
     "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
     "forwarder_tests": "tests/test_v58_entanglement_area.py",
-    "status": "results/STATUS.md"
+    "forwarder_spec": "docs/V58_0_ENTANGLEMENT_AREA.md"
   },
-  "_needs_human": [
-    "真实表征上的 B1–B4 判决待落桶 (前缀 v58-area2)",
+  "note_on_supersession": "阈值方法被 v59.0 证伪（iid 零分布低估谱尾部），但本代的定性结论不受影响，故不标 superseded_by",
+  "open_items": [
     "k≥20 的失效边界需在真实数据上确认是否触及",
-    "非线性耦合 (互协方差之外) 未覆盖"
-  ],
-  "_extracted_from": [
-    "research/aligner/README.md"
+    "非线性耦合（互协方差之外）未覆盖"
   ]
 }

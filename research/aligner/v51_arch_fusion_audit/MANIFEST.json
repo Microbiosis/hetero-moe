@@ -47,9 +47,13 @@
     "note": "与论文的 +82.7%/+70.6% 同向; 数值差异来自本代补的 held-out 划分 (v7 原版无 held-out)"
   },
   "leakage_audit": {
-    "status": "pending",
-    "audits": [],
-    "note": "本代自带双口径 + 目标置换对照 + 置换零分布 + 探针自检, 但尚未由独立审计包结清"
+    "required": true,
+    "status": "clean",
+    "audits": [
+      "52.0"
+    ],
+    "audited_in": "52.0",
+    "note": "已由 v52 独立复算通过。C2（随机目标臂类别可解码 ≤0.50，即探针有效性自检）在 D128/256/512 三档全部通过（实测 0.39–0.43），见 research/aligner/v52_independent_audit/results/metrics.json:verdicts。本包结论：架构异构线的『融合优于单专家』margin 同样是识别机制的产物 —— 目标置换（模态 m → 块 π(m)，无不动点）后 margin 完全不变（+70.4% → +72.7%），说明与底座间任何语义对应关系无关。"
   },
   "falsified": [
     {

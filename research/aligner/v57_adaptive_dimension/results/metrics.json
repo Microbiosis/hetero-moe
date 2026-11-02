@@ -1,0 +1,317 @@
+{
+ "schema_version": "1.0",
+ "version": "57.0",
+ "package": "v57_adaptive_dimension",
+ "line": "aligner",
+ "config": {
+  "batch": 32,
+  "phase_steps": 10,
+  "ambient": 3072,
+  "d_h": 2560,
+  "d_c": 512,
+  "death_window": 2,
+  "cache": "/tmp/v56_repr.npz"
+ },
+ "phases": [
+  [
+   "P1 文本侧",
+   "h"
+  ],
+  [
+   "P2 文本+表格",
+   "hc"
+  ],
+  [
+   "P3 文本侧",
+   "h"
+  ]
+ ],
+ "trajectory": [
+  13,
+  25,
+  36,
+  49,
+  59,
+  70,
+  79,
+  89,
+  99,
+  108,
+  122,
+  133,
+  142,
+  151,
+  158,
+  167,
+  177,
+  188,
+  196,
+  206,
+  215,
+  219,
+  227,
+  235,
+  243,
+  253,
+  263,
+  272,
+  282,
+  292
+ ],
+ "rows": [
+  {
+   "phase": "P1 文本侧",
+   "step": 0,
+   "r": 13,
+   "captured": 0.9977,
+   "born": 13,
+   "died": 0
+  },
+  {
+   "phase": "P1 文本侧",
+   "step": 1,
+   "r": 25,
+   "captured": 0.9992,
+   "born": 12,
+   "died": 0
+  },
+  {
+   "phase": "P1 文本侧",
+   "step": 2,
+   "r": 36,
+   "captured": 0.9997,
+   "born": 11,
+   "died": 0
+  },
+  {
+   "phase": "P1 文本侧",
+   "step": 3,
+   "r": 49,
+   "captured": 0.9999,
+   "born": 13,
+   "died": 0
+  },
+  {
+   "phase": "P1 文本侧",
+   "step": 4,
+   "r": 59,
+   "captured": 0.9999,
+   "born": 10,
+   "died": 0
+  },
+  {
+   "phase": "P1 文本侧",
+   "step": 5,
+   "r": 70,
+   "captured": 0.9999,
+   "born": 11,
+   "died": 0
+  },
+  {
+   "phase": "P1 文本侧",
+   "step": 6,
+   "r": 79,
+   "captured": 0.9999,
+   "born": 9,
+   "died": 0
+  },
+  {
+   "phase": "P1 文本侧",
+   "step": 7,
+   "r": 89,
+   "captured": 1.0,
+   "born": 10,
+   "died": 0
+  },
+  {
+   "phase": "P1 文本侧",
+   "step": 8,
+   "r": 99,
+   "captured": 1.0,
+   "born": 10,
+   "died": 0
+  },
+  {
+   "phase": "P1 文本侧",
+   "step": 9,
+   "r": 108,
+   "captured": 1.0,
+   "born": 9,
+   "died": 0
+  },
+  {
+   "phase": "P2 文本+表格",
+   "step": 0,
+   "r": 122,
+   "captured": 0.9997,
+   "born": 14,
+   "died": 0
+  },
+  {
+   "phase": "P2 文本+表格",
+   "step": 1,
+   "r": 133,
+   "captured": 0.9998,
+   "born": 11,
+   "died": 0
+  },
+  {
+   "phase": "P2 文本+表格",
+   "step": 2,
+   "r": 142,
+   "captured": 0.9999,
+   "born": 9,
+   "died": 0
+  },
+  {
+   "phase": "P2 文本+表格",
+   "step": 3,
+   "r": 151,
+   "captured": 0.9999,
+   "born": 9,
+   "died": 0
+  },
+  {
+   "phase": "P2 文本+表格",
+   "step": 4,
+   "r": 158,
+   "captured": 0.9999,
+   "born": 7,
+   "died": 0
+  },
+  {
+   "phase": "P2 文本+表格",
+   "step": 5,
+   "r": 167,
+   "captured": 0.9999,
+   "born": 9,
+   "died": 0
+  },
+  {
+   "phase": "P2 文本+表格",
+   "step": 6,
+   "r": 177,
+   "captured": 1.0,
+   "born": 10,
+   "died": 0
+  },
+  {
+   "phase": "P2 文本+表格",
+   "step": 7,
+   "r": 188,
+   "captured": 1.0,
+   "born": 11,
+   "died": 0
+  },
+  {
+   "phase": "P2 文本+表格",
+   "step": 8,
+   "r": 196,
+   "captured": 1.0,
+   "born": 8,
+   "died": 0
+  },
+  {
+   "phase": "P2 文本+表格",
+   "step": 9,
+   "r": 206,
+   "captured": 1.0,
+   "born": 10,
+   "died": 0
+  },
+  {
+   "phase": "P3 文本侧",
+   "step": 0,
+   "r": 215,
+   "captured": 1.0,
+   "born": 9,
+   "died": 0
+  },
+  {
+   "phase": "P3 文本侧",
+   "step": 1,
+   "r": 219,
+   "captured": 1.0,
+   "born": 9,
+   "died": 5
+  },
+  {
+   "phase": "P3 文本侧",
+   "step": 2,
+   "r": 227,
+   "captured": 1.0,
+   "born": 8,
+   "died": 0
+  },
+  {
+   "phase": "P3 文本侧",
+   "step": 3,
+   "r": 235,
+   "captured": 1.0,
+   "born": 9,
+   "died": 1
+  },
+  {
+   "phase": "P3 文本侧",
+   "step": 4,
+   "r": 243,
+   "captured": 1.0,
+   "born": 9,
+   "died": 1
+  },
+  {
+   "phase": "P3 文本侧",
+   "step": 5,
+   "r": 253,
+   "captured": 1.0,
+   "born": 10,
+   "died": 0
+  },
+  {
+   "phase": "P3 文本侧",
+   "step": 6,
+   "r": 263,
+   "captured": 1.0,
+   "born": 10,
+   "died": 0
+  },
+  {
+   "phase": "P3 文本侧",
+   "step": 7,
+   "r": 272,
+   "captured": 1.0,
+   "born": 9,
+   "died": 0
+  },
+  {
+   "phase": "P3 文本侧",
+   "step": 8,
+   "r": 282,
+   "captured": 1.0,
+   "born": 10,
+   "died": 0
+  },
+  {
+   "phase": "P3 文本侧",
+   "step": 9,
+   "r": 292,
+   "captured": 1.0,
+   "born": 10,
+   "died": 0
+  }
+ ],
+ "verdicts": {
+  "V1_expand": true,
+  "V2_collapse": false,
+  "V3_not_constant": true,
+  "r_max": 292,
+  "r_final": 292,
+  "born_total": 299,
+  "died_total": 7
+ },
+ "fixed_d_baselines": [
+  96,
+  252,
+  384
+ ]
+}

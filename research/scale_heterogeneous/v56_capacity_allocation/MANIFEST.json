@@ -50,9 +50,12 @@
     "note": "P1 与 P3 的未过都不是架构问题: P1 源于数据泄漏(单侧探针 0.65-0.73), P3 是投影带来小幅优化收益(0.9-1.4pp)但未到阈值"
   },
   "leakage_audit": {
-    "status": "pending",
-    "audits": [],
-    "note": "decouple=True 未能完全切断职业-工时相关: 单侧线性探针 0.727/0.648 而非 0.5。这是 v39 §5 已声明的已知边界, 本代沿用并实测确认。严格零泄漏需切断所有相关类别字段"
+    "required": true,
+    "status": "invalidated",
+    "audits": [
+      "56.0"
+    ],
+    "note": "审计完成，发现泄漏并使一个判据失效。Adult 的 decouple=True **未完全切断**职业↔工时相关：单侧线性探针（XOR 下应接近 chance 0.5）实测 0.727 / 0.648。后果：P1（linear 头任何宽度都解不开 XOR，acc ≤ 0.80）因此判**未过** —— 线性头能解开的那部分来自残留相关，不是给了 concat 价值。不受影响的是主结论：P2（hidden=16 已达最好宽度的 95%）✓ 与 P4（大宽度激活有效秩 < 5%）✓ 都不依赖两侧模态的严格独立性，『维度不是约束，但空间确实是空的』这条仍成立。⚠️ 可复核性缺口：探针数字 0.727/0.648 只记录在 SPEC.md §4，**未落盘到 results/metrics.json**，因此该审计的原始读数无法从产物直接复核（见 open_items）。这是 v39 §5 已声明的已知边界，本代实测确认，不是新发现。"
   },
   "falsified": [
     {
@@ -92,5 +95,9 @@
   ],
   "_extracted_from": [
     "research/scale_heterogeneous/README.md"
+  ],
+  "open_items": [
+    "单侧探针 0.727/0.648 只在 SPEC §4 有文字记录，未落盘 metrics.json；要可复核需重跑 examples/run_v56_capacity_allocation.py 并把探针读数写进结果",
+    "严格零泄漏需切断所有相关类别字段（不只 decouple=True 的当前实现）"
   ]
 }
