@@ -107,22 +107,30 @@ def draw_subs(ax, which, alpha):
 
 # ============================================================ ① 真实尺度
 def act1(ax, t):
-    """① 三个底座的宽度差 3.5 倍 —— 三条带子依次流过 P 闸门。"""
+    """① 三个底座的宽度差 3.5 倍 —— 三条带子依次流过 P 闸门。
+
+    入口段的长度按**真实维度比例**画（896 : 256 : 768），
+    出口段三条一律 256 —— 进去时参差、出来时同宽，这就是这一幕的论点。
+    """
     p = seg(t, 0.0, 0.05)
     ax.text(50, 60, '① 三个底座的宽度差 3.5 倍', color=GOLD, fontsize=14,
             weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(GOLD))
 
     MODELS = ['Qwen', 'BERT', 'ViT']
     MAXD = 896
-    SLEN = 46.0                 # 满宽条子的长度
-    X_IN, X_GATE, X_OUT = 8.0, 56.0, 66.0
+    LEN_MAX = 36.0                 # Qwen(896) 的条子长度
+    X_IN, X_GATE, X_OUT = 5.0, 43.0, 51.0
+    LEN_OUT = LEN_MAX * 256 / MAXD  # 出口一律 256 → 长度相同
 
     # ---- 闸门 ----
     ag = seg(t, 0.05, 0.15)
     if ag > 0.01:
-        ST.rbox(ax, (X_GATE, 30), 4.5, 24, fc=FG, ec=FG, lw=1.6, alpha=ag * 0.16, fill_alpha=0.45, z=2)
-        ax.text(X_GATE + 2.25, 55.5, 'P', color=FG, fontsize=13,
+        ST.rbox(ax, (X_GATE, 28), 4.5, 24, fc=FG, ec=FG, lw=1.6,
+                alpha=ag * 0.16, fill_alpha=0.45, z=2)
+        ax.text(X_GATE + 2.25, 53.5, 'P', color=FG, fontsize=13,
                 ha='center', alpha=ag, weight='bold', path_effects=ST.text_glow(FG))
+        ax.text(X_GATE + 2.25, 26.0, '正交投影', color=DIM, fontsize=8.5,
+                ha='center', alpha=ag)
 
     # ---- 每条带子占 1/3 时间依次通过 ----
     for i, m in enumerate(MODELS):
@@ -131,20 +139,33 @@ def act1(ax, t):
         if a <= 0.01:
             continue
         y = 46 - i * 8
-        wlen = SLEN * MOD_DIM[m] / MAXD
-        # 入口段：带子从左长出
-        head = seg(a, 0.0, 0.55)                     # 0→1 表示走到闸门
-        x_end = X_IN + (X_GATE - X_IN) * head
-        ST.rbox(ax, (X_IN, y), max(x_end - X_IN, 0.01), 4.4, fc=MOD_COL[m], ec=MOD_COL[m], lw=1.6, alpha=0.85, fill_alpha=0.45, z=2)
-        # 模态名与维度放在同一行（放在带子下方会压到下一条带子）
-        ax.text(X_IN + 2, y + 6.8, f'{m}  {MOD_DIM[m]}', color=MOD_COL[m],
+        wlen = LEN_MAX * MOD_DIM[m] / MAXD        # ← 真实比例
+        ratio = MOD_DIM[m] / MAXD
+
+        # 入口段：长度按真实维度，动画从左长出
+        head = seg(a, 0.0, 0.55)
+        ST.rbox(ax, (X_IN, y), max(wlen * head, 0.01), 4.4,
+                fc=MOD_COL[m], ec=MOD_COL[m], lw=1.6, alpha=0.85,
+                fill_alpha=0.45, z=2)
+        # 标签：模态名 + 维度 + 相对 Qwen 的比例
+        ax.text(X_IN, y + 6.8, f'{m}', color=MOD_COL[m], fontsize=10.5,
+                va='center', alpha=a, weight='bold')
+        ax.text(X_IN + 7.0, y + 6.8, f'{MOD_DIM[m]} 维', color=MOD_COL[m],
                 fontsize=10, va='center', alpha=a)
-        # 出口段：等宽 256
+        ax.text(X_IN + 15.0, y + 6.8, f'（Qwen 的 {ratio:.2f}×）', color=DIM,
+                fontsize=9, va='center', alpha=a * 0.95)
+
+        # 基准虚线：Qwen 的长度，贯穿三行 —— 直接看出 BERT 短了多少
+        if i > 0:
+            ax.plot([X_IN, X_IN + LEN_MAX], [y + 2.2, y + 2.2], color=DIM,
+                    lw=0.8, ls=(0, (3, 4)), alpha=0.35 * a, zorder=1)
+
+        # 出口段：一律 256，三条等长
         if head > 0.62:
             b = seg(a, 0.55, 0.9)
-            wout = SLEN * 256 / MAXD
-            ST.rbox(ax, (X_OUT, y), wout * b, 4.4, fc=MOD_COL[m], ec=MOD_COL[m], lw=1.6, alpha=0.85, fill_alpha=0.45, z=2)
-            ax.text(X_OUT + wout * b + 1.6, y + 2.2, '256', color=MOD_COL[m],
+            ST.rbox(ax, (X_OUT, y), LEN_OUT * b, 4.4, fc=MOD_COL[m],
+                    ec=MOD_COL[m], lw=1.6, alpha=0.85, fill_alpha=0.45, z=2)
+            ax.text(X_OUT + LEN_OUT * b + 1.6, y + 2.2, '256', color=MOD_COL[m],
                     fontsize=9.5, va='center', alpha=a)
         # 闸门处的箭头
         if head > 0.4:
@@ -152,19 +173,23 @@ def act1(ax, t):
                         arrowprops=dict(arrowstyle='->', color=MOD_COL[m],
                                         lw=1.2, alpha=a * min(1, (head - 0.4) * 4)))
 
+    # ---- 结论：进去参差，出来同宽 ----
+    az = seg(t, 0.58, 0.72)
+    if az > 0.01:
+        ax.text(X_OUT + LEN_OUT / 2, 22.5, '压成同宽', color=ICE, fontsize=9.5,
+                ha='center', alpha=az)
+        ax.plot([X_OUT, X_OUT + LEN_OUT], [21.0, 21.0], color=ICE, lw=1.0, alpha=az)
+
     # ---- 能量保留 ----
-    ae = seg(t, 0.58, 0.72)
+    ae = seg(t, 0.62, 0.74)
     if ae > 0.01:
-        # 三行一起出现（逐个淡入会让未出现的行看着像残留）
         for i, m in enumerate(MODELS):
-            x = 22 + i * 20
-            ax.text(x, 21, m, color=MOD_COL[m], fontsize=9.5, ha='center', alpha=ae)
-            ax.text(x, 17, f'保留能量 {MOD_EN[m]*100:.0f}%', color=FG, fontsize=10,
+            x = 20 + i * 20
+            ax.text(x, 16.0, m, color=MOD_COL[m], fontsize=9.5, ha='center', alpha=ae)
+            ax.text(x, 12.5, f'保留能量 {MOD_EN[m]*100:.0f}%', color=FG, fontsize=10,
                     ha='center', alpha=ae)
-    ax.text(50, 13.0, 'BERT 的能量一分不丢，Qwen 丢掉 46%，ViT 丢掉 41%',
-            color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.74, 0.86), va='center')
-    ax.text(50, 9.0, '三个模态的序列长度也不同：文本 128，图像 197',
-            color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.82, 0.95), va='center')
+    ax.text(50, 8.6, 'BERT 的能量一分不丢，Qwen 丢掉 46%，ViT 丢掉 41%',
+            color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.76, 0.88), va='center')
 
 
 # ============================================================ ② 四视角
