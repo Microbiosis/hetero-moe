@@ -154,42 +154,43 @@ def act6(ax, t):
                     fontsize=12, ha='center', alpha=a2, weight='bold')
             ax.text(x + bw / 2, base + hgt + 2.0, f'{v:.3f}', color=FG,
                     fontsize=12, ha='center', alpha=a2 * grow)
-        ax.text(50, 21.0, f'token #{i0}', color=DIM, fontsize=9, ha='center',
-                alpha=a2, va='center')
-        ax.text(50, 17.5,
-                f'四槽激活率 100%  ·  平均熵 {np.mean(ent):.3f}  ·  和 = 1',
-                color='#35D0BA', fontsize=10, ha='center',
+        # 统计信息挪到**顶部** —— 底部要塞拆分重组的三个块，
+        # 塞不下（柱子标签已在 23.4，往下还要 5 行）
+        # 合并成一行 —— 顶部的位置被 v62.1(50) / v62.2(47) 占着，
+        # 分两行会撞。底部则要塞拆分重组的三个块。
+        ax.text(50, 53.0,
+                f'token #{i0}  ·  四槽激活率 100%  ·  平均熵 {np.mean(ent):.3f}'
+                f'  ·  Q 槽权重≈0（由 K/V/O 承担，熵 {ENT_LO:.3f}–{ENT_HI:.3f}）',
+                color='#35D0BA', fontsize=9.5, ha='center',
                 alpha=seg(t, 0.44, 0.54), va='center')
-        ax.text(50, 14.0,
-                f'Q 槽权重≈0，实际由 K/V/O 三槽承担（熵 {ENT_LO:.3f}–{ENT_HI:.3f}）',
-                color=DIM, fontsize=8.5, ha='center',
-                alpha=seg(t, 0.50, 0.60), va='center')
 
     # ---- 拆分重组 ----
     a4 = seg(t, 0.62, 0.70)
     if a4 > 0.01:
-        ax.text(50, 10.5, '可分离 · 可重组', color='#64E3F6',
+        # 标题放在块的**上方** —— 原来在 y=10.5，正压在中间的合成块上
+        ax.text(50, 16.5, '可分离 · 可重组', color='#64E3F6',
                 fontsize=11, weight='bold', alpha=a4, va='center', ha='center')
         fly = seg(t, 0.66, 0.82)
-        lx = 8 + (30 - 8) * fly
+        lx = 8 + (28 - 8) * fly
         ST.rbox(ax, (lx, 8.6), 10, 4.4, fc='#64E3F6', ec='#64E3F6', lw=1.4,
                 alpha=a4 * 0.32, fill_alpha=0.45, z=2)
         ax.text(lx + 5, 10.8, 'token5 的 K', color='#64E3F6', fontsize=8.5,
                 ha='center', va='center', alpha=a4)
-        rx = 66 - (66 - 60) * fly
+        rx = 66 + (62 - 66) * fly
         ST.rbox(ax, (rx, 8.6), 10, 4.4, fc='#b085f5', ec='#b085f5', lw=1.4,
                 alpha=a4 * 0.32, fill_alpha=0.45, z=2)
         ax.text(rx + 5, 10.8, 'token0 的 O', color='#b085f5', fontsize=8.5,
                 ha='center', va='center', alpha=a4)
         if fly > 0.85:
             g = seg(fly, 0.85, 1.0)
-            ST.rbox(ax, (50, 8.4), 10, 4.8, fc=FG, ec=FG, lw=1.4,
+            ST.rbox(ax, (48, 8.4), 10, 4.8, fc=FG, ec=FG, lw=1.4,
                     alpha=g * 0.16, fill_alpha=0.45, z=2)
-            ax.text(55, 10.8, '新 token', color=FG, fontsize=8.5, ha='center',
+            ax.text(53, 10.8, '新 token', color=FG, fontsize=8.5, ha='center',
                     va='center', alpha=g)
-            ax.annotate('', xy=(49.5, 10.8), xytext=(44.5, 10.8),
+            # 箭头在块**之间**，不画进块里
+            ax.annotate('', xy=(46.5, 10.8), xytext=(38.5, 10.8),
                         arrowprops=dict(arrowstyle='->', color=FG, lw=1.4, alpha=g))
-            ax.annotate('', xy=(60.5, 10.8), xytext=(69.5, 10.8),
+            ax.annotate('', xy=(59.5, 10.8), xytext=(61.5, 10.8),
                         arrowprops=dict(arrowstyle='->', color=FG, lw=1.4, alpha=g))
 
 
