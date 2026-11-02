@@ -375,6 +375,52 @@ router 宽度在 `__init__` 里按「声明的全部模型」算死（Q/O 槽各
 
 ---
 
+## 13c. 机制可视化（8 幕 / 60.3 秒）
+
+视频：**[structure-film-public/v62_mechanism.mp4](https://huggingface.co/datasets/redmingwei/structure-film-public/blob/main/v62_mechanism.mp4)**
+（1600×1000 / 30 fps / 1810 帧 / 1.0 MB）
+
+| # | 时长 | 幕 | 屏上的关键数字 | 来源 |
+|---|---|---|---|---|
+| ① | 6.7s | 真实尺度 | 896 / 256 / 768 → 256；能量保留 54% / 100% / 59% | 真实前向 |
+| ② | 6.3s | 四视角 | `空间 = Σ_s S_s = 4 × 256 = 1024` | 算子结构 |
+| ③ | 7.0s | 两两对齐 | 0.9893 / 0.9883 / 0.9879 | metrics.json |
+| ④ | 8.7s | 三模型崩 | 0.9893 → **0.6767**；去掉 Qwen → 0.9879 | metrics.json |
+| ⑤ | 8.3s | 环路闭合 | 一致性损失 0.007817 → 0.000000；0.6767 → **0.9925** | metrics.json |
+| ⑥ | 8.7s | 四槽分工 | 逐 token 真实槽门控（0.731 / 0.054 / 0.034 / 0.181）；平均熵 0.553 | 真实前向 |
+| ⑦ | 9.7s | 专家路由 | 0.360 / 0.731 / 0.538 / 0.371；均衡 0.492；top-k=2 | 2002 条 held-out |
+| ⑧ | 5.0s | 收尾 | 645,190,802 参数；held-out 0.9101 | 综合 |
+
+**每一幕的数字都来自真实前向或实测，没有一个是为了好看编的。**
+
+渲染工程在 [`visual/`](visual/)：
+
+```
+visual/
+├── render12345.py     ①–⑤ 幕（+⑧ 收尾）
+├── render67.py        ⑥⑦ 幕
+├── render_all.py      全部 8 幕
+├── plan.py            各幕帧数分配
+├── data/
+│   ├── v62_capture.npz   真实前向的中间张量（槽门控、专家 alpha、结构化 token…）
+│   ├── v62_meta.json     维度、能量保留等标量
+│   └── v62_route.json    2002 条 held-out 的路由统计
+```
+
+重渲：
+
+```bash
+cd research/aligner/v62_dimension_projection_space/visual
+python3 render_all.py
+bash /tmp/concat.sh   # ffmpeg concat
+```
+
+⚠️ ⑥ 幕里槽门控的数字是**逐 token**的真实值，不同 token 差别很大
+（最大权重中位数 0.70，最低 0.056）。画面按熵从高到低排序后滚动展示，
+避免等距抽样正好抽到极端 token 而让人误以为没修好。
+
+---
+
 ## 14. 未做的事（明确列出）
 
 - **没做**：bit 级跨版本复现（需 pin transformers 版本；实测 5.16.1 vs 5.21.0 差 7.9e-05）
