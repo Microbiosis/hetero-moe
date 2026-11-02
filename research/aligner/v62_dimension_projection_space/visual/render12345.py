@@ -238,9 +238,20 @@ def act3(ax, t):
            'Qwen×ViT':  AL['pairwise']['Q']['Qwen×ViT'],
            'BERT×ViT':  AL['pairwise']['Q']['BERT×ViT']}
     # 每座桥：两端的 (x, y) 与标签
-    BR = [('Qwen', 'BERT', 'Qwen×BERT', 20, 44, 48, 44),
-          ('Qwen', 'ViT',  'Qwen×ViT',  20, 76, 32, 32),
-          ('BERT', 'ViT',  'BERT×ViT',  44, 76, 16, 16)]
+    # 每条桥一条水平带（y1 必须等于 y2 —— 之前第一条写成 48/44，桥是斜的）
+    BR = [('Qwen', 'BERT', 'Qwen×BERT', 20, 44, 48, 48),
+          ('Qwen', 'ViT',  'Qwen×ViT',  20, 76, 34, 34),
+          ('BERT', 'ViT',  'BERT×ViT',  44, 76, 20, 20)]
+    for _m1, _m2, _k, _x1, _x2, _y1, _y2 in BR:
+        assert _y1 == _y2, '桥必须是水平的：%s 的 y1=%s y2=%s' % (_k, _y1, _y2)
+
+    # 同一个模态在多条桥上的端点用竖虚线连起来 —— 否则会看成是不同��模型
+    for _mm, _pts in (('Qwen', [(20, 48), (20, 34)]),
+                      ('BERT', [(44, 48), (44, 20)]),
+                      ('ViT',  [(76, 34), (76, 20)])):
+        _ys = sorted(y for _x, y in _pts)
+        ax.plot([_pts[0][0]] * 2, _ys, color=MOD_COL[_mm], lw=0.9,
+                ls=(0, (2, 3)), alpha=0.45, zorder=1)
 
     for i, (m1, m2, key, x1, x2, y1, y2) in enumerate(BR):
         t0 = 0.10 + i * 0.12
@@ -249,7 +260,7 @@ def act3(ax, t):
         if a > 0.01:
             for (xx, yy, mm) in ((x1, y1, m1), (x2, y2, m2)):
                 ST.glow_dot(ax, (xx, yy), 2.0, MOD_COL[mm], alpha=a * 0.85)
-                ax.text(xx, yy - 4.2, mm, color=MOD_COL[mm], fontsize=8.5,
+                ax.text(xx, yy - 3.6, mm, color=MOD_COL[mm], fontsize=8.5,
                         ha='center', va='center', alpha=a)
         # 桥生长
         if a > 0.01:
@@ -267,9 +278,9 @@ def act3(ax, t):
             ax.plot([x1, x2], [y1, y1], color=GREEN, lw=3.2, alpha=a4)
 
     a5 = seg(t, 0.64, 0.76)
-    ax.text(50, 11.5, '三座桥全绿 —— 看起来一切顺利',
+    ax.text(50, 11.0, '三座桥全绿 —— 看起来一切顺利',
             color=GREEN, fontsize=11.5, ha='center', alpha=a5, va='center')
-    ax.text(50, 8.8,
+    ax.text(50, 8.6,
             '   '.join(f'{k} {v:.4f}' for k, v in tgt.items()),
             color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.72, 0.86), va='center')
 
