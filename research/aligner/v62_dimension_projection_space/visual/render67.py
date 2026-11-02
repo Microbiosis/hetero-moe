@@ -4,6 +4,7 @@
 （data/v62_route.json）。不编造。
 """
 import os
+import json
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -244,9 +245,12 @@ if __name__ == '__main__':
     total = int(sys.argv[2]) if len(sys.argv) > 2 else 240
     out = os.path.join(FRAMES, f'act{which}')
     os.makedirs(out, exist_ok=True)
+    for f in os.listdir(out):
+        if f.endswith('.png'):
+            os.remove(os.path.join(out, f))
     fn = act6 if which == '6' else act7
     print(f'渲染 幕{which}: {total} 帧', flush=True)
     for fi in range(total):
-        frame(fi, total, fn, out)
+        frame(fi, total, fn, out, which)
         if fi % 40 == 0: print(f'  {fi}/{total}', flush=True)
     print('done', flush=True)

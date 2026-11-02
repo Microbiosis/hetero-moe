@@ -222,38 +222,77 @@ def act3(ax, t):
 
 # ============================================================ ④ 三模型崩
 def act4(ax, t):
-    p = seg(t, 0.0, 0.06)
+    """④ 三个一起，垮了 —— 实时动态。
+
+    三条模态流各自是一个「波」：整体从左边缘推进，前端先穿过透镜。
+    穿过透镜的部分被剪切（越过越多偏得越多），于是看到的是
+    **正在被撕开**，而不是切好的静态图。
+    """
+    p = seg(t, 0.0, 0.05)
     ax.text(50, 59, '④ 三个一起，垮了', color=RED, fontsize=14,
             weight='bold', alpha=p, ha='center', va='center')
 
-    # 单透镜
-    a1 = seg(t, 0.08, 0.18)
-    if a1 > 0.01:
-        ax.add_patch(Rectangle((46, 26), 7, 26, color=FG, alpha=a1 * 0.18))
-        ax.text(49.5, 53.5, '单一变换', color=FG, fontsize=10.5, ha='center', alpha=a1)
-        for i, m in enumerate(['Qwen', 'BERT', 'ViT']):
-            y = 44 - i * 7
-            ax.add_patch(Rectangle((10, y), 30, 4.6, color=MOD_COL[m], alpha=a1 * 0.55))
-            ax.text(25, y + 2.3, m, color=MOD_COL[m], fontsize=9.5,
-                    ha='center', va='center', alpha=a1)
-            ax.annotate('', xy=(46, y + 2.3), xytext=(40, y + 2.3),
-                        arrowprops=dict(arrowstyle='->', color=MOD_COL[m], lw=1.2, alpha=a1))
+    X0, X1 = 10.0, 88.0          # 流的起点 / 终点
+    LX, LW = 46.0, 7.0           # 透镜
+    P_LENS = (LX - X0) / (X1 - X0)
+    NSEG = 9                     # 每条流的 token 块数
+    SPREAD = 0.34                # 流的长度（占全程比例）
+    SHEAR = 7.5                  # 完全错开时的 y 位移
+    MODELS = ['Qwen', 'BERT', 'ViT']
 
-    # 撕裂
-    a2 = seg(t, 0.26, 0.42)
+    # ---------------- 阶段 A：透镜 + 三股待入 ----------------
+    a1 = seg(t, 0.04, 0.18)
+    # 阶段 A 的箭头与标签随流推进淡出（否则与流里的模态名重复）
+    fade_a = 1.0 - seg(t, 0.20, 0.40)
+    if a1 > 0.01 and fade_a > 0.01:
+        ax.add_patch(Rectangle((LX, 26), LW, 26, color=FG, alpha=a1 * 0.16))
+        ax.text(LX + LW / 2, 53.5, '单一变换', color=FG, fontsize=10.5,
+                ha='center', alpha=a1)
+        for i, m in enumerate(MODELS):
+            y = 44 - i * 7
+            ax.annotate('', xy=(LX - 2, y + 2.2), xytext=(X0 + 6, y + 2.2),
+                        arrowprops=dict(arrowstyle='->', color=MOD_COL[m],
+                                        lw=1.3, alpha=a1 * 0.8 * fade_a))
+            ax.text(X0, y + 5.8, m, color=MOD_COL[m], fontsize=9.5,
+                    ha='left', alpha=a1 * fade_a)
+
+    # ---------------- 阶段 B：流推进 + 实时剪开 ----------------
+    a2 = seg(t, 0.18, 0.58)
     if a2 > 0.01:
-        for i, m in enumerate(['Qwen', 'BERT', 'ViT']):
-            y = 44 - i * 7
-            shear = (i - 1) * 3.2 * a2          # 三股被剪开
-            ax.add_patch(Rectangle((58, y + shear), 26, 4.6, color=MOD_COL[m],
-                                   alpha=a2 * 0.55))
-            ax.text(71, y + shear + 2.3, m, color=MOD_COL[m], fontsize=9.5,
-                    ha='center', va='center', alpha=a2)
-        ax.text(71, 22, '三股被剪开了', color=RED, fontsize=10.5,
-                ha='center', alpha=a2, va='center')
+        front = seg(a2 * 1.12, 0.0, 1.0)      # 流前端的整体位置 0→1
+        ax.add_patch(Rectangle((LX, 26), LW, 26, color=FG, alpha=a2 * 0.14))
+        ax.add_patch(Rectangle((LX, 26), LW, 26, fill=False, edgecolor=FG,
+                               lw=1.0, alpha=a2 * 0.32))
+        ax.text(LX + LW / 2, 53.5, '单一变换', color=FG, fontsize=10.5,
+                ha='center', alpha=a2)
 
-    # 数字翻转
-    a3 = seg(t, 0.44, 0.56)
+        for i, m in enumerate(MODELS):
+            y0 = 44 - i * 7
+            dirn = i - 1                          # Qwen 上、BERT 不动、ViT 下
+            for k in range(NSEG):
+                u = k / (NSEG - 1)               # 1 = 前端，0 = 后端
+                pos = front - (1 - u) * SPREAD    # 每个块在流中的世界位置
+                if pos < 0.002:
+                    continue
+                x = X0 + (X1 - X0) * pos
+                over = max(0.0, min(1.0, (pos - P_LENS) / max(1e-6, 1 - P_LENS)))
+                y = y0 + dirn * SHEAR * (over ** 0.8)
+                ax.add_patch(Rectangle((x, y), 3.2, 4.4, color=MOD_COL[m],
+                                       alpha=0.62))
+                # 正在被撕的地方画一道红痕
+                if 0.03 < over < 0.90 and dirn != 0:
+                    ax.plot([x, x], [y0, y], color=RED, lw=1.2,
+                            alpha=0.55 * (1 - abs(over - 0.45) * 2))
+                if k == 0:                        # 前端方块旁标模态名
+                    ax.text(x + 3.6, y + 2.2, m, color=MOD_COL[m],
+                            fontsize=9.5, va='center', alpha=0.95)
+
+        if a2 > 0.80:
+            ax.text(74, 21, '三股被剪开了', color=RED, fontsize=10.5,
+                    ha='center', alpha=seg(a2, 0.80, 1.0), va='center')
+
+    # ---------------- 阶段 C：数字翻转 ----------------
+    a3 = seg(t, 0.60, 0.72)
     if a3 > 0.01:
         ax.text(20, 17.0, '两两', color=DIM, fontsize=10, ha='right', alpha=a3, va='center')
         ax.text(22, 17.0, '0.9893', color=GREEN, fontsize=13, ha='left', alpha=a3,
@@ -264,22 +303,36 @@ def act4(ax, t):
         ax.annotate('', xy=(36, 7.0), xytext=(36, 17.0),
                     arrowprops=dict(arrowstyle='->', color=RED, lw=1.4, alpha=a3))
 
-    # 去掉一个就回来 —— 只有 Qwen 淡出，BERI/ViT 保持原样
-    a4 = seg(t, 0.60, 0.70)
+    # ---------------- 阶段 D：去掉 Qwen，其余重新对齐 ----------------
+    a4 = seg(t, 0.74, 0.86)
     if a4 > 0.01:
-        # 把 Qwen 那条盖成背景色（淡出），并在旁边标注
-        ax.add_patch(Rectangle((10, 41.7), 30, 4.6, color=BG, alpha=a4 * 0.92))
-        ax.add_patch(Rectangle((10, 41.7), 30, 4.6, fill=False,
-                               edgecolor=MOD_COL['Qwen'], lw=0.8,
-                               alpha=a4 * 0.35, linestyle='--'))
-        ax.text(25, 44.0, 'Qwen 退出', color=DIM, fontsize=9.5, ha='center',
-                va='center', alpha=a4)
+        refocus = seg(a4, 0.22, 0.78)
+        for i, m in enumerate(MODELS):
+            y0 = 44 - i * 7
+            dirn = i - 1
+            if m == 'Qwen':
+                # 淡出
+                ax.add_patch(Rectangle((X0, 41.8), 26, 4.4, color=BG, alpha=a4 * 0.94))
+                ax.add_patch(Rectangle((X0, 41.8), 26, 4.4, fill=False,
+                                       edgecolor=MOD_COL['Qwen'], lw=0.8,
+                                       alpha=a4 * 0.35, linestyle='--'))
+                ax.text(X0 + 13, 44.0, 'Qwen 退出', color=DIM, fontsize=9.5,
+                        ha='center', va='center', alpha=a4)
+                continue
+            for k in range(NSEG):
+                u = k / (NSEG - 1)
+                pos = 1.0 - (1 - u) * SPREAD
+                x = X0 + (X1 - X0) * pos
+                over = max(0.0, min(1.0, (pos - P_LENS) / max(1e-6, 1 - P_LENS)))
+                y = y0 + dirn * SHEAR * (over ** 0.8) * (1 - refocus)
+                ax.add_patch(Rectangle((x, y), 3.2, 4.4, color=MOD_COL[m],
+                                       alpha=0.62))
         ax.text(20, 12.0, '去掉 Qwen 后', color=DIM, fontsize=10, ha='right',
                 alpha=a4, va='center')
         ax.text(22, 12.0, '0.9879', color=GREEN, fontsize=13, ha='left',
                 alpha=a4, va='center', weight='bold')
 
-    a5 = seg(t, 0.76, 0.86)
+    a5 = seg(t, 0.88, 0.96)
     ax.text(50, 4, '不是 Qwen 的 GQA 结构有问题 —— 是一个变换要同时满足三对约束',
             color=ICE, fontsize=10, ha='center', alpha=a5, va='center')
 
@@ -383,9 +436,12 @@ if __name__ == '__main__':
     which = sys.argv[1]; total = int(sys.argv[2])
     out = os.path.join(FRAMES, f'act{which}')
     os.makedirs(out, exist_ok=True)
+    for f in os.listdir(out):
+        if f.endswith('.png'):
+            os.remove(os.path.join(out, f))
     fn = {'1': act1, '2': act2, '3': act3, '4': act4, '5': act5, '8': act8}[which]
     print(f'渲染 幕{which}: {total} 帧', flush=True)
     for fi in range(total):
-        frame(fi, total, fn, out)
+        frame(fi, total, fn, out, which)
         if fi % 40 == 0: print(f'  {fi}/{total}', flush=True)
     print('done', flush=True)
