@@ -97,7 +97,10 @@ def act6(ax, t):
 
     sa = D['slot_alpha']            # [16,4] 真实逐 token 槽门控
     ent = -np.sum(sa * np.log(sa + 1e-12), -1) / np.log(4)
-    order = np.argsort(-ent)         # 按熵从高到低滚动：典型 → 极端
+    # 按 token **原始顺序**滚动，不用按熵排序。
+    # 排序后熵单调下降，观众会读成「越看越糟」；原始顺序有起伏（0.012–0.749），
+    # 才看得出「这是真实序列，每个 token 的槽偏好不同」。
+    ENT_LO, ENT_HI = float(ent.min()), float(ent.max())
 
     # ---------- 0.06-0.20：v62.1 塌缩演示 ----------
     a1 = seg(t, 0.06, 0.14) * (1 - seg(t, 0.22, 0.30))
@@ -125,7 +128,7 @@ def act6(ax, t):
         i0 = int(np.floor(pos)) % n
         i1 = (i0 + 1) % n
         frac = pos - np.floor(pos)
-        row = sa[order[i0]] * (1 - frac) + sa[order[i1]] * frac
+        row = sa[i0] * (1 - frac) + sa[i1] * frac
 
         for i in range(4):
             v = float(row[i])
@@ -139,10 +142,13 @@ def act6(ax, t):
             ax.text(x + bw / 2, base + hgt + 2.2, f'{v:.3f}', color=FG,
                     fontsize=12, ha='center', alpha=a2 * grow)
         # token 序号
-        ax.text(50, 21.0, f'token #{order[i0]}  （按熵从高到低滚动）',
-                color=DIM, fontsize=9, ha='center', alpha=a2, va='center')
+        # 「四槽都在用」≠「四槽权重一样」：不同 token 偏好差很多。
+        # 并进这一行说明，不另起一行（下方 14.0 是拆分重组标题的位置）。
+        ax.text(50, 21.0,
+                f'token #{i0}  ·  每个槽都有非零权重，但偏好不同：熵 {ENT_LO:.3f} – {ENT_HI:.3f}',
+                color=DIM, fontsize=8.5, ha='center', alpha=a2, va='center')
         ax.text(50, 17.5,
-                f'四槽激活率 100%  ·  平均熵 {np.mean(-np.sum(sa*np.log(sa+1e-12),-1))/np.log(4):.3f}'
+                f'四槽激活率 100%  ·  平均熵 {np.mean(ent):.3f}'
                 f'  ·  和 = 1  ·  token 数不变',
                 color='#35D0BA', fontsize=10, ha='center',
                 alpha=seg(t, 0.44, 0.52), va='center')
