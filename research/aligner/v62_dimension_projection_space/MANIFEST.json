@@ -42,12 +42,12 @@
   "protocol": {
     "eval_set": "train_distribution",
     "input": "三个真实预训练骨干（Qwen2.5-0.5B D=896 / BERT-L4-H256 D=256 / ViT-base-16 D=768）的 layer0-3 权重切片，经随机正交 P_m 投到 256 维共享空间后测对齐",
-    "caveat": "对齐 CKA 是在**合成输入**（标准正态）上测的表示对齐，不是下游任务精度；端到端数字（held-out 0.9016）来自 ag_news 4 分类，与 v33 的 fuse_mse 协议不同，两者不可直接比较"
+    "caveat": "对齐 CKA 是在**合成输入**（标准正态）上测的表示对齐，不是下游任务精度；端到端数字（held-out 0.9076，v62.3）来自 ag_news 4 分类，与 v33 的 fuse_mse 协议不同，两者不可直接比较"
   },
   "acceptance": {
     "criterion": "① 成对对齐 CKA ≥ 0.98；② 环路一致性约束后三模型对齐 ≥ 0.99；③ 等维保真度 ≥ 0.999；④ 端到端 held-out 显著高于随机且专家不塌缩；⑤ 净室 8 步全过（含 trust_remote_code 与缺模态）",
     "outcome": "pass",
-    "note": "①两两 0.9873~0.9898 ②0.9925 ③0.9998 ④0.9016 vs 0.25，均衡 0.8774 ⑤cleanroom.py 8/8，包内测试 12/12"
+    "note": "①两两 0.9873~0.9898 ②0.9925 ③0.9998 ④0.9076 vs 0.25，专家均衡 0.612 ⑤cleanroom.py 8/8，包内测试 16/16"
   },
   "leakage_audit": {
     "required": true,
