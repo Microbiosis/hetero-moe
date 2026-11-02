@@ -160,9 +160,9 @@ def act1(ax, t):
             ax.text(x, 21, m, color=MOD_COL[m], fontsize=9.5, ha='center', alpha=ae)
             ax.text(x, 17, f'保留能量 {MOD_EN[m]*100:.0f}%', color=FG, fontsize=10,
                     ha='center', alpha=ae)
-    ax.text(50, 12, 'BERT 的能量一分不丢，Qwen 丢掉 46%，ViT 丢掉 41%',
+    ax.text(50, 13.0, 'BERT 的能量一分不丢，Qwen 丢掉 46%，ViT 丢掉 41%',
             color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.74, 0.86), va='center')
-    ax.text(50, 6, '三个模态的序列长度也不同：文本 128，图像 197',
+    ax.text(50, 9.0, '三个模态的序列长度也不同：文本 128，图像 197',
             color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.82, 0.95), va='center')
 
 
@@ -214,9 +214,9 @@ def act2(ax, t):
         ax.text(50, 16.5, '不是把一个 256 维空间切成四块',
                 color=DIM, fontsize=9.5, ha='center', alpha=a4, va='center')
     a5 = seg(t, 0.80, 0.92)
-    ax.text(50, 9.5, '空间 = Σ_s S_s  =  4 × 256  =  1024 维',
+    ax.text(50, 12.5, '空间 = Σ_s S_s  =  4 × 256  =  1024 维',
             color=GREEN, fontsize=13, ha='center', alpha=a5, va='center', weight='bold', path_effects=ST.text_glow(GREEN))
-    ax.text(50, 4.5, 'token 数不变 —— 合并发生在模型轴，不在 token 轴',
+    ax.text(50, 8.8, 'token 数不变 —— 合并发生在模型轴，不在 token 轴',
             color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.86, 0.97), va='center')
 
 
@@ -266,9 +266,9 @@ def act3(ax, t):
             ax.plot([x1, x2], [y1, y1], color=GREEN, lw=3.2, alpha=a4)
 
     a5 = seg(t, 0.64, 0.76)
-    ax.text(50, 8, '三座桥全绿 —— 看起来一切顺利',
+    ax.text(50, 11.5, '三座桥全绿 —— 看起来一切顺利',
             color=GREEN, fontsize=11.5, ha='center', alpha=a5, va='center')
-    ax.text(50, 4,
+    ax.text(50, 8.8,
             '   '.join(f'{k} {v:.4f}' for k, v in tgt.items()),
             color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.72, 0.86), va='center')
 
@@ -345,11 +345,11 @@ def act4(ax, t):
     # ---------------- 阶段 C：数字翻转 ----------------
     a3 = seg(t, 0.60, 0.72)
     if a3 > 0.01:
-        ax.text(20, 17.0, '两两', color=DIM, fontsize=10, ha='right', alpha=a3, va='center')
-        ax.text(22, 17.0, '0.9893', color=GREEN, fontsize=13, ha='left', alpha=a3,
+        ax.text(20, 22.0, '两两', color=DIM, fontsize=10, ha='right', alpha=a3, va='center')
+        ax.text(22, 22.0, '0.9893', color=GREEN, fontsize=13, ha='left', alpha=a3,
                 va='center', weight='bold', path_effects=ST.text_glow(GREEN))
-        ax.text(20, 7.0, '三模型', color=DIM, fontsize=10, ha='right', alpha=a3, va='center')
-        ax.text(38, 7.0, '0.6767', color=RED, fontsize=13, ha='left', alpha=a3,
+        ax.text(20, 17.0, '三模型', color=DIM, fontsize=10, ha='right', alpha=a3, va='center')
+        ax.text(38, 17.0, '0.6767', color=RED, fontsize=13, ha='left', alpha=a3,
                 va='center', weight='bold', path_effects=ST.text_glow(RED))
         ax.annotate('', xy=(36, 7.0), xytext=(36, 17.0),
                     arrowprops=dict(arrowstyle='->', color=RED, lw=1.4, alpha=a3))
@@ -381,7 +381,7 @@ def act4(ax, t):
                 alpha=a4, va='center', weight='bold', path_effects=ST.text_glow(GREEN))
 
     a5 = seg(t, 0.88, 0.96)
-    ax.text(50, 4, '不是 Qwen 的 GQA 结构有问题 —— 是一个变换要同时满足三对约束',
+    ax.text(50, 8.8, '不是 Qwen 的 GQA 结构有问题 —— 是一个变换要同时满足三对约束',
             color=ICE, fontsize=10, ha='center', alpha=a5, va='center')
 
 
@@ -429,8 +429,10 @@ def act5(ax, t):
     vx, vy = tri[2]                            # ViT 节点
     if a2 > 0.01:
         # 两个结果标记放在 ViT 节点**右侧**，垂直错开（避开节点本身）
-        m1 = (vx + 8.0, vy - gap * 0.5)
-        m2 = (vx + 8.0, vy + gap * 0.5)
+        # 合拢目标是 ViT 节点本身 —— 语义是「两个结果在同一点重合」，
+        # 停在节点外侧会看起来像「结果飞出去了」
+        m1 = (vx + gap * 0.28, vy - gap * 0.5)
+        m2 = (vx + gap * 0.28, vy + gap * 0.5)
         ST.rbox(ax, (m1[0] - 1.1, m1[1] - 1.1), 2.2, 2.2, fc=ICE, ec=ICE, lw=1.6, alpha=a2 * 0.9, fill_alpha=0.45, z=2)
         ST.rbox(ax, (m2[0] - 1.1, m2[1] - 1.1), 2.2, 2.2, fc=GOLD, ec=GOLD, lw=1.6, alpha=a2 * 0.9, fill_alpha=0.45, z=2)
         # 从 ViT 节点连到各自的标记
@@ -445,9 +447,9 @@ def act5(ax, t):
     # 缝的文字（收紧时淡出）
     a2b = a2 * (1 - seg(t, 0.66, 0.78))
     if a2b > 0.01:
-        ax.text(50, 18.5, '同一个终点，走法不同 ⇒ 结果不同',
+        ax.text(50, 21.0, '同一个终点，走法不同 ⇒ 结果不同',
                 color=RED, fontsize=10.5, ha='center', alpha=a2b, va='center')
-        ax.text(50, 13.5, f'缝宽 {CON["two_path_diff"]:.4f}',
+        ax.text(50, 17.0, f'缝宽 {CON["two_path_diff"]:.4f}',
                 color=RED, fontsize=9.5, ha='center', alpha=a2b, va='center')
 
     # ---------------- 约束公式 ----------------
@@ -466,8 +468,8 @@ def act5(ax, t):
                 lw=2.0 + 1.6 * tighten, alpha=0.95,
                 path_effects=ST.line_glow(VIOLET, lw=5, alpha=0.4))
         if a2 > 0.01:
-            m1 = (vx + 8.0, vy - gap * 0.5)
-            m2 = (vx + 8.0, vy + gap * 0.5)
+            m1 = (vx + gap * 0.28, vy - gap * 0.5)
+            m2 = (vx + gap * 0.28, vy + gap * 0.5)
             ST.rbox(ax, (m1[0] - 1.1, m1[1] - 1.1), 2.2, 2.2, fc=ICE, ec=ICE, lw=1.6, alpha=0.9, fill_alpha=0.45, z=2)
             ST.rbox(ax, (m2[0] - 1.1, m2[1] - 1.1), 2.2, 2.2, fc=GOLD, ec=GOLD, lw=1.6, alpha=0.9, fill_alpha=0.45, z=2)
             ax.plot([vx, m1[0]], [vy, m1[1]], color=ICE, lw=1.2, alpha=0.85)
@@ -480,13 +482,13 @@ def act5(ax, t):
     # ---------------- 结果 ----------------
     a5 = seg(t, 0.82, 0.92)
     if a5 > 0.01:
-        ax.text(26, 8, '0.6767', color=RED, fontsize=13, ha='center', alpha=a5, va='center')
-        ax.annotate('', xy=(44, 8), xytext=(34, 8),
+        ax.text(26, 9.0, '0.6767', color=RED, fontsize=13, ha='center', alpha=a5, va='center')
+        ax.annotate('', xy=(44, 9.0), xytext=(34, 9.0),
                     arrowprops=dict(arrowstyle='->', color=GREEN, lw=1.8, alpha=a5))
-        ax.text(50, 8, '0.9925', color=GREEN, fontsize=15, ha='center',
+        ax.text(50, 9.0, '0.9925', color=GREEN, fontsize=15, ha='center',
                 alpha=a5, va='center', weight='bold', path_effects=ST.text_glow(GREEN))
-        ax.text(72, 8, '三模型', color=DIM, fontsize=10, ha='center', alpha=a5, va='center')
-    ax.text(50, 13.5, f'一致性损失 {CON["loss_before"]:.6f} → {CON["loss_after"]:.6f}',
+        ax.text(72, 9.0, '三模型', color=DIM, fontsize=10, ha='center', alpha=a5, va='center')
+    ax.text(50, 13.0, f'一致性损失 {CON["loss_before"]:.6f} → {CON["loss_after"]:.6f}',
             color=DIM, fontsize=9.5, ha='center', alpha=seg(t, 0.88, 0.97), va='center')
 
 
@@ -539,5 +541,7 @@ if __name__ == '__main__':
     print(f'渲染 幕{which}: {total} 帧', flush=True)
     for fi in range(total):
         frame(fi, total, fn, out, which)
-        if fi % 40 == 0: print(f'  {fi}/{total}', flush=True)
+        if fi % 40 == 0:
+            print(f'  {fi}/{total}', flush=True)
+            gc.collect()      # 长跑时 matplotlib 图元会累积，触发内存压力
     print('done', flush=True)

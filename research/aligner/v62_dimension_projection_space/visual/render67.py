@@ -5,6 +5,7 @@
 """
 import os
 import json
+import gc
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -108,13 +109,13 @@ def act6(ax, t):
             ST.rbox(ax, (14 + i * 18, base), bw, max(bh * v, 0.15), fc=SLOT_COL[i], ec=SLOT_COL[i], lw=1.6, alpha=a1 * 0.9, fill_alpha=0.45, z=2)
             ax.text(14 + i * 18 + bw / 2, base - 2.4, SLOT_NAMES[i],
                     color=DIM, fontsize=11, ha='center', alpha=a1)
-        ax.text(50, 22.0, '一个槽吃掉几乎全部权重', color='#CF3655',
+        ax.text(50, 25.0, '一个槽吃掉几乎全部权重', color='#CF3655',
                 fontsize=11, alpha=a1, va='center', ha='center')
 
     # ---------- 0.26-0.72：四根柱随 token 平滑滚动 ----------
     a2 = seg(t, 0.26, 0.36)
     if a2 > 0.01:
-        ax.text(50, 51.0, 'v62.2 修后：熵 0.693，四槽都参与', color='#35D0BA',
+        ax.text(50, 47.0, 'v62.2 修后：熵 0.693，四槽都参与', color='#35D0BA',
                 fontsize=10, alpha=a2, va='center', ha='center')
 
         base, bw, maxh = 26.0, 12.0, 26.0
@@ -138,43 +139,46 @@ def act6(ax, t):
             ax.text(x + bw / 2, base + hgt + 2.2, f'{v:.3f}', color=FG,
                     fontsize=12, ha='center', alpha=a2 * grow)
         # token 序号
-        ax.text(50, base - 7.0, f'token #{order[i0]}  （按熵从高到低滚动）',
+        ax.text(50, 21.0, f'token #{order[i0]}  （按熵从高到低滚动）',
                 color=DIM, fontsize=9, ha='center', alpha=a2, va='center')
-        ax.text(50, base - 10.5,
-                f'四槽激活率 100%  ·  平均熵 {np.mean(-np.sum(sa*np.log(sa+1e-12),-1))/np.log(4):.3f}  ·  和 = 1',
-                color='#35D0BA', fontsize=10.5, ha='center',
+        ax.text(50, 17.5,
+                f'四槽激活率 100%  ·  平均熵 {np.mean(-np.sum(sa*np.log(sa+1e-12),-1))/np.log(4):.3f}'
+                f'  ·  和 = 1  ·  token 数不变',
+                color='#35D0BA', fontsize=10, ha='center',
                 alpha=seg(t, 0.44, 0.52), va='center')
 
-    # ---------- 0.74-0.92：拆分重组动画 ----------
+    # ---------- 0.74-0.92：拆分重组动画（底部中央，不越界）----------
     a4 = seg(t, 0.74, 0.84)
     if a4 > 0.01:
-        ax.text(50, 18.5, '可分离 · 可重组', color='#64E3F6',
+        ax.text(50, 14.0, '可分离 · 可重组', color='#64E3F6',
                 fontsize=11, weight='bold', alpha=a4, va='center', ha='center')
         fly = seg(t, 0.80, 0.92)
-        # 左块：token 5 的 K 槽
-        lx = 8 + (34 - 8) * fly
-        ST.rbox(ax, (lx, 7), 11, 6, fc='#64E3F6', ec='#64E3F6', lw=1.6, alpha=a4 * 0.32, fill_alpha=0.45, z=2)
-        ax.text(lx + 5.5, 10, 'token5 的 K', color='#64E3F6', fontsize=9,
+        # 左块：token 5 的 K 槽，向中间飞
+        lx = 14 + (30 - 14) * fly
+        ST.rbox(ax, (lx, 8.6), 10, 4.4, fc='#64E3F6', ec='#64E3F6', lw=1.4,
+                alpha=a4 * 0.32, fill_alpha=0.45, z=2)
+        ax.text(lx + 5, 10.8, 'token5 的 K', color='#64E3F6', fontsize=8.5,
                 ha='center', va='center', alpha=a4)
-        # 右块：token 0 的 O 槽
-        rx = 66 - (66 - 60) * fly
-        ST.rbox(ax, (rx, 7), 11, 6, fc='#b085f5', ec='#b085f5', lw=1.6, alpha=a4 * 0.32, fill_alpha=0.45, z=2)
-        ax.text(rx + 5.5, 10, 'token0 的 O', color='#b085f5', fontsize=9,
+        # 右块：token 0 的 O 槽，向中间飞
+        rx = 86 - (86 - 70) * fly
+        ST.rbox(ax, (rx, 8.6), 10, 4.4, fc='#b085f5', ec='#b085f5', lw=1.4,
+                alpha=a4 * 0.32, fill_alpha=0.45, z=2)
+        ax.text(rx + 5, 10.8, 'token0 的 O', color='#b085f5', fontsize=8.5,
                 ha='center', va='center', alpha=a4)
         # 中间合成
         if fly > 0.85:
-            ST.rbox(ax, (46, 6), 8, 8, fc=FG, ec=FG, lw=1.6, alpha=seg(fly, 0.85, 1.0) * 0.16, fill_alpha=0.45, z=2)
-            ax.text(50, 10, '新 token', color=FG, fontsize=9.5, ha='center',
-                    va='center', alpha=seg(fly, 0.85, 1.0))
-            ax.annotate('', xy=(45.5, 10), xytext=(38, 10),
-                        arrowprops=dict(arrowstyle='->', color=FG, lw=1.4,
-                                        alpha=seg(fly, 0.85, 1.0)))
-            ax.annotate('', xy=(55, 10), xytext=(61, 10),
-                        arrowprops=dict(arrowstyle='->', color=FG, lw=1.4,
-                                        alpha=seg(fly, 0.85, 1.0)))
+            g = seg(fly, 0.85, 1.0)
+            ST.rbox(ax, (50, 8.4), 10, 4.8, fc=FG, ec=FG, lw=1.4,
+                    alpha=g * 0.16, fill_alpha=0.45, z=2)
+            ax.text(55, 10.8, '新 token', color=FG, fontsize=8.5, ha='center',
+                    va='center', alpha=g)
+            ax.annotate('', xy=(49.5, 10.8), xytext=(44.5, 10.8),
+                        arrowprops=dict(arrowstyle='->', color=FG, lw=1.4, alpha=g))
+            ax.annotate('', xy=(60.5, 10.8), xytext=(69.5, 10.8),
+                        arrowprops=dict(arrowstyle='->', color=FG, lw=1.4, alpha=g))
 
-    ax.text(50, 10.5, '[B, S, 4, 256]  ·  token 数不变  ·  全槽软分布',
-            color=DIM, fontsize=9, ha='center', alpha=seg(t, 0.30, 0.40), va='center')
+    # 原来的 '[B, S, 4, 256] · token 数不变' 单独一行与字幕重复，
+    # 「token 数不变」并入下面那行，避免与拆分重组的合成块相撞。
 
 
 # ============================================================ 幕 ⑦
@@ -277,5 +281,7 @@ if __name__ == '__main__':
     print(f'渲染 幕{which}: {total} 帧', flush=True)
     for fi in range(total):
         frame(fi, total, fn, out, which)
-        if fi % 40 == 0: print(f'  {fi}/{total}', flush=True)
+        if fi % 40 == 0:
+            print(f'  {fi}/{total}', flush=True)
+            gc.collect()      # 长跑时 matplotlib 图元会累积，触发内存压力
     print('done', flush=True)
