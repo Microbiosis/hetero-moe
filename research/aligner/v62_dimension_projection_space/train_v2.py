@@ -20,7 +20,15 @@ t0 = time.time()
 DEV = 'cuda' if torch.cuda.is_available() else 'cpu'
 print('device:', DEV, flush=True)
 if DEV=='cuda': print(torch.cuda.get_device_name(0), flush=True)
-subprocess.run([sys.executable,'-m','pip','install','-q','huggingface_hub','scikit-learn'],check=False)
+# 只在缺包时才装；--break-system-packages 是为了在 PEP 668 管理的
+# 系统环境里也能装（PEP 668 会直接拒绝系统级 pip install）。
+try:
+    import huggingface_hub  # noqa: F401
+    import sklearn         # noqa: F401
+except ImportError:
+    subprocess.run([sys.executable, '-m', 'pip', 'install', '-q',
+                    '--break-system-packages',
+                    'huggingface_hub', 'scikit-learn'], check=False)
 from huggingface_hub import hf_hub_download, HfApi
 
 HFT = os.environ.get('HF_TOKEN','')
