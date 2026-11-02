@@ -118,7 +118,7 @@ def act6(ax, t):
     # ---------- 0.26-0.72：四根柱随 token 平滑滚动 ----------
     a2 = seg(t, 0.26, 0.36)
     if a2 > 0.01:
-        ax.text(50, 47.0, 'v62.2 修后：熵 0.693，四槽都参与', color='#35D0BA',
+        ax.text(50, 47.0, 'v62.3 修好 router 后：熵 0.647', color='#35D0BA',
                 fontsize=10, alpha=a2, va='center', ha='center')
 
         base, bw, maxh = 26.0, 12.0, 26.0
@@ -144,11 +144,14 @@ def act6(ax, t):
         # token 序号
         # 「四槽都在用」≠「四槽权重一样」：不同 token 偏好差很多。
         # 并进这一行说明，不另起一行（下方 14.0 是拆分重组标题的位置）。
+        # v62.3 修好 lazy bug 后，router 真正训练了 —— 它学会了**几乎不用 Q 槽**
+        # （16 个 token 上 Q 槽权重 0.000–0.022），实际由 K/V/O 三槽承担。
+        # 这与「四槽各贡献」的原始设想不符，但是真实结果，照实说。
         ax.text(50, 21.0,
-                f'token #{i0}  ·  每个槽都有非零权重，但偏好不同：熵 {ENT_LO:.3f} – {ENT_HI:.3f}',
+                f'token #{i0}  ·  Q 槽权重≈0，实际由 K/V/O 三槽承担（熵 {ENT_LO:.3f}–{ENT_HI:.3f}）',
                 color=DIM, fontsize=8.5, ha='center', alpha=a2, va='center')
         ax.text(50, 17.5,
-                f'四槽激活率 100%  ·  平均熵 {np.mean(ent):.3f}'
+                f'软分布故激活率 100%  ·  平均熵 {np.mean(ent):.3f}'
                 f'  ·  和 = 1  ·  token 数不变',
                 color='#35D0BA', fontsize=10, ha='center',
                 alpha=seg(t, 0.44, 0.52), va='center')
@@ -237,7 +240,7 @@ def act7(ax, t):
     # ---------- 真实负载柱 ----------
     a4 = seg(t, 0.52, 0.66)
     if a4 > 0.01:
-        base, bw, maxh = 12.0, 13.0, 24.0
+        base, bw, maxh = 15.0, 13.0, 19.0
         for e in range(4):
             x = 12 + e * 21
             hgt = maxh * load[e] * a4
@@ -254,23 +257,24 @@ def act7(ax, t):
         ax.text(12 + bw / 2, base + maxh * load[0] + 6.5,
                 '36%', color=DIM, fontsize=10, ha='center', alpha=a5)
 
-        ax.text(50, 9.5,
+        ax.text(50, 9.0,
                 f'均衡 {BAL:.3f}  ·  熵 {_E:.3f}  ·  top-k={R["top_k"]}（每 token 只跑 2 个专家）',
                 color=DIM, fontsize=9.5, ha='center', alpha=a4, va='center')
 
     # ---------- 角标 ----------
     a6 = seg(t, 0.72, 0.82)
-    ax.text(50, 38.0, '⚠ 四个专家均为随机初始化，未从真实 FFN 抽取',
+    ax.text(50, 36.5, '⚠ 四个专家均为随机初始化，未从真实 FFN 抽取',
             color='#CF3655', fontsize=10.5, ha='center', alpha=a6, va='center')
     a7 = seg(t, 0.82, 0.90)
-    ax.text(50, 34.0, '专家已解冻 · 50.3M 可训练参数',
+    ax.text(50, 32.5, '专家已解冻 · 50.3M 可训练参数',
             color=DIM, fontsize=9.5, ha='center', alpha=a7, va='center')
 
     # ---------- 底部对照条 ----------
     a8 = seg(t, 0.88, 0.97)
-    ST.rbox(ax, (6, 17.5), 88, 3.0, fc='#64E3F6', ec='#64E3F6', lw=1.6, alpha=a8 * 0.09, fill_alpha=0.45, z=2)
-    ax.text(50, 19.1,
-            '槽门控：全槽软分布（四个都参与）    |    专家选择：top-k=2（真的省算力）',
+    # 放在专家盒下方的空白（y≈40）；放底部会横穿负载柱（柱区 y 15–34）
+    ST.rbox(ax, (6, 40.0), 88, 3.2, fc='#64E3F6', ec='#64E3F6', lw=1.6, alpha=a8 * 0.09, fill_alpha=0.45, z=2)
+    ax.text(50, 41.6,
+            '槽门控：全槽软分布    |    专家选择：top-k=2（真的省算力）',
             color='#64E3F6', fontsize=9.5, ha='center', alpha=a8, va='center')
 
 

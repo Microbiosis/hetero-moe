@@ -419,7 +419,7 @@
   },
   "end_to_end": {
     "_source": "真实数据端到端训练（ag_news 4 分类），v62.2（槽门控去 top-k + 熵正则）",
-    "version": "62.2",
+    "version": "62.3",
     "fix": "v62.0 的 proj_space.router 是死代码（输出未被使用）；v62.1 让它参与计算但仍在槽上做 top-k=2，实测槽熵 0.0209（单槽独占）；v62.2 改为全槽软门控 + 熵正则，槽熵恢复到 0.6928。",
     "data": {
       "n_text": 10000,
@@ -451,30 +451,41 @@
       "bal_w": 0.01,
       "slot_ent_w": 0.05
     },
-    "held_out_acc": 0.9100899100899101,
+    "held_out_acc": 0.9075924075924076,
     "chance": 0.25,
-    "best_val_acc": 0.9100899100899101,
+    "best_val_acc": 0.9076,
     "best_val_step": null,
     "slot_gate": {
-      "_what": "proj_space.router 的输出 —— 全槽软门控（四槽各贡献多少，和=1）",
-      "load": null,
-      "entropy": null,
-      "balance": null,
-      "reading": "v62.1/v62.2 的槽门控数字全部作废：那个 router 从未被训练。v62.3 修好 lazy 问题后重训，数字以新报告为准。",
-      "status": "INVALIDATED（v62.1/v62.2）— 见 _invalidated"
+      "_what": "proj_space.router 的输出 —— token 级槽门控（全槽软分布，和=1）",
+      "status": "v62.3 有效（v62.1/v62.2 作废，见 _invalidated）",
+      "load": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "mean_weight": [
+        0.003,
+        0.171,
+        0.434,
+        0.392
+      ],
+      "entropy": 0.6470226811300187,
+      "balance": 0.9999999989999999,
+      "reading": "「load 全 1.0」是软分布的必然（没有槽被硬关掉），但**平均权重** [0.003, 0.171, 0.434, 0.392] 说明 Q 槽几乎不被使用 —— router 真正训练后自己学会了放弃 Q 槽，实际由 K/V/O 三槽承担。这与「四槽各贡献」的原始设想不符，但是真实结果。"
     },
     "expert": {
       "_what": "fusion.W_router 的输出 —— 专家选择（4 选 top-2）",
+      "status": "v62.1/v62.2/v62.3 均有效",
       "load": [
-        0.35961694555444557,
-        0.7311399537962038,
-        0.537962037962038,
-        0.3712810626873127
+        0.35030594405594406,
+        0.5267740072427572,
+        0.5723768419080919,
+        0.5505432067932068
       ],
-      "entropy": 0.4762617950189395,
-      "balance": 0.4918578764508696,
-      "reading": "专家选择不受 lazy bug 影响 —— fusion.W_router 是 nn.Parameter，从 __init__ 起就在 trainable 里。",
-      "status": "有效（fusion.W_router 一直在 optimizer 里）"
+      "entropy": 0.471961368834115,
+      "balance": 0.612019770534626,
+      "reading": "v62.3 的专家均衡 0.612 高于 v62.2 的 0.492 —— slot_gate 真正参与训练后，canonical 的槽间比例合理了，fusion 的 router 也就更容易均衡。"
     },
     "caveat": "专家**解冻**（偏离 v33 原设定）；专家权重随机初始化而非从真实 FFN 抽取；任务是 ag_news 分类而非 v33 的 fuse_mse。**不能**与 v33 的 +26.7% 直接比较。",
     "version_history": {
@@ -499,9 +510,10 @@
         "62.1",
         "62.2"
       ],
-      "reason": "训练脚本的 proj_space.router 是 lazy 创建（__init__ 里 s.router=None，首次 forward 才建）。后果三连：① load_state_dict 时 proj_space.router.weight 被判为 unexpected，权重根本加载不上；② trainable/optimizer 在 router 存在之前就取好，router 从未被优化；③ 熵正则的梯度流向 router 却不在 optimizer 里，被丢弃。⇒ 槽门控完全由一个**随机初始化**的 router 决定，「四槽激活率 100%」不成立。",
-      "evidence": "对照测试：训练脚本模型与打包模型在同一输入上给出 alpha[0,0] = [0.2082,0.1385,0.1008,0.5525] vs [0.4139,0.3244,0.1828,0.0788]；unexpected_keys 含 proj_space.router.weight；named_parameters 里只有 fusion.W_router，没有 proj_space.router。",
-      "fixed_in": "62.3"
+      "reason": "训练脚本的 proj_space.router 是 lazy 创建（__init__ 里 s.router=None，首次 forward 才建）。后果三连：① load_state_dict 时 proj_space.router.weight 被判为 unexpected，权重根本加载不上；② trainable/optimizer 在 router 存在之前就取好，router 从未被优化；③ 熵正则的梯度流向 router 却不在 optimizer 里，被丢弃。⇒ 槽门控完全由一个**随机初始化**的 router 决定。",
+      "evidence": "同输入同权重下：训练脚本模型 alpha[0,0]=[0.2082,0.1385,0.1008,0.5525] vs 打包模型 [0.4139,0.3244,0.1828,0.0788]；unexpected_keys 含 proj_space.router.weight；named_parameters 里只有 fusion.W_router。",
+      "fixed_in": "62.3",
+      "note": "专家选择不受影响（fusion.W_router 一直是 nn.Parameter）。"
     }
   },
   "packaging": {

@@ -4,6 +4,7 @@
   - 维度、能量保留、槽门控      → data/v62_capture.npz + v62_meta.json（真实前向）
   - 对齐 CKA、秩扫描、环路一致性 → research/aligner/v62_*/results/metrics.json（实测）
 """
+import gc
 import os
 import numpy as np
 import os
@@ -499,18 +500,20 @@ def act8(ax, t):
     ax.text(50, 56, 'v62 · 维度投影空间', color=GREEN, fontsize=16,
             weight='bold', alpha=p, ha='center', va='center', path_effects=ST.text_glow(GREEN))
 
+    # 全部是 v62.3（router 修好并重训后）的真实读数
     rows = [
         ('两两对齐',   '0.9879 – 0.9898', GREEN),
         ('三模型',     '0.6767  →  0.9925', GREEN),
         ('空间',       '256  →  Σ = 1024 维', ICE),
-        ('专家',       '4 个都在用  ·  均衡 0.492', GOLD),
+        ('专家',       '均衡 0.612  ·  四个都在用', GOLD),
+        ('槽门控',     'Q 槽权重 ≈ 0（router 自己学的）', RED),
     ]
     for i, (k, v, c) in enumerate(rows):
         # 逐行从左滑入
-        a = seg(t, 0.08 + i * 0.11, 0.20 + i * 0.11)
+        a = seg(t, 0.06 + i * 0.10, 0.18 + i * 0.10)
         if a <= 0.01:
             continue
-        y = 47 - i * 7
+        y = 48 - i * 5.5
         slide = (1 - a) * 8
         ax.text(28 - slide, y, k, color=DIM, fontsize=11, ha='right', alpha=a, va='center')
         ax.text(32 - slide, y, v, color=c, fontsize=13, ha='left', alpha=a,
