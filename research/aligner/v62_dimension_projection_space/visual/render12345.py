@@ -68,22 +68,27 @@ def frame(fi, total, fn, out, which=None):
               cmap=matplotlib.colors.LinearSegmentedColormap.from_list(
                   'bg', [ST.BG_DEEP, ST.BG, ST.BG_DEEP]),
               interpolation='bilinear')
-    # 环境层：缓慢飘动的微粒 —— 整片一直有低频运动，画面不死
-    MO.dust(ax, t, n=90, seed=7 + (ord(which) if which else 0) * 13)
+    # 环境层：① 大面积缓慢流动的光带 ② 漂移的微粒
+    # 整片一直有低频运动，画面不死
+    MO.light_band(ax, t)
+    MO.dust(ax, t, n=170, seed=7 + (ord(which) if which else 0) * 13)
     fn(ax, t)
     if which:
         draw_subs(ax, which, seg(t, 0.0, 0.05))
         ST.watermark(ax, 'v62 · 维度投影空间')
     # 转场：幕首淡入（黑幕压一下），幕尾淡出
     if which:
-        head = MO.fade(t, 0.0, 0.05)      # 幕首：从黑浮起
-        tail = MO.fade(t, 0.95, 0.05)     # 幕尾：沉入黑
-        ov = max(1.0 - head, tail) * 0.85
+        # 真转场：幕尾淡到**全黑**、幕首从全黑浮起。
+        # 之前只到 0.45，于是幕与幕之间是「画面+45%黑」硬切到「画面+45%黑」，
+        # 内容突变造成 4.75 的帧差 —— 转场反而成了全片最大的运动。
+        head = MO.fade(t, 0.0, 0.10)      # 幕首：从全黑浮起
+        tail = MO.fade(t, 0.88, 0.10)     # 幕尾：淡到全黑
+        ov = max(1.0 - head, tail)
         if ov > 0.01:
             ax.add_patch(Rectangle((0, 0), W, H, fc=BG, ec='none',
                                    alpha=ov, zorder=50))
     # 镜头极缓慢推近
-    ST.camera(ax, zoom=1.0 + 0.022 * t)
+    ST.camera(ax, zoom=1.0 + 0.022 * t, drift=MO.idle_y(t, 0.10, 0.33))
     fig.savefig(f'{out}/f{fi:05d}.png', facecolor=BG, dpi=100)
     plt.close(fig)
 
@@ -151,7 +156,7 @@ def act1(ax, t):
         a = seg(t, t0, t0 + 0.13)
         if a <= 0.01:
             continue
-        y = 45 - i * 7
+        y = 45 - i * 7 + MO.idle_y(t, 0.20, 0.55, i * 0.31)
         wlen = LEN_MAX * MOD_DIM[m] / MAXD
         head = seg(a, 0.0, 0.62)
         ST.rbox(ax, (X_IN, y), max(wlen * head, 0.01), 3.8,
@@ -177,6 +182,12 @@ def act1(ax, t):
             ax.annotate('', xy=(X_GATE + 4.4, y + 1.9), xytext=(X_GATE + 0.8, y + 1.9),
                         arrowprops=dict(arrowstyle='->', color=MOD_COL[m],
                                         lw=1.1, alpha=a * min(1, (head - 0.4) * 4)))
+        # 光点从幕一开始就跑 —— 幕的前段（元素还没建好）也不静止
+        MO.flow(ax, [(X_IN, y + 1.9),
+                     (X_IN + wlen * head, y + 1.9),
+                     (X_GATE, y + 1.9),
+                     (X_GATE + 5.0 + LEN_OUT * head, y + 1.9)],
+                t, n=6, color=MOD_COL[m], r=0.40, alpha=a * 0.9, speed=0.55)
 
     # ---- 右半：256 不是空间 ----
     aq = seg(t, 0.26, 0.44)
@@ -222,7 +233,7 @@ def act2(ax, t):
         grow = seg(a2, 0.0, 1.0)
         split = seg(a2, 0.12, 0.70)
         for i, sl in enumerate(SLOT_NAMES):
-            y_end = 46 - i * 8
+            y_end = 46 - i * 8 + MO.idle_y(t, 0.22, 0.48, i * 0.27)
             y_now = 40 + (y_end - 40) * split
             x_now = 16 + (72 - 16) * grow
             ax.plot([11.5, x_now], [40, y_now], color=SLOT_COL[i], lw=1.2,
@@ -233,7 +244,7 @@ def act2(ax, t):
             ax.text(18, y_now + 5.0, f'{sl}  子空间（256 维）', color=SLOT_COL[i],
                     fontsize=9.5, va='center', alpha=a2)
 
-    a3 = seg(t, 0.24, 0.48)
+    a3 = seg(t, 0.12, 0.92)
     if a3 > 0.01:
         for i, sl in enumerate(SLOT_NAMES):
             y = 46 - i * 8
@@ -286,16 +297,25 @@ def act3(ax, t):
         a = seg(t, t0, t0 + 0.13)
         if a <= 0.01:
             continue
+        _dy = MO.idle_y(t, 0.22, 0.5, i * 0.29)
         for (xx, yy, mm) in ((x1, y1, m1), (x2, y2, m2)):
-            ax.add_patch(Circle((xx, yy), 2.0, color=MOD_COL[mm], alpha=a * 0.85))
-            ax.text(xx, yy - 3.6, mm, color=MOD_COL[mm], fontsize=8.5,
+            ax.add_patch(Circle((xx, yy + _dy), 2.0, color=MOD_COL[mm], alpha=a * 0.85))
+            ax.text(xx, yy + _dy - 3.6, mm, color=MOD_COL[mm], fontsize=8.5,
                     ha='center', va='center', alpha=a)
         # out_back：桥到位时轻微过冲 —— follow-through
         g = MO.ease((t - t0) / 0.13, 'out_back') if t >= t0 else 0.0
         x_end = x1 + (x2 - x1) * g
-        ax.plot([x1, x_end], [y1, y1], color=GREEN, lw=2.4, alpha=0.95)
-        ax.add_patch(Circle((x_end, y1), 0.75, color=GREEN, alpha=a))
-        MO.counter(ax, (x1 + x2) / 2, y1 + 3.4, tgt[key], t, t0 + 0.05, 0.16,
+        ax.plot([x1, x_end], [y1 + _dy, y1 + _dy], color=GREEN, lw=2.4, alpha=0.95)
+        # 端点持续呼吸 —— 桥接完也不停
+        _pr = 1.0 + 0.18 * np.sin(2 * np.pi * (2.2 * t + i * 0.7))
+        ax.add_patch(Circle((x_end, y1 + _dy), 0.75 * _pr, color=GREEN, alpha=a))
+        # 光点从桥的**全长**上跑，且从幕一开始就跑 ——
+        # 之前等 a>0.55 才启动，幕的前段（元素还没建好）就成了静止段
+        if t > 0.02:
+            MO.flow(ax, [(x1, y1 + _dy), (x2, y1 + _dy)], t, n=5,
+                    color='#BFFFC0', r=0.38, alpha=0.95, speed=0.7,
+                    phase=i * 0.31)
+        MO.counter(ax, (x1 + x2) / 2, y1 + 3.4 + _dy, tgt[key], t, t0 + 0.05, 0.16,
                    fmt='{:.4f}', color=GREEN, fontsize=11.5, alpha=a,
                    path_effects=ST.text_glow(GREEN))
 
@@ -331,7 +351,7 @@ def act4(ax, t):
         ax.text(LX + LW / 2, 51.5, '单一变换', color=FG, fontsize=10,
                 ha='center', alpha=a1)
 
-    a2 = seg(t, 0.08, 0.44)
+    a2 = seg(t, 0.06, 0.58)
     if a2 > 0.01:
         ST.rbox(ax, (LX, 26), LW, 24, fc=FG, ec=FG, lw=1.5,
                 alpha=a2 * 0.10, fill_alpha=0.30, z=2)
@@ -354,14 +374,24 @@ def act4(ax, t):
                 over = max(0.0, min(1.0, (prog - (LX - X0) / (X1_ - X0))
                                     / max(1e-6, 1 - (LX - X0) / (X1_ - X0))))
                 y = y0 + dirn * SHEAR * (over ** 0.8)
-                ST.rbox(ax, (x, y), 2.6, 4.2, fc=MOD_COL[m], ec=MOD_COL[m],
-                        lw=0.8, r=0.12, alpha=0.9, fill_alpha=0.95, z=2)
+                # 渐进长大：原来 prog>0 就整块出现，一帧冒出好几个 → 4.75 的帧差突变
+                _g = min(1.0, max(0.0, prog / 0.09))
+                if _g <= 0.02:
+                    continue
+                ST.rbox(ax, (x + 1.3 * (1 - _g), y + 2.1 * (1 - _g)),
+                        2.6 * _g, 4.2 * _g, fc=MOD_COL[m], ec=MOD_COL[m],
+                        lw=0.8, r=0.12, alpha=0.9 * _g, fill_alpha=0.95, z=2)
                 if 0.02 < over < 0.92 and dirn != 0:
                     ax.plot([x, x], [y0, y], color=RED, lw=1.1,
                             alpha=0.5 * (1 - abs(over - 0.45) * 2))
                 if k == 0:
                     ax.text(x + 3.6, y + 2.2, m, color=MOD_COL[m], fontsize=9,
                             va='center', alpha=0.95)
+        # 光点沿三条流持续向右跑 —— 覆盖「流已走完」的静止段
+        for i, m in enumerate(MODELS):
+            y0 = 44 - i * 7
+            MO.flow(ax, [(X0, y0), (X1_, y0)], t, n=6, color=MOD_COL[m],
+                    r=0.38, alpha=0.75, speed=0.65, phase=i * 0.33)
         if a2 > 0.85:
             ax.text(74, 22.0, '三股被剪开了 —— 因为 router 是随机的', color=RED,
                     fontsize=10, ha='center', alpha=seg(a2, 0.85, 1.0), va='center')
@@ -408,9 +438,10 @@ def act5(ax, t):
     tri = [(30, 44), (18, 26), (42, 26)]
     labels = ['Qwen', 'BERT', 'ViT']
     a1 = seg(t, 0.02, 0.12)
+    _dy5 = MO.idle_y(t, 0.24, 0.45, 0.13)
     if a1 > 0.01:
         for (x, y), lb, c in zip(tri, labels, [GOLD, ICE, GREEN]):
-            ax.add_patch(Circle((x, y), 3.4, color=c, alpha=a1 * 0.85))
+            ax.add_patch(Circle((x, y + _dy5), 3.4, color=c, alpha=a1 * 0.85))
             ax.text(x, y, lb, color='#0a0c10', fontsize=8.5, ha='center',
                     va='center', alpha=a1, weight='bold')
 
@@ -422,6 +453,9 @@ def act5(ax, t):
             continue
         (x1, y1), (x2, y2) = tri[ia], tri[ib]
         ax.plot([x1, x2], [y1, y2], color=VIOLET, lw=2.0, alpha=a)
+        if t > 0.02:
+            MO.flow(ax, [(x1, y1 + _dy5), (x2, y2 + _dy5)], t, n=4,
+                    color='#E6C6FF', r=0.36, alpha=0.9, speed=0.6, phase=i * 0.4)
 
     a2 = seg(t, 0.24, 0.38)
     a2b = a2 * (1 - seg(t, 0.46, 0.56))
@@ -508,6 +542,8 @@ def act8(ax, t):
         txt = '空间不是一个大小的数，而是按功能槽张成的一组子空间之和'
         ax.text(50, 9.0, txt[:int(len(txt) * min(1.0, a6 * 1.25))],
                 color=ICE, fontsize=12, ha='center', alpha=a6, va='center')
+        MO.flow(ax, [(14, 9.0), (86, 9.0)], t, n=8, color='#BFD8FF',
+                r=0.30, alpha=a6 * 0.8, speed=0.35)
 
 
 if __name__ == '__main__':

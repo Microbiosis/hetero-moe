@@ -135,9 +135,14 @@ def watermark(ax, text, alpha=1.0):
     ax.text(97, 3.2, text, color=GREY_D, fontsize=FS_MICRO,
             ha='right', va='center', alpha=alpha)
 
-def camera(ax, zoom=1.0, cx=50, cy=31):
-    """镜头推近：把画布按 zoom 放大并平移，使中心保持在 (cx, cy)。"""
-    if zoom == 1.0:
+def camera(ax, zoom=1.0, cx=50, cy=31, drift=0.0):
+    """镜头推近 + 整体极缓慢漂移。
+
+    drift 让整个画面持续做亚像素级移动 —— 观众感知不到"抖"，
+    但画面不会完全死掉。
+    """
+    cy = cy + drift
+    if zoom == 1.0 and drift == 0.0:
         return
     ax.set_xlim(cx - 50 / zoom, cx + 50 / zoom)
     ax.set_ylim(cy - 31 / zoom, cy + 31 / zoom)

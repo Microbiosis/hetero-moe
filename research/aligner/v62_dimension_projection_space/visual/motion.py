@@ -61,26 +61,105 @@ def pulse(t, freq=1.0, phase=0.0, lo=0.55, hi=1.0):
     return lo + (hi - lo) * s
 
 
+def light_band(ax, t, W=100, H=62, n=4, color='#2A3442', alpha=0.55):
+    """背景缓慢横移的斜光带 —— 大面积运动，帧差上看得见。
+
+    单个微粒在 320x200 的降采样里会被平均掉，帧间差几乎测不出；
+    光带是连续的大面积，感知与测量上都成立。
+    """
+    for i in range(n):
+        y0 = -10 + i * (H + 20) / n
+        dx = (t * (5.5 + i * 1.7)) % (W + 40) - 20
+        # 用一条很宽、很淡的斜带表示
+        ax.add_patch(plt_poly([
+            (dx - 26, y0), (dx - 8, y0), (dx + 14, y0 + H),
+            (dx - 4, y0 + H)], color, alpha))
+
+
+def plt_poly(pts, color, alpha):
+    from matplotlib.patches import Polygon
+    return Polygon(pts, closed=True, fc=color, ec='none', alpha=alpha, zorder=-5)
+
+
+def flow(ax, pts, t, n=7, color='#FFFFFF', r=0.55, alpha=0.9, speed=1.0,
+         phase=0.0):
+    """沿路径流动的光点 —— 给任何连线/带子加"有东西在里面走"的感觉。
+
+    pts 是折线（[(x0,y0), (x1,y1), ...]），光点按 (t*speed + phase + k/n) 沿它走。
+    这是让静态图形"活起来"最有效的手段：运动是**沿着语义路径**的，
+    观众会读成"数据在流动"，而不是"装饰在飘"。
+    """
+    segs = []
+    total = 0.0
+    for i in range(len(pts) - 1):
+        (x0, y0), (x1, y1) = pts[i], pts[i + 1]
+        L = float(np.hypot(x1 - x0, y1 - y0))
+        segs.append((x0, y0, x1, y1, L, total))
+        total += L
+    if total <= 0:
+        return
+    for k in range(n):
+        u = ((t * speed + phase + k / n) % 1.0) * total
+        for (x0, y0, x1, y1, L, base) in segs:
+            if u <= base + L:
+                f = 0.0 if L <= 0 else (u - base) / L
+                x = x0 + (x1 - x0) * f
+                y = y0 + (y1 - y0) * f
+                # 拖尾：沿路留一串渐隐的点，看起来像"有东西在流"
+                for _j in range(4):
+                    uu = u - _j * (total * 0.012)
+                    if uu < 0:
+                        continue
+                    for (ax0, ay0, ax1, ay1, aL, ab) in segs:
+                        if uu <= ab + aL:
+                            ff = 0.0 if aL <= 0 else (uu - ab) / aL
+                            ax.add_patch(plt_circle(
+                                ax0 + (ax1 - ax0) * ff, ay0 + (ay1 - ay0) * ff,
+                                r * (1 - _j * 0.2), alpha * (1 - _j * 0.22)))
+                            break
+                ax.add_patch(plt_circle(x, y, r, alpha))
+                break
+        else:
+            x0, y0, x1, y1, L, base = segs[-1]
+            ax.add_patch(plt_circle(x1, y1, r, alpha))
+
+
+def idle_y(t, amp=0.28, freq=0.7, phase=0.0):
+    """原地浮动：元素即使不动位置也在微微起伏（idle motion）。
+
+    这是"画面不死"的关键 —— 观众感知到的动态大部分来自这种低频起伏，
+    而不是大幅位移。
+    """
+    return amp * np.sin(2 * np.pi * (freq * t + phase))
+
+
+def idle_scale(t, amp=0.035, freq=0.8, phase=0.0):
+    """原地呼吸缩放（1 ± amp）。"""
+    return 1.0 + amp * np.sin(2 * np.pi * (freq * t + phase))
+
+
 # ---------------- 背景微粒场 ----------------
-def dust(ax, t, n=110, seed=7, W=100, H=62, r=0.13, alpha=0.62):
+def dust(ax, t, n=170, seed=7, W=100, H=62, r=0.16, alpha=0.95):
     """缓慢飘动的微粒（3Blue1Brown 式的星尘衬底）。
 
     粒子位置由 (seed, 初始位置) 决定，随时间做小幅度漂移 ——
     整层始终在动，但速度远慢于主体，不会抢注意力。
     """
     rng = np.random.default_rng(seed)
-    x0 = rng.uniform(-6, W + 6, n)
-    y0 = rng.uniform(-4, H + 4, n)
-    vx = rng.uniform(-1.6, 1.6, n)
-    vy = rng.uniform(-1.1, 1.1, n)
+    x0 = rng.uniform(-8, W + 8, n)
+    y0 = rng.uniform(-6, H + 6, n)
+    vx = rng.uniform(-2.2, 2.2, n)
+    vy = rng.uniform(-1.5, 1.5, n)
     sz = rng.uniform(0.5, 1.9, n)
     ph = rng.uniform(0, 2 * np.pi, n)
-    x = x0 + vx * t * 2.2
-    y = y0 + vy * t * 1.5 + np.sin(2 * np.pi * t * 0.25 + ph) * 0.9
-    tw = 0.55 + 0.45 * np.sin(2 * np.pi * t * 0.55 + ph)
+    # 视差：大点 = 前景（快、亮），小点 = 远景（慢、暗）—— 层次感
+    depth = (sz - 0.5) / 1.4
+    x = x0 + vx * t * (1.4 + 4.0 * depth)
+    y = y0 + vy * t * (0.9 + 2.4 * depth) + np.sin(2 * np.pi * t * 0.30 + ph) * 1.3
+    tw = 0.58 + 0.42 * np.sin(2 * np.pi * t * 0.5 + ph)   # [0.16, 1.0] 不会为负
     for i in range(n):
-        ax.add_patch(plt_circle(x[i], y[i], r * sz[i] * 0.5,
-                                alpha * tw[i] * 0.42))
+        ax.add_patch(plt_circle(x[i], y[i], r * sz[i] * 0.55,
+                                alpha * (0.30 + 0.55 * depth[i]) * tw[i] * 0.62))
 
 
 def plt_circle(x, y, r, a):

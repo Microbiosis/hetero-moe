@@ -79,22 +79,27 @@ def frame(fi, total, fn, out, which=None):
               cmap=matplotlib.colors.LinearSegmentedColormap.from_list(
                   'bg', [ST.BG_DEEP, ST.BG, ST.BG_DEEP]),
               interpolation='bilinear')
-    # 环境层：缓慢飘动的微粒 —— 整片一直有低频运动，画面不死
-    MO.dust(ax, t, n=90, seed=7 + (ord(which) if which else 0) * 13)
+    # 环境层：① 大面积缓慢流动的光带 ② 漂移的微粒
+    # 整片一直有低频运动，画面不死
+    MO.light_band(ax, t)
+    MO.dust(ax, t, n=170, seed=7 + (ord(which) if which else 0) * 13)
     fn(ax, t)
     if which:
         draw_subs(ax, which, seg(t, 0.0, 0.05))
         ST.watermark(ax, 'v62 · 维度投影空间')
     # 转场：幕首淡入（黑幕压一下），幕尾淡出
     if which:
-        head = MO.fade(t, 0.0, 0.05)      # 幕首：从黑浮起
-        tail = MO.fade(t, 0.95, 0.05)     # 幕尾：沉入黑
-        ov = max(1.0 - head, tail) * 0.85
+        # 真转场：幕尾淡到**全黑**、幕首从全黑浮起。
+        # 之前只到 0.45，于是幕与幕之间是「画面+45%黑」硬切到「画面+45%黑」，
+        # 内容突变造成 4.75 的帧差 —— 转场反而成了全片最大的运动。
+        head = MO.fade(t, 0.0, 0.10)      # 幕首：从全黑浮起
+        tail = MO.fade(t, 0.88, 0.10)     # 幕尾：淡到全黑
+        ov = max(1.0 - head, tail)
         if ov > 0.01:
             ax.add_patch(Rectangle((0, 0), W, H, fc=BG, ec='none',
                                    alpha=ov, zorder=50))
     # 镜头极缓慢推近
-    ST.camera(ax, zoom=1.0 + 0.022 * t)
+    ST.camera(ax, zoom=1.0 + 0.022 * t, drift=MO.idle_y(t, 0.10, 0.33))
     fig.savefig(f'{out}/f{fi:05d}.png', facecolor=BG, dpi=100)
     plt.close(fig)
 
@@ -133,7 +138,7 @@ def act6(ax, t):
         order = np.argsort(-ent)
         n = len(sa)
         base, bw, maxh = 26.0, 12.0, 24.0
-        pos = seg(t, 0.16, 0.56) * (n + 2)
+        pos = seg(t, 0.12, 0.92) * (n + 2)   # 整幕持续滚，不留静止段
         i0 = int(np.floor(pos)) % n
         i1 = (i0 + 1) % n
         frac = pos - np.floor(pos)
@@ -212,10 +217,10 @@ def act7(ax, t):
             ax.text(EXP[e] + 5, 49.5, f'专家{e}', color=EXP_COL[e], fontsize=9,
                     ha='center', va='center', alpha=a1)
 
-    a3 = seg(t, 0.08, 0.42)
+    a3 = seg(t, 0.04, 0.86)
     if a3 > 0.01:
         for k in range(16):
-            tk = seg(a3 * 1.45 - k * 0.030, 0.0, 1.0)
+            tk = seg(a3 * 1.55 - k * 0.026, 0.0, 1.0)
             if tk <= 0.02 or tk >= 0.999:
                 continue
             y0 = 50.5 - (k % 5) * 1.2
