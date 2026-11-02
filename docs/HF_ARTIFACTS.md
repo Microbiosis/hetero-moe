@@ -23,10 +23,27 @@
 | 原来 | 现在在哪 |
 |---|---|
 | `HeteroMoEProjSpace-v2` (2.6 GB) | **主仓**（唯一可加载）`HeteroMoEProjSpace-v2` |
-| `hetero-moe-projspace-v2` (214 MB) | → `HeteroMoEProjSpace-v2/checkpoints/v62/` |
+| `hetero-moe-projspace-v2` (214 MB) | → `HeteroMoEProjSpace-v2/checkpoints/v62.3/` |
 | `hetero-moe-projspace` (3.3 MB) | **分析仓**，吸收 `dimspace/` `align/` `v33_reference/` |
 
 一个能跑模型，一个存读数。`HeteroMoE-v1` 已删除（见 §三「已删除的仓库」）。
+
+## 二·五、当前版本状态（v62.3）
+
+| 项 | 值 |
+|---|---|
+| 当前版本 | **v62.3**（`checkpoints/v62.3/`） |
+| held-out 准确率 | **0.9076**（随机 0.25） |
+| 专家负载 / 均衡 | [0.350, 0.527, 0.572, 0.551] / **0.612** |
+| 槽门控熵 | **0.647**（软分布） |
+| 槽门控平均权重 | [0.003, 0.171, 0.434, 0.392] —— **Q 槽几乎不用** |
+
+⚠️ **v62.0 / v62.1 / v62.2 的端到端数字与槽门控结论一律作废。**
+那些版本的 `proj_space.router` 是 lazy 创建的（既没被 `load_state_dict` 加载上，
+也从未进入 optimizer），槽门控全由一个**随机初始化**的 router 决定 ——
+v62.0 报的「均衡 0.8774」尤其误导，它统计的正是这个从不参与计算的模块。
+
+---
 
 ## 三、完整清单（4 model + 3 dataset）
 
@@ -34,7 +51,7 @@
 
 | 仓库 | 大小 | 内容 |
 |---|---|---|
-| **`HeteroMoEProjSpace-v2`** | **2.81 GB** | v62 完整模型（唯一可 `from_pretrained` 加载）+ `checkpoints/v62/`（训练 state_dict 214 MB + 曲线） |
+| **`HeteroMoEProjSpace-v2`** | **2.81 GB** | **v62.3** 完整模型（唯一可 `from_pretrained` 加载）+ `checkpoints/v62.3/`（训练 state_dict 214 MB + 报告）|
 | `backbone-slices`（私有） | 295 MB | 三骨干 layer0–3 × 6 功能槽权重切片 |
 | `hetero-moe-cache`（dataset） | 4.46 GB | ag_news/food101 真实隐藏状态 |
 
@@ -67,7 +84,7 @@
 
 | 仓库 | 大小 | 内容 |
 |---|---|---|
-| `structure-film-public` | 101 MB | 机制可视化视频 + 族谱 3D 素材 |
+| `structure-film-public` | 105 MB | **v62 机制可视化**（`v62_mechanism.mp4`，8 幕 / 60 秒 / 数字全部来自真实前向）+ 旧版机制可视化 + 族谱 3D 素材 |
 | `structure-film-job`（私有） | 106 MB | 《谱系》110 秒长片渲染工程 |
 
 ### 已删除的仓库（及原因）
@@ -80,7 +97,7 @@
 | `hetero-moe-align` | <0.1 MB | → `hetero-moe-projspace/align/` | 并入分析仓 |
 | `hetero-moe-router-unfrozen` | 14.6 MB | → `hetero-moe-router/unfrozen/` | 同族实验合并 |
 | `hetero-moe-shared-routed` | 17.7 MB | → `hetero-moe-router/shared-routed/` | 同族实验合并 |
-| `hetero-moe-projspace-v2` | 214 MB | → `HeteroMoEProjSpace-v2/checkpoints/v62/` | 中间产物，归属主仓 |
+| `hetero-moe-projspace-v2` | 214 MB | → `HeteroMoEProjSpace-v2/checkpoints/v62.3/` | 中间产物，归属主仓 |
 | **`HeteroMoE-v1`** | **2.41 GB** | **删除**，证据转存 `hetero-moe-projspace/v33_reference/` | 见下 |
 
 #### 为什么删 `HeteroMoE-v1`
