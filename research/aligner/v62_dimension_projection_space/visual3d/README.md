@@ -46,7 +46,7 @@ cv.to_pil().save('frame.png')
 ## 交互式版本（HTML，主交付）
 
 `html/v62_space3d.html` —— **完全离线的单文件**（three.js r128 + OrbitControls + 几何数据
-全部内联，约 640 KB），双击即可打开，手机上也能用。
+全部内联，约 645 KB），双击即可打开，手机上也能用。
 
 关键认识：**three.js 在沙箱里不可用**（swiftshader 不出图），但交付 HTML 后
 three.js 是在**用户的浏览器**里跑的 —— 那里有真 GPU。所以交互式版本沙箱零渲染成本。
@@ -80,3 +80,27 @@ route_slots ['Q','O']   total_dim 1024   d_shared 256
 ```
 
 数据在 `v62_geom.json`（同目录），脚本内核在 `html/v62_geom_data.js`。
+
+### 沙箱里验证逻辑（渲不了 three.js 时）
+
+沙箱的 swiftshader 不出图，但**场景构建逻辑**可以用 stub 替掉 THREE 后跑通：
+数据键是否对得上、坐标计算、数组索引、事件绑定、滑杆逻辑。
+
+node 跑出来的结果：
+
+```
+子空间平面 : Q, K, V, O
+门控权重   : {"Q":0.0035,"K":0.1706,"V":0.4344,"O":0.3916}
+平面不透明 : Q=0.062  K=0.166  V=0.329  O=0.303
+路由槽     : Q, O
+向量清单   : Q:Qwen=1.000  Q:BERT=0.011  K:BERT=1.000  K:ViT=0.042
+             V:BERT=1.000  V:ViT=0.043  O:Qwen=1.000  O:BERT=0.012
+HUD 读数   : Q 0.0035 · K 0.1706 · V 0.4344 · O 0.3916
+收紧滑杆   : OK
+```
+
+**这个方法抓出了一个真 bug**：`BufferGeometry` 没有 `rotateZ()`（那是 `Object3D` 的），
+圆柱转向那行在真实 three.js 里会直接抛异常，整个场景起不来。
+改成旋转物体（`mesh.rotation.z`）。
+
+渲染本身（透视、光照、材质）仍需在真浏览器里看。
