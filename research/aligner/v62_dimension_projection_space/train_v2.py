@@ -172,7 +172,7 @@ class HeteroMoEProjSpace(nn.Module):
                  use_hyper=False,use_fast=False,hyper_rank=8,fast_decay=0.9,
                  use_recurrent_gate=False,use_memory_router=False,
                  use_hebbian=False,use_modality_adapter=False,use_feedback=False,
-                 use_sparse=False):
+                 use_sparse=False,use_moa=False,moa_steps=1,moa_mode='sparse_router'):
         super().__init__()
         s.P_m=nn.ParameterList([nn.Parameter(torch.empty(d_shared,D)) for D in modal_dims])
         for m in range(len(modal_dims)):
@@ -184,8 +184,14 @@ class HeteroMoEProjSpace(nn.Module):
                                         use_hebbian=use_hebbian,
                                         use_modality_adapter=use_modality_adapter)
         s.d_space=s.proj_space.total_dim
-        # ---- 重构A：稀疏块融合 或 稠密MoE ----
-        if use_sparse:
+        # ---- 重构A：稀疏块融合 / MoA异构proposer / 稠密MoE ----
+        if use_moa:
+            from moa_fusion import MoAFusionOverProjSpace
+            s.fusion=MoAFusionOverProjSpace(s.d_space,num_proposers=ne,
+                                            top_k=top_k,
+                                            aggregator_mode=moa_mode,
+                                            num_refinement_steps=moa_steps)
+        elif use_sparse:
             from sparse_block_fusion import SparseBlockFusion
             s.fusion=SparseBlockFusion(s.d_space,n_blocks=16,block_ff=256,
                                        top_blocks=3,num_experts=ne)
@@ -208,6 +214,8 @@ class HeteroMoEProjSpace(nn.Module):
         struct,canon,aux=s.proj_space(feats,return_aux=True)
         if fused_only:
             y,alpha=s.fusion.forward_with_routing(canon)
+            # ---- MoA：暴露 aux_loss（Load-Balancing + Z-Loss）----
+            aux['moa_aux_loss'] = getattr(s.fusion, 'last_aux_loss', 0.0)
             # ---- 路线9：top-down 反馈回写投影 ----
             if s.use_feedback:
                 conf,deltas=s.feedback_head(y)
@@ -232,9 +240,13 @@ _USE_FB    = os.environ.get('USE_FB','0') == '1'
 _USE_LOPT  = os.environ.get('USE_LOPT','0') == '1'
 _USE_SPARSE = os.environ.get('USE_SPARSE','0') == '1'
 _USE_SUPCON = os.environ.get('USE_SUPCON','0') == '1'
+_USE_MOA = os.environ.get('USE_MOA','0') == '1'
+_MOA_STEPS = int(os.environ.get('MOA_STEPS','1'))
+_MOA_MODE = os.environ.get('MOA_MODE','sparse_router')
 _on = [n for n,v in [('HYPER',_USE_HYPER),('FAST',_USE_FAST),('RECUR',_USE_RECUR),
         ('MEM',_USE_MEM),('HEBB',_USE_HEBB),('ADAPT',_USE_ADAPT),('FB',_USE_FB),
-        ('LOPT',_USE_LOPT),('SPARSE',_USE_SPARSE),('SUPCON',_USE_SUPCON)] if v]
+        ('LOPT',_USE_LOPT),('SPARSE',_USE_SPARSE),('SUPCON',_USE_SUPCON),
+        ('MOA',_USE_MOA)] if v]
 if _on:
     print('   [自修改权重] 启用: %s' % ','.join(_on), flush=True)
 CTR_W = float(os.environ.get('CTR_W', '0.5'))
@@ -250,7 +262,8 @@ model=HeteroMoEProjSpace(
     use_hyper=_USE_HYPER,use_fast=_USE_FAST,
     use_recurrent_gate=_USE_RECUR,use_memory_router=_USE_MEM,
     use_hebbian=_USE_HEBB,use_modality_adapter=_USE_ADAPT,
-    use_feedback=_USE_FB,use_sparse=_USE_SPARSE).to(DEV)
+    use_feedback=_USE_FB,use_sparse=_USE_SPARSE,
+    use_moa=_USE_MOA,moa_steps=_MOA_STEPS,moa_mode=_MOA_MODE).to(DEV)
 
 # ---- 路线5：学习式权重优化器（替换 proj_space 投影矩阵的更新方式）----
 _learned_opt = None
@@ -371,6 +384,11 @@ for step in range(STEPS+1):
     loss_ent = -slot_ent
 
     loss=loss_ce+BAL_W*loss_bal+_slot_ent_w_eff*loss_ent
+
+    # ---- MoA：Load-Balancing + Z-Loss 辅助损失 ----
+    _moa_aux = aux.get('moa_aux_loss', 0.0)
+    if isinstance(_moa_aux, torch.Tensor):
+        loss = loss + _moa_aux
 
     # ---- 重构C：监督对比 loss（治 v54「一致但无类别结构」）----
     # 对融合表示 z 做 SupCon：同类别拉近、异类别推远，直接塑造类别几何。
