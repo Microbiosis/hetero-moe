@@ -139,7 +139,7 @@ def idle_scale(t, amp=0.035, freq=0.8, phase=0.0):
 
 
 # ---------------- 背景微粒场 ----------------
-def dust(ax, t, n=170, seed=7, W=100, H=62, r=0.16, alpha=0.95):
+def dust(ax, t, n=80, seed=7, W=100, H=62, r=0.22, alpha=0.95):
     """缓慢飘动的微粒（3Blue1Brown 式的星尘衬底）。
 
     粒子位置由 (seed, 初始位置) 决定，随时间做小幅度漂移 ——

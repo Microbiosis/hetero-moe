@@ -555,7 +555,11 @@ if __name__ == '__main__':
     print(f'渲染 幕{which}: {total} 帧', flush=True)
     for fi in range(total):
         frame(fi, total, fn, out, which)
+        # 每帧后强制回收：matplotlib 的 artist（每帧 200+ 个 patch）
+        # 不主动 GC 会累积，Kaggle CPU kernel 只有 ~4GB 内存时会 OOM。
+        # 本地 14GB 够用，所以这个坑只在云端暴露。
+        plt.close('all')
+        gc.collect()
         if fi % 40 == 0:
             print(f'  {fi}/{total}', flush=True)
-            gc.collect()      # 长跑时 matplotlib 图元会累积，触发内存压力
     print('done', flush=True)
