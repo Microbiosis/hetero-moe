@@ -244,7 +244,7 @@ from self_repair import SlotHealthMonitor
 monitor = SlotHealthMonitor(
     n_slots=model.proj_space.n_slots,
     slot_names=model.proj_space.slot_names,
-    threshold=0.01,      # 低于此值触发修复（Q 槽 0.003 < 0.01）
+    threshold=0.005,     # 降至 0.005（v62.4 训练时 Q 槽 EMA 约 0.02–0.05，未击穿 0.01）
     ema_decay=0.99,
     cooldown=200,        # 修复后至少 200 步内不重复触发
     device=str(DEV)
@@ -343,6 +343,7 @@ for step in range(STEPS+1):
                      'router_wnorm': float(rw.detach().norm()),
                      'router_gnorm': float(rg.norm()) if rg is not None else 0.0,
                      'slot_ent': slot_ent,
+                     'slot_ema': monitor.status(),
                      'loss_ent': float(loss_ent.detach())})
         print('   step %4d  ce %.4f  acc %.3f  负载 %s  熵 %.3f  %.0fs'
               %(step,float(loss_ce),acc,np.round(load,2).tolist(),ent,time.time()-t0), flush=True)
