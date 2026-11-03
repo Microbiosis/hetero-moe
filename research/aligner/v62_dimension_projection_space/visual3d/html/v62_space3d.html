@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>v62 维度投影空间 · 三维机制</title>
+<style>
+  html,body{margin:0;height:100%;background:#0a0c10;overflow:hidden;
+    font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;color:#e8eaed}
+  #c{display:block;width:100vw;height:100vh}
+  .hud{position:fixed;padding:14px 18px;background:rgba(10,12,16,.82);
+       border:1px solid #222834;border-radius:10px;font-size:13px;line-height:1.85;
+       pointer-events:none;backdrop-filter:blur(4px)}
+  #ttl{left:18px;top:18px;max-width:430px}
+  #ttl b{font-size:17px;color:#35D0BA;letter-spacing:.5px}
+  #leg{right:18px;top:18px;max-width:270px}
+  #ctl{left:18px;bottom:18px;pointer-events:auto}
+  #ctl label{display:block;font-size:12px;color:#9aa4b2;margin-bottom:4px}
+  #ctl input{width:230px;accent-color:#35D0BA}
+  .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;
+      vertical-align:middle}
+  .k{color:#9aa4b2}
+  .v{color:#e8eaed;font-variant-numeric:tabular-nums}
+  .tip{position:fixed;padding:9px 12px;background:rgba(14,17,23,.95);
+       border:1px solid #2a3340;border-radius:7px;font-size:12px;line-height:1.7;
+       pointer-events:none;display:none;max-width:290px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="hud" id="ttl">
+  <b>v62 · 维度投影空间（三维）</b><br>
+  <span class="k">空间</span> <span class="v">空间 = Σ<sub>s</sub> S<sub>s</sub>，4 槽 × 256 = 1024 维</span><br>
+  <span class="k">对齐</span> <span class="v">A<sub>ac</sub> ≡ A<sub>bc</sub> ∘ A<sub>ab</sub>（环路一致性）</span><br>
+  <span class="k">held-out</span> <span class="v">0.9076</span>
+  <span class="k">专家均衡</span> <span class="v">0.612</span>
+  <div style="margin-top:8px;color:#7f8a99">
+    几何来自 v62.3 真实前向：槽门控均值
+    <span class="v">Q 0.0035 · K 0.1706 · V 0.4344 · O 0.3916</span><br>
+    圆柱长度 = 该模态在该槽的投影后能量（归一化）
+  </div>
+  <div style="margin-top:8px;color:#7f8a99">拖动旋转 · 滚轮缩放 · 右键平移</div>
+</div>
+
+<div class="hud" id="leg">
+  <div><span class="sw" style="background:#F0873B"></span>模型轴 Qwen</div>
+  <div><span class="sw" style="background:#64E3F6"></span>模型轴 BERT</div>
+  <div><span class="sw" style="background:#83C167"></span>模型轴 ViT</div>
+  <div><span class="sw" style="background:#8a94a6"></span>子空间平面 S<sub>s</sub>（256 维）</div>
+  <div style="margin-top:8px"><span class="sw" style="background:#35D0BA"></span>槽门控向量（逐 token）</div>
+  <div><span class="sw" style="background:#CF3655"></span>对齐路径（直达 / 复合）</div>
+</div>
+
+<div class="hud" id="ctl">
+  <label>约束收紧 <span id="tw" style="color:#e8eaed">0%</span> —— 两条路径合拢</label>
+  <input type="range" id="tw2" min="0" max="100" value="0">
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script src="v62_geom_data.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+
+const BG=0x0a0c10, AX=[0x39414f,0x39414f,0x39414f];
+const MODEL_COL={Qwen:0xF0873B,BERT:0x64E3F6,ViT:0x83C167};
+const SLOT_COL={Q:0xC9E2AE,K:0xA6CF8C,V:0x83C167,O:0x77B05D};
+
+// ---- 数据（来自 v62.3 真实前向；与仓库 visual/data/v62_geom.json 同源）----
+const D = window.__V62_GEOM__ || {
+  slots:["Q","K","V","O"],
+  alpha_mean:[0.003,0.171,0.434,0.392],
+  slot_models:{Q:["Qwen","BERT","ViT"],K:["BERT","ViT"],V:["BERT","ViT"],O:["Qwen","BERT","ViT"]},
+  per_modality:{Q:{Qwen:0.9,BERT:0.2,ViT:0.4},K:{Qwen:0.0,BERT:0.8,ViT:0.5},
+               V:{Qwen:0.0,BERT:0.7,ViT:0.9},O:{Qwen:0.6,BERT:0.3,ViT:0.2}}
+};
+
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+const sc=new THREE.Scene(); sc.background=new THREE.Color(BG);
+const cam=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,1000);
+cam.position.set(34,26,34);
+const ctl=new OrbitControls(cam,renderer.domElement);
+ctl.enableDamping=true; ctl.dampingFactor=.06; ctl.target.set(0,0,0);
+sc.add(new THREE.AmbientLight(0xffffff,.5));
+const key=new THREE.DirectionalLight(0xffffff,1.1); key.position.set(30,40,25); sc.add(key);
+const rim=new THREE.DirectionalLight(0x66d9ff,.35); rim.position.set(-25,-15,-20); sc.add(rim);
+
+// ---- 三条正交轴：X=模型轴 Y=槽轴 Z=对齐轴 ----
+const AXLEN=16;
+function axisLine(from,to,color){
+  const g=new THREE.BufferGeometry().setFromPoints([from,to]);
+  sc.add(new THREE.Line(g,new THREE.LineBasicMaterial({color})));
+}
+axisLine(new THREE.Vector3(-AXLEN,-AXLEN,-AXLEN),new THREE.Vector3(AXLEN,-AXLEN,-AXLEN),AX[0]);
+axisLine(new THREE.Vector3(-AXLEN,-AXLEN,-AXLEN),new THREE.Vector3(-AXLEN, AXLEN,-AXLEN),AX[1]);
+axisLine(new THREE.Vector3(-AXLEN,-AXLEN,-AXLEN),new THREE.Vector3(-AXLEN,-AXLEN, AXLEN),AX[2]);
+function label(txt,pos,color,size){
+  const cv=document.createElement('canvas'); cv.width=512; cv.height=128;
+  const x=cv.getContext('2d'); x.font='bold 64px "Noto Sans CJK SC",sans-serif';
+  x.fillStyle=color; x.textAlign='center'; x.textBaseline='middle';
+  x.fillText(txt,256,64);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),
+    transparent:true, depthTest:false}));
+  sp.scale.set(size,size/4,1); sp.position.copy(pos); sc.add(sp); return sp;
+}
+label('模型轴 · Qwen/BERT/ViT',new THREE.Vector3(AXLEN+2,-AXLEN,-AXLEN),'#8a94a6',9);
+label('槽轴 · Q/K/V/O',new THREE.Vector3(-AXLEN,AXLEN+2,-AXLEN),'#8a94a6',9);
+label('对齐轴',new THREE.Vector3(-AXLEN,-AXLEN,AXLEN+2),'#8a94a6',7);
+
+// ---- 四个子空间平面 S_s（256 维，YZ 平面上的斜切方块）----
+const slotMeshes={};
+D.slots.forEach((s,i)=>{
+  const y=-AXLEN+3+i*7.5;
+  const g=new THREE.PlaneGeometry(9,9);
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({
+    color:SLOT_COL[s]||0x8899aa, transparent:true, opacity:.13,
+    side:THREE.DoubleSide, depthWrite:false}));
+  m.position.set(0,y,0); m.rotation.y=Math.PI/4; sc.add(m);
+  slotMeshes[s]=m;
+  label('S_'+s,new THREE.Vector3(0,y+5.6,0),'#'+((SLOT_COL[s]||0x8899aa).toString(16).padStart(6,'0')),4.6);
+});
+
+// ---- 槽门控向量：每个模态在每个槽上的贡献（沿模型轴 X 方向）----
+const vecGroup=new THREE.Group(); sc.add(vecGroup);
+const vecs=[];
+D.slots.forEach((s,i)=>{
+  const y=-AXLEN+3+i*7.5;
+  (D.slot_models[s]||[]).forEach(m=>{
+    const w=(D.per_modality&&D.per_modality[s]&&D.per_modality[s][m])||0;
+    if(w<=0.001) return;
+    const L=w*13;
+    const g=new THREE.CylinderGeometry(.34,.34,L,12);
+    g.rotateZ(Math.PI/2);
+    const me=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:MODEL_COL[m]||0x8899aa}));
+    me.position.set(-L/2,y,0); vecGroup.add(me);
+    const tip=new THREE.Mesh(new THREE.SphereGeometry(.52,16,12),
+      new THREE.MeshBasicMaterial({color:MODEL_COL[m]||0x8899aa}));
+    tip.position.set(0,y,0); vecGroup.add(tip);
+    vecs.push({mesh:me,tip,slot:s,model:m,w});
+  });
+});
+
+// ---- 对齐路径：直达 vs 复合（终点同，路径不同 = 锥角）----
+const pathGrp=new THREE.Group(); sc.add(pathGrp);
+const A=new THREE.Vector3(-6,2,2), B=new THREE.Vector3(6,2,-4), C=new THREE.Vector3(6,8,-6);
+function tube(pts,color,dash){
+  const g=new THREE.BufferGeometry().setFromPoints(pts);
+  const m=dash?new THREE.LineDashedMaterial({color,dashSize:1.1,gapSize:.55}):
+                 new THREE.LineBasicMaterial({color});
+  const l=new THREE.Line(g,m); if(dash) l.computeLineDistances();
+  pathGrp.add(l); return l;
+}
+const direct=tube([A,C],0xCF3655,false);
+const composed=tube([A,B,C],0x35D0BA,true);
+const nodeMat=new THREE.MeshBasicMaterial({color:0xF0873B});
+[[A,'Qwen'],[B,'BERT'],[C,'ViT']].forEach(([p,nm])=>{
+  const m=new THREE.Mesh(new THREE.SphereGeometry(.85,20,14),nodeMat);
+  m.position.copy(p); pathGrp.add(m);
+  label(nm,p.clone().add(new THREE.Vector3(0,2.2,0)),'#F0873B',4.0);
+});
+// 锥角弧（缝）
+const arcGeo=new THREE.BufferGeometry();
+const arcPts=[]; const AN=26;
+for(let i=0;i<=AN;i++){const th=i/AN*Math.PI*0.5;
+  arcPts.push(new THREE.Vector3(6, 2+Math.sin(th)*3.4, -6+ (1-Math.cos(th))*2.4));}
+arcGeo.setFromPoints(arcPts);
+pathGrp.add(new THREE.Line(arcGeo,new THREE.LineBasicMaterial({color:0xCF3655,transparent:true,opacity:.85})));
+
+// ---- 收紧滑杆：两条路径合拢 ----
+const sl=document.getElementById('tw2'), twv=document.getElementById('tw');
+let tighten=0;
+function applyTighten(){
+  const t=tighten;
+  // 直达路径不变，复合路径被拉直：中间点 B 向直线 AC 靠
+  const B2=A.clone().lerp(C,t*0.92);
+  const g=new THREE.BufferGeometry().setFromPoints([A,B2,C]);
+  pathGrp.remove(composed); composed.geometry.dispose();
+  composed=new THREE.Line(g,new THREE.LineDashedMaterial({color:0x35D0BA,dashSize:1.1,gapSize:.55}));
+  composed.computeLineDistances(); pathGrp.add(composed);
+  arcPts.length=0;
+  for(let i=0;i<=AN;i++){const th=i/AN*Math.PI*0.5*(1-t*0.92);
+    arcPts.push(new THREE.Vector3(6,2+Math.sin(th)*3.4,-6+(1-Math.cos(th))*2.4));}
+  arcGeo.setFromPoints(arcPts);
+  twv.textContent=Math.round(t*100)+'%';
+}
+sl.addEventListener('input',()=>{tighten=+sl.value/100; applyTighten();});
+
+// ---- 悬停提示 ----
+const tip=document.getElementById('tip');
+const ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
+let hitList=[];
+renderer.domElement.addEventListener('mousemove',e=>{
+  mouse.x=(e.clientX/innerWidth)*2-1; mouse.y=-(e.clientY/innerHeight)*2+1;
+  ray.setFromCamera(mouse,cam);
+  const its=ray.intersectObjects(vecGroup.children,false);
+  if(its.length){
+    const o=its[0].object; const v=vecs.find(v=>v.mesh===o||v.tip===o);
+    if(v){ tip.style.display='block'; tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY+14)+'px';
+      tip.innerHTML=`<b style="color:#${(MODEL_COL[v.model]||0xffffff).toString(16).padStart(6,'0')}">${v.model}</b>`
+        +` 在 <b>${v.slot}</b> 槽<br>贡献权重 <span class="v">${v.w.toFixed(3)}</span>`;
+      return; }
+  }
+  tip.style.display='none';
+});
+
+function resize(){ cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight); }
+addEventListener('resize',resize);
+(function loop(){ requestAnimationFrame(loop); ctl.update(); renderer.render(sc,cam); })();
+</script>
+</body></html>
