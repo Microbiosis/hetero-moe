@@ -214,8 +214,10 @@ _USE_MEM   = os.environ.get('USE_MEM','0') == '1'
 _USE_HEBB  = os.environ.get('USE_HEBB','0') == '1'
 _USE_ADAPT = os.environ.get('USE_ADAPT','0') == '1'
 _USE_FB    = os.environ.get('USE_FB','0') == '1'
+_USE_LOPT  = os.environ.get('USE_LOPT','0') == '1'
 _on = [n for n,v in [('HYPER',_USE_HYPER),('FAST',_USE_FAST),('RECUR',_USE_RECUR),
-        ('MEM',_USE_MEM),('HEBB',_USE_HEBB),('ADAPT',_USE_ADAPT),('FB',_USE_FB)] if v]
+        ('MEM',_USE_MEM),('HEBB',_USE_HEBB),('ADAPT',_USE_ADAPT),('FB',_USE_FB),
+        ('LOPT',_USE_LOPT)] if v]
 if _on:
     print('   [自修改权重] 启用: %s' % ','.join(_on), flush=True)
 model=HeteroMoEProjSpace(
@@ -223,6 +225,18 @@ model=HeteroMoEProjSpace(
     use_recurrent_gate=_USE_RECUR,use_memory_router=_USE_MEM,
     use_hebbian=_USE_HEBB,use_modality_adapter=_USE_ADAPT,
     use_feedback=_USE_FB).to(DEV)
+
+# ---- 路线5：学习式权重优化器（替换 proj_space 投影矩阵的更新方式）----
+_learned_opt = None
+if _USE_LOPT:
+    from learned_optimizer import LearnedWeightOptimizer
+    _learned_opt = LearnedWeightOptimizer(d=256, rank=4).to(DEV)
+    # 投影矩阵不走 AdamW，改由 learned_opt 手动更新
+    for n, p in model.named_parameters():
+        if '.proj.' in n and '.weight' in n:
+            p.requires_grad_(False)
+    print('   [路线5] 学习式优化器接管 %d 个投影矩阵'
+          % sum(1 for n,_ in model.named_parameters() if '.proj.' in n), flush=True)
 n_ps=sum(p.numel() for p in model.proj_space.parameters())
 n_fu=sum(p.numel() for p in model.fusion.parameters())
 print('   投影空间 %.2fM | 融合层 %.2fM | 总 %.2fM'
@@ -344,6 +358,15 @@ for step in range(STEPS+1):
         if repaired:
             print('   [自修复] step %d 触发: %s | %s'
                   % (step, repaired, monitor.summary()), flush=True)
+
+    # ---- 路线5：学习式优化器手动更新投影矩阵 ----
+    if _learned_opt is not None:
+        with torch.no_grad():
+            for n, p in model.named_parameters():
+                if '.proj.' in n and '.weight' in n and p.grad is not None:
+                    dW = _learned_opt.predict_delta(p.data, p.grad,
+                                                    float(loss_ce.detach()))
+                    p.data.add_(dW)
 
     if step%250==0 or step==STEPS:
         # 在 val 上评估
