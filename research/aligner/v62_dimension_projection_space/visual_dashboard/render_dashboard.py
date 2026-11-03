@@ -114,10 +114,8 @@ def main():
         metrics = json.load(f)
     # energy_keep 不在 metrics.json 里 —— 它是 capture 时实测的
     # （投影后范数 / 投影前范数），在 v62_capture.npz 里。
-    # energy_keep（投影后/投影前范数比）实测于 capture 时，存在 v62_meta.json
-    _meta = json.load(open(os.environ.get('DASH_META',
-                                          '/workspace/v62-viz/data/v62_meta.json')))
-    metrics['_energy_keep'] = [float(x) for x in _meta['energy_keep']]
+    # energy_keep（投影后/投影前范数比）实测于 capture 时，随数据一起带过来
+    metrics['_energy_keep'] = [float(x) for x in data.get('energy_keep', [0.54, 1.0, 0.59])]
     acts.load(data, metrics)
     print('data n=%d  total=%d' % (data['n'], TOTAL), flush=True)
     for fi in range(F_INTRO):
