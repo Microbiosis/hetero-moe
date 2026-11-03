@@ -13,10 +13,43 @@
 2. **描边 + 半透明填充**（3B1B 的图形语汇），不是实心色块。
 3. **排版分层**：主标题 / 幕号 / 数据标注 / 出处水印，字号与灰度拉开。
 """
+import os
+
 import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
+from matplotlib import font_manager as fm
 from matplotlib.colors import to_rgba
 from matplotlib.patches import FancyBboxPatch
+
+
+def setup_fonts():
+    """找到可用的中文字体并设为默认。
+
+    本机（手机沙箱）与 Kaggle 的字体路径不同，所以按候选顺序找，
+    找到就用它自己的 family 名 —— NotoSansCJK-Regular.ttc 的名字是
+    'Noto Sans CJK SC'，而下载的单字重 OTF 是 'Noto Sans SC'，不能写死。
+
+    环境变量 CJK_FONT 可指定路径（Kaggle 上先下载字体再指过来）。
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    cands = [os.environ.get('CJK_FONT', ''),
+             os.path.join(here, 'fonts', 'NotoSansSC-Regular.otf'),
+             '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+             '/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf',
+             '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc']
+    for f in cands:
+        if f and os.path.exists(f):
+            try:
+                fm.fontManager.addfont(f)
+                name = fm.FontProperties(fname=f).get_name()
+                plt.rcParams['font.family'] = [name, 'DejaVu Sans']
+                plt.rcParams['axes.unicode_minus'] = False
+                return name
+            except Exception:
+                continue
+    plt.rcParams['font.family'] = ['DejaVu Sans']
+    plt.rcParams['axes.unicode_minus'] = False
+    return None
 
 # ---------------- Manim 色板 ----------------
 BG        = '#14161C'      # 冷调深灰（Manim GREY_E #222222 略冷化）

@@ -22,12 +22,7 @@ import style as ST
 import motion as MO
 from matplotlib.patches import Circle, FancyArrowPatch
 
-for f in ['/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
-          '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf']:
-    if os.path.exists(f):
-        fm.fontManager.addfont(f)
-plt.rcParams['font.family'] = ['Noto Sans CJK SC', 'DejaVu Sans']
-plt.rcParams['axes.unicode_minus'] = False
+ST.setup_fonts()          # 中文字体：手机沙箱与 Kaggle 路径不同，见 style.py
 
 D = np.load(DATA + '/v62_capture.npz')
 import json
@@ -549,7 +544,9 @@ def act8(ax, t):
 if __name__ == '__main__':
     import sys
     which = sys.argv[1]; total = int(sys.argv[2])
-    out = os.path.join(FRAMES, f'act{which}')
+    # 输出目录可由第三个参数指定（render_all.py 用它渲染到临时目录，
+    # 校验通过后才原子替换正式目录 —— 否则子脚本会直接写正式目录）
+    out = sys.argv[3] if len(sys.argv) > 3 else os.path.join(FRAMES, f'act{which}')
     os.makedirs(out, exist_ok=True)
     for f in os.listdir(out):
         if f.endswith('.png'):
