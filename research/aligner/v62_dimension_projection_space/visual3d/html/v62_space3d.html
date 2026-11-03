@@ -1446,7 +1446,9 @@ function tube(pts,color,dash){
   pathGrp.add(l); return l;
 }
 const direct=tube([A,C],0xCF3655,false);
-const composed=tube([A,B,C],0x35D0BA,true);
+// 用 let：applyTighten() 里要把它换成新几何体。写成 const 的话，
+// 拖一下滑杆就会抛 "Assignment to constant variable"。
+let composed=tube([A,B,C],0x35D0BA,true);
 const nodeMat=new THREE.MeshBasicMaterial({color:0xF0873B});
 [[A,'Qwen'],[B,'BERT'],[C,'ViT']].forEach(([p,nm])=>{
   const m=new THREE.Mesh(new THREE.SphereGeometry(.85,20,14),nodeMat);
