@@ -396,7 +396,12 @@ router 宽度在 `__init__` 里按「声明的全部模型」算死（Q/O 槽各
 ## 13c. 机制可视化（8 幕 / 60.3 秒）
 
 视频：**[structure-film-public/v62_mechanism.mp4](https://huggingface.co/datasets/redmingwei/structure-film-public/blob/main/v62_mechanism.mp4)**
-（1600×1000 / 30 fps / **1122 帧 / 37.4 秒** / 2.35 MB）
+（1600×1000 / 30 fps / **1122 帧 / 37.4 秒** / 2.30 MB）
+
+> **渲染在云端跑。** 本工作区绑在用户手机上，渲染 1122 帧 × 每帧 200+ 个
+> matplotlib artist × 1600×1000 PNG 会把 8 核和 11GB 内存吃满。
+> 现在由 Kaggle kernel `redmingwei/hetero-moe-viz-render` 渲染并合成，
+> 本机只做单帧小图验证。云端产出的这一版就是 Hub 上发布的版本。
 
 | # | 时长 | 幕 | 屏上的关键数字 | 来源 |
 |---|---|---|---|---|
