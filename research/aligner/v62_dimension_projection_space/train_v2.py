@@ -123,6 +123,9 @@ if _REPO is None:
         _REPO.mkdir(parents=True, exist_ok=True)
 _fetch_ops(_REPO)
 _sys.path.insert(0, str(_REPO))
+# v62.4：projspace.py 现在 import 同目录的 hyper_proj / self_repair，
+# Kaggle exec 环境 cwd 不在包目录，必须把包目录插入 sys.path。
+_sys.path.insert(0, str(_REPO / _REL))
 
 
 def _load(name, rel):
