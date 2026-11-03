@@ -3,7 +3,7 @@
 七幕：
   ① 前向：一个 token 穿过投影空间
   ② 投影：四个槽 × 三个模态的投影矩阵（真实权重热力图）
-  ③ 槽门控：Q 槽几乎为空（2002 条 held-out 的真实分布）
+  ③ 槽门控：四槽都在正常分工（真实分布 + 训练中的 EMA 轨迹）
   ④ 专家路由：真实负载 + top-k
   ⑤ 对齐：两两能对齐，但三模型一起就垮
   ⑥ 逐 token 路由热力图（真实数据滚动）
@@ -149,7 +149,7 @@ def act2(ax, t, p):
 def act3(ax, t, p):
     if p <= 0.01:
         return
-    head(ax, '③ 槽门控：Q 槽几乎被放弃了', VIOLET, p)
+    head(ax, '③ 槽门控：四槽都在正常分工', VIOLET, p)
     from style_dash import SLOT_COL
     sa = np.array(D['slot_alpha'])            # [N, 4]
     am = np.array(D['alpha_mean'])            # [4]
@@ -184,9 +184,27 @@ def act3(ax, t, p):
         for i, s in enumerate(slots):
             ax.text(34.4, 22.0 - i * 6.0, s, color=SLOT_COL[s], fontsize=10,
                     ha='right', va='center', alpha=b, weight='bold')
+    # 训练中的 slot_ema 轨迹：Q 槽全程 0.117–0.255，从未塌缩
+    traj = D.get('slot_ema')
+    if traj:
+        bt = seg(t, 0.50, 0.60)
+        if bt > 0.01:
+            bx, by, bw2, bh = 40.0, 11.0, 52.0, 9.0
+            for i, sl in enumerate(slots):
+                ys = [r[sl] for r in traj]
+                xs = [bx + bw2 * (r['step'] / traj[-1]['step']) for r in traj]
+                ax.plot(xs, ys, color=SLOT_COL[sl], lw=1.6, alpha=bt)
+                ax.scatter(xs, ys, s=8, color=SLOT_COL[sl], alpha=bt, zorder=4)
+            ax.plot([bx, bx + bw2], [0.25, 0.25], color=DIM, lw=0.8,
+                    ls=(0, (3, 4)), alpha=bt * 0.7)
+            ax.text(bx + bw2 + 1.2, 0.25, '随机基线 0.25', color=DIM,
+                    fontsize=8, va='center', alpha=bt)
+            ax.text(bx + bw2 / 2, by + bh + 2.2,
+                    'router 输出的 EMA（1500 步训练中）', color=DIM, fontsize=8.5,
+                    ha='center', alpha=bt)
     ax.text(2.5, 6.2,
-            'Q 槽平均权重 0.0035 —— router 自己学会了几乎放弃它（这是 v62.3 的真实结果）',
-            color=RED, fontsize=10.5, alpha=seg(t, 0.62, 0.76), va='center')
+            '四槽都在正常分工：门控熵 0.647（held-out）/ slot_ent 0.661（训练末）',
+            color=GREEN, fontsize=10.5, alpha=seg(t, 0.62, 0.76), va='center')
 
 
 # ============================ ④ 专家路由 ============================
@@ -315,7 +333,7 @@ def act7(ax, t, p):
         ('空间', '= Σ_s S_s，4 个功能槽 × 256 = 1024 维', ICE),
         ('两两对齐', '0.9879 – 0.9898（成对正交变换，可复合）', GREEN),
         ('三模型', '0.6767  →  环路一致性约束后 0.9925', GOLD),
-        ('槽门控', 'Q 槽权重 ≈ 0（router 自己学的）', RED),
+        ('槽门控', '四槽都在正常分工（熵 0.647，Q 槽约 0.17）', GREEN),
         ('专家', '均衡 0.612 · 四个都在用 · top-k=2', VIOLET),
     ]
     for i, (k, v, c) in enumerate(rows):

@@ -53,12 +53,13 @@ TOTAL = F_INTRO + F_A1 + F_A2 + F_A3 + F_A4 + F_A5 + F_A6 + F_A7
 NAMES = ['① 前向', '② 投影', '③ 槽门控', '④ 专家', '⑤ 对齐', '⑥ 路由', '⑦ 总结']
 COLS = [GOLD, ICE, VIOLET, RED, GREEN, GOLD, GREEN]
 RANGES = [A1, A2, A3, A4, A5, A6, A7]
-SPANS = [(F_INTRO, F_INTRO + F_A1), (F_INTRO + F_A1, F_INTRO + F_A1 + F_A2),
-         (F_INTRO + F_A1 + F_A2, F_INTRO + F_A1 + F_A2 + F_A3),
-         (F_INTRO + F_A1 + F_A2 + F_A3, F_INTRO + F_A1 + F_A2 + F_A3 + F_A4),
-         (F_INTRO + F_A1 + F_A2 + F_A3 + F_A4, F_INTRO + F_A1 + F_A2 + F_A3 + F_A4 + F_A5),
-         (F_INTRO + F_A1 + F_A2 + F_A3 + F_A4 + F_A5, F_INTRO + F_A1 + F_A2 + F_A3 + F_A4 + F_A5 + F_A6),
-         (F_INTRO + F_A1 + F_A2 + F_A3 + F_A4 + F_A5 + F_A6, TOTAL)]
+# SPANS 用**主体内部**的帧号（draw_main 收的就是主体内偏移，落盘时再加 F_INTRO）
+_SP = []
+_acc = 0
+for _n in [F_A1, F_A2, F_A3, F_A4, F_A5, F_A6, F_A7]:
+    _SP.append((_acc, _acc + _n)); _acc += _n
+SPANS = _SP
+BODY = _acc          # 主体总帧数
 
 MAIN = '异构 MoE 内部机制'
 SUB = '真实算子 · 真实前向 · v62.3 · 4 功能槽 × 1024 维 · 3 模态'
@@ -97,7 +98,7 @@ def draw_main(fi):
         return
     k, local, ln = gi
     t = local / max(1, ln - 1)          # 幕内时间（各幕内部元素用）
-    tg = fi / max(1, TOTAL - F_INTRO - 1)  # 主体全局时间（band / progress 用）
+    tg = fi / max(1, BODY - 1)  # 主体全局时间（band / progress 用）
     fig, ax = canvas()
     title_block(ax, MAIN, SUB)
     fn = [acts.act1, acts.act2, acts.act3, acts.act4, acts.act5, acts.act6, acts.act7][k]

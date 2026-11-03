@@ -159,7 +159,7 @@ def act6(ax, t):
         # 分两行会撞。底部则要塞拆分重组的三个块。
         ax.text(50, 53.0,
                 f'token #{i0}  ·  四槽激活率 100%  ·  平均熵 {np.mean(ent):.3f}'
-                f'  ·  Q 槽权重≈0（由 K/V/O 承担，熵 {ENT_LO:.3f}–{ENT_HI:.3f}）',
+                f'  ·  四槽都在正常分工（熵 {ENT_LO:.3f}–{ENT_HI:.3f}）',
                 color='#35D0BA', fontsize=9.5, ha='center',
                 alpha=seg(t, 0.44, 0.54), va='center')
 

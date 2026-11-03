@@ -38,7 +38,7 @@
     几何来自 v62.3 真实前向：槽门控均值
     <span class="v" id="am">—</span><br>
     圆柱长度 = 该模态在该槽的投影后能量（归一化）<br>
-    平面不透明度 = 槽门控权重 —— <b style="color:#CF3655">Q 方向几乎是空的</b>
+    平面不透明度 = 槽门控权重 —— <b style="color:#35D0BA">四槽都在正常分工</b>
   </div>
   <div style="margin-top:8px;color:#7f8a99">拖动旋转 · 滚轮缩放 · 右键平移</div>
 </div>
@@ -1127,12 +1127,7 @@ window.__V62_GEOM__ = {
   "V",
   "O"
  ],
- "alpha_mean": [
-  0.0035,
-  0.1706,
-  0.4344,
-  0.3916
- ],
+ "alpha_mean": [0.17153, 0.26811, 0.25418, 0.30618],
  "alpha_per_token": [
   [
    0.004510500468313694,
@@ -1351,7 +1346,7 @@ const SLOT_COL={Q:0xC9E2AE,K:0xA6CF8C,V:0x83C167,O:0x77B05D};
 // ---- 数据（来自 v62.3 真实前向；与仓库 visual/data/v62_geom.json 同源）----
 const D = window.__V62_GEOM__ || {
   slots:["Q","K","V","O"],
-  alpha_mean:[0.003,0.171,0.434,0.392],
+  alpha_mean:[0.17153,0.26811,0.25418,0.30618],
   slot_models:{Q:["Qwen","BERT","ViT"],K:["BERT","ViT"],V:["BERT","ViT"],O:["Qwen","BERT","ViT"]},
   per_modality:{Q:{Qwen:0.9,BERT:0.2,ViT:0.4},K:{Qwen:0.0,BERT:0.8,ViT:0.5},
                V:{Qwen:0.0,BERT:0.7,ViT:0.9},O:{Qwen:0.6,BERT:0.3,ViT:0.2}}
@@ -1401,7 +1396,7 @@ D.slots.forEach((s,i)=>{
   const y=-AXLEN+3+i*7.5;
   const a=amap[s];                              // 该槽的真实门控权重
   const g=new THREE.PlaneGeometry(9,9);
-  // 不透明度 ∝ 门控权重：Q 槽权重 0.0035 → 平面几乎透明（真的"几乎是空的"）
+  // 不透明度 ∝ 门控权重（v62.4 的 slot_ema 终点，四槽都在正常分工）
   const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({
     color:SLOT_COL[s]||0x8899aa, transparent:true,
     opacity:0.06+0.62*a, side:THREE.DoubleSide, depthWrite:false}));
