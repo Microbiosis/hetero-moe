@@ -232,12 +232,15 @@ class DimProjectionSpace(nn.Module):
                     continue
                 if m not in feats or k not in feats[m]:
                     continue
-                x = self.proj[key](feats[m][k])
-                # ---- 路线6：模态条件 adapter ----
-                if self.use_modality_adapter and hasattr(self, 'adapter_bank'):
-                    if k in self.adapter_bank.INJECTION.get(m, []):
-                        _mid = {'Qwen': 0, 'BERT': 1, 'ViT': 2}.get(m, 0)
-                        x = self.adapter_bank.get_adapter(k, m).adapt(x, _mid)
+                # ---- 路线6：模态条件 adapter（修改投影权重后线性变换）----
+                if (self.use_modality_adapter and hasattr(self, 'adapter_bank')
+                        and k in self.adapter_bank.INJECTION.get(m, [])):
+                    _mid = {'Qwen': 0, 'BERT': 1, 'ViT': 2}.get(m, 0)
+                    W_eff = self.adapter_bank.get_adapter(k, m).adapt(
+                        self.proj[key].weight, _mid)
+                    x = F.linear(feats[m][k], W_eff)
+                else:
+                    x = self.proj[key](feats[m][k])
                 if B is None:
                     B, S = x.shape[0], x.shape[1]
                 for step in self._path(k, m):
