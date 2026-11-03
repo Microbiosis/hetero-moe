@@ -47,12 +47,13 @@ class SlotHealthMonitor:
     def update(self, alpha: torch.Tensor) -> None:
         """alpha: [B,S,n_slots]（router 输出）或 [n_slots]。"""
         if alpha.dim() == 3:
-            m = alpha.detach().mean(dim=(0, 1)).cpu()
+            m = alpha.detach().mean(dim=(0, 1))
         elif alpha.dim() == 1:
-            m = alpha.detach().cpu()
+            m = alpha.detach()
         else:
             raise ValueError('alpha 形状应为 [B,S,n_slots] 或 [n_slots]，得到 %s'
                              % tuple(alpha.shape))
+        m = m.to(self.ema.device)                  # 对齐设备（ema 固定 CPU）
         self.ema.mul_(self.ema_decay).add_(m * (1 - self.ema_decay))
         self.steps += 1
 
