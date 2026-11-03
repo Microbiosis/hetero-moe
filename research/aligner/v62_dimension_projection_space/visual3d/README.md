@@ -39,3 +39,44 @@ cv.to_pil().save('frame.png')
 ```
 
 文字层用 PIL 叠（中文用 Noto Sans CJK SC）。
+
+
+---
+
+## 交互式版本（HTML，主交付）
+
+`html/v62_space3d.html` —— **完全离线的单文件**（three.js r128 + OrbitControls + 几何数据
+全部内联，约 640 KB），双击即可打开，手机上也能用。
+
+关键认识：**three.js 在沙箱里不可用**（swiftshader 不出图），但交付 HTML 后
+three.js 是在**用户的浏览器**里跑的 —— 那里有真 GPU。所以交互式版本沙箱零渲染成本。
+
+### 场景内容（v62 的三条正交轴）
+
+```
+X = 模型轴（Qwen / BERT / ViT）
+Y = 槽轴（Q / K / V / O）
+Z = 对齐轴
+```
+
+- 四个子空间平面 S_s（256 维，半透明方块，斜切摆放）
+- 逐模态在每槽的贡献向量：圆柱，长度 = 该模态在该槽的**投影后能量**（归一化）
+- 对齐路径：直达 A→C（红实线）vs 复合 A→B→C（青虚线）
+  —— 终点相同、路径不同，**「缝」就是这个锥角**
+- 底部滑杆：约束收紧，两条路径合拢
+- 悬停任一向量 → 显示「该模态在该槽的贡献权重」
+- 拖动旋转 / 滚轮缩放 / 右键平移
+
+### 几何数据（v62.3 真实前向，Kaggle kernel `redmingwei/hetero-moe-v62-geom` 抓）
+
+```
+alpha_mean   Q 0.0035   K 0.1706   V 0.4344   O 0.3916
+能量（进共享空间 → 投影到子空间后）
+  Q  Qwen  394729 → 246904    ← 独占 Q 槽
+  K  BERT   3091 →  3188
+  V  BERT   3091 →  3061
+  O  Qwen  394729 → 209312    ← 独占 O 槽
+route_slots ['Q','O']   total_dim 1024   d_shared 256
+```
+
+数据在 `v62_geom.json`（同目录），脚本内核在 `html/v62_geom_data.js`。
