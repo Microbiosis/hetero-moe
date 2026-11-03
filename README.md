@@ -13,6 +13,7 @@
 | **HF 全部产物** | [Hetero-MoE 研究档案 Collection](https://huggingface.co/collections/redmingwei/hetero-moe-6ae6b67d79b0423227575c99) · 7 个仓库（4 model + 3 dataset） |
 | **仓库逐个说明** | [`docs/HF_ARTIFACTS.md`](docs/HF_ARTIFACTS.md) |
 | **最新一代** | [`research/aligner/v62_dimension_projection_space/`](research/aligner/v62_dimension_projection_space/) |
+| **三维机制（可交互）** | [v62-space3d](https://huggingface.co/spaces/redmingwei/v62-space3d) — 拖动旋转看 v62 的三条正交轴 |
 
 ## 5 秒理解
 
