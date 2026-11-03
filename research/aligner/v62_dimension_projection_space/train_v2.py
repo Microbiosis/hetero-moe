@@ -220,6 +220,13 @@ _on = [n for n,v in [('HYPER',_USE_HYPER),('FAST',_USE_FAST),('RECUR',_USE_RECUR
         ('LOPT',_USE_LOPT)] if v]
 if _on:
     print('   [自修改权重] 启用: %s' % ','.join(_on), flush=True)
+# 路线8 方向2：memory router 启用时加强槽均衡 + 熵正则，强制四槽 alpha 趋均
+_slot_bal_w = float(os.environ.get('SLOT_BAL_W', '1.0' if _USE_MEM else '0.1'))
+_slot_ent_w_eff = float(os.environ.get('SLOT_ENT_W2',
+                                       '0.20' if _USE_MEM else str(SLOT_ENT_W)))
+if _USE_MEM:
+    print('   [路线8] 槽均衡权重 %.2f→%.2f, 熵正则 %.2f→%.2f'
+          % (0.1, _slot_bal_w, SLOT_ENT_W, _slot_ent_w_eff), flush=True)
 model=HeteroMoEProjSpace(
     use_hyper=_USE_HYPER,use_fast=_USE_FAST,
     use_recurrent_gate=_USE_RECUR,use_memory_router=_USE_MEM,
@@ -336,7 +343,7 @@ for step in range(STEPS+1):
     loss_bal_slot = ah_slot.shape[-1]*(fm_s*pm_s).sum()
     fm_e=(ah_exp>0).float().mean(dim=(0,1));  pm_e=ah_exp.mean(dim=(0,1))
     loss_bal_exp  = 4*(fm_e*pm_e).sum()
-    loss_bal = loss_bal_exp + 0.1*loss_bal_slot
+    loss_bal = loss_bal_exp + _slot_bal_w*loss_bal_slot
 
     # 槽门控熵正则：最大化熵，防止塌到单槽。
     # v62.1 实测槽门控熵只有 0.0209（上界 1.0），等价于只剩一个槽，
@@ -344,7 +351,7 @@ for step in range(STEPS+1):
     slot_ent = -(ah_slot*torch.log(ah_slot+1e-9)).sum(-1).mean()
     loss_ent = -slot_ent
 
-    loss=loss_ce+BAL_W*loss_bal+SLOT_ENT_W*loss_ent
+    loss=loss_ce+BAL_W*loss_bal+_slot_ent_w_eff*loss_ent
     if step<STEPS:
         opt.zero_grad(set_to_none=True); loss.backward()
         torch.nn.utils.clip_grad_norm_(trainable,1.0)
