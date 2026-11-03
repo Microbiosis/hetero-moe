@@ -47,10 +47,19 @@ class FusionOverProjSpace(nn.Module):
             [nn.Parameter(torch.tensor([0.05])) for _ in range(num_experts)])
         self.W_router = nn.Parameter(torch.randn(num_experts, d_space) * 0.01)
 
-        # ---- 路线 3：快速权重专家偏置（运行时状态，不进 state_dict）----
-        # 每专家一个 [d_space] 的 fast bias，按 batch 输入的均值 EMA 更新，
-        # 实现推理时对新序列的快速适应。默认关闭（use_fast=False）。
-        self.fast_w = torch.zeros(num_experts, d_space)
+        # ---- 路线 3：快速权重专家（Fast-Weight FFN）----
+        # 真正实现：用 key-value outer product 累积 ΔW，推理后遗忘。
+        # 每专家有 fast_u/fast_v 生成低秩 ΔW = outer(u(x), v(x))，
+        # 动态修改 FFN 第一层权重。默认关闭（use_fast=False）。
+        self.use_fast = use_fast
+        if use_fast:
+            self.fast_u = nn.ParameterList(
+                [nn.Parameter(torch.randn(d_space, d_ff) * 0.02)
+                 for _ in range(num_experts)])
+            self.fast_v = nn.ParameterList(
+                [nn.Parameter(torch.randn(d_space, d_space) * 0.02)
+                 for _ in range(num_experts)])
+            self.fast_scale = nn.Parameter(torch.tensor([0.05]))
 
     @staticmethod
     def _swiglu(x: torch.Tensor, wg, wu, wd) -> torch.Tensor:
@@ -63,22 +72,30 @@ class FusionOverProjSpace(nn.Module):
         _, ti = torch.topk(a, self.top_k, dim=-1)
         ah = a * torch.zeros_like(a).scatter_(-1, ti, 1.0)
 
-        # ---- 路线 3：快速权重更新（推理时适应新序列）----
+        # ---- 路线 3：快速权重 ΔW = outer(u(x), v(x)) ----
+        # 用当前 batch 的 hidden state 均值生成每专家的 FFN 权重修正，
+        # 前向时叠加到 w_gates，推理后不持久化（快速写入/遗忘）。
+        fast_deltas = None
         if self.use_fast:
-            if self.fast_w.device != x.device:
-                self.fast_w = self.fast_w.to(x.device)
-            mu = x.detach().mean(dim=(0, 1))            # [d_space] 全局均值
-            with torch.no_grad():
-                self.fast_w.mul_(self.fast_decay).add_(
-                    mu.unsqueeze(0) * (1 - self.fast_decay))
+            mu = x.detach().mean(dim=1)                  # [B, d_space]
+            fast_deltas = []
+            for m in range(self.num_experts):
+                u = mu @ self.fast_u[m]                  # [B, d_ff]
+                v = mu @ self.fast_v[m]                  # [B, d_space]
+                dW = torch.bmm(u.unsqueeze(2), v.unsqueeze(1))  # [B,d_ff,d_space]
+                fast_deltas.append(self.fast_scale * dW)
 
         out = torch.zeros_like(x)
         for m in range(self.num_experts):
-            bias = self.betas[m]
-            if self.use_fast:
-                bias = bias + self.fast_w[m]            # 快速偏置叠加
-            h = x * self.gammas[m] + bias               # 不 detach：专家参与训练
-            f = self._swiglu(h, self.w_gates[m], self.w_ups[m], self.w_downs[m])
+            h = x * self.gammas[m] + self.betas[m]       # 不 detach：专家参与训练
+            if self.use_fast and fast_deltas is not None:
+                # 动态 w_gates：w_slow[b] + ΔW[b]
+                wg = self.w_gates[m].unsqueeze(0) + fast_deltas[m]   # [B,d_ff,d_space]
+                gate_h = torch.bmm(h, wg.transpose(1, 2))            # [B,S,d_ff]
+                up_h = F.linear(h, self.w_ups[m])
+                f = F.linear(F.silu(gate_h) * up_h, self.w_downs[m])
+            else:
+                f = self._swiglu(h, self.w_gates[m], self.w_ups[m], self.w_downs[m])
             out = out + ah[..., m:m + 1] * self.alphas[m] * f
         return x + out, ah
 
