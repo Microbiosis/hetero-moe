@@ -145,14 +145,17 @@ from itertools import combinations
 
 
 class HeteroMoEProjSpace(nn.Module):
-    def __init__(s,modal_dims=(896,256,768),d_shared=256,ne=4,top_k=2):
+    def __init__(s,modal_dims=(896,256,768),d_shared=256,ne=4,top_k=2,
+                 use_hyper=False,use_fast=False,hyper_rank=8,fast_decay=0.9):
         super().__init__()
         s.P_m=nn.ParameterList([nn.Parameter(torch.empty(d_shared,D)) for D in modal_dims])
         for m in range(len(modal_dims)):
             nn.init.orthogonal_(s.P_m[m]); s.P_m[m].requires_grad_(False)
-        s.proj_space=DimProjectionSpace(d_shared,MEASURED,ne,top_k)
+        s.proj_space=DimProjectionSpace(d_shared,MEASURED,ne,top_k,
+                                        use_hyper=use_hyper,hyper_rank=hyper_rank)
         s.d_space=s.proj_space.total_dim
-        s.fusion=FusionOverProjSpace(s.d_space,None,ne,top_k)
+        s.fusion=FusionOverProjSpace(s.d_space,None,ne,top_k,
+                                     use_fast=use_fast,fast_decay=fast_decay)
     def forward(s, hidden, fused_only=True):
         names=['Qwen','BERT','ViT']; pr={}
         for i,m in enumerate(names):
@@ -168,7 +171,11 @@ class HeteroMoEProjSpace(nn.Module):
         return canon,aux
 
 torch.manual_seed(0)
-model=HeteroMoEProjSpace().to(DEV)
+_USE_HYPER = os.environ.get('USE_HYPER','0') == '1'
+_USE_FAST  = os.environ.get('USE_FAST','0') == '1'
+if _USE_HYPER or _USE_FAST:
+    print('   [自修改权重] use_hyper=%s use_fast=%s' % (_USE_HYPER,_USE_FAST), flush=True)
+model=HeteroMoEProjSpace(use_hyper=_USE_HYPER,use_fast=_USE_FAST).to(DEV)
 n_ps=sum(p.numel() for p in model.proj_space.parameters())
 n_fu=sum(p.numel() for p in model.fusion.parameters())
 print('   投影空间 %.2fM | 融合层 %.2fM | 总 %.2fM'

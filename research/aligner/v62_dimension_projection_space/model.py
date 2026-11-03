@@ -90,7 +90,9 @@ class HeteroMoEProjSpaceConfig(PretrainedConfig):
     def __init__(self, qwen_id: str = QWEN_ID, bert_id: str = BERT_ID,
                  vit_id: str = VIT_ID, d_shared: int = 256,
                  n_experts: int = 4, moe_top_k: int = 2, d_space: int = 1024,
-                 modal_dims=(896, 256, 768), **kw):
+                 modal_dims=(896, 256, 768),
+                 use_hyper: bool = False, hyper_rank: int = 8,
+                 use_fast: bool = False, fast_decay: float = 0.9, **kw):
         self.qwen_id = qwen_id
         self.bert_id = bert_id
         self.vit_id = vit_id
@@ -99,6 +101,10 @@ class HeteroMoEProjSpaceConfig(PretrainedConfig):
         self.moe_top_k = moe_top_k          # 不能叫 top_k：会和生成参数冲突
         self.d_space = d_space
         self.modal_dims = list(modal_dims)
+        self.use_hyper = use_hyper
+        self.hyper_rank = hyper_rank
+        self.use_fast = use_fast
+        self.fast_decay = fast_decay
         super().__init__(**kw)
 
 
@@ -138,9 +144,13 @@ class HeteroMoEProjSpaceModel(PreTrainedModel):
 
         self.proj_space = DimProjectionSpace(
             config.d_shared, MEASURED_SUBSPACES,
-            config.n_experts, config.moe_top_k)
+            config.n_experts, config.moe_top_k,
+            use_hyper=getattr(config, 'use_hyper', False),
+            hyper_rank=getattr(config, 'hyper_rank', 8))
         self.fusion = FusionOverProjSpace(
-            config.d_space, None, config.n_experts, config.moe_top_k)
+            config.d_space, None, config.n_experts, config.moe_top_k,
+            use_fast=getattr(config, 'use_fast', False),
+            fast_decay=getattr(config, 'fast_decay', 0.9))
 
     @classmethod
     def from_scratch(cls, config: HeteroMoEProjSpaceConfig):

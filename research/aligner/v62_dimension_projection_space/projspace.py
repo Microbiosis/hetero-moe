@@ -48,6 +48,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+from hyper_proj import HyperLinear
+
+
 @dataclass
 class SlotSubspace:
     """一个功能槽贡献的子空间。"""
@@ -86,7 +89,8 @@ class DimProjectionSpace(nn.Module):
 
     def __init__(self, d_shared: int = 256,
                  subspaces: Optional[Dict[str, SlotSubspace]] = None,
-                 n_experts: int = 4, top_k: int = 2):
+                 n_experts: int = 4, top_k: int = 2,
+                 use_hyper: bool = False, hyper_rank: int = 8):
         super().__init__()
         self.d_shared = d_shared
         self.subspaces = subspaces or MEASURED_SUBSPACES
@@ -94,16 +98,24 @@ class DimProjectionSpace(nn.Module):
         self.n_slots = len(self.slot_names)
         self.n_experts = n_experts
         self.top_k = top_k
+        self.use_hyper = use_hyper
+        self.hyper_rank = hyper_rank
         self.reference = {k: sp.models[0] for k, sp in self.subspaces.items()}
 
         # ---- 槽轴 × 模型轴：投影 ----
+        # use_hyper=True 时用 HyperLinear（slow 正交冻结 + hyper 低秩 delta），
+        # 否则用标准 nn.Linear（v62.3 行为）。
         self.proj = nn.ModuleDict()
         for k, sp in self.subspaces.items():
             for m in sp.models:
-                lin = nn.Linear(d_shared, sp.dim, bias=False)
-                if sp.dim == d_shared:
-                    nn.init.orthogonal_(lin.weight)   # 等维 → 保距
-                self.proj[f'{k}|{m}'] = lin
+                if use_hyper:
+                    self.proj[f'{k}|{m}'] = HyperLinear(
+                        d_shared, sp.dim, rank=hyper_rank, slow_trainable=False)
+                else:
+                    lin = nn.Linear(d_shared, sp.dim, bias=False)
+                    if sp.dim == d_shared:
+                        nn.init.orthogonal_(lin.weight)   # 等维 → 保距
+                    self.proj[f'{k}|{m}'] = lin
 
         # ---- 对齐轴：成对（可复合）----
         self.align = nn.ModuleDict()

@@ -23,11 +23,14 @@ class FusionOverProjSpace(nn.Module):
     """输入 [B,S,d_space]，输出 [B,S,d_space] + 路由权重。"""
 
     def __init__(self, d_space: int = 1024, d_ff: int | None = None,
-                 num_experts: int = 4, top_k: int = 2):
+                 num_experts: int = 4, top_k: int = 2,
+                 use_fast: bool = False, fast_decay: float = 0.9):
         super().__init__()
         self.d_space = d_space
         self.num_experts = num_experts
         self.top_k = top_k
+        self.use_fast = use_fast
+        self.fast_decay = fast_decay
         d_ff = d_ff or 4 * d_space
 
         self.gammas = nn.ParameterList(
@@ -44,6 +47,11 @@ class FusionOverProjSpace(nn.Module):
             [nn.Parameter(torch.tensor([0.05])) for _ in range(num_experts)])
         self.W_router = nn.Parameter(torch.randn(num_experts, d_space) * 0.01)
 
+        # ---- 路线 3：快速权重专家偏置（运行时状态，不进 state_dict）----
+        # 每专家一个 [d_space] 的 fast bias，按 batch 输入的均值 EMA 更新，
+        # 实现推理时对新序列的快速适应。默认关闭（use_fast=False）。
+        self.fast_w = torch.zeros(num_experts, d_space)
+
     @staticmethod
     def _swiglu(x: torch.Tensor, wg, wu, wd) -> torch.Tensor:
         return F.linear(F.silu(F.linear(x, wg)) * F.linear(x, wu), wd)
@@ -55,9 +63,21 @@ class FusionOverProjSpace(nn.Module):
         _, ti = torch.topk(a, self.top_k, dim=-1)
         ah = a * torch.zeros_like(a).scatter_(-1, ti, 1.0)
 
+        # ---- 路线 3：快速权重更新（推理时适应新序列）----
+        if self.use_fast:
+            if self.fast_w.device != x.device:
+                self.fast_w = self.fast_w.to(x.device)
+            mu = x.detach().mean(dim=(0, 1))            # [d_space] 全局均值
+            with torch.no_grad():
+                self.fast_w.mul_(self.fast_decay).add_(
+                    mu.unsqueeze(0) * (1 - self.fast_decay))
+
         out = torch.zeros_like(x)
         for m in range(self.num_experts):
-            h = x * self.gammas[m] + self.betas[m]           # 不 detach：专家参与训练
+            bias = self.betas[m]
+            if self.use_fast:
+                bias = bias + self.fast_w[m]            # 快速偏置叠加
+            h = x * self.gammas[m] + bias               # 不 detach：专家参与训练
             f = self._swiglu(h, self.w_gates[m], self.w_ups[m], self.w_downs[m])
             out = out + ah[..., m:m + 1] * self.alphas[m] * f
         return x + out, ah
