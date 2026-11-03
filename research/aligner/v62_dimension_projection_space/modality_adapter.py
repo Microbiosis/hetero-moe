@@ -44,10 +44,11 @@ class ModalityAdapter(nn.Module):
         B = out[self.d_out * self.rank:].view(self.rank, self.d_in)
         return A, B
 
-    def adapt(self, W: torch.Tensor, modality_id: int) -> torch.Tensor:
-        """返回 W + scale * A@B（LoRA 形式）。"""
+    def adapt(self, x: torch.Tensor, modality_id: int) -> torch.Tensor:
+        """对激活 x [B,S,d_in] 加低秩残差（LoRA on activation）。"""
         A, B = self(modality_id)
-        return W + self.scale * (A @ B)
+        # x @ B^T @ A^T: [B,S,d_in]→[B,S,rank]→[B,S,d_out]
+        return x + self.scale * (x @ B.transpose(-1, -2) @ A.transpose(-1, -2))
 
     def extra_repr(self):
         return ('%d→%d rank=%d modalities=%d'
