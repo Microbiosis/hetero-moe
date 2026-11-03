@@ -21,6 +21,10 @@ import motion as MO
 from matplotlib.patches import Circle, FancyArrowPatch
 
 ST.setup_fonts()          # 中文字体：手机沙箱与 Kaggle 路径不同，见 style.py
+# 画布尺寸可配置：1600×1000 是发布版，1280×800 是省内存的云端版
+_FW, _FH = (int(x) for x in os.environ.get('FIG_SIZE', '1600x1000').split('x'))
+FIG_SIZE = (_FW / 100.0, _FH / 100.0)
+FIG_DPI = int(os.environ.get('FIG_DPI', '100'))
 
 D = np.load(DATA + '/v62_capture.npz')
 R = json.load(open(DATA + '/v62_route.json'))
@@ -64,7 +68,7 @@ def draw_subs(ax, which, alpha):
 
 
 def frame(fi, total, fn, out, which=None):
-    fig = plt.figure(figsize=(16, 10), facecolor=BG)
+    fig = plt.figure(figsize=FIG_SIZE, facecolor=BG)
     ax = fig.add_axes([0, 0, 1, 1]); ax.set_facecolor(BG)
     ax.set_xlim(0, W); ax.set_ylim(0, H); ax.axis('off')
     t = fi / max(total - 1, 1)
@@ -95,7 +99,7 @@ def frame(fi, total, fn, out, which=None):
                                    alpha=ov, zorder=50))
     # 镜头极缓慢推近
     ST.camera(ax, zoom=1.0 + 0.022 * t, drift=MO.idle_y(t, 0.10, 0.33))
-    fig.savefig(f'{out}/f{fi:05d}.png', facecolor=BG, dpi=100)
+    fig.savefig(f'{out}/f{fi:05d}.png', facecolor=BG, dpi=FIG_DPI)
     plt.close(fig)
 
 

@@ -129,7 +129,15 @@ def main():
     # ② 校验帧数 —— 不符就停下，绝不替换正式目录
     if not verify(TMP, '临时目录'):
         raise RuntimeError('帧数校验失败，frames/ 保持原样')
-    # ③ 原子替换：旧目录挪走，新目录改名
+    # ③ 先合成 —— **必须在 rename 之前**。concat() 从 TMP 读帧，
+    #    而下一步会把 TMP 改名成 FRAMES，顺序反了就是 FileNotFoundError。
+    if '--render-only' not in args:
+        print('[render] 合成 ...', flush=True)
+        concat()
+        n = sum(TOTAL.values())
+        print('[render] 合成完成：%d 帧 / %.1fs / %s'
+              % (n, n / 30.0, OUT_MP4), flush=True)
+    # ④ 原子替换：旧目录挪走，新目录改名
     old = FRAMES + '.old'
     if os.path.isdir(old):
         shutil.rmtree(old)
@@ -138,13 +146,6 @@ def main():
     os.rename(TMP, FRAMES)
     shutil.rmtree(old, ignore_errors=True)
     print('[render] frames/ 已更新（%.0fs）' % (time.time() - t0), flush=True)
-    # ④ 自己合成
-    if '--render-only' not in args:
-        print('[render] 合成 ...', flush=True)
-        concat()
-        n = sum(TOTAL.values())
-        print('[render] 完成：%d 帧 / %.1fs / %s'
-              % (n, n / 30.0, OUT_MP4), flush=True)
 
 
 if __name__ == '__main__':

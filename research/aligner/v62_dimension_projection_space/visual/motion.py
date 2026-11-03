@@ -106,7 +106,7 @@ def flow(ax, pts, t, n=7, color='#FFFFFF', r=0.55, alpha=0.9, speed=1.0,
                 x = x0 + (x1 - x0) * f
                 y = y0 + (y1 - y0) * f
                 # 拖尾：沿路留一串渐隐的点，看起来像"有东西在流"
-                for _j in range(4):
+                for _j in range(2):
                     uu = u - _j * (total * 0.012)
                     if uu < 0:
                         continue
@@ -139,7 +139,7 @@ def idle_scale(t, amp=0.035, freq=0.8, phase=0.0):
 
 
 # ---------------- 背景微粒场 ----------------
-def dust(ax, t, n=80, seed=7, W=100, H=62, r=0.22, alpha=0.95):
+def dust(ax, t, n=48, seed=7, W=100, H=62, r=0.30, alpha=0.95):
     """缓慢飘动的微粒（3Blue1Brown 式的星尘衬底）。
 
     粒子位置由 (seed, 初始位置) 决定，随时间做小幅度漂移 ——
