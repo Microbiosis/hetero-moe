@@ -29,6 +29,16 @@ print('device', DEV, 'torch', torch.__version__, flush=True)
 N_TEXT = 10000
 N_IMG = 5000
 MAXLEN = 128
+HF_REPO = 'redmingwei/hetero-moe-cache-v63'
+
+def _upload(fname):
+    """每提取完一个骨干立即上传，防后续崩溃全部丢失。"""
+    from huggingface_hub import HfApi
+    api = HfApi(token=os.environ.get('HF_TOKEN'))
+    api.create_repo(HF_REPO, repo_type='dataset', exist_ok=True)
+    api.upload_file(path_or_fileobj=f'{OUT}/{fname}', path_in_repo=fname,
+                    repo_id=HF_REPO, repo_type='dataset')
+    print('  [uploaded] %s' % fname, flush=True)
 
 # ============ 1. 数据 ============
 print('\n[1/5] 加载 ag_news + food101 ...', flush=True)
@@ -71,6 +81,7 @@ with torch.no_grad():
         if (i // BS) % 20 == 0:
             print('  qwen %d/%d  %.0fs' % (i, N_TEXT, time.time() - t0), flush=True)
 np.save(f'{OUT}/h_qwen_v63.npy', Hq)
+_upload('h_qwen_v63.npy')
 print('  ✅ h_qwen_v63 %s' % (Hq.shape,), flush=True)
 del qm, qlm; torch.cuda.empty_cache()
 
@@ -90,6 +101,7 @@ with torch.no_grad():
         if (i // BS) % 20 == 0:
             print('  bert %d/%d  %.0fs' % (i, N_TEXT, time.time() - t0), flush=True)
 np.save(f'{OUT}/h_bert_v63.npy', Hb)
+_upload('h_bert_v63.npy')
 print('  ✅ h_bert_v63 %s' % (Hb.shape,), flush=True)
 del bm; torch.cuda.empty_cache()
 
@@ -115,23 +127,17 @@ with torch.no_grad():
         if (i // BS) % 20 == 0:
             print('  vit %d/%d  %.0fs' % (i, N_IMG, time.time() - t0), flush=True)
 np.save(f'{OUT}/h_vit_v63.npy', Hv)
+_upload('h_vit_v63.npy')
 print('  ✅ h_vit_v63 %s' % (Hv.shape,), flush=True)
 
 # ============ 5. 标签 + 上传 ============
 print('\n[5/5] 标签 + 上传 HF ...', flush=True)
 np.save(f'{OUT}/labels_v63.npy', labels)
+_upload('labels_v63.npy')
 # food_labels：沿用 v62 逻辑（food101 图像对齐文本批次的伪标签），
 # 这里先用 food101 真实 label 占位，训练脚本会按 v62 方式循环取模
 fl = np.array([x['label'] for x in fd], dtype=np.int64)
 np.save(f'{OUT}/food_labels_v63.npy', fl)
+_upload('food_labels_v63.npy')
 
-from huggingface_hub import HfApi
-api = HfApi(token=os.environ.get('HF_TOKEN'))
-repo = 'redmingwei/hetero-moe-cache-v63'
-api.create_repo(repo, repo_type='dataset', exist_ok=True)
-for f in ['h_qwen_v63.npy', 'h_bert_v63.npy', 'h_vit_v63.npy',
-          'labels_v63.npy', 'food_labels_v63.npy']:
-    api.upload_file(path_or_fileobj=f'{OUT}/{f}', path_in_repo=f, repo_id=repo,
-                    repo_type='dataset')
-    print('  uploaded %s' % f, flush=True)
 print('\n[done] 总耗时 %.0fs' % (time.time() - t0), flush=True)
