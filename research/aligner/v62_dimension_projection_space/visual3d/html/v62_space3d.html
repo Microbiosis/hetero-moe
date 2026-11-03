@@ -36,8 +36,9 @@
   <span class="k">专家均衡</span> <span class="v">0.612</span>
   <div style="margin-top:8px;color:#7f8a99">
     几何来自 v62.3 真实前向：槽门控均值
-    <span class="v">Q 0.0035 · K 0.1706 · V 0.4344 · O 0.3916</span><br>
-    圆柱长度 = 该模态在该槽的投影后能量（归一化）
+    <span class="v" id="am">—</span><br>
+    圆柱长度 = 该模态在该槽的投影后能量（归一化）<br>
+    平面不透明度 = 槽门控权重 —— <b style="color:#CF3655">Q 方向几乎是空的</b>
   </div>
   <div style="margin-top:8px;color:#7f8a99">拖动旋转 · 滚轮缩放 · 右键平移</div>
 </div>
@@ -1392,15 +1393,24 @@ label('对齐轴',new THREE.Vector3(-AXLEN,-AXLEN,AXLEN+2),'#8a94a6',7);
 
 // ---- 四个子空间平面 S_s（256 维，YZ 平面上的斜切方块）----
 const slotMeshes={};
+const amap={}; D.slots.forEach((s,i)=>amap[s]=D.alpha_mean[i]);
+document.getElementById('am').textContent =
+  D.slots.map((s,i)=>s+' '+D.alpha_mean[i].toFixed(4)).join(' · ');
+const ROUTE = new Set(D.route_slots||[]);   // Q/O：三模型一起会垮 → 必须路由
 D.slots.forEach((s,i)=>{
   const y=-AXLEN+3+i*7.5;
+  const a=amap[s];                              // 该槽的真实门控权重
   const g=new THREE.PlaneGeometry(9,9);
+  // 不透明度 ∝ 门控权重：Q 槽权重 0.0035 → 平面几乎透明（真的"几乎是空的"）
   const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({
-    color:SLOT_COL[s]||0x8899aa, transparent:true, opacity:.13,
-    side:THREE.DoubleSide, depthWrite:false}));
+    color:SLOT_COL[s]||0x8899aa, transparent:true,
+    opacity:0.06+0.62*a, side:THREE.DoubleSide, depthWrite:false}));
   m.position.set(0,y,0); m.rotation.y=Math.PI/4; sc.add(m);
   slotMeshes[s]=m;
-  label('S_'+s,new THREE.Vector3(0,y+5.6,0),'#'+((SLOT_COL[s]||0x8899aa).toString(16).padStart(6,'0')),4.6);
+  const hex='#'+((SLOT_COL[s]||0x8899aa).toString(16).padStart(6,'0'));
+  label('S_'+s,new THREE.Vector3(0,y+5.6,0),hex,4.6);
+  label('α='+a.toFixed(3)+(ROUTE.has(s)?'  路由槽':'  融合槽'),
+        new THREE.Vector3(0,y+3.4,0), ROUTE.has(s)?'#CF3655':'#7f8a99', 3.0);
 });
 
 // ---- 槽门控向量：每个模态在每个槽上的贡献（沿模型轴 X 方向）----
@@ -1412,9 +1422,11 @@ D.slots.forEach((s,i)=>{
     const w=(D.per_modality&&D.per_modality[s]&&D.per_modality[s][m])||0;
     if(w<=0.001) return;
     const L=w*13;
+    // CylinderGeometry 默认沿 Y 轴，要让它沿 X 轴 —— 旋转**物体**而不是几何体。
+    // （BufferGeometry 没有 rotateZ()，那是 Object3D 的方法；调几何体会直接报错。）
     const g=new THREE.CylinderGeometry(.34,.34,L,12);
-    g.rotateZ(Math.PI/2);
     const me=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:MODEL_COL[m]||0x8899aa}));
+    me.rotation.z=Math.PI/2;   // 圆柱默认沿 Y 轴 → 转到 X 轴（模型轴方向）
     me.position.set(-L/2,y,0); vecGroup.add(me);
     const tip=new THREE.Mesh(new THREE.SphereGeometry(.52,16,12),
       new THREE.MeshBasicMaterial({color:MODEL_COL[m]||0x8899aa}));
