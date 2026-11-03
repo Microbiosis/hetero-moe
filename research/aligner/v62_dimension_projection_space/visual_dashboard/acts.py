@@ -203,7 +203,8 @@ def act3(ax, t, p):
                     'router 输出的 EMA（1500 步训练中）', color=DIM, fontsize=8.5,
                     ha='center', alpha=bt)
     ax.text(2.5, 6.2,
-            '四槽都在正常分工：门控熵 0.647（held-out）/ slot_ent 0.661（训练末）',
+            f'四槽都在正常分工：门控熵 {D.get("slot_entropy",0.647):.3f}（held-out）'
+            f' / slot_ent {traj[-1]["slot_ent"]:.3f}（训练末）',
             color=GREEN, fontsize=10.5, alpha=seg(t, 0.62, 0.76), va='center')
 
 
@@ -334,7 +335,7 @@ def act7(ax, t, p):
         ('两两对齐', '0.9879 – 0.9898（成对正交变换，可复合）', GREEN),
         ('三模型', '0.6767  →  环路一致性约束后 0.9925', GOLD),
         ('槽门控', '四槽都在正常分工（熵 0.647，Q 槽约 0.17）', GREEN),
-        ('专家', '均衡 0.612 · 四个都在用 · top-k=2', VIOLET),
+        ('专家', f'均衡 {D.get("balance",0.612):.3f} · 四个都在用 · top-k=2', VIOLET),
     ]
     for i, (k, v, c) in enumerate(rows):
         a = seg(t, 0.05 + i * 0.10, 0.16 + i * 0.10)
@@ -345,5 +346,5 @@ def act7(ax, t, p):
                 ha='right', va='center', alpha=a)
         ax.text(33.0 - (1 - a) * 8, y, v, color=c, fontsize=13,
                 ha='left', va='center', alpha=a, weight='bold')
-    ax.text(50, 8.0, 'held-out 0.9076 · 645,190,802 参数 · 三个真实骨干',
+    ax.text(50, 8.0, f'held-out {D.get("acc_heldout",0.9076):.4f} · 645,190,802 参数 · 三个真实骨干',
             color=FG, fontsize=10.5, ha='center', alpha=seg(t, 0.60, 0.75), va='center')
