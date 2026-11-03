@@ -255,7 +255,17 @@ class DimProjectionSpace(nn.Module):
                 q = aligned[0]
                 kv = torch.cat(aligned[1:], dim=1)
                 fused, _ = self.cross_attn[k](q, kv, kv)
-                w = F.softmax(self.fuse_w[k], dim=0)
+                w_base = F.softmax(self.fuse_w[k], dim=0)
+                # ---- 路线4：Hebbian 耦合矩阵调制融合权重 ----
+                if self.use_hebbian and hasattr(self, 'hebbian'):
+                    slot_feats = {m: feats[m][k] for m in sp.models
+                                  if m in feats and k in feats.get(m, {})}
+                    w_hebb = self.hebbian.gate_for_slot(slot_feats).to(
+                        w_base.device)
+                    w = w_base * w_hebb                      # 可学习 × 动态耦合
+                    w = w / (w.sum() + 1e-9)
+                else:
+                    w = w_base
                 per_slot[k] = w[0] * q + (1 - w[0]) * fused
 
         if not per_slot:
