@@ -44,22 +44,19 @@ class RecursiveFeedbackHead(nn.Module):
         y: [B,S,d_fused] 融合层输出
         returns:
             confidence: [B,S,n_slots]
-            deltas: list of n_slots tensors, each [B,S,slot_dim,slot_dim]
+            deltas: list of n_slots tensors, each [slot_dim,slot_dim]（batch 级共享）
         """
-        B, S, _ = y.shape
         conf = self.conf(y)                              # [B,S,n_slots]
-        raw = self.gen(y)                                # [B,S,out_dim]
+        mu = y.detach().mean(dim=(0, 1))                 # [d_fused] 全局均值
+        raw = self.gen(mu)                               # [out_dim]
 
         deltas = []
         per_slot = 2 * self.slot_dim * self.rank
         for i in range(self.n_slots):
-            chunk = raw[..., i * per_slot:(i + 1) * per_slot]
-            U = chunk[..., :self.slot_dim * self.rank].view(
-                B, S, self.slot_dim, self.rank)
-            V = chunk[..., self.slot_dim * self.rank:].view(
-                B, S, self.rank, self.slot_dim)
-            delta = torch.matmul(U, V)                   # [B,S,d,d]
-            deltas.append(delta)
+            chunk = raw[i * per_slot:(i + 1) * per_slot]
+            U = chunk[:self.slot_dim * self.rank].view(self.slot_dim, self.rank)
+            V = chunk[self.slot_dim * self.rank:].view(self.rank, self.slot_dim)
+            deltas.append(torch.matmul(U, V))            # [d,d]
         return conf, deltas
 
     def apply_feedback(self, proj_weights: list, y: torch.Tensor,

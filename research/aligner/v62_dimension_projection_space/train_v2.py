@@ -201,7 +201,7 @@ class HeteroMoEProjSpace(nn.Module):
                         key=f'{k}|Qwen'   # 回写到参考模型投影
                         if key in s.proj_space.proj:
                             s.proj_space.proj[key].weight.add_(
-                                s.feedback_head.lambda_*deltas[i].mean(dim=(0,1)))
+                                s.feedback_head.lambda_*deltas[i])
                 aux['feedback_conf']=conf
             return y,alpha,aux
         return canon,aux
