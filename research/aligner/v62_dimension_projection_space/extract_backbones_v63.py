@@ -33,13 +33,22 @@ MAXLEN = 128
 # ============ 1. 数据 ============
 print('\n[1/5] 加载 ag_news + food101 ...', flush=True)
 from datasets import load_dataset
-ag = load_dataset('ag_news', split='train')
+# 带 namespace 的 HF dataset id（Kaggle datasets 库拒绝无命名空间的 'ag_news'）
+def _load(name_candidates, **kw):
+    last = None
+    for n in name_candidates:
+        try:
+            return load_dataset(n, **kw)
+        except Exception as e:
+            last = e; print('  load %s failed: %s' % (n, str(e)[:80]), flush=True)
+    raise last
+
+ag = _load(['fancyzhx/ag_news', 'SetFit/ag_news'], split='train')
 texts = [x['text'] for x in ag.select(range(N_TEXT))]
 labels = np.array([x['label'] for x in ag.select(range(N_TEXT))], dtype=np.int64)
 print('  ag_news %d 条, 标签分布 %s' % (len(texts), np.bincount(labels).tolist()), flush=True)
 
-fd = load_dataset('food101', split='train')
-fd = fd.select(range(N_IMG))
+fd = _load(['ethz/food101', 'food101'], split='train').select(range(N_IMG))
 print('  food101 %d 张' % len(fd), flush=True)
 
 # ============ 2. Qwen3.5-2B ============
