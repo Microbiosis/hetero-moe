@@ -134,13 +134,13 @@ def _load(name, rel):
     return mod
 
 
-_ps = _load('v62_projspace', _REL + '/projspace.py')
-_fu = _load('v62_fusion', _REL + '/fusion.py')
-# 路线1/3 新增模块：确保同目录在 sys.path，projspace.py 内部的
-# `from hyper_proj import HyperLinear` 才能解析（Kaggle exec 环境 cwd 不在包目录）。
+# 先把 v62 包目录插入 sys.path，再加载算子 —— projspace.py 内部的
+# `from hyper_proj import HyperLinear` 需要能解析到同目录的新模块。
 _pkg_dir = str((_find_repo() or _Path.cwd()) / _REL)
 if _pkg_dir not in _sys.path:
     _sys.path.insert(0, _pkg_dir)
+_ps = _load('v62_projspace', _REL + '/projspace.py')
+_fu = _load('v62_fusion', _REL + '/fusion.py')
 DimProjectionSpace = _ps.DimProjectionSpace
 FusionOverProjSpace = _fu.FusionOverProjSpace
 MEASURED = _ps.MEASURED_SUBSPACES
