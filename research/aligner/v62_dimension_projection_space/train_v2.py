@@ -46,7 +46,8 @@ print('\n[1/5] 载入缓存 ...', flush=True)
 # 默认 v62：hetero-moe-cache + 896,256,768
 _SUF = os.environ.get('CACHE_SUFFIX', '')
 _MODAL_DIMS = tuple(int(x) for x in os.environ.get('MODAL_DIMS', '896,256,768').split(','))
-R = os.environ.get('CACHE', 'redmingwei/hetero-moe-cache' + _SUF)
+# 文件名后缀用 _v63，但 HF repo 名用连字符 hetero-moe-cache-v63
+R = os.environ.get('CACHE', 'redmingwei/hetero-moe-cache' + _SUF.replace('_', '-'))
 _FILES_CACHE = ['h_qwen%s.npy' % _SUF, 'h_bert%s.npy' % _SUF, 'h_vit%s.npy' % _SUF,
                 'labels%s.npy' % _SUF, 'food_labels%s.npy' % _SUF]
 p = {f: hf_hub_download(R, f, repo_type='dataset') for f in _FILES_CACHE}
