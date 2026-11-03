@@ -75,7 +75,8 @@ from pathlib import Path as _Path
 _URL = 'https://github.com/Microbiosis/hetero-moe.git'
 _RAW = 'https://raw.githubusercontent.com/Microbiosis/hetero-moe/main'
 _REL = 'research/aligner/v62_dimension_projection_space'
-_FILES = {'projspace.py': 'v62_projspace', 'fusion.py': 'v62_fusion'}
+_FILES = {'projspace.py': 'v62_projspace', 'fusion.py': 'v62_fusion',
+          'hyper_proj.py': 'v62_hyper_proj', 'self_repair.py': 'v62_self_repair'}
 
 
 def _find_repo():
@@ -135,6 +136,11 @@ def _load(name, rel):
 
 _ps = _load('v62_projspace', _REL + '/projspace.py')
 _fu = _load('v62_fusion', _REL + '/fusion.py')
+# 路线1/3 新增模块：确保同目录在 sys.path，projspace.py 内部的
+# `from hyper_proj import HyperLinear` 才能解析（Kaggle exec 环境 cwd 不在包目录）。
+_pkg_dir = str((_find_repo() or _Path.cwd()) / _REL)
+if _pkg_dir not in _sys.path:
+    _sys.path.insert(0, _pkg_dir)
 DimProjectionSpace = _ps.DimProjectionSpace
 FusionOverProjSpace = _fu.FusionOverProjSpace
 MEASURED = _ps.MEASURED_SUBSPACES
