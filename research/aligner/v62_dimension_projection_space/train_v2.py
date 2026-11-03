@@ -222,6 +222,19 @@ hist=[]
 best_acc = -1.0
 best_state = None
 
+from self_repair import SlotHealthMonitor
+
+# 路线 7：自修复槽监测器（v62.3 发现 Q 槽权重仅 0.003）
+monitor = SlotHealthMonitor(
+    n_slots=model.proj_space.n_slots,
+    slot_names=model.proj_space.slot_names,
+    threshold=0.01,      # 低于此值触发修复（Q 槽 0.003 < 0.01）
+    ema_decay=0.99,
+    cooldown=200,        # 修复后至少 200 步内不重复触发
+    device=str(DEV)
+)
+print('[自修复] 监测器就绪: %s' % monitor.summary(), flush=True)
+
 for step in range(STEPS+1):
     bi = np.sort(rng.choice(tr_idx, size=min(BS,len(tr_idx)), replace=False))
     hq=torch.from_numpy(np.asarray(h_q[bi],dtype=np.float32)).to(DEV)
@@ -268,6 +281,15 @@ for step in range(STEPS+1):
         opt.zero_grad(set_to_none=True); loss.backward()
         torch.nn.utils.clip_grad_norm_(trainable,1.0)
         opt.step()
+
+    # ---- 路线 7：自修复槽监测 ----
+    # 在 optimizer 步进后更新 EMA；每 50 步检查一次是否需要修复低贡献槽。
+    monitor.update(ah_slot)
+    if step % 50 == 0:
+        repaired = monitor.repair(model.proj_space, opt)
+        if repaired:
+            print('   [自修复] step %d 触发: %s | %s'
+                  % (step, repaired, monitor.summary()), flush=True)
 
     if step%250==0 or step==STEPS:
         # 在 val 上评估
