@@ -73,27 +73,26 @@ class FusionOverProjSpace(nn.Module):
         ah = a * torch.zeros_like(a).scatter_(-1, ti, 1.0)
 
         # ---- 路线 3：快速权重 ΔW = outer(u(x), v(x)) ----
-        # 用当前 batch 的 hidden state 均值生成每专家的 FFN 权重修正，
+        # 用当前 batch 的 hidden state **全局均值**生成每专家一个共享 ΔW，
         # 前向时叠加到 w_gates，推理后不持久化（快速写入/遗忘）。
+        # batch 级共享避免 [B,d_ff,d_space] 显存爆炸（B=200 时 3.2GB）。
         fast_deltas = None
         if self.use_fast:
-            mu = x.detach().mean(dim=1)                  # [B, d_space]
+            mu = x.detach().mean(dim=(0, 1))                  # [d_space] 全局均值
             fast_deltas = []
             for m in range(self.num_experts):
-                u = mu @ self.fast_u[m]                  # [B, d_ff]
-                v = mu @ self.fast_v[m]                  # [B, d_space]
-                dW = torch.bmm(u.unsqueeze(2), v.unsqueeze(1))  # [B,d_ff,d_space]
+                u = mu @ self.fast_u[m]                       # [d_ff]
+                v = mu @ self.fast_v[m]                       # [d_space]
+                dW = torch.outer(u, v)                        # [d_ff, d_space]
                 fast_deltas.append(self.fast_scale * dW)
 
         out = torch.zeros_like(x)
         for m in range(self.num_experts):
             h = x * self.gammas[m] + self.betas[m]       # 不 detach：专家参与训练
             if self.use_fast and fast_deltas is not None:
-                # 动态 w_gates：w_slow[b] + ΔW[b]
-                wg = self.w_gates[m].unsqueeze(0) + fast_deltas[m]   # [B,d_ff,d_space]
-                gate_h = torch.bmm(h, wg.transpose(1, 2))            # [B,S,d_ff]
-                up_h = F.linear(h, self.w_ups[m])
-                f = F.linear(F.silu(gate_h) * up_h, self.w_downs[m])
+                # 动态 w_gates：w_slow + ΔW（batch 级共享，广播到所有 token）
+                wg = self.w_gates[m] + fast_deltas[m]         # [d_ff, d_space]
+                f = self._swiglu(h, wg, self.w_ups[m], self.w_downs[m])
             else:
                 f = self._swiglu(h, self.w_gates[m], self.w_ups[m], self.w_downs[m])
             out = out + ah[..., m:m + 1] * self.alphas[m] * f
