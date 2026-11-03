@@ -1,10 +1,12 @@
-"""路线8：记忆增强路由（Memory-Augmented Router）。
+"""路线8：记忆增强路由（Memory-Augmented Router）—— 负反馈修复版。
 
-维护一组可修改的"记忆权重" M ∈ R^{N×d}，通过 attention-like 读写
-存储历史路由决策，并反馈到当前 router。
+v62.6 初版失败根因：只有正反馈——write 存 softmax(logits)，read 用
+memory 强化 router，被选中的槽自我强化，最终 V 槽独占（熵 0.076）。
 
-写：M ← M + α·outer(q, v)（当前 batch 的路由 query/value）
-读：router 输入 = [current_features, retrieved_memory]
+本版加三层负反馈：
+  1. 记忆衰减（decay）：每次 write 前旧记忆整体淡出，防止单条记忆永久主导
+  2. 过载减压（relief）：某槽在 memory 中累积超过阈值时，全局缩放该列
+  3. 检索居中（centering）：read 返回相对 memory 均值的偏差，打破同向累积
 """
 from __future__ import annotations
 
@@ -14,57 +16,71 @@ import torch.nn.functional as F
 
 
 class MemoryAugmentedRouter(nn.Module):
-    """带外部记忆的路由器。"""
+    """带外部记忆 + 负反馈均衡的路由器。"""
 
     def __init__(self, d_in: int, n_slots: int, n_memory: int = 64,
-                 d_mem: int = 64, alpha: float = 0.1):
+                 d_mem: int = 64, alpha: float = 0.1,
+                 decay: float = 0.95, relief: float = 0.9,
+                 overload_thresh: float = 1.5):
         super().__init__()
         self.d_in = d_in
         self.n_slots = n_slots
         self.n_memory = n_memory
         self.d_mem = d_mem
         self.alpha = alpha
+        self.decay = decay
+        self.relief = relief
+        self.overload_thresh = overload_thresh
 
-        # 记忆槽：key 和 value
         self.register_buffer('mem_key', torch.randn(n_memory, d_mem) * 0.02)
         self.register_buffer('mem_val', torch.zeros(n_memory, n_slots))
         self.register_buffer('mem_age', torch.zeros(n_memory))
 
-        # 投影：features → query
         self.q_proj = nn.Linear(d_in, d_mem)
-        # 路由头：features + retrieved → slot logits
         self.router = nn.Linear(d_in + n_slots, n_slots)
 
+    # ------------------------------------------------------------------
     @torch.no_grad()
     def write(self, q: torch.Tensor, v: torch.Tensor):
-        """q: [B,d_mem] 当前 query；v: [B,n_slots] 当前路由值。"""
-        # 找最旧的记忆槽替换（或累加）
-        idx = torch.argmin(self.mem_age).item()
+        """q: [B,d_mem]；v: [B,n_slots]。带负反馈的写入。"""
+        # 负反馈1：旧记忆衰减，越老的记忆影响越小
+        self.mem_val.mul_(self.decay)
+        self.mem_key.mul_(self.decay ** 0.5)
+
+        idx = int(torch.argmin(self.mem_age).item())
         self.mem_key[idx] = q.mean(0)
         self.mem_val[idx] = v.mean(0)
         self.mem_age[idx] = 0
         self.mem_age += 1
 
+        # 负反馈2：过载减压——某槽累积超过全槽均值 × 阈值时，缩放该列
+        col_sum = self.mem_val.sum(dim=0)
+        mean_sum = col_sum.mean()
+        if mean_sum > 1e-9:
+            overload = col_sum > mean_sum * self.overload_thresh
+            if overload.any():
+                self.mem_val[:, overload] *= self.relief
+
     @torch.no_grad()
     def read(self, q: torch.Tensor) -> torch.Tensor:
-        """q: [B,d_mem] → retrieved: [B,n_slots]。"""
-        scores = q @ self.mem_key.T                     # [B,N]
+        """q: [B,d_mem] → retrieved [B,n_slots]，带居中负反馈。"""
+        scores = q @ self.mem_key.T
         w = F.softmax(scores / (self.d_mem ** 0.5), dim=-1)
-        return w @ self.mem_val                          # [B,n_slots]
+        retrieved = w @ self.mem_val
+        # 负反馈3：减去 memory 全局趋势，只返回"相对偏差"。
+        # 若所有记忆都指向 V 槽，居中后 V 的检索值反而降低，切断正反馈。
+        retrieved = retrieved - self.mem_val.mean(dim=0, keepdim=True)
+        return retrieved
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        x: [B,S,d_in]
-        returns: [B,S,n_slots] 路由 logits
-        """
+        """x: [B,S,d_in] → logits [B,S,n_slots]。"""
         B, S, D = x.shape
         xin = x.reshape(B * S, D)
-        q = self.q_proj(xin)                             # [B*S,d_mem]
-        retrieved = self.read(q)                         # [B*S,n_slots]
+        q = self.q_proj(xin)
+        retrieved = self.read(q)
         logits = self.router(torch.cat([xin, retrieved], dim=-1))
         logits = logits.view(B, S, self.n_slots)
 
-        # 写记忆（用当前 logits 的 softmax 作为 value）
         if self.training:
             with torch.no_grad():
                 v = F.softmax(logits.reshape(B * S, -1), dim=-1)
@@ -77,5 +93,7 @@ class MemoryAugmentedRouter(nn.Module):
         self.mem_age.zero_()
 
     def extra_repr(self):
-        return ('d_in=%d, n_slots=%d, memory=%d×%d'
-                % (self.d_in, self.n_slots, self.n_memory, self.d_mem))
+        return ('d_in=%d, n_slots=%d, memory=%d×%d, decay=%.2f, '
+                'relief=%.2f, thresh=%.1f'
+                % (self.d_in, self.n_slots, self.n_memory, self.d_mem,
+                   self.decay, self.relief, self.overload_thresh))
