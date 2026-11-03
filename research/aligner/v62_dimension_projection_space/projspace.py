@@ -90,7 +90,11 @@ class DimProjectionSpace(nn.Module):
     def __init__(self, d_shared: int = 256,
                  subspaces: Optional[Dict[str, SlotSubspace]] = None,
                  n_experts: int = 4, top_k: int = 2,
-                 use_hyper: bool = False, hyper_rank: int = 8):
+                 use_hyper: bool = False, hyper_rank: int = 8,
+                 use_recurrent_gate: bool = False,
+                 use_memory_router: bool = False,
+                 use_hebbian: bool = False,
+                 use_modality_adapter: bool = False):
         super().__init__()
         self.d_shared = d_shared
         self.subspaces = subspaces or MEASURED_SUBSPACES
@@ -100,6 +104,10 @@ class DimProjectionSpace(nn.Module):
         self.top_k = top_k
         self.use_hyper = use_hyper
         self.hyper_rank = hyper_rank
+        self.use_recurrent_gate = use_recurrent_gate
+        self.use_memory_router = use_memory_router
+        self.use_hebbian = use_hebbian
+        self.use_modality_adapter = use_modality_adapter
         self.reference = {k: sp.models[0] for k, sp in self.subspaces.items()}
 
         # ---- 槽轴 × 模型轴：投影 ----
@@ -159,6 +167,27 @@ class DimProjectionSpace(nn.Module):
 
         self.total_dim = sum(sp.dim for sp in self.subspaces.values())
 
+        # ---- 路线2/4/6/8：自修改权重模块（默认关闭）----
+        from recurrent_gate import RecurrentSlotGate
+        from hebbian_align import HebbianSlotAlignment
+        from memory_router import MemoryAugmentedRouter
+        from modality_adapter import ModalityAdapterBank
+
+        # 路线2：递归槽门控（替换静态 slot_gate）
+        if use_recurrent_gate:
+            self.recurrent_gate = RecurrentSlotGate(self.total_dim, self.n_slots)
+        # 路线8：记忆增强路由（替换 self.router）
+        if use_memory_router:
+            self.memory_router = MemoryAugmentedRouter(self._route_dim or d_shared,
+                                                       self.n_slots)
+        # 路线4：Hebbian 模态耦合
+        if use_hebbian:
+            self.hebbian = HebbianSlotAlignment()
+        # 路线6：模态条件 adapter
+        if use_modality_adapter:
+            self.adapter_bank = ModalityAdapterBank(
+                slots=self.slot_names, d=d_shared, rank=8)
+
     # ------------------------------------------------------------------
     def _path(self, slot: str, model: str) -> List[str]:
         """模型到参考模型的对齐路径（支持两步复合）。"""
@@ -186,6 +215,12 @@ class DimProjectionSpace(nn.Module):
           canonical: [B,S,Σdim_s]      扁平拼接，喂给融合层
           alpha:     [B,S,E]           路由权重
         """
+        # ---- 路线4：Hebbian 推理时更新（前向最开始）----
+        if self.use_hebbian and hasattr(self, 'hebbian'):
+            with torch.no_grad():
+                self.hebbian({m: feats[m][self.slot_names[0]] for m in feats
+                              if self.slot_names[0] in feats.get(m, {})})
+
         per_slot: Dict[str, torch.Tensor] = {}
         B = S = None
 
@@ -198,6 +233,10 @@ class DimProjectionSpace(nn.Module):
                 if m not in feats or k not in feats[m]:
                     continue
                 x = self.proj[key](feats[m][k])
+                # ---- 路线6：模态条件 adapter ----
+                if self.use_modality_adapter and hasattr(self, 'adapter_bank'):
+                    if k in self.adapter_bank.INJECTION.get(m, []):
+                        x = self.adapter_bank.get_adapter(k, m).adapt(x, m)
                 if B is None:
                     B, S = x.shape[0], x.shape[1]
                 for step in self._path(k, m):
@@ -229,7 +268,17 @@ class DimProjectionSpace(nn.Module):
             return v[:, idx, :]
 
         S = s_min
-        gate = F.softmax(self.slot_gate, dim=0)          # 全局槽权重 [n_slots]
+        # ---- 路线2：递归槽门控 或 静态 slot_gate ----
+        if self.use_recurrent_gate and hasattr(self, 'recurrent_gate'):
+            # 用当前 canonical（近似：per_slot 拼接）驱动 GRU
+            gate_in = torch.cat(
+                [_pool(per_slot[k]) if k in per_slot
+                 else torch.zeros(B, S, self.subspaces[k].dim, device=dev)
+                 for k in self.subspaces], dim=-1)      # [B,S,total_dim]
+            gate = self.recurrent_gate(gate_in)         # [B,S,n_slots]
+            gate_global = gate.mean(dim=1)              # [B,n_slots] 兜底
+        else:
+            gate = F.softmax(self.slot_gate, dim=0)     # 全局槽权重 [n_slots]
 
         # ---------- 路由：token 级槽门控 ----------
         #
@@ -265,21 +314,21 @@ class DimProjectionSpace(nn.Module):
             xin = torch.cat(rp, dim=-1)
             assert xin.shape[-1] == self._route_dim, (
                 'router 输入宽度 %d != 声明 %d' % (xin.shape[-1], self._route_dim))
-            # 槽门控用**全槽软门控**，不做 top-k。
-            #
-            # top-k 的用途是省算力（专家只算被选中的那些）。但四个槽的投影
-            # 在进入这一步之前**已经全部算完了** —— 在这里 top-k 省不下任何
-            # 计算，只会丢信息，并且会把门控压成「单槽独占」。
-            #
-            # v62.1 实测（top-k=2）：每 token 最大权重均值 0.9933、中位 1.0000，
-            # 熵 0.0209（top-2 的理论上界才 0.5）。等价于只剩一个槽在工作，
-            # 而 v62 的核心主张正是「空间 = Σ 子空间」，四槽必须都有贡献。
-            alpha = F.softmax(self.router(xin), dim=-1)
+            # ---- 路线8：记忆增强路由 或 标准 router ----
+            if self.use_memory_router and hasattr(self, 'memory_router'):
+                alpha = F.softmax(self.memory_router(xin), dim=-1)
+            else:
+                alpha = F.softmax(self.router(xin), dim=-1)
         else:
             alpha = torch.ones(B, S, self.n_slots, device=dev) / self.n_slots
 
         # 有效门控 = 全局槽权重 × 逐 token 槽激活，归一化到和为 1
-        eff = gate.view(1, 1, -1) * alpha                        # [B,S,n_slots]
+        # 路线2 时 gate 已是 [B,S,n_slots]（GRU 逐 token 输出），直接用；
+        # 否则 gate 是 [n_slots]，广播成 [1,1,n_slots]。
+        if gate.dim() == 3:
+            eff = gate * alpha
+        else:
+            eff = gate.view(1, 1, -1) * alpha
         eff = eff / (eff.sum(-1, keepdim=True) + 1e-9)
 
         canonical = torch.cat(

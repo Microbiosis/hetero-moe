@@ -76,7 +76,13 @@ _URL = 'https://github.com/Microbiosis/hetero-moe.git'
 _RAW = 'https://raw.githubusercontent.com/Microbiosis/hetero-moe/main'
 _REL = 'research/aligner/v62_dimension_projection_space'
 _FILES = {'projspace.py': 'v62_projspace', 'fusion.py': 'v62_fusion',
-          'hyper_proj.py': 'v62_hyper_proj', 'self_repair.py': 'v62_self_repair'}
+          'hyper_proj.py': 'v62_hyper_proj', 'self_repair.py': 'v62_self_repair',
+          'recurrent_gate.py': 'v62_recurrent_gate',
+          'hebbian_align.py': 'v62_hebbian_align',
+          'memory_router.py': 'v62_memory_router',
+          'modality_adapter.py': 'v62_modality_adapter',
+          'feedback_head.py': 'v62_feedback_head',
+          'learned_optimizer.py': 'v62_learned_optimizer'}
 
 
 def _find_repo():
@@ -155,16 +161,27 @@ from itertools import combinations
 
 class HeteroMoEProjSpace(nn.Module):
     def __init__(s,modal_dims=(896,256,768),d_shared=256,ne=4,top_k=2,
-                 use_hyper=False,use_fast=False,hyper_rank=8,fast_decay=0.9):
+                 use_hyper=False,use_fast=False,hyper_rank=8,fast_decay=0.9,
+                 use_recurrent_gate=False,use_memory_router=False,
+                 use_hebbian=False,use_modality_adapter=False,use_feedback=False):
         super().__init__()
         s.P_m=nn.ParameterList([nn.Parameter(torch.empty(d_shared,D)) for D in modal_dims])
         for m in range(len(modal_dims)):
             nn.init.orthogonal_(s.P_m[m]); s.P_m[m].requires_grad_(False)
         s.proj_space=DimProjectionSpace(d_shared,MEASURED,ne,top_k,
-                                        use_hyper=use_hyper,hyper_rank=hyper_rank)
+                                        use_hyper=use_hyper,hyper_rank=hyper_rank,
+                                        use_recurrent_gate=use_recurrent_gate,
+                                        use_memory_router=use_memory_router,
+                                        use_hebbian=use_hebbian,
+                                        use_modality_adapter=use_modality_adapter)
         s.d_space=s.proj_space.total_dim
         s.fusion=FusionOverProjSpace(s.d_space,None,ne,top_k,
                                      use_fast=use_fast,fast_decay=fast_decay)
+        # ---- 路线9：跨层递归反馈 ----
+        s.use_feedback=use_feedback
+        if use_feedback:
+            from feedback_head import RecursiveFeedbackHead
+            s.feedback_head=RecursiveFeedbackHead(s.d_space, ne, d_shared, rank=4)
     def forward(s, hidden, fused_only=True):
         names=['Qwen','BERT','ViT']; pr={}
         for i,m in enumerate(names):
@@ -176,15 +193,36 @@ class HeteroMoEProjSpace(nn.Module):
         struct,canon,aux=s.proj_space(feats,return_aux=True)
         if fused_only:
             y,alpha=s.fusion.forward_with_routing(canon)
+            # ---- 路线9：top-down 反馈回写投影 ----
+            if s.use_feedback:
+                conf,deltas=s.feedback_head(y)
+                with torch.no_grad():
+                    for i,k in enumerate(s.proj_space.slot_names):
+                        key=f'{k}|Qwen'   # 回写到参考模型投影
+                        if key in s.proj_space.proj:
+                            s.proj_space.proj[key].weight.add_(
+                                s.feedback_head.lambda_*deltas[i].mean(dim=(0,1)))
+                aux['feedback_conf']=conf
             return y,alpha,aux
         return canon,aux
 
 torch.manual_seed(0)
 _USE_HYPER = os.environ.get('USE_HYPER','0') == '1'
 _USE_FAST  = os.environ.get('USE_FAST','0') == '1'
-if _USE_HYPER or _USE_FAST:
-    print('   [自修改权重] use_hyper=%s use_fast=%s' % (_USE_HYPER,_USE_FAST), flush=True)
-model=HeteroMoEProjSpace(use_hyper=_USE_HYPER,use_fast=_USE_FAST).to(DEV)
+_USE_RECUR = os.environ.get('USE_RECUR','0') == '1'
+_USE_MEM   = os.environ.get('USE_MEM','0') == '1'
+_USE_HEBB  = os.environ.get('USE_HEBB','0') == '1'
+_USE_ADAPT = os.environ.get('USE_ADAPT','0') == '1'
+_USE_FB    = os.environ.get('USE_FB','0') == '1'
+_on = [n for n,v in [('HYPER',_USE_HYPER),('FAST',_USE_FAST),('RECUR',_USE_RECUR),
+        ('MEM',_USE_MEM),('HEBB',_USE_HEBB),('ADAPT',_USE_ADAPT),('FB',_USE_FB)] if v]
+if _on:
+    print('   [自修改权重] 启用: %s' % ','.join(_on), flush=True)
+model=HeteroMoEProjSpace(
+    use_hyper=_USE_HYPER,use_fast=_USE_FAST,
+    use_recurrent_gate=_USE_RECUR,use_memory_router=_USE_MEM,
+    use_hebbian=_USE_HEBB,use_modality_adapter=_USE_ADAPT,
+    use_feedback=_USE_FB).to(DEV)
 n_ps=sum(p.numel() for p in model.proj_space.parameters())
 n_fu=sum(p.numel() for p in model.fusion.parameters())
 print('   投影空间 %.2fM | 融合层 %.2fM | 总 %.2fM'
