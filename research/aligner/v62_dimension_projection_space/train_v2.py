@@ -42,15 +42,21 @@ VER     = os.environ.get('VER','62.4')
 
 # ============ 载入真实数据 ============
 print('\n[1/5] 载入缓存 ...', flush=True)
-R='redmingwei/hetero-moe-cache'
-p={f: hf_hub_download(R,f,repo_type='dataset') for f in
-   ['h_qwen.npy','h_bert.npy','h_vit.npy','labels.npy','food_labels.npy']}
-h_q=np.load(p['h_qwen.npy'],mmap_mode='r')
-h_b=np.load(p['h_bert.npy'],mmap_mode='r')
-h_v=np.load(p['h_vit.npy'],mmap_mode='r')
-y_t=np.load(p['labels.npy']); y_v=np.load(p['food_labels.npy'])
-print('   qwen%s bert%s vit%s 类别%s'%(h_q.shape,h_b.shape,h_v.shape,
-      np.bincount(y_t,minlength=4).tolist()), flush=True)
+# v63 换底座：CACHE_SUFFIX=_v63 + MODAL_DIMS=2048,768,1152（Qwen3.5-2B/ModernBERT/SigLIP2）
+# 默认 v62：hetero-moe-cache + 896,256,768
+_SUF = os.environ.get('CACHE_SUFFIX', '')
+_MODAL_DIMS = tuple(int(x) for x in os.environ.get('MODAL_DIMS', '896,256,768').split(','))
+R = os.environ.get('CACHE', 'redmingwei/hetero-moe-cache' + _SUF)
+_FILES_CACHE = ['h_qwen%s.npy' % _SUF, 'h_bert%s.npy' % _SUF, 'h_vit%s.npy' % _SUF,
+                'labels%s.npy' % _SUF, 'food_labels%s.npy' % _SUF]
+p = {f: hf_hub_download(R, f, repo_type='dataset') for f in _FILES_CACHE}
+h_q = np.load(p['h_qwen%s.npy' % _SUF], mmap_mode='r')
+h_b = np.load(p['h_bert%s.npy' % _SUF], mmap_mode='r')
+h_v = np.load(p['h_vit%s.npy' % _SUF], mmap_mode='r')
+y_t = np.load(p['labels%s.npy' % _SUF]); y_v = np.load(p['food_labels%s.npy' % _SUF])
+print('   [cache=%s modal_dims=%s]' % (R, _MODAL_DIMS), flush=True)
+print('   qwen%s bert%s vit%s 类别%s' % (h_q.shape, h_b.shape, h_v.shape,
+      np.bincount(y_t, minlength=4).tolist()), flush=True)
 
 # ============ 模型（内联，云端无需额外文件）============
 print('\n[2/5] 构建模型 ...', flush=True)
@@ -239,6 +245,7 @@ if _USE_MEM:
     print('   [路线8] 槽均衡权重 %.2f→%.2f, 熵正则 %.2f→%.2f'
           % (0.1, _slot_bal_w, SLOT_ENT_W, _slot_ent_w_eff), flush=True)
 model=HeteroMoEProjSpace(
+    modal_dims=_MODAL_DIMS,
     use_hyper=_USE_HYPER,use_fast=_USE_FAST,
     use_recurrent_gate=_USE_RECUR,use_memory_router=_USE_MEM,
     use_hebbian=_USE_HEBB,use_modality_adapter=_USE_ADAPT,
