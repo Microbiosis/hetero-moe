@@ -508,10 +508,8 @@ if HAS_TORCH:
             dB_u = dt.unsqueeze(-1) * B_ssm.unsqueeze(2) * u.unsqueeze(-1)
 
             # v66: O(1) Chunkwise SSD 并行扫描（替代 O(L) 串行循环）
-            # SSD 的 L_intra [B,C,Q,Q,D,N] 中间张量在 B=32 时约 4GB → OOM。
-            # 默认改用 Kogge-Stone（纯逐元素 O(log L) 扫描，无 Q×Q 矩阵，显存 O(L*D*N)）。
-            y = parallel_kogge_stone_selective_scan_torch(
-                torch.exp(log_dA), dB_u, C_ssm)
+            # 注：BS=32 时 L_intra [B,C,Q,Q,D,N]≈4GB 会 OOM，需配 BS<=8。
+            y = chunkwise_ssd_selective_scan_torch(log_dA, dB_u, C_ssm, chunk_size=16)
             return self.out_proj((y + u * self.D) * F.silu(z))
 
 
