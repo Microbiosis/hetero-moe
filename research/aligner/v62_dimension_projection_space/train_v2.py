@@ -50,7 +50,14 @@ _MODAL_DIMS = tuple(int(x) for x in os.environ.get('MODAL_DIMS', '896,256,768').
 R = os.environ.get('CACHE', 'redmingwei/hetero-moe-cache' + _SUF.replace('_', '-'))
 _FILES_CACHE = ['h_qwen%s.npy' % _SUF, 'h_bert%s.npy' % _SUF, 'h_vit%s.npy' % _SUF,
                 'labels%s.npy' % _SUF, 'food_labels%s.npy' % _SUF]
-p = {f: hf_hub_download(R, f, repo_type='dataset') for f in _FILES_CACHE}
+# v65：支持 LOCAL_CACHE（Kaggle 预先下载到本地，避免训练中外网断）
+_LOCAL = os.environ.get('LOCAL_CACHE', '')
+if _LOCAL and os.path.isdir(_LOCAL):
+    p = {f: os.path.join(_LOCAL, f) for f in _FILES_CACHE
+         if os.path.exists(os.path.join(_LOCAL, f))}
+    print('   [LOCAL_CACHE=%s] 命中 %d/%d 文件' % (_LOCAL, len(p), len(_FILES_CACHE)), flush=True)
+else:
+    p = {f: hf_hub_download(R, f, repo_type='dataset') for f in _FILES_CACHE}
 h_q = np.load(p['h_qwen%s.npy' % _SUF], mmap_mode='r')
 h_b = np.load(p['h_bert%s.npy' % _SUF], mmap_mode='r')
 h_v = np.load(p['h_vit%s.npy' % _SUF], mmap_mode='r')
