@@ -55,9 +55,10 @@ h_q = np.load(p['h_qwen%s.npy' % _SUF], mmap_mode='r')
 h_b = np.load(p['h_bert%s.npy' % _SUF], mmap_mode='r')
 h_v = np.load(p['h_vit%s.npy' % _SUF], mmap_mode='r')
 y_t = np.load(p['labels%s.npy' % _SUF]); y_v = np.load(p['food_labels%s.npy' % _SUF])
-print('   [cache=%s modal_dims=%s]' % (R, _MODAL_DIMS), flush=True)
+N_CLS = int(os.environ.get('N_CLS', '4'))   # ag_news=4, SNLI-VE=3
+print('   [cache=%s modal_dims=%s N_CLS=%d]' % (R, _MODAL_DIMS, N_CLS), flush=True)
 print('   qwen%s bert%s vit%s 类别%s' % (h_q.shape, h_b.shape, h_v.shape,
-      np.bincount(y_t, minlength=4).tolist()), flush=True)
+      np.bincount(y_t, minlength=N_CLS).tolist()), flush=True)
 
 # ============ 模型（内联，云端无需额外文件）============
 print('\n[2/5] 构建模型 ...', flush=True)
