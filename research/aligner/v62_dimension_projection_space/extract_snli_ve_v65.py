@@ -41,7 +41,15 @@ if not os.path.exists(f'{OUT}/flickr30k-images'):
     with zipfile.ZipFile(zip_path) as z:
         z.extractall(OUT)
     print('  flickr30k-images extracted', flush=True)
-IMG_DIR = f'{OUT}/flickr30k-images/flickr30k-images'
+IMG_DIR_CANDS = [f'{OUT}/flickr30k-images', f'{OUT}/flickr30k-images/flickr30k-images']
+import glob as _glob
+IMG_DIR = None
+for c in IMG_DIR_CANDS:
+    if os.path.isdir(c) and len(_glob.glob(f'{c}/*.jpg')) > 100:
+        IMG_DIR = c; break
+if IMG_DIR is None:
+    IMG_DIR = IMG_DIR_CANDS[0]
+print('  IMG_DIR = %s (jpg数=%d)' % (IMG_DIR, len(_glob.glob(f'{IMG_DIR}/*.jpg'))), flush=True)
 
 print('[1/5] 下载 SNLI-VE train 标注 ...', flush=True)
 snli_path = f'{OUT}/snli_ve_train.jsonl'
@@ -67,6 +75,7 @@ with open(snli_path) as f:
         if len(records) >= N:
             break
 print('  配对 %d 条' % len(records), flush=True)
+assert len(records) > 100, '配对记录过少（%d）！检查 IMG_DIR/Flickr30K_ID 匹配' % len(records)
 labels = np.array([r[2] for r in records], dtype=np.int64)
 np.save(f'{OUT}/labels_v65.npy', labels); _up('labels_v65.npy')
 
