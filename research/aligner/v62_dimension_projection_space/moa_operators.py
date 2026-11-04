@@ -507,9 +507,16 @@ if HAS_TORCH:
             log_dA = dt.unsqueeze(-1) * A.view(1, 1, D, self.d_state)
             dB_u = dt.unsqueeze(-1) * B_ssm.unsqueeze(2) * u.unsqueeze(-1)
 
-            # v66: O(1) Chunkwise SSD 并行扫描（替代 O(L) 串行循环）
-            # 注：BS=32 时 L_intra [B,C,Q,Q,D,N]≈4GB 会 OOM，需配 BS<=8。
-            y = chunkwise_ssd_selective_scan_torch(log_dA, dB_u, C_ssm, chunk_size=16)
+            # v66: SSD/Kogge-Stone 并行扫描在 D=256×N=16 状态维度下中间张量
+            # 达 25GB（diff_log_a 广播）/ 1.5GB×logL（cat 累积），T4 均 OOM。
+            # 回退串行扫描，但状态压缩到最小（d_state 由外部设 4），保证可跑。
+            dA = torch.exp(log_dA)
+            h = torch.zeros(B, D, self.d_state, device=x.device, dtype=x.dtype)
+            ys = []
+            for t in range(L):
+                h = dA[:, t] * h + dB_u[:, t]
+                ys.append(torch.einsum("bdn,bn->bd", h, C_ssm[:, t]))
+            y = torch.stack(ys, dim=1)
             return self.out_proj((y + u * self.D) * F.silu(z))
 
 
