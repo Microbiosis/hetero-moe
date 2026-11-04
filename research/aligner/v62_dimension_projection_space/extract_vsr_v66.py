@@ -60,18 +60,26 @@ import io as _io
 def _load_img(idx):
     fp = f'{img_dir}/{idx}.jpg'
     if os.path.exists(fp):
-        return Image.open(fp).convert('RGB')
+        try:
+            return Image.open(fp).convert('RGB')
+        except Exception:
+            pass
     url, _, _ = records[idx]
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     for _try in range(3):
         try:
-            data = urllib.request.urlopen(url, timeout=20).read()
+            data = urllib.request.urlopen(req, timeout=25).read()
             img = Image.open(_io.BytesIO(data)).convert('RGB')
             img.save(fp)
             return img
-        except Exception as ex:
+        except Exception:
             if _try == 2:
-                raise
+                # 下载失败：返回确定性灰图占位（非全零，避免视觉hidden退化常数），并计数
+                _stats['img_fail'] += 1
+                return Image.new('RGB', (224, 224), (128, 128, 128))
     return None
+
+_stats = {'img_fail': 0}
 
 # ---------- 3. Qwen3.5-2B 文本 ----------
 print('[3/5] Qwen3.5-2B ...', flush=True)
@@ -131,6 +139,8 @@ with torch.no_grad():
         Hv[i:i+VBS] = h.cpu().numpy().astype(np.float16)
         if (i//VBS) % 20 == 0: print('  vit %d/%d %.0fs' % (i, len(records), time.time()-t0), flush=True)
 np.save(f'{OUT}/h_vit_vsr.npy', Hv); _up('h_vit_vsr.npy')
+print('  [stats] 图像下载失败 %d/%d（灰图占位）' % (_stats['img_fail'], len(records)), flush=True)
+assert _stats['img_fail'] < len(records) * 0.2, '图像下载失败率>20%%，视觉hidden不可信'
 
 np.save(f'{OUT}/food_labels_vsr.npy', labels); _up('food_labels_vsr.npy')
 print('[done] VSR v66 提取 %.0fs' % (time.time()-t0), flush=True)
