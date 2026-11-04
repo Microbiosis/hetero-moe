@@ -238,7 +238,7 @@ class HeteroMoEProjSpace(nn.Module):
                  use_recurrent_gate=False,use_memory_router=False,
                  use_hebbian=False,use_modality_adapter=False,use_feedback=False,
                  use_sparse=False,use_moa=False,moa_steps=1,moa_mode='sparse_router',
-                 pm_reconcile=False,pm_target=1024):
+                 pm_reconcile=False,pm_target=1024,use_vl=False):
         super().__init__()
         # ---- v69: 异构 P_m ----
         # pm_reconcile=True: 大模型降维 + 小模型DimReconcileBlock升维到 pm_target，
@@ -283,6 +283,19 @@ class HeteroMoEProjSpace(nn.Module):
         if use_feedback:
             from feedback_head import RecursiveFeedbackHead
             s.feedback_head=RecursiveFeedbackHead(s.d_space, ne, d_shared, rank=4)
+        # ---- v70: VL 跨模态融合旁路（用户仓库 CrossModalVisionLanguageFusionSubOp）----
+        # 四槽把三模态预混合进 canonical，视觉文本交互在进融合层前被抹平。
+        # VL 旁路直接吃分离的文本流(Qwen+BERT)和视觉流(ViT)，锚点共注意力+Bilinear门控。
+        s.use_vl = use_vl
+        if use_vl:
+            import sys as _sys
+            _vl_pkg = '/workspace/neuro-physical-hierarchical-moa-backbone/hybrid_moa_vl_operator_suite'
+            if _vl_pkg not in _sys.path:
+                _sys.path.insert(0, _vl_pkg)
+            from moa_operators import CrossModalVisionLanguageFusionSubOp as _VLFusion
+            s.vl_fusion = _VLFusion(d_model=d_shared, num_anchors=16)
+            s.vl_text_proj = nn.Linear(d_shared, d_shared, bias=False)   # 文本流整理
+            s.vl_vis_proj = nn.Linear(d_shared, d_shared, bias=False)    # 视觉流整理
     def forward(s, hidden, fused_only=True):
         names=['Qwen','BERT','ViT']; pr={}
         for i,m in enumerate(names):
@@ -291,11 +304,23 @@ class HeteroMoEProjSpace(nn.Module):
                     pr[m]=s.modal_proj[i](hidden[m])      # 异构调解投影
                 else:
                     pr[m]=hidden[m]@s.P_m[i].t()          # 原统一正交冻结
+        # ---- v70: VL 跨模态融合旁路 ----
+        vl_out = None
+        if getattr(s, 'use_vl', False):
+            txt = [pr[m] for m in ['Qwen','BERT'] if m in pr]
+            t_stream = s.vl_text_proj(sum(txt) / len(txt)) if txt else None   # 文本流
+            v_stream = s.vl_vis_proj(pr['ViT']) if 'ViT' in pr else None      # 视觉流
+            if t_stream is not None and v_stream is not None:
+                # VL 融合：锚点共注意力 + Bilinear 门控，输出 [B,S,d_shared]
+                vl_out = s.vl_fusion.forward_from_projected(v_stream, t_stream)
         # K/V 槽只有 BERT/ViT 参与；Q/O 三模型都有
         feats={}
         for m in pr:
             feats[m]={k:pr[m] for k in s.proj_space.slot_names}
         struct,canon,aux=s.proj_space(feats,return_aux=True)
+        # VL 旁路输出并联进 canonical（残差式，不破坏四槽结构）
+        if vl_out is not None:
+            canon = canon + vl_out
         if fused_only:
             y,alpha=s.fusion.forward_with_routing(canon)
             # ---- MoA：暴露 aux_loss（Load-Balancing + Z-Loss）----
@@ -329,6 +354,7 @@ _MOA_STEPS = int(os.environ.get('MOA_STEPS','1'))
 _MOA_MODE = os.environ.get('MOA_MODE','sparse_router')
 _USE_PMR = os.environ.get('PM_RECONCILE','0') == '1'
 _PM_TARGET = int(os.environ.get('PM_TARGET','1024'))
+_USE_VL = os.environ.get('USE_VL','0') == '1'
 _on = [n for n,v in [('HYPER',_USE_HYPER),('FAST',_USE_FAST),('RECUR',_USE_RECUR),
         ('MEM',_USE_MEM),('HEBB',_USE_HEBB),('ADAPT',_USE_ADAPT),('FB',_USE_FB),
         ('LOPT',_USE_LOPT),('SPARSE',_USE_SPARSE),('SUPCON',_USE_SUPCON),
@@ -350,7 +376,7 @@ model=HeteroMoEProjSpace(
     use_hebbian=_USE_HEBB,use_modality_adapter=_USE_ADAPT,
     use_feedback=_USE_FB,use_sparse=_USE_SPARSE,
     use_moa=_USE_MOA,moa_steps=_MOA_STEPS,moa_mode=_MOA_MODE,
-    pm_reconcile=_USE_PMR,pm_target=_PM_TARGET).to(DEV)
+    pm_reconcile=_USE_PMR,pm_target=_PM_TARGET,use_vl=_USE_VL).to(DEV)
 
 # ---- 路线5：学习式权重优化器（替换 proj_space 投影矩阵的更新方式）----
 _learned_opt = None
