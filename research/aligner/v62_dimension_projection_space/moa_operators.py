@@ -427,8 +427,57 @@ if HAS_TORCH:
             return self.out_proj(out)
 
 
+    # ---- v66: Launch-Bound-Optimized SSM Scan (O(1) SSD / O(log L) Kogge-Stone) ----
+    def parallel_kogge_stone_selective_scan_torch(dA, dB_u, C):
+        """O(log2 L) Parallel Associative Scan: (a2,b2)o(a1,b1)=(a2*a1, a2*b1+b2)。"""
+        _, L, _, _ = dA.shape
+        a_curr, b_curr = dA, dB_u
+        for step in range(int(math.ceil(math.log2(max(L, 2))))):
+            stride = 1 << step
+            if stride >= L:
+                break
+            b_new = a_curr[:, stride:] * b_curr[:, :-stride] + b_curr[:, stride:]
+            a_new = a_curr[:, stride:] * a_curr[:, :-stride]
+            b_curr = torch.cat([b_curr[:, :stride], b_new], dim=1)
+            a_curr = torch.cat([a_curr[:, :stride], a_new], dim=1)
+        return torch.einsum("bldn,bln->bld", b_curr, C)
+
+    def chunkwise_ssd_selective_scan_torch(log_dA, dB_u, C, chunk_size=16):
+        """Mamba-2 SSD: O(1) constant launches。L 非 chunk 整数倍时 fallback Kogge-Stone。"""
+        B, L, D, N_s = log_dA.shape
+        Q = min(chunk_size, L)
+        if L % Q != 0:
+            return parallel_kogge_stone_selective_scan_torch(torch.exp(log_dA), dB_u, C)
+        n_chunks = L // Q
+        log_a_c = log_dA.view(B, n_chunks, Q, D, N_s)
+        dbu_c = dB_u.view(B, n_chunks, Q, D, N_s)
+        c_c = C.view(B, n_chunks, Q, N_s)
+        cumsum_log_a = torch.cumsum(log_a_c, dim=2)
+        diff_log_a = cumsum_log_a.unsqueeze(3) - cumsum_log_a.unsqueeze(2)
+        tril = torch.tril(torch.ones(Q, Q, device=log_dA.device, dtype=torch.bool)).view(1, 1, Q, Q, 1, 1)
+        L_intra = torch.where(tril, torch.exp(diff_log_a.clamp(max=0.0)), torch.zeros_like(diff_log_a))
+        h_intra = torch.einsum("bcijdn,bcjdn->bcidn", L_intra, dbu_c)
+        decay_to_end = torch.exp(cumsum_log_a[:, :, -1:] - cumsum_log_a)
+        h_chunk_in = (decay_to_end * dbu_c).sum(dim=2)
+        total_chunk_decay = torch.exp(cumsum_log_a[:, :, -1])
+        a_ch, b_ch = total_chunk_decay, h_chunk_in
+        for s in range(int(math.ceil(math.log2(max(n_chunks, 2))))):
+            st = 1 << s
+            if st >= n_chunks:
+                break
+            b_next = a_ch[:, st:] * b_ch[:, :-st] + b_ch[:, st:]
+            a_next = a_ch[:, st:] * a_ch[:, :-st]
+            b_ch = torch.cat([b_ch[:, :st], b_next], dim=1)
+            a_ch = torch.cat([a_ch[:, :st], a_next], dim=1)
+        h_boundary = torch.cat([torch.zeros(B, 1, D, N_s, device=log_dA.device, dtype=log_dA.dtype), b_ch[:, :-1]], dim=1)
+        h_total = h_intra + torch.exp(cumsum_log_a) * h_boundary.unsqueeze(2)
+        return torch.einsum("bcidn,bcin->bcid", h_total, c_c).reshape(B, L, D)
+
     class SelectiveSSMSubOp(nn.Module):
-        """Proposer Branch 2: Mamba/SSM-inspired Selective State Space Operator."""
+        """Proposer Branch 2: Mamba/SSM-inspired Selective State Space Operator.
+
+        v66: 用 O(1) Chunkwise SSD 并行扫描替换 O(L) 串行 for 循环（launch-bound 修复）。
+        """
 
         def __init__(self, d_model: int, d_state: int = 16):
             super().__init__()
@@ -455,15 +504,11 @@ if HAS_TORCH:
             )
             dt = F.softplus(dt + self.dt_bias)
             A = -torch.exp(self.A_log)
-            dA = torch.exp(dt.unsqueeze(-1) * A.view(1, 1, D, self.d_state))
+            log_dA = dt.unsqueeze(-1) * A.view(1, 1, D, self.d_state)
             dB_u = dt.unsqueeze(-1) * B_ssm.unsqueeze(2) * u.unsqueeze(-1)
 
-            h = torch.zeros(B, D, self.d_state, device=x.device, dtype=x.dtype)
-            ys = []
-            for t in range(L):
-                h = dA[:, t] * h + dB_u[:, t]
-                ys.append(torch.einsum("bdn,bn->bd", h, C_ssm[:, t]))
-            y = torch.stack(ys, dim=1)
+            # v66: O(1) Chunkwise SSD 并行扫描（替代 O(L) 串行循环）
+            y = chunkwise_ssd_selective_scan_torch(log_dA, dB_u, C_ssm, chunk_size=16)
             return self.out_proj((y + u * self.D) * F.silu(z))
 
 
