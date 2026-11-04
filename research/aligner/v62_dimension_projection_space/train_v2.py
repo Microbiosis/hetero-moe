@@ -313,19 +313,6 @@ def _selftest():
 # ============ 训练：接分类头 ============
 _selftest()
 print('\n[3/5] 训练（带分类头，N_CLS=%d）...' % N_CLS, flush=True)
-# ---- sanity check：MoA 在新数据上能 forward ----
-model.eval()
-with torch.no_grad():
-    _b = tr_idx[:8]
-    _hq = torch.from_numpy(np.asarray(h_q[_b], dtype=np.float32)).to(DEV)
-    _hb = torch.from_numpy(np.asarray(h_b[_b], dtype=np.float32)).to(DEV)
-    _vi = _b % h_v.shape[0]
-    _hv = torch.from_numpy(np.asarray(h_v[_vi], dtype=np.float32)).to(DEV)
-    _y, _a, _aux = model({'Qwen':_hq, 'BERT':_hb, 'ViT':_hv}, fused_only=True)
-    _p = head(_y.mean(1))
-    print('   [sanity] y%s alpha%s logits%s (N_CLS=%d)'
-          % (tuple(_y.shape), tuple(_a.shape), tuple(_p.shape), N_CLS), flush=True)
-model.train()
 head=nn.Linear(model.d_space,N_CLS).to(DEV)
 opt.add_param_group({'params':head.parameters()})
 ce=nn.CrossEntropyLoss()
