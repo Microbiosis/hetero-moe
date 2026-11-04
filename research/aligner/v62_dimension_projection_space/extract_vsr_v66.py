@@ -52,34 +52,50 @@ labels = np.array([r[2] for r in records], dtype=np.int64)
 np.save(f'{OUT}/labels_vsr.npy', labels); _up('labels_vsr.npy')
 print('  标签分布 false/true: %s' % np.bincount(labels, minlength=2).tolist(), flush=True)
 
-# ---------- 2. 下载 COCO 图像 ----------
-print('[2/5] 下载 COCO 图像（VSR专用）...', flush=True)
+# ---------- 2. 下载 COCO 图像（从 HF 预打包 zip，绕开 Kaggle 联网限制）----------
+print('[2/5] 从 HF 拉取 COCO 图像 (3 parts) ...', flush=True)
+import zipfile
 img_dir = f'{OUT}/images'; os.makedirs(img_dir, exist_ok=True)
+_HF_BASE = 'https://huggingface.co/datasets/redmingwei/vsr-coco-images/resolve/main/'
+_PARTS = ['vsr_part1.zip', 'vsr_part2.zip', 'vsr_part3.zip']
+for _pt in _PARTS:
+    _zp = f'{OUT}/{_pt}'
+    if not os.path.exists(_zp) or os.path.getsize(_zp) < 1e6:
+        for _t in range(4):
+            try:
+                urllib.request.urlretrieve(_HF_BASE + _pt, _zp); break
+            except Exception as _e:
+                print('  retry %s: %s' % (_pt, str(_e)[:50]), flush=True); time.sleep(3)
+    with zipfile.ZipFile(_zp) as z:
+        z.extractall(img_dir)
+    print('  extracted %s' % _pt, flush=True)
+print('  图像就绪: %d 张' % len(os.listdir(img_dir)), flush=True)
 from PIL import Image
 import io as _io
+_stats = {'img_fail': 0}
 def _load_img(idx):
-    fp = f'{img_dir}/{idx}.jpg'
-    if os.path.exists(fp):
+    # 本地 zip 已解压，文件名 = COCO ID（从 image_link 提取）
+    url, _, _ = records[idx]
+    fname = url.split('/')[-1]                 # 000000558388.jpg
+    fp = f'{img_dir}/{fname}'
+    if os.path.exists(fp) and os.path.getsize(fp) > 1000:
         try:
             return Image.open(fp).convert('RGB')
         except Exception:
             pass
-    url, _, _ = records[idx]
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    for _try in range(3):
+    # 兜底：本地缺失则尝试联网（Kaggle 大概率失败，返回灰图占位）
+    for _try in range(2):
         try:
-            data = urllib.request.urlopen(req, timeout=25).read()
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            data = urllib.request.urlopen(req, timeout=20).read()
             img = Image.open(_io.BytesIO(data)).convert('RGB')
             img.save(fp)
             return img
         except Exception:
-            if _try == 2:
-                # 下载失败：返回确定性灰图占位（非全零，避免视觉hidden退化常数），并计数
-                _stats['img_fail'] += 1
-                return Image.new('RGB', (224, 224), (128, 128, 128))
-    return None
-
-_stats = {'img_fail': 0}
+            pass
+    # 下载失败：返回确定性灰图占位（非全零，避免视觉hidden退化常数），并计数
+    _stats['img_fail'] += 1
+    return Image.new('RGB', (384, 384), (128, 128, 128))
 
 # ---------- 3. Qwen3.5-2B 文本 ----------
 print('[3/5] Qwen3.5-2B ...', flush=True)
