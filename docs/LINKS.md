@@ -1,6 +1,14 @@
 # 产物链接索引
 
-> 最后核对：2026-11-03
+> 最后核对：2026-11-04
+
+## 算子库原始版（上游）
+
+| 链接 | 说明 |
+|---|---|
+| https://github.com/Microbiosis/neuro-physical-hierarchical-moa-backbone | **算子库原始版本**，Apache-2.0。12 个领域神经算子共 10,619 行（`moa_operators` / `moa_triton_kernels` / `unified_hybrid_moa_architecture` 等），附 numpy 参考实现与净室 `smoke_test.py`（9/9 通过） |
+
+本仓库 `research/aligner/v62_dimension_projection_space/` 下的 `moa_operators.py`、`moa_operators_fast.py`、`moa_triton_fast.py`、`moa_triton_kernels.py` 是该库的**适配修改版**（为 v62 融合层定制），以上游原始版为准；两边内容不同，勿互相覆盖。
 
 ## 三维机制（可交互）— 主入口
 
