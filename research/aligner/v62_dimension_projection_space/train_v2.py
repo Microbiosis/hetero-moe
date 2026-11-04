@@ -63,6 +63,12 @@ h_b = np.load(p['h_bert%s.npy' % _SUF], mmap_mode='r')
 h_v = np.load(p['h_vit%s.npy' % _SUF], mmap_mode='r')
 y_t = np.load(p['labels%s.npy' % _SUF]); y_v = np.load(p['food_labels%s.npy' % _SUF])
 N_CLS = int(os.environ.get('N_CLS', '4'))   # ag_news=4, SNLI-VE=3
+ABL = os.environ.get('ABL', 'all')          # all=融合, text=只文本(无ViT), image=只视觉
+def _feats(hq, hb, hv):
+    d = {'Qwen': hq, 'BERT': hb}
+    if ABL != 'text':
+        d['ViT'] = hv
+    return d
 print('   [cache=%s modal_dims=%s N_CLS=%d]' % (R, _MODAL_DIMS, N_CLS), flush=True)
 print('   qwen%s bert%s vit%s 类别%s' % (h_q.shape, h_b.shape, h_v.shape,
       np.bincount(y_t, minlength=N_CLS).tolist()), flush=True)
@@ -359,7 +365,7 @@ for step in range(STEPS+1):
     hv=torch.from_numpy(np.asarray(h_v[vi],dtype=np.float32)).to(DEV)
     lab=torch.as_tensor(y_t[bi],device=DEV)
 
-    y,alpha,aux=model({'Qwen':hq,'BERT':hb,'ViT':hv}, fused_only=True)
+    y,alpha,aux=model(_feats(hq,hb,hv), fused_only=True)
     if step==0:
         print('   [debug] y.shape=%s alpha.shape=%s' % (tuple(y.shape), tuple(alpha.shape)), flush=True)
         print('   [debug] hq.shape=%s hb.shape=%s' % (tuple(hq.shape), tuple(hb.shape)), flush=True)
@@ -448,7 +454,7 @@ for step in range(STEPS+1):
                 vbb=torch.from_numpy(np.asarray(h_b[vb],dtype=np.float32)).to(DEV)
                 vvi=vb % h_v.shape[0]
                 vv=torch.from_numpy(np.asarray(h_v[vvi],dtype=np.float32)).to(DEV)
-                vy,_,_=model({'Qwen':vq,'BERT':vbb,'ViT':vv},fused_only=True)
+                vy,_,_=model(_feats(vq,vbb,vv),fused_only=True)
                 vp=head(vy.mean(1)).argmax(-1)
                 vc+=(vp==torch.as_tensor(y_t[vb],device=DEV)).sum().item()
                 vt+=len(vb)
@@ -496,7 +502,7 @@ with torch.no_grad():
         hb=torch.from_numpy(np.asarray(h_b[b],dtype=np.float32)).to(DEV)
         vi=b % h_v.shape[0]
         hv=torch.from_numpy(np.asarray(h_v[vi],dtype=np.float32)).to(DEV)
-        y,alpha,aux=model({'Qwen':hq,'BERT':hb,'ViT':hv},fused_only=True)
+        y,alpha,aux=model(_feats(hq,hb,hv),fused_only=True)
         pred=head(y.mean(1)).argmax(-1)
         corr+=(pred==torch.as_tensor(y_t[b],device=DEV)).sum().item()
         tot+=len(b)
