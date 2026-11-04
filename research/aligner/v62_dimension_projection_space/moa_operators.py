@@ -567,12 +567,12 @@ if HAS_TORCH:
             self.num_proposers = config.num_proposers
             branches: List[nn.Module] = []
             for i in range(self.num_proposers):
-                kind = i % 4
+                # v67: 3 异构分支（去 SSM：其状态维度与 T4 显存/并行扫描内存爆炸三角冲突）
+                # 0=Attention, 1=CausalConv, 2=SwiGLU
+                kind = i % 3
                 if kind == 0:
                     branches.append(CausalSelfAttentionSubOp(config.d_model, config.n_heads))
                 elif kind == 1:
-                    branches.append(SelectiveSSMSubOp(config.d_model, config.d_state))
-                elif kind == 2:
                     branches.append(
                         CausalDepthwiseConvSubOp(config.d_model, config.conv_kernel_size)
                     )
