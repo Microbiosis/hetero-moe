@@ -15,6 +15,7 @@
 """
 from __future__ import annotations
 
+import os
 import torch
 import torch.nn as nn
 
@@ -48,6 +49,7 @@ class MoAFusionOverProjSpace(nn.Module):
             num_refinement_steps=num_refinement_steps,
             enable_adaptive_halting=enable_halting,
             aux_loss_weight=0.01, z_loss_weight=0.001,
+            d_state=int(os.environ.get('MOA_DSTATE', '4')),
         )
         self.block = IterativeMoAOperatorBlock(self.cfg)
         self.last_aux_loss = 0.0
