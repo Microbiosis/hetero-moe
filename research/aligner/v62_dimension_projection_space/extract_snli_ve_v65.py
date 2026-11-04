@@ -13,7 +13,8 @@ import os, json, time, zipfile
 import numpy as np
 import torch
 
-OUT = '/kaggle/working'; os.makedirs(OUT, exist_ok=True)
+OUT = '/kaggle/working/cache_v65'   # 提取直接存固定目录，供同kernel训练读取
+os.makedirs(OUT, exist_ok=True)
 t0 = time.time(); DEV = 'cuda'
 HF_REPO = 'redmingwei/hetero-moe-cache-v65'
 N = 5000
@@ -22,6 +23,8 @@ VIT_SEQ = 197
 LABEL_MAP = {'entailment': 0, 'neutral': 1, 'contradiction': 2}
 
 def _up(f):
+    if os.environ.get('UPLOAD', '1') != '1':
+        return
     from huggingface_hub import HfApi
     api = HfApi(token=os.environ.get('HF_TOKEN'))
     api.create_repo(HF_REPO, repo_type='dataset', exist_ok=True)
