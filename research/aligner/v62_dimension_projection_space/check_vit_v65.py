@@ -44,11 +44,12 @@ print('全局 mean %.5f  std %.5f' % (sub.mean(), sub.std()))
 print('每样本 std: mean %.5f  min %.5f  max %.5f' % (
     sub.std(axis=(1,2)).mean(), sub.std(axis=(1,2)).min(), sub.std(axis=(1,2)).max()))
 
-# patch 间差异（单样本内 128 patch 是否相同）
-p0 = sub[0]                                    # [128,1152]
+# patch 间差异（单样本内 patch 是否相同）
+p0 = sub[0]                                    # [L_patch,1152]
+Lp = p0.shape[0]
 patch_cos = (p0 @ p0.T) / (np.linalg.norm(p0,axis=1,keepdims=True) @ np.linalg.norm(p0,axis=1,keepdims=True).T + 1e-9)
-offdiag = patch_cos[~np.eye(128, dtype=bool)]
-print('样本0 patch间cosine: mean %.4f  std %.4f (应<0.99否则patch全同)' % (offdiag.mean(), offdiag.std()))
+offdiag = patch_cos[~np.eye(Lp, dtype=bool)]
+print('样本0 patch间cosine: mean %.4f  std %.4f (L_patch=%d, 应<0.99否则patch全同)' % (offdiag.mean(), offdiag.std(), Lp))
 
 # 样本间 cosine（不同图 hidden 区分度）
 flat = sub.mean(axis=1)                        # [200,1152] 每图池化
