@@ -184,22 +184,26 @@ from itertools import combinations
 # ============ v69: 异构 P_m（维度调解）============
 # 问题：BERT(768)/ViT(1152) 对接 Qwen(2048) 时，统一压到256=残废，补零升2048=稀疏。
 # 解法：大模型降维投影，小模型先局部提炼再稠密升维，门控保护原生信息。
+# v69b 关键修复：调解/降维后**仍接冻结随机正交投影**——原冻结正交P_m默默提供
+#   「跨模态去相关」，去掉后三模态在target_dim挤成一团，路由step250即塌到Q槽
+#   (slot_ent 0.988→0.001)。调解块管「信息不残废」，冻结正交管「跨模态去相关」。
 class DimDownProj(nn.Module):
     """大维度模态 → target_dim 的降维投影（信息量大，降一半仍富余）。"""
     def __init__(self, d_src, d_target):
         super().__init__()
         self.proj = nn.Linear(d_src, d_target)
         self.norm = nn.LayerNorm(d_target)
+        w = torch.empty(d_target, d_target); nn.init.orthogonal_(w)
+        self.register_buffer('ortho', w.detach())
     def forward(self, x):
-        return self.norm(self.proj(x))
+        return self.norm(self.proj(x)) @ self.ortho.t()
 
 
 class DimReconcileBlock(nn.Module):
-    """低维模态 → target_dim 的调解层：局部提炼 + 稠密升维 + 门控保护。"""
+    """低维模态 → target_dim 的调解层：局部提炼 + 稠密升维 + 门控保护 + 冻结正交去相关。"""
     def __init__(self, d_src, d_target, n_heads=4):
         super().__init__()
         h = max(1, n_heads)
-        # d_src 需被 n_heads 整除；不整除则退化为 MLP 提炼
         self.use_attn = (d_src % h == 0) and d_src >= h
         if self.use_attn:
             self.local_refine = nn.MultiheadAttention(d_src, h, batch_first=True)
@@ -210,6 +214,12 @@ class DimReconcileBlock(nn.Module):
         self.up_proj = nn.Linear(d_src, d_target)      # 稠密升维（非补零）
         self.gate = nn.Linear(d_src, d_target)         # 门控保护原生信息
         self.out_norm = nn.LayerNorm(d_target)
+        # v69b：调解输出后接冻结随机正交（在target空间内去相关，恢复原P_m核心作用）
+        self.register_buffer('ortho', self._make_ortho(d_target))
+    @staticmethod
+    def _make_ortho(d):
+        w = torch.empty(d, d); nn.init.orthogonal_(w)
+        return w.detach()
     def forward(self, x):                              # x: [B, S, d_src]
         if self.use_attn:
             refined, _ = self.local_refine(x, x, x)
@@ -218,7 +228,8 @@ class DimReconcileBlock(nn.Module):
         refined = self.refine_norm(x + refined)         # 残差提炼
         up = self.up_proj(refined)                      # 稠密升维
         g = torch.sigmoid(self.gate(refined))           # 门控 0~1
-        return self.out_norm(up * g)
+        out = self.out_norm(up * g)                     # 门控后的稠密表示
+        return out @ self.ortho.t()                     # 冻结正交去相关
 
 
 class HeteroMoEProjSpace(nn.Module):
