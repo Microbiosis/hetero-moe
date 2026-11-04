@@ -305,14 +305,14 @@ def _selftest():
 # ============ 训练：接分类头 ============
 _selftest()
 print('\n[3/5] 训练（带分类头，任务是 4 类分类）...', flush=True)
-head=nn.Linear(model.d_space,4).to(DEV)
+head=nn.Linear(model.d_space,N_CLS).to(DEV)
 opt.add_param_group({'params':head.parameters()})
 ce=nn.CrossEntropyLoss()
 n=h_q.shape[0]
 # ==== 按类别分层划分 train/val ====
 rng=np.random.default_rng(0)
 tr_idx, va_idx = [], []
-for c in range(4):
+for c in range(N_CLS):
     ids = np.where(y_t == c)[0]
     rng.shuffle(ids)
     k = int(len(ids) * 0.8)
@@ -321,7 +321,7 @@ tr_idx = np.sort(np.concatenate(tr_idx))
 va_idx = np.sort(np.concatenate(va_idx))
 n = len(tr_idx)
 print('   分层划分: train %d / val %d' % (n, len(va_idx)), flush=True)
-for c in range(4):
+for c in range(N_CLS):
     a=(y_t[tr_idx]==c).sum(); b=(y_t[va_idx]==c).sum()
     print('     类%d  train %d (%.2f)  val %d (%.2f)'
           % (c, a, a/n, b, b/len(va_idx)), flush=True)
@@ -374,7 +374,7 @@ for step in range(STEPS+1):
     fm_s=(ah_slot>0).float().mean(dim=(0,1)); pm_s=ah_slot.mean(dim=(0,1))
     loss_bal_slot = ah_slot.shape[-1]*(fm_s*pm_s).sum()
     fm_e=(ah_exp>0).float().mean(dim=(0,1));  pm_e=ah_exp.mean(dim=(0,1))
-    loss_bal_exp  = 4*(fm_e*pm_e).sum()
+    loss_bal_exp  = 4*(fm_e*pm_e).sum()   # 专家数固定4，与类别无关
     loss_bal = loss_bal_exp + _slot_bal_w*loss_bal_slot
 
     # 槽门控熵正则：最大化熵，防止塌到单槽。
