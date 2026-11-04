@@ -181,17 +181,72 @@ from typing import Dict, List, Optional, Tuple
 from itertools import combinations
 
 
+# ============ v69: 异构 P_m（维度调解）============
+# 问题：BERT(768)/ViT(1152) 对接 Qwen(2048) 时，统一压到256=残废，补零升2048=稀疏。
+# 解法：大模型降维投影，小模型先局部提炼再稠密升维，门控保护原生信息。
+class DimDownProj(nn.Module):
+    """大维度模态 → target_dim 的降维投影（信息量大，降一半仍富余）。"""
+    def __init__(self, d_src, d_target):
+        super().__init__()
+        self.proj = nn.Linear(d_src, d_target)
+        self.norm = nn.LayerNorm(d_target)
+    def forward(self, x):
+        return self.norm(self.proj(x))
+
+
+class DimReconcileBlock(nn.Module):
+    """低维模态 → target_dim 的调解层：局部提炼 + 稠密升维 + 门控保护。"""
+    def __init__(self, d_src, d_target, n_heads=4):
+        super().__init__()
+        h = max(1, n_heads)
+        # d_src 需被 n_heads 整除；不整除则退化为 MLP 提炼
+        self.use_attn = (d_src % h == 0) and d_src >= h
+        if self.use_attn:
+            self.local_refine = nn.MultiheadAttention(d_src, h, batch_first=True)
+        else:
+            self.local_refine = nn.Sequential(nn.Linear(d_src, d_src), nn.GELU(),
+                                              nn.Linear(d_src, d_src))
+        self.refine_norm = nn.LayerNorm(d_src)
+        self.up_proj = nn.Linear(d_src, d_target)      # 稠密升维（非补零）
+        self.gate = nn.Linear(d_src, d_target)         # 门控保护原生信息
+        self.out_norm = nn.LayerNorm(d_target)
+    def forward(self, x):                              # x: [B, S, d_src]
+        if self.use_attn:
+            refined, _ = self.local_refine(x, x, x)
+        else:
+            refined = self.local_refine(x)
+        refined = self.refine_norm(x + refined)         # 残差提炼
+        up = self.up_proj(refined)                      # 稠密升维
+        g = torch.sigmoid(self.gate(refined))           # 门控 0~1
+        return self.out_norm(up * g)
+
+
 class HeteroMoEProjSpace(nn.Module):
     def __init__(s,modal_dims=(896,256,768),d_shared=256,ne=4,top_k=2,
                  use_hyper=False,use_fast=False,hyper_rank=8,fast_decay=0.9,
                  use_recurrent_gate=False,use_memory_router=False,
                  use_hebbian=False,use_modality_adapter=False,use_feedback=False,
-                 use_sparse=False,use_moa=False,moa_steps=1,moa_mode='sparse_router'):
+                 use_sparse=False,use_moa=False,moa_steps=1,moa_mode='sparse_router',
+                 pm_reconcile=False,pm_target=1024):
         super().__init__()
-        s.P_m=nn.ParameterList([nn.Parameter(torch.empty(d_shared,D)) for D in modal_dims])
-        for m in range(len(modal_dims)):
-            nn.init.orthogonal_(s.P_m[m]); s.P_m[m].requires_grad_(False)
-        s.proj_space=DimProjectionSpace(d_shared,MEASURED,ne,top_k,
+        # ---- v69: 异构 P_m ----
+        # pm_reconcile=True: 大模型降维 + 小模型DimReconcileBlock升维到 pm_target，
+        #   不再统一压到 d_shared=256（信息残废）或补零（稀疏）。d_shared 提升到 pm_target。
+        # pm_reconcile=False: 原逻辑（统一正交冻结投影到 d_shared）。
+        s.pm_reconcile=pm_reconcile
+        if pm_reconcile:
+            s.d_shared=pm_target                      # 对接维度提升
+            max_dim=max(modal_dims)
+            s.modal_proj=nn.ModuleList([
+                DimDownProj(D, pm_target) if D==max_dim
+                else DimReconcileBlock(D, pm_target)
+                for D in modal_dims])
+        else:
+            s.d_shared=d_shared
+            s.P_m=nn.ParameterList([nn.Parameter(torch.empty(d_shared,D)) for D in modal_dims])
+            for m in range(len(modal_dims)):
+                nn.init.orthogonal_(s.P_m[m]); s.P_m[m].requires_grad_(False)
+        s.proj_space=DimProjectionSpace(s.d_shared,MEASURED,ne,top_k,
                                         use_hyper=use_hyper,hyper_rank=hyper_rank,
                                         use_recurrent_gate=use_recurrent_gate,
                                         use_memory_router=use_memory_router,
@@ -220,7 +275,11 @@ class HeteroMoEProjSpace(nn.Module):
     def forward(s, hidden, fused_only=True):
         names=['Qwen','BERT','ViT']; pr={}
         for i,m in enumerate(names):
-            if m in hidden: pr[m]=hidden[m]@s.P_m[i].t()
+            if m in hidden:
+                if s.pm_reconcile:
+                    pr[m]=s.modal_proj[i](hidden[m])      # 异构调解投影
+                else:
+                    pr[m]=hidden[m]@s.P_m[i].t()          # 原统一正交冻结
         # K/V 槽只有 BERT/ViT 参与；Q/O 三模型都有
         feats={}
         for m in pr:
@@ -257,6 +316,8 @@ _USE_SUPCON = os.environ.get('USE_SUPCON','0') == '1'
 _USE_MOA = os.environ.get('USE_MOA','0') == '1'
 _MOA_STEPS = int(os.environ.get('MOA_STEPS','1'))
 _MOA_MODE = os.environ.get('MOA_MODE','sparse_router')
+_USE_PMR = os.environ.get('PM_RECONCILE','0') == '1'
+_PM_TARGET = int(os.environ.get('PM_TARGET','1024'))
 _on = [n for n,v in [('HYPER',_USE_HYPER),('FAST',_USE_FAST),('RECUR',_USE_RECUR),
         ('MEM',_USE_MEM),('HEBB',_USE_HEBB),('ADAPT',_USE_ADAPT),('FB',_USE_FB),
         ('LOPT',_USE_LOPT),('SPARSE',_USE_SPARSE),('SUPCON',_USE_SUPCON),
@@ -277,7 +338,8 @@ model=HeteroMoEProjSpace(
     use_recurrent_gate=_USE_RECUR,use_memory_router=_USE_MEM,
     use_hebbian=_USE_HEBB,use_modality_adapter=_USE_ADAPT,
     use_feedback=_USE_FB,use_sparse=_USE_SPARSE,
-    use_moa=_USE_MOA,moa_steps=_MOA_STEPS,moa_mode=_MOA_MODE).to(DEV)
+    use_moa=_USE_MOA,moa_steps=_MOA_STEPS,moa_mode=_MOA_MODE,
+    pm_reconcile=_USE_PMR,pm_target=_PM_TARGET).to(DEV)
 
 # ---- 路线5：学习式权重优化器（替换 proj_space 投影矩阵的更新方式）----
 _learned_opt = None
