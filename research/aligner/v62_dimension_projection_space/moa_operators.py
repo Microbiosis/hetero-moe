@@ -648,13 +648,13 @@ if HAS_TORCH:
             self.num_proposers = config.num_proposers
             branches: List[nn.Module] = []
             for i in range(self.num_proposers):
-                # v68: 恢复4异构分支（SSM用zero-OOM版，d_state=16显存4.6MB可跑）
-                kind = i % 4
+                # v71: 回到 v65.5 验证过的 3 异构分支（去 SSM）。
+                # SSM 的 chunkwise_ssd 在 D=256×N=16 下 diff_log_a 要 25GB → OOM；
+                # zero-OOM 版(autograd checkpoint)可跑但 held-out 仅0.53，远输3分支的0.64。
+                kind = i % 3
                 if kind == 0:
                     branches.append(CausalSelfAttentionSubOp(config.d_model, config.n_heads))
                 elif kind == 1:
-                    branches.append(SelectiveSSMSubOp(config.d_model, config.d_state))
-                elif kind == 2:
                     branches.append(
                         CausalDepthwiseConvSubOp(config.d_model, config.conv_kernel_size)
                     )
