@@ -298,6 +298,7 @@ class HeteroMoEProjSpace(nn.Module):
             s.vl_fusion = _VLFusion(d_model=d_shared, num_anchors=16)
             s.vl_text_proj = nn.Linear(d_shared, d_shared, bias=False)   # 文本流整理
             s.vl_vis_proj = nn.Linear(d_shared, d_shared, bias=False)    # 视觉流整理
+            s.vl_out_proj = nn.Linear(d_shared, s.d_space, bias=False)  # 投到canonical维度
     def forward(s, hidden, fused_only=True):
         names=['Qwen','BERT','ViT']; pr={}
         for i,m in enumerate(names):
@@ -322,7 +323,7 @@ class HeteroMoEProjSpace(nn.Module):
         struct,canon,aux=s.proj_space(feats,return_aux=True)
         # VL 旁路输出并联进 canonical（残差式，不破坏四槽结构）
         if vl_out is not None:
-            canon = canon + vl_out
+            canon = canon + s.vl_out_proj(vl_out)
         if fused_only:
             y,alpha=s.fusion.forward_with_routing(canon)
             # ---- MoA：暴露 aux_loss（Load-Balancing + Z-Loss）----
