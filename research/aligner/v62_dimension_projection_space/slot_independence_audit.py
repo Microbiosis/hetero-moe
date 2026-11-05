@@ -19,12 +19,20 @@ def main():
     args = ap.parse_args()
 
     import torch
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import os as _os
+    _here = _os.path.dirname(_os.path.abspath(__file__))
+    _pkgdir = '/kaggle/working/hetero-moe/research/aligner/v62_dimension_projection_space'
+    for _cand in [_here, _pkgdir]:
+        if _cand and _os.path.isfile(_os.path.join(_cand, 'projspace.py')):
+            _pkgdir = _cand; break
+    sys.path.insert(0, _pkgdir)
     import importlib.util as ilu
-    spec = ilu.spec_from_file_location('v62_projspace', 'projspace.py')
+    spec = ilu.spec_from_file_location('v62_projspace',
+                                       _os.path.join(_pkgdir, 'projspace.py'))
     ps_mod = ilu.module_from_spec(spec); sys.modules['v62_projspace'] = ps_mod
     spec.loader.exec_module(ps_mod)
     DimProjectionSpace = ps_mod.DimProjectionSpace; MEASURED = ps_mod.MEASURED_SUBSPACES
+    print('projspace 目录:', _pkgdir, flush=True)
 
     dev = 'cuda' if torch.cuda.is_available() else 'cpu'
     ps = DimProjectionSpace(256, MEASURED, 4, 2).to(dev)
