@@ -288,11 +288,13 @@ class HeteroMoEProjSpace(nn.Module):
         # VL 旁路直接吃分离的文本流(Qwen+BERT)和视觉流(ViT)，锚点共注意力+Bilinear门控。
         s.use_vl = use_vl
         if use_vl:
+            # VL 算子从同目录 vl_fusion.py import（Kaggle clone 仓库后可用）
+            _vl_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in dir() else None
             import sys as _sys
-            _vl_pkg = '/workspace/neuro-physical-hierarchical-moa-backbone/hybrid_moa_vl_operator_suite'
-            if _vl_pkg not in _sys.path:
-                _sys.path.insert(0, _vl_pkg)
-            from moa_operators import CrossModalVisionLanguageFusionSubOp as _VLFusion
+            for _cand in [_vl_dir, '/kaggle/working/hetero-moe/research/aligner/v62_dimension_projection_space']:
+                if _cand and _cand not in _sys.path and os.path.isdir(_cand):
+                    _sys.path.insert(0, _cand)
+            from vl_fusion import CrossModalVisionLanguageFusionSubOp as _VLFusion
             s.vl_fusion = _VLFusion(d_model=d_shared, num_anchors=16)
             s.vl_text_proj = nn.Linear(d_shared, d_shared, bias=False)   # 文本流整理
             s.vl_vis_proj = nn.Linear(d_shared, d_shared, bias=False)    # 视觉流整理
