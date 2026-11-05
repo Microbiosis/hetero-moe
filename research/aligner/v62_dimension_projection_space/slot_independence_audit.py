@@ -37,9 +37,27 @@ def main():
     dev = 'cuda' if torch.cuda.is_available() else 'cpu'
     ps = DimProjectionSpace(256, MEASURED, 4, 2).to(dev)
     sd = torch.load(args.ckpt, map_location=dev)
-    ps.load_state_dict(sd.get('proj_space', sd), strict=False)
+    msd = sd.get('model', sd)
+    ps.load_state_dict({k[len('proj_space.'):]: v for k, v in msd.items()
+                        if k.startswith('proj_space.')}, strict=False)
     ps.eval()
     slots = ps.slot_names                                  # ['Q','K','V','O']
+    # P_m: 模态 hidden -> d_shared(256) 正交冻结投影（v62 架构关键一步）
+    P_M = []
+    for _i in range(3):
+        _k = None
+        for _cand in ['P_m.%d' % _i, 'P_m.%d.weight' % _i]:
+            if _cand in msd:
+                _k = _cand; break
+        if _k is None:
+            raise KeyError('ckpt 缺少 P_m.%d；现有 P_m 键: %s'
+                           % (_i, [x for x in msd if 'P_m' in x][:6]))
+        P_M.append(msd[_k].to(dev))
+    print('P_m shapes:', [tuple(x.shape) for x in P_M], flush=True)
+    _EXP = [(256, 2048), (256, 768), (256, 1152)]
+    for _i, _p in enumerate(P_M):
+        if tuple(_p.shape) != _EXP[_i]:
+            raise ValueError('P_m.%d 形状 %s，期望 %s' % (_i, tuple(_p.shape), _EXP[_i]))
 
     hq = np.load(f'{args.cache}/h_qwen{args.suf}.npy', mmap_mode='r')
     hb = np.load(f'{args.cache}/h_bert{args.suf}.npy', mmap_mode='r')
@@ -48,9 +66,11 @@ def main():
     idx = rng.choice(hq.shape[0], min(args.n, hq.shape[0]), replace=False)
 
     def canon_of(hq_t, hb_t, hv_t):
-        feats = {'Qwen': {k: hq_t for k in slots},
-                 'BERT': {k: hb_t for k in slots},
-                 'ViT':  {k: hv_t for k in slots}}
+        # 先过 P_m 投影（模态维 → 256），再进四槽投影空间
+        pr = {'Qwen': hq_t @ P_M[0].t(),
+              'BERT': hb_t @ P_M[1].t(),
+              'ViT':  hv_t @ P_M[2].t()}
+        feats = {m: {k: pr[m] for k in slots} for m in pr}
         _, canon, _ = ps(feats, return_aux=True)
         return canon
 
@@ -90,19 +110,30 @@ def main():
     hb_t = torch.from_numpy(np.asarray(hb[b],dtype=np.float32)).to(dev)
     hv_t = torch.from_numpy(np.asarray(hv[b % hv.shape[0]],dtype=np.float32)).to(dev)
     Gs = []
+    _MIDX = {'Qwen': 0, 'BERT': 1, 'ViT': 2}
     for m, base in [('Qwen', hq_t), ('BERT', hb_t), ('ViT', hv_t)]:
         src = base.clone().requires_grad_(True)
-        pr = {'Qwen': hq_t.detach(), 'BERT': hb_t.detach(), 'ViT': hv_t.detach()}
-        pr[m] = src
+        pr = {'Qwen': hq_t @ P_M[0].t(), 'BERT': hb_t @ P_M[1].t(),
+              'ViT': hv_t @ P_M[2].t()}
+        pr[m] = src @ P_M[_MIDX[m]].t()
         feats = {mm: {k: pr[mm] for k in slots} for mm in pr}
         _, canon, _ = ps(feats, return_aux=True)
         canon.sum().backward()
         g = src.grad.ravel().cpu().numpy(); g = g - g.mean()
         Gs.append(g / (np.linalg.norm(g) + 1e-15))
-    Gm = np.stack(Gs, axis=1)
+    # 三模态 hidden 维度不同（2048/768/1152），梯度向量长度不同 → 不能直接堆叠。
+    # 改为：各自中心化后投影到公共子空间（随机高斯投影到 256 维）再比较方向；
+    # 同时用各自长度做 Gram，报告两两 |cos|。
+    _rng = np.random.default_rng(7)
+    def _proj(g):
+        d = g.shape[0]
+        R = _rng.standard_normal((d, 256)) / np.sqrt(d)
+        q = g @ R
+        return q / (np.linalg.norm(q) + 1e-15)
+    Gm = np.stack([_proj(g) for g in Gs], axis=1)
     gcos = np.abs(Gm.T @ Gm); goff = ~np.eye(3, dtype=bool)
     grank = int(np.linalg.matrix_rank(Gm, tol=1e-5))
-    print('梯度子空间秩: %d/3' % grank)
+    print('梯度子空间秩(公共投影后): %d/3' % grank)
     print('梯度两两|cos| 均值 %.4f 最大 %.4f' % (gcos[goff].mean(), gcos[goff].max()))
     print('判定:', '✅ 三模态梯度独立' if (grank==3 and gcos[goff].max()<0.8)
           else '⚠️ 三模态梯度共线 → 某模态冗余')
