@@ -22,7 +22,7 @@ def main():
     import os as _os
     _here = _os.path.dirname(_os.path.abspath(__file__))
     _pkgdir = '/kaggle/working/hetero-moe/research/aligner/v62_dimension_projection_space'
-    for _cand in [_here, _pkgdir]:
+    for _cand in [_here, _pkgdir, '/kaggle/working/v62pkg']:
         if _cand and _os.path.isfile(_os.path.join(_cand, 'projspace.py')):
             _pkgdir = _cand; break
     sys.path.insert(0, _pkgdir)
