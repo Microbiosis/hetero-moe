@@ -142,7 +142,7 @@ def main():
         g = src.grad.reshape(-1, src.shape[-1]).cpu().numpy()      # [N, D_m]
         # 三模态维度不同(D_m 各异) → 各自先过 P_m 投到同一条 256 维槽空间再比较，
         # 这样三个子空间同维，夹角可直接算。衡量的是「梯度投影到共享子空间后的贡献方向」。
-        gp = g @ P_m[_mi].cpu().numpy()                            # [N, 256]
+        gp = g @ P_m[_mi].cpu().numpy().T                          # [N,D_m]@[D_m,256]=[N,256]
         G = gp.T @ gp                                              # [256,256]
         w, V = np.linalg.eigh(G)                                   # 升序
         order = np.argsort(w)[::-1][:args.k]                        # 最大 k 个特征值
