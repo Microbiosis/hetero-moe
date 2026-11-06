@@ -140,25 +140,24 @@ def main():
         _, cn, _ = ps(feats, return_aux=True)
         cn.sum().backward()
         g = src.grad.reshape(-1, src.shape[-1]).cpu().numpy()      # [N, D_m]
-        # 用 Gram 矩阵 (D×D) 特征分解取右奇异向量：避免对 [N,D] 做完整 SVD（CPU 上极慢）
-        # 主子空间取「输入方向」= V（g 的列空间），即梯度在输入维度上的主方向
-        G = g.T @ g                                                # [D_m, D_m]
+        # 三模态维度不同(D_m 各异) → 各自先过 P_m 投到同一条 256 维槽空间再比较，
+        # 这样三个子空间同维，夹角可直接算。衡量的是「梯度投影到共享子空间后的贡献方向」。
+        gp = g @ P_m[_mi].cpu().numpy()                            # [N, 256]
+        G = gp.T @ gp                                              # [256,256]
         w, V = np.linalg.eigh(G)                                   # 升序
         order = np.argsort(w)[::-1][:args.k]                        # 最大 k 个特征值
-        Vk = V[:, order]                                           # [D_m, k] 列正交
-        S = np.sqrt(np.maximum(w[order], 0))
-        Us.append(Vk.T)                                            # [k, D_m] 行正交（便于比夹角）
-        print('  %s 梯度 %s → 主方向 %s (能量 %.3f)' % (
+        Vk = V[:, order]                                           # [256,k] 列正交
+        Us.append(Vk)                                              # 三模态统一 [256,k]
+        print('  %s 梯度 %s → 槽空间主方向 %s (能量 %.3f)' % (
             name, tuple(g.shape), Vk.shape,
-            float((S**2).sum() / max((w**2).sum(), 1e-12))), flush=True)
+            float(w[order].sum() / max(w.sum(), 1e-12))), flush=True)
     # 各模态主子空间维度不同(D_m×k) → 用投影算子比较夹角:
     # |Ui^T Pj Ui| 的最大奇异值 = 两个子空间夹角
+    # 三个子空间统一在 256 维槽空间 → 直接比 |Ui^T Uj| 的最大奇异值
     sc = []
     for i in range(3):
         for j in range(i+1, 3):
-            Pi = Us[i].T @ Us[i]          # [D_i, D_i] 投影到 Qi 的列空间
-            # 把 Qj 的基投到 Qi 的空间: Pi @ (列正交基 of Qj) 的奇异值
-            M = Pi @ Us[j].T              # [D_i, k]
+            M = Us[i].T @ Us[j]           # [k,k]
             sc.append(float(np.linalg.svd(M, compute_uv=False)[0]))
     print('三模态梯度子空间主夹角(cos): %s 均值 %.4f 最大 %.4f' % (
         np.round(sc, 4).tolist(), float(np.mean(sc)), float(np.max(sc))))
