@@ -129,8 +129,12 @@ def main():
     Us = []
     for name, base in [('Qwen', q_t), ('BERT', b_t), ('ViT', v_t)]:
         src = base.clone().requires_grad_(True)
-        pr = {'Qwen': q_t.detach(), 'BERT': b_t.detach(), 'ViT': v_t.detach()}
-        pr[name] = src
+        # 关键：必须先过 P_m 投影到 d_shared(256)，否则 2048 维直接喂 256 维槽投影会维度报错
+        _mi = {'Qwen': 0, 'BERT': 1, 'ViT': 2}[name]
+        pr = {'Qwen': q_t.detach() @ P_m[0].t(),
+              'BERT': b_t.detach() @ P_m[1].t(),
+              'ViT':  v_t.detach() @ P_m[2].t()}
+        pr[name] = src @ P_m[_mi].t()
         feats = {m: {k: pr[m] for k in slots} for m in pr}
         _, cn, _ = ps(feats, return_aux=True)
         cn.sum().backward()
