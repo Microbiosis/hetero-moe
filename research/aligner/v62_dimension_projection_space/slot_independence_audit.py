@@ -20,7 +20,7 @@ def main():
 
     import torch, os as _o, urllib.request as _ur
     # 自包含：下载 v62 算子文件到本地包目录（不依赖 git clone / notebook 编排）
-    _BASE = 'https://raw.githubusercontent.com/Microbiosis/hetero-moe/aa7184d/research/aligner/v62_dimension_projection_space/'
+    _BASE = 'https://raw.githubusercontent.com/Microbiosis/hetero-moe/930f2f7/research/aligner/v62_dimension_projection_space/'
     _FILES = ['projspace.py','hyper_proj.py','self_repair.py','recurrent_gate.py',
               'memory_router.py','hebbian_align.py','modality_adapter.py',
               'feedback_head.py','fusion.py','moa_operators.py','moa_fusion.py']
