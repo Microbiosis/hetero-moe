@@ -27,6 +27,7 @@ def main():
     ap.add_argument('--suf', default='_v65')
     ap.add_argument('--n', type=int, default=400)
     ap.add_argument('--k', type=int, default=8, help='主子空间维数')
+    ap.add_argument('--grad_n', type=int, default=16, help='Dim III 梯度样本数')
     args = ap.parse_args()
 
     import torch
@@ -121,7 +122,7 @@ def main():
 
     # ---------- Dim III ----------
     print('\n=== Dim III 三模态输入梯度子空间独立 ===', flush=True)
-    b = idx[:64]
+    b = idx[:args.grad_n]      # Dim III 只需少量样本算梯度（CPU 反传慢）
     q_t = torch.from_numpy(np.asarray(hq[b], dtype=np.float32)).to(dev)
     b_t = torch.from_numpy(np.asarray(hb[b], dtype=np.float32)).to(dev)
     # ViT 197 patch vs 文本 128 token → 截断到 128 使行数与 token 位置对齐
