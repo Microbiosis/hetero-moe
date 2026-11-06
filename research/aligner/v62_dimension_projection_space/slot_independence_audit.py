@@ -18,17 +18,23 @@ def main():
     ap.add_argument('--n', type=int, default=400)
     args = ap.parse_args()
 
-    import torch
-    import os as _os
-    _here = _os.path.dirname(_os.path.abspath(__file__))
-    _pkgdir = '/kaggle/working/hetero-moe/research/aligner/v62_dimension_projection_space'
-    for _cand in [_here, _pkgdir, '/kaggle/working/v62pkg']:
-        if _cand and _os.path.isfile(_os.path.join(_cand, 'projspace.py')):
-            _pkgdir = _cand; break
-    sys.path.insert(0, _pkgdir)
+    import torch, os as _o, urllib.request as _ur
+    # 自包含：下载 v62 算子文件到本地包目录（不依赖 git clone / notebook 编排）
+    _BASE = 'https://raw.githubusercontent.com/Microbiosis/hetero-moe/aa7184d/research/aligner/v62_dimension_projection_space/'
+    _FILES = ['projspace.py','hyper_proj.py','self_repair.py','recurrent_gate.py',
+              'memory_router.py','hebbian_align.py','modality_adapter.py',
+              'feedback_head.py','fusion.py','moa_operators.py','moa_fusion.py']
+    _pkgdir = '/tmp/v62pkg'
+    _o.makedirs(_pkgdir, exist_ok=True)
+    for _f in _FILES:
+        _p = _o.path.join(_pkgdir, _f)
+        if not _o.path.exists(_p) or _o.path.getsize(_p) < 100:
+            _ur.urlretrieve(_BASE + _f, _p)
+    if _pkgdir not in sys.path:
+        sys.path.insert(0, _pkgdir)
     import importlib.util as ilu
     spec = ilu.spec_from_file_location('v62_projspace',
-                                       _os.path.join(_pkgdir, 'projspace.py'))
+                                       _o.path.join(_pkgdir, 'projspace.py'))
     ps_mod = ilu.module_from_spec(spec); sys.modules['v62_projspace'] = ps_mod
     spec.loader.exec_module(ps_mod)
     DimProjectionSpace = ps_mod.DimProjectionSpace; MEASURED = ps_mod.MEASURED_SUBSPACES
