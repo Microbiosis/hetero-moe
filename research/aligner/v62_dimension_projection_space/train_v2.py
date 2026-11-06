@@ -104,6 +104,8 @@ _FILES = {'projspace.py': 'v62_projspace', 'fusion.py': 'v62_fusion',
           'modality_adapter.py': 'v62_modality_adapter',
           'feedback_head.py': 'v62_feedback_head',
           'learned_optimizer.py': 'v62_learned_optimizer',
+          'vl_fusion.py': 'v62_vl_fusion',
+          'moa_fusion.py': 'v62_moa_fusion',
           'sparse_block_fusion.py': 'v62_sparse_block_fusion'}
 
 
