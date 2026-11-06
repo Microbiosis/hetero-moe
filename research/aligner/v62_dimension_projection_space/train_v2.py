@@ -316,6 +316,11 @@ class HeteroMoEProjSpace(nn.Module):
             t_stream = s.vl_text_proj(sum(txt) / len(txt)) if txt else None   # 文本流
             v_stream = s.vl_vis_proj(pr['ViT']) if 'ViT' in pr else None      # 视觉流
             if t_stream is not None and v_stream is not None:
+                # ViT 有 197 patch、文本 128 token → 池化视觉序列到文本长度再融合
+                if v_stream.shape[1] != t_stream.shape[1]:
+                    _vi = torch.linspace(0, v_stream.shape[1] - 1,
+                                         t_stream.shape[1]).long().to(v_stream.device)
+                    v_stream = v_stream[:, _vi, :]
                 # VL 融合：锚点共注意力 + Bilinear 门控，输出 [B,S,d_shared]
                 vl_out = s.vl_fusion.forward_from_projected(v_stream, t_stream)
         # K/V 槽只有 BERT/ViT 参与；Q/O 三模型都有
