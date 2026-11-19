@@ -1,0 +1,943 @@
+{
+  "protocol": {
+    "route": "alpha (离线: 从权重切片重建逐层前向)",
+    "scope": "S1 机械可行性; 不含语义层判据 (P1a/P1b/P2/P3)",
+    "seed": 0,
+    "models": {
+      "Qwen": {
+        "d": 896,
+        "n_heads": 14,
+        "n_kv": 2,
+        "head_dim": 64
+      },
+      "BERT": {
+        "d": 256,
+        "n_heads": 4,
+        "n_kv": 4,
+        "head_dim": 64
+      },
+      "ViT": {
+        "d": 768,
+        "n_heads": 12,
+        "n_kv": 12,
+        "head_dim": 64
+      }
+    },
+    "seq": {
+      "Qwen": 128,
+      "BERT": 128,
+      "ViT": 197
+    },
+    "declared_modeling_choices": [
+      "pre-norm + 非仿射 RMSNorm (norm 参数不在切片里)",
+      "attention 无 bias; FFN 无激活 (Qwen SwiGLU 缺 gate 路)",
+      "无 embedding ⇒ 输入 h0 为随机向量",
+      "无 position embedding",
+      "GQA 头数由切片形状反推"
+    ],
+    "thresholds": {
+      "norm_ratio": [
+        0.1,
+        10.0
+      ],
+      "eff_rank_min": 1.1,
+      "rel_perturbation_min": 0.001,
+      "v62_tolerance": 0.05
+    },
+    "reused_from_v75": [
+      "load_wall",
+      "v62_spectral",
+      "fit_transport(同式)",
+      "slot_repr (v62 measure)"
+    ],
+    "v75_g2_sha256": "8d0e34fccf0d51a471469c73934198c0963c0b3a7f70ac77f4227b1718a78f7c",
+    "v62_measure_sha256": "8a20d007f5a42340ee89713512c089f81157d92101610c17f92f7ae6077aa349"
+  },
+  "C1_structure": {
+    "all_ok": true,
+    "models": {
+      "Qwen": {
+        "ok": true,
+        "layers": [
+          {
+            "layer": "0",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                896,
+                896
+              ],
+              "K": [
+                128,
+                896
+              ],
+              "V": [
+                128,
+                896
+              ],
+              "O": [
+                896,
+                896
+              ],
+              "expand": [
+                4864,
+                896
+              ],
+              "contract": [
+                896,
+                4864
+              ]
+            }
+          },
+          {
+            "layer": "1",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                896,
+                896
+              ],
+              "K": [
+                128,
+                896
+              ],
+              "V": [
+                128,
+                896
+              ],
+              "O": [
+                896,
+                896
+              ],
+              "expand": [
+                4864,
+                896
+              ],
+              "contract": [
+                896,
+                4864
+              ]
+            }
+          },
+          {
+            "layer": "2",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                896,
+                896
+              ],
+              "K": [
+                128,
+                896
+              ],
+              "V": [
+                128,
+                896
+              ],
+              "O": [
+                896,
+                896
+              ],
+              "expand": [
+                4864,
+                896
+              ],
+              "contract": [
+                896,
+                4864
+              ]
+            }
+          },
+          {
+            "layer": "3",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                896,
+                896
+              ],
+              "K": [
+                128,
+                896
+              ],
+              "V": [
+                128,
+                896
+              ],
+              "O": [
+                896,
+                896
+              ],
+              "expand": [
+                4864,
+                896
+              ],
+              "contract": [
+                896,
+                4864
+              ]
+            }
+          }
+        ],
+        "heads": {
+          "n_heads": 14,
+          "n_kv": 2,
+          "head_dim": 64
+        },
+        "gqa": true
+      },
+      "BERT": {
+        "ok": true,
+        "layers": [
+          {
+            "layer": "0",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                256,
+                256
+              ],
+              "K": [
+                256,
+                256
+              ],
+              "V": [
+                256,
+                256
+              ],
+              "O": [
+                256,
+                256
+              ],
+              "expand": [
+                1024,
+                256
+              ],
+              "contract": [
+                256,
+                1024
+              ]
+            }
+          },
+          {
+            "layer": "1",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                256,
+                256
+              ],
+              "K": [
+                256,
+                256
+              ],
+              "V": [
+                256,
+                256
+              ],
+              "O": [
+                256,
+                256
+              ],
+              "expand": [
+                1024,
+                256
+              ],
+              "contract": [
+                256,
+                1024
+              ]
+            }
+          },
+          {
+            "layer": "2",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                256,
+                256
+              ],
+              "K": [
+                256,
+                256
+              ],
+              "V": [
+                256,
+                256
+              ],
+              "O": [
+                256,
+                256
+              ],
+              "expand": [
+                1024,
+                256
+              ],
+              "contract": [
+                256,
+                1024
+              ]
+            }
+          },
+          {
+            "layer": "3",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                256,
+                256
+              ],
+              "K": [
+                256,
+                256
+              ],
+              "V": [
+                256,
+                256
+              ],
+              "O": [
+                256,
+                256
+              ],
+              "expand": [
+                1024,
+                256
+              ],
+              "contract": [
+                256,
+                1024
+              ]
+            }
+          }
+        ],
+        "heads": {
+          "n_heads": 4,
+          "n_kv": 4,
+          "head_dim": 64
+        },
+        "gqa": false
+      },
+      "ViT": {
+        "ok": true,
+        "layers": [
+          {
+            "layer": "0",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                768,
+                768
+              ],
+              "K": [
+                768,
+                768
+              ],
+              "V": [
+                768,
+                768
+              ],
+              "O": [
+                768,
+                768
+              ],
+              "expand": [
+                3072,
+                768
+              ],
+              "contract": [
+                768,
+                3072
+              ]
+            }
+          },
+          {
+            "layer": "1",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                768,
+                768
+              ],
+              "K": [
+                768,
+                768
+              ],
+              "V": [
+                768,
+                768
+              ],
+              "O": [
+                768,
+                768
+              ],
+              "expand": [
+                3072,
+                768
+              ],
+              "contract": [
+                768,
+                3072
+              ]
+            }
+          },
+          {
+            "layer": "2",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                768,
+                768
+              ],
+              "K": [
+                768,
+                768
+              ],
+              "V": [
+                768,
+                768
+              ],
+              "O": [
+                768,
+                768
+              ],
+              "expand": [
+                3072,
+                768
+              ],
+              "contract": [
+                768,
+                3072
+              ]
+            }
+          },
+          {
+            "layer": "3",
+            "ok": true,
+            "shapes": {
+              "Q": [
+                768,
+                768
+              ],
+              "K": [
+                768,
+                768
+              ],
+              "V": [
+                768,
+                768
+              ],
+              "O": [
+                768,
+                768
+              ],
+              "expand": [
+                3072,
+                768
+              ],
+              "contract": [
+                768,
+                3072
+              ]
+            }
+          }
+        ],
+        "heads": {
+          "n_heads": 12,
+          "n_kv": 12,
+          "head_dim": 64
+        },
+        "gqa": false
+      }
+    }
+  },
+  "C2_provenance": {
+    "ok": true,
+    "relative_error": {
+      "same_function_js_mean": 5.161305199749687e-08,
+      "diff_function_js_mean": 3.56342021314315e-08
+    },
+    "n_pairs": 1728,
+    "permutation_p": 0.0002,
+    "measured_same": 0.03023246259565187,
+    "published_same": 0.030232464156041614,
+    "measured_diff": 0.04011207591269744,
+    "published_diff": 0.040112077342059314,
+    "tolerance": 0.05,
+    "v62_measure_sha256": "8a20d007f5a42340ee89713512c089f81157d92101610c17f92f7ae6077aa349"
+  },
+  "C3_health": {
+    "all_ok": true,
+    "scope": [
+      "Qwen",
+      "BERT"
+    ],
+    "models": {
+      "Qwen": {
+        "ok": true,
+        "in_scope": true,
+        "rms_by_layer": [
+          0.9998160004615784,
+          1.3559365272521973,
+          1.7128756046295166,
+          2.0781610012054443,
+          2.7079074382781982
+        ],
+        "rms_ratio": [
+          1.3561860648607893,
+          1.2632417301268462,
+          1.2132585668144438,
+          1.303030629824236
+        ],
+        "eff_rank_by_layer": [
+          846.1748046875,
+          693.7276611328125,
+          672.1423950195312,
+          647.6786499023438,
+          623.7435302734375
+        ],
+        "branch_rms": [
+          {
+            "layer": 0,
+            "rms_attn_branch": 0.1236455962061882,
+            "rms_ffn_branch": 0.8492592573165894
+          },
+          {
+            "layer": 1,
+            "rms_attn_branch": 0.03373797610402107,
+            "rms_ffn_branch": 0.6182743310928345
+          },
+          {
+            "layer": 2,
+            "rms_attn_branch": 0.026739967986941338,
+            "rms_ffn_branch": 0.6329942941665649
+          },
+          {
+            "layer": 3,
+            "rms_attn_branch": 0.03504549711942673,
+            "rms_ffn_branch": 0.7772012948989868
+          }
+        ],
+        "min_ratio": 1.2132585668144438,
+        "max_ratio": 1.3561860648607893,
+        "min_eff_rank": 623.7435302734375
+      },
+      "BERT": {
+        "ok": true,
+        "in_scope": true,
+        "rms_by_layer": [
+          0.9995502829551697,
+          1.2316179275512695,
+          1.8825668096542358,
+          3.443063735961914,
+          3.32307767868042
+        ],
+        "rms_ratio": [
+          1.2321720563259309,
+          1.5285315092771252,
+          1.8289198121964447,
+          0.9651513691050108
+        ],
+        "eff_rank_by_layer": [
+          251.922119140625,
+          129.4342498779297,
+          61.264347076416016,
+          27.68732261657715,
+          32.81238555908203
+        ],
+        "branch_rms": [
+          {
+            "layer": 0,
+            "rms_attn_branch": 0.12231382727622986,
+            "rms_ffn_branch": 1.2265545129776
+          },
+          {
+            "layer": 1,
+            "rms_attn_branch": 0.26716965436935425,
+            "rms_ffn_branch": 2.1727843284606934
+          },
+          {
+            "layer": 2,
+            "rms_attn_branch": 0.5489348769187927,
+            "rms_ffn_branch": 3.56719970703125
+          },
+          {
+            "layer": 3,
+            "rms_attn_branch": 0.6311540007591248,
+            "rms_ffn_branch": 1.4219478368759155
+          }
+        ],
+        "min_ratio": 0.9651513691050108,
+        "max_ratio": 1.8289198121964447,
+        "min_eff_rank": 27.68732261657715
+      },
+      "ViT": {
+        "ok": false,
+        "in_scope": false,
+        "rms_by_layer": [
+          1.0001907348632812,
+          20.110424041748047,
+          24.960193634033203,
+          25.45118522644043,
+          28.907224655151367
+        ],
+        "rms_ratio": [
+          20.10658901422126,
+          1.241157003065479,
+          1.0196709849132237,
+          1.1357909031725342
+        ],
+        "eff_rank_by_layer": [
+          744.3560791015625,
+          73.5483627319336,
+          64.46540069580078,
+          77.8252944946289,
+          79.4942855834961
+        ],
+        "branch_rms": [
+          {
+            "layer": 0,
+            "rms_attn_branch": 2.1034841537475586,
+            "rms_ffn_branch": 20.844799041748047
+          },
+          {
+            "layer": 1,
+            "rms_attn_branch": 7.1946492195129395,
+            "rms_ffn_branch": 27.818445205688477
+          },
+          {
+            "layer": 2,
+            "rms_attn_branch": 7.775697231292725,
+            "rms_ffn_branch": 17.335466384887695
+          },
+          {
+            "layer": 3,
+            "rms_attn_branch": 5.975554466247559,
+            "rms_ffn_branch": 15.246831893920898
+          }
+        ],
+        "min_ratio": 1.0196709849132237,
+        "max_ratio": 20.10658901422126,
+        "min_eff_rank": 64.46540069580078
+      }
+    },
+    "out_of_scope": {
+      "ViT": {
+        "ok": false,
+        "in_scope": false,
+        "rms_by_layer": [
+          1.0001907348632812,
+          20.110424041748047,
+          24.960193634033203,
+          25.45118522644043,
+          28.907224655151367
+        ],
+        "rms_ratio": [
+          20.10658901422126,
+          1.241157003065479,
+          1.0196709849132237,
+          1.1357909031725342
+        ],
+        "eff_rank_by_layer": [
+          744.3560791015625,
+          73.5483627319336,
+          64.46540069580078,
+          77.8252944946289,
+          79.4942855834961
+        ],
+        "branch_rms": [
+          {
+            "layer": 0,
+            "rms_attn_branch": 2.1034841537475586,
+            "rms_ffn_branch": 20.844799041748047
+          },
+          {
+            "layer": 1,
+            "rms_attn_branch": 7.1946492195129395,
+            "rms_ffn_branch": 27.818445205688477
+          },
+          {
+            "layer": 2,
+            "rms_attn_branch": 7.775697231292725,
+            "rms_ffn_branch": 17.335466384887695
+          },
+          {
+            "layer": 3,
+            "rms_attn_branch": 5.975554466247559,
+            "rms_ffn_branch": 15.246831893920898
+          }
+        ],
+        "min_ratio": 1.0196709849132237,
+        "max_ratio": 20.10658901422126,
+        "min_eff_rank": 64.46540069580078
+      }
+    },
+    "out_of_scope_defects": {
+      "ViT": "layer0 残差膨胀 20.1x (判据上限 10x), 有效秩 744→64; 根因: 切片没有 norm gain / embedding 尺度, 非仿射 RMSNorm 压不住 该层的分支量级 ⇒ ViT 进入首代范围前必须先修"
+    },
+    "bounds": {
+      "ratio": [
+        0.1,
+        10.0
+      ],
+      "eff_rank_min": 1.1
+    },
+    "n_samples": 32
+  },
+  "C4_injection": {
+    "ok": true,
+    "target": "BERT",
+    "inject_at": 1,
+    "n_samples": 64,
+    "seq": 128,
+    "curve": [
+      {
+        "layer": 1,
+        "rel_perturbation": 0.6315246224403381,
+        "alignment_mean": 0.6484118103981018,
+        "alignment_frac_pos": 1.0
+      },
+      {
+        "layer": 2,
+        "rel_perturbation": 0.6603195667266846,
+        "alignment_mean": 0.6293700933456421,
+        "alignment_frac_pos": 1.0
+      },
+      {
+        "layer": 3,
+        "rel_perturbation": 0.6789060235023499,
+        "alignment_mean": 0.8323091268539429,
+        "alignment_frac_pos": 1.0
+      }
+    ],
+    "final": {
+      "layer": 3,
+      "rel_perturbation": 0.6789060235023499,
+      "alignment_mean": 0.8323091268539429,
+      "alignment_frac_pos": 1.0
+    },
+    "min_rel_perturbation": 0.001,
+    "note": "残差流原样携带注入向量 => alignment 接近 1 是平凡结果, 本检查只证明'打断->注入->续跑'的计算图通路存在, 不证明语义有用。"
+  },
+  "C5_cross_model": {
+    "ok": true,
+    "chain_ok": true,
+    "orthogonality_max_abs": {
+      "Qwen": 9.5367431640625e-07,
+      "BERT": 5.960464477539062e-07,
+      "ViT": 7.152557373046875e-07
+    },
+    "rows": [
+      {
+        "pair": "Qwen->BERT",
+        "layer": "0",
+        "slot": "Q",
+        "r2_matched": 0.9661352083096353,
+        "r2_wrong_slot": 0.9671850299261612,
+        "delta": -0.0010498216165258922
+      },
+      {
+        "pair": "Qwen->BERT",
+        "layer": "0",
+        "slot": "O",
+        "r2_matched": 0.9821307903634978,
+        "r2_wrong_slot": 0.9819517620644919,
+        "delta": 0.00017902829900595663
+      },
+      {
+        "pair": "Qwen->BERT",
+        "layer": "1",
+        "slot": "Q",
+        "r2_matched": 0.9890768999686401,
+        "r2_wrong_slot": 0.9885747716310391,
+        "delta": 0.0005021283376009933
+      },
+      {
+        "pair": "Qwen->BERT",
+        "layer": "1",
+        "slot": "O",
+        "r2_matched": 0.9924222798506662,
+        "r2_wrong_slot": 0.9922500892505851,
+        "delta": 0.00017219060008111242
+      },
+      {
+        "pair": "Qwen->BERT",
+        "layer": "2",
+        "slot": "Q",
+        "r2_matched": 0.9884590324736048,
+        "r2_wrong_slot": 0.9889343721590759,
+        "delta": -0.00047533968547108785
+      },
+      {
+        "pair": "Qwen->BERT",
+        "layer": "2",
+        "slot": "O",
+        "r2_matched": 0.9905256685406204,
+        "r2_wrong_slot": 0.9902218048392474,
+        "delta": 0.00030386370137303054
+      },
+      {
+        "pair": "Qwen->BERT",
+        "layer": "3",
+        "slot": "Q",
+        "r2_matched": 0.9892065486975022,
+        "r2_wrong_slot": 0.9889466544784672,
+        "delta": 0.0002598942190350506
+      },
+      {
+        "pair": "Qwen->BERT",
+        "layer": "3",
+        "slot": "O",
+        "r2_matched": 0.9913647207262136,
+        "r2_wrong_slot": 0.9909505092709922,
+        "delta": 0.0004142114552214693
+      },
+      {
+        "pair": "ViT->BERT",
+        "layer": "0",
+        "slot": "Q",
+        "r2_matched": 0.9637647691388448,
+        "r2_wrong_slot": 0.9648037437107796,
+        "delta": -0.0010389745719348031
+      },
+      {
+        "pair": "ViT->BERT",
+        "layer": "0",
+        "slot": "O",
+        "r2_matched": 0.9882114379778593,
+        "r2_wrong_slot": 0.9883292559962888,
+        "delta": -0.00011781801842958295
+      },
+      {
+        "pair": "ViT->BERT",
+        "layer": "1",
+        "slot": "Q",
+        "r2_matched": 0.9792980538600585,
+        "r2_wrong_slot": 0.9788145877393812,
+        "delta": 0.00048346612067728945
+      },
+      {
+        "pair": "ViT->BERT",
+        "layer": "1",
+        "slot": "O",
+        "r2_matched": 0.9892967456443803,
+        "r2_wrong_slot": 0.9889691297031908,
+        "delta": 0.000327615941189463
+      },
+      {
+        "pair": "ViT->BERT",
+        "layer": "2",
+        "slot": "Q",
+        "r2_matched": 0.9852263310390466,
+        "r2_wrong_slot": 0.9859676708716785,
+        "delta": -0.0007413398326319154
+      },
+      {
+        "pair": "ViT->BERT",
+        "layer": "2",
+        "slot": "O",
+        "r2_matched": 0.9890020730286458,
+        "r2_wrong_slot": 0.9890351287237142,
+        "delta": -3.3055695068395785e-05
+      },
+      {
+        "pair": "ViT->BERT",
+        "layer": "3",
+        "slot": "Q",
+        "r2_matched": 0.9878409366698636,
+        "r2_wrong_slot": 0.9879790857933518,
+        "delta": -0.00013814912348819597
+      },
+      {
+        "pair": "ViT->BERT",
+        "layer": "3",
+        "slot": "O",
+        "r2_matched": 0.9897585230304702,
+        "r2_wrong_slot": 0.9889039011127874,
+        "delta": 0.0008546219176828185
+      },
+      {
+        "pair": "Qwen->ViT",
+        "layer": "0",
+        "slot": "Q",
+        "r2_matched": 0.9667685624276361,
+        "r2_wrong_slot": 0.9669268047193845,
+        "delta": -0.00015824229174843385
+      },
+      {
+        "pair": "Qwen->ViT",
+        "layer": "0",
+        "slot": "O",
+        "r2_matched": 0.9842152251649564,
+        "r2_wrong_slot": 0.9856581347734792,
+        "delta": -0.00144290960852278
+      },
+      {
+        "pair": "Qwen->ViT",
+        "layer": "1",
+        "slot": "Q",
+        "r2_matched": 0.989650973300123,
+        "r2_wrong_slot": 0.9896138281971648,
+        "delta": 3.7145102958158205e-05
+      },
+      {
+        "pair": "Qwen->ViT",
+        "layer": "1",
+        "slot": "O",
+        "r2_matched": 0.9916706991227328,
+        "r2_wrong_slot": 0.9923190779442592,
+        "delta": -0.000648378821526463
+      },
+      {
+        "pair": "Qwen->ViT",
+        "layer": "2",
+        "slot": "Q",
+        "r2_matched": 0.9885134137505326,
+        "r2_wrong_slot": 0.9891358585705317,
+        "delta": -0.0006224448199990684
+      },
+      {
+        "pair": "Qwen->ViT",
+        "layer": "2",
+        "slot": "O",
+        "r2_matched": 0.9906643459663733,
+        "r2_wrong_slot": 0.9903593239415921,
+        "delta": 0.00030502202478122076
+      },
+      {
+        "pair": "Qwen->ViT",
+        "layer": "3",
+        "slot": "Q",
+        "r2_matched": 0.9892648857839791,
+        "r2_wrong_slot": 0.9897143466174164,
+        "delta": -0.0004494608334373318
+      },
+      {
+        "pair": "Qwen->ViT",
+        "layer": "3",
+        "slot": "O",
+        "r2_matched": 0.9915626171529578,
+        "r2_wrong_slot": 0.9918621929034905,
+        "delta": -0.00029957575053274343
+      }
+    ],
+    "n_rows": 24,
+    "frac_matched_better": 0.4583333333333333,
+    "median_delta": -7.543685674898937e-05,
+    "note": "槽级 ridge R² 是路线 α 里唯一非平凡的跨模型内容信号; 匹配槽若明显强于错槽, 说明槽对应在激活层面携带信息。"
+  },
+  "criteria": {
+    "C1_structure_ok": true,
+    "C2_provenance_within_tol": true,
+    "C3_stack_health_ok": true,
+    "C4_injection_path_ok": true,
+    "C5_cross_model_path_ok": true
+  },
+  "verdict": "S1_PASS",
+  "limits": [
+    "路线 α = 权重级随机输入前向: 无 embedding/norm 参数/bias/激活/position embedding",
+    "残差流原样携带注入向量 ⇒ C4 的 alignment 接近 1 是平凡结果, 只证机制不证语义",
+    "语义层判据 (P1a/P1b/P2/P3) 必须上路线 β (真模型逐层驱动)",
+    "首代只覆盖 Qwen↔BERT 的 Q/O 槽; ViT↔BERT 与 Qwen↔ViT 的 R² 只作探索"
+  ]
+}

@@ -74,11 +74,15 @@ class HeteroMoEProjSpaceConfig(PretrainedConfig):
 
     def __init__(self, qwen_id=QWEN_ID, bert_id=BERT_ID, vit_id=VIT_ID,
                  d_shared=256, n_experts=4, moe_top_k=2, d_space=1024,
-                 modal_dims=(896, 256, 768), **kw):
+                 modal_dims=(896, 256, 768),
+                 use_hyper=False, hyper_rank=8,
+                 use_fast=False, fast_decay=0.9, **kw):
         self.qwen_id = qwen_id; self.bert_id = bert_id; self.vit_id = vit_id
         self.d_shared = d_shared; self.n_experts = n_experts
         self.moe_top_k = moe_top_k; self.d_space = d_space
         self.modal_dims = list(modal_dims)
+        self.use_hyper = use_hyper; self.hyper_rank = hyper_rank
+        self.use_fast = use_fast; self.fast_decay = fast_decay
         super().__init__(**kw)
 
 
@@ -88,7 +92,7 @@ class HeteroMoEProjSpaceConfig(PretrainedConfig):
 
 def clean(path, drop=()):
     """取一个源文件的源码，去掉模块 docstring、相对 import 和被 drop 的类。"""
-    src = pathlib.Path(path).read_text()
+    src = pathlib.Path(path).read_text(encoding='utf-8')
     tree = ast.parse(src)
     lines = src.split('\n')
     gone = set()
@@ -129,8 +133,8 @@ if __name__ == '__main__':
     ast.parse(text)                       # 语法自检
     out = pathlib.Path(a.out)
     if a.check:
-        old = out.read_text() if out.exists() else ''
+        old = out.read_text(encoding='utf-8') if out.exists() else ''
         print('一致' if old == text else '不同 —— 需要重新生成')
         sys.exit(0 if old == text else 1)
-    out.write_text(text)
+    out.write_text(text, encoding='utf-8')
     print('已生成 %s  (%.1f KB)' % (out, out.stat().st_size / 1024))

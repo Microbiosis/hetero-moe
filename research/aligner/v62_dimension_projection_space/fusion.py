@@ -69,34 +69,50 @@ class FusionOverProjSpace(nn.Module):
         # 路由只看输入分布，不该被专家梯度污染
         logits = F.linear(x.detach(), self.W_router)
         a = F.softmax(logits, dim=-1)
+        self.last_router_probs = a
         _, ti = torch.topk(a, self.top_k, dim=-1)
         ah = a * torch.zeros_like(a).scatter_(-1, ti, 1.0)
 
-        # ---- 路线 3：快速权重 ΔW = outer(u(x), v(x)) ----
-        # 用当前 batch 的 hidden state **全局均值**生成每专家一个共享 ΔW，
-        # 前向时叠加到 w_gates，推理后不持久化（快速写入/遗忘）。
-        # batch 级共享避免 [B,d_ff,d_space] 显存爆炸（B=200 时 3.2GB）。
-        fast_deltas = None
+        # ---- 路线 3：快速权重 ΔW_b = outer(u(x_b), v(x_b)) ----
+        # 逐样本沿序列维求均值生成低秩因子 (u_b, v_b)，通过分解式
+        # h @ ΔW_b^T = (h @ v_b) * u_b 计算，既避免跨样本信息串扰，又无需物化 [B,d_ff,d_space]。
+        fast_uv = None
         if self.use_fast:
-            mu = x.detach().mean(dim=(0, 1))                  # [d_space] 全局均值
-            fast_deltas = []
+            mu = x.detach().mean(dim=1)                       # [B, d_space] 逐样本均值
+            fast_uv = []
             for m in range(self.num_experts):
-                u = mu @ self.fast_u[m]                       # [d_ff]
-                v = mu @ self.fast_v[m]                       # [d_space]
-                dW = torch.outer(u, v)                        # [d_ff, d_space]
-                fast_deltas.append(self.fast_scale * dW)
+                u = mu @ self.fast_u[m]                       # [B, d_ff]
+                v = mu @ self.fast_v[m]                       # [B, d_space]
+                fast_uv.append((u, v))
 
-        out = torch.zeros_like(x)
+        out_flat = torch.zeros_like(x.reshape(-1, self.d_space))
+        B, S, D = x.shape
+        x_flat = x.reshape(B * S, D)
+        ah_flat = ah.reshape(B * S, self.num_experts)
+        counts = []
         for m in range(self.num_experts):
-            h = x * self.gammas[m] + self.betas[m]       # 不 detach：专家参与训练
-            if self.use_fast and fast_deltas is not None:
-                # 动态 w_gates：w_slow + ΔW（batch 级共享，广播到所有 token）
-                wg = self.w_gates[m] + fast_deltas[m]         # [d_ff, d_space]
-                f = self._swiglu(h, wg, self.w_ups[m], self.w_downs[m])
+            w_m = ah_flat[:, m]
+            active = torch.nonzero(w_m > 0, as_tuple=False).squeeze(-1)
+            n_act = int(active.numel())
+            counts.append(n_act)
+            if n_act == 0:
+                continue
+            x_act = x_flat.index_select(0, active)
+            h = x_act * self.gammas[m] + self.betas[m]   # 不 detach：专家参与训练，仅计算活跃 token
+            if self.use_fast and fast_uv is not None:
+                u_b, v_b = fast_uv[m]
+                b_idx = torch.div(active, S, rounding_mode='floor')
+                u_act = u_b.index_select(0, b_idx)       # [N_act, d_ff]
+                v_act = v_b.index_select(0, b_idx)       # [N_act, d_space]
+                proj_v = (h * v_act).sum(dim=-1, keepdim=True)
+                gate_lin = F.linear(h, self.w_gates[m]) + self.fast_scale * proj_v * u_act
+                f = F.linear(F.silu(gate_lin) * F.linear(h, self.w_ups[m]), self.w_downs[m])
             else:
                 f = self._swiglu(h, self.w_gates[m], self.w_ups[m], self.w_downs[m])
-            out = out + ah[..., m:m + 1] * self.alphas[m] * f
-        return x + out, ah
+            contrib = w_m.index_select(0, active).unsqueeze(-1) * self.alphas[m] * f
+            out_flat = out_flat.index_add(0, active, contrib)
+        self.last_expert_token_counts = counts
+        return x + out_flat.reshape(B, S, D), ah
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.forward_with_routing(x)[0]

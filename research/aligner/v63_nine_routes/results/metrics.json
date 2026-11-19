@@ -1,0 +1,51 @@
+{
+  "package": "v63_nine_routes",
+  "version": "63.0",
+  "generated": "2026-11-12",
+  "status": "code_ready_pending_batch_run",
+  "note": "本代**没有端到端数字**。九条路线中多数需重训或外部 API（LLM 解码），Kaggle 批量验证尚未执行。按项目纪律（负面结果与未验证同等重要、无支撑数字不得对外引用），本快照只记录可本地复算的结构性事实：脚本可编译、模块可导入、路由器的稀疏/均衡语义成立。",
+  "locally_verifiable": {
+    "scripts_total": 9,
+    "scripts_compile": 9,
+    "route_categories": [
+      "routing",
+      "robustness",
+      "interpret",
+      "deploy",
+      "audit"
+    ],
+    "routers": {
+      "HardLoadRouter": {
+        "semantics": "top-k 硬选择 + 批次级容量惩罚",
+        "k": 2,
+        "gate_is_sparse": true,
+        "gate_sums_to_one": true,
+        "capacity_factor": 1.25
+      },
+      "DynamicSlotRouter": {
+        "semantics": "熵驱动 Gumbel-sigmoid 逐 token 动态稀疏",
+        "tau": 0.5,
+        "min_slots": 1,
+        "max_slots": 4,
+        "differentiable": true
+      }
+    }
+  },
+  "falsified": [
+    {
+      "hypothesis": "Q 槽塌缩到接近 0，需要自修复机制介入",
+      "verdict": "前提不成立 —— v62.3/v62.4 实测 Q 槽 EMA 全程 0.11–0.25，从未跌破 0.01 触发阈值，自修复一次都没触发",
+      "evidence": "research/aligner/v63_nine_routes/README.md（当前结论，2026-11-03）"
+    },
+    {
+      "hypothesis": "v62 的槽塌缩是普遍现象，self_repair 是通用保险",
+      "verdict": "证伪 —— 塌缩只出现在 v62.0–v62.2（router lazy / 槽 top-k 两种 bug），v62.3 修好后四槽全��正常分工（熵 0.647）",
+      "evidence": "research/aligner/v62_dimension_projection_space/SPEC.md §9"
+    }
+  ],
+  "pending": [
+    "九条路线的 Kaggle 批量验证（批 A 评估类 / 批 B 训练类）尚未执行",
+    "批 A 产物应落盘到 research/aligner/v63_nine_routes/results/*.json",
+    "批 B 产物应落盘到 HF redmingwei/HeteroMoEProjSpace-v2/checkpoints/v63.*"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "package": "v70_vl_bypass",
+  "version": "70.0",
+  "generated": "2026-11-12",
+  "status": "code_ready_pending_batch_run",
+  "one_mechanism_added": "CrossModalVisionLanguageFusionSubOp：双向 2D 感知局部空间深度卷积（视觉流）+ 低秩跨模态锚点共注意力（零距离衰减，文本流）+ Hadamard-Bilinear 门控，在单个融合 kernel 内完成；输出经 vl_out_proj 投到 canonical 维后**残差并入**，不破坏四槽结构。USE_VL=1 启用。",
+  "note": "本代**没有端到端数字**。按项目纪律，无支撑的数字不得对外引用；本快照只记录可本地复算的结构性事实。",
+  "locally_verifiable": {
+    "operator_params": 203000,
+    "num_anchors": 16,
+    "residual_into_canonical": true,
+    "env": "USE_VL=1",
+    "zero_distance_first_pos_delta": 0.0009827,
+    "convex_combination_checked": true,
+    "gate_params": [
+      "alpha_vis",
+      "alpha_txt",
+      "beta_bilin"
+    ],
+    "vl_out_projected_to": "d_space"
+  },
+  "implementation_modules": [
+    "research/aligner/v62_dimension_projection_space/vl_fusion.py",
+    "research/aligner/v62_dimension_projection_space/train_v2.py"
+  ],
+  "falsified": [],
+  "bugs_fixed": [
+    "VL 维度 bug：vl_out(256) 过 Linear 投到 canonical(1024) 再残差",
+    "patch 维硬编码：h_vit 是 197 不是 128，改用动态 Lp",
+    "ViT 197 patch 先池化到文本 128 token 再融合",
+    "视觉 hidden 有效性检查：样本间 cosine + patch 差异 + 灰图对照",
+    "VSR 图像改从 HF 预打包 zip(3 parts) 拉取，绕开 Kaggle COCO 联网限制"
+  ],
+  "pending": [
+    "Kaggle 批量验证未执行",
+    "端到端数字待回填"
+  ],
+  "acceptance_note": "7/7 通过（本地 CPU）。第 3 项把 out_proj 置成恒等后验证门控的凸组合性质"
+}

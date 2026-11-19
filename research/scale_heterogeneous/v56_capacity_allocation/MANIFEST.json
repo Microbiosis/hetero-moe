@@ -36,7 +36,7 @@
     "delta_pct": 36.1,
     "seeds": 5,
     "outcome_label": "mixed",
-    "note": "P1 ✗(native linear 0.833 > 预登记 0.80, 根因是 decouple 未完全切断泄漏, 单侧线性 0.65-0.73) / P2 ✓ / P3 ✗(差 0.009-0.014, 投影略好但未达 0.03 阈值; 按字面未过) / P4 ✓"
+    "note": "2026-11-19 勘误修正：P1 ✗（native linear 0.833 > 0.80，真根因是 load_adult_crossmodal 缺失四格 XOR 均衡采样致 (True,True) 仅占 6.8%，理论线性上限高达 0.9316，而非 decouple 失效）/ P2 ✓ / P3 ✗（预登记判据为 max|proj-native| <= 0.03，在全部 w>=8 均通过 [0.009~0.0266 <= 0.03]，仅因退化宽度 w=4 差值 0.0656 > 0.03 失败；原注把 <= 0.03 反向误读为未达 0.03）/ P4 ✓"
   },
   "protocol": {
     "eval_set": "Adult XOR, 384/128 划分 (seed 1234), 与 v39 同构造",
@@ -47,7 +47,7 @@
   "acceptance": {
     "criterion": "P1 linear 任何宽度 ≤0.80 / P2 hidden=16 达最好宽度 95% / P3 proj vs native 差 ≤0.03 / P4 大宽度激活有效秩 <5%",
     "outcome": "P1 ✗ / P2 ✓ / P3 ✗ / P4 ✓",
-    "note": "P1 与 P3 的未过都不是架构问题: P1 源于数据泄漏(单侧探针 0.65-0.73), P3 是投影带来小幅优化收益(0.9-1.4pp)但未到阈值"
+    "note": "2026-11-19 勘误修正：P1 未过源于 load_adult_crossmodal 缺四格 XOR 均衡采样（单侧理论上限 0.709/0.654）；P3 在 w>=8 全部满足 ≤0.03，仅因 w=4 退化点 0.0656 > 0.03 失败。"
   },
   "leakage_audit": {
     "required": true,

@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "version": "71.0",
+  "package": "v71_slot_audit",
+  "line": "aligner",
+  "title": "四槽/三模态独立性审计 — Dim II 表示独立 + Dim III 梯度子空间独立",
+  "generation": {
+    "one_mechanism_added": "Dim II：四槽 canonical 前向表示的联合子空间秩 + 两两 |cos| + VIF，判定「满秩且不共线」才叫四槽分工。Dim III：三模态各自梯度经 P_m 投影到同一 256 维槽空间后取 k 维主子空间，用投影算子比较夹角，判定「三模态梯度是否各司其职」。",
+    "parent": "70.0",
+    "children": [
+      "72.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [
+      "72.0"
+    ],
+    "note": "aligner 线接 v48→…→v62→v63→…→v74。v63 起为 v62 共享空间的工程化延伸，不改槽/模型/对齐三轴本身。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "research/aligner/v62_dimension_projection_space/slot_independence_audit.py"
+    ],
+    "note": "同代还做了一次能力回退：回到三分支（zero-OOM 四分支 0.53 输给三分支 0.64）。审计脚本在 v72/v73/v74 连续修 bug —— 那些修复本身说明**审计从未真正执行过**。"
+  },
+  "claim": {
+    "asserts": "四槽/三模态独立性审计脚本端到端可跑通并产出 Dim II / Dim III 两份结构化报告；判据口径（满秩且两两|cos|<0.6；最大夹角<0.9）与默认参数（n=400/k=8/grad_n=16）固定",
+    "metric": "unit_test_pass_rate",
+    "direction": "higher_is_better",
+    "value": 1.0,
+    "baseline": {
+      "ref": "无（本代首次登记）",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": null,
+    "outcome_label": "code_ready_pending_batch_run",
+    "note": "**本代交付的是审计工具与判据口径，不是审计结论。**本地跑通用的是合成 ckpt+合成 cache；针对真实训练权重的结论待 Kaggle 跑。"
+  },
+  "protocol": {
+    "eval_set": "not_applicable",
+    "input": "本代无下游任务评估；权威测试只验证机制语义",
+    "caveat": "引用本代时不得说成精度结论。"
+  },
+  "acceptance": {
+    "criterion": "权威测试全部通过（tests/test_package.py）",
+    "outcome": "pass",
+    "note": "7/7 通过（本地 CPU）。第 1 项用合成 ckpt+cache 真跑一遍脚本"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分，无目标泄漏风险面；且本代无端到端数字可泄漏。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "v71 版审计脚本给出的结论可信",
+      "verdict": "证伪 —— 它用随机初始化的 DimProjectionSpace + load_state_dict(strict=False)，加载失败的键被静默忽略 ⇒ 等于审计随机空间；该问题在 v73 被修掉",
+      "evidence": "research/aligner/v73_dim3/SPEC.md §1.1"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v71_slot_audit.py",
+    "forwarder_spec": "docs/V71_0_SLOT_AUDIT.md"
+  },
+  "tests_status": "present",
+  "external_artifacts": {
+    "note": "端到端产物待 Kaggle 批量验证后落盘。"
+  }
+}

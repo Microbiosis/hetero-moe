@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "version": "84.0",
+  "package": "v84_inherent_flaw_remediation",
+  "line": "weight_fusion",
+  "title": "全历史固有缺陷实证审计与 hetero_moe v5.0 系统修复（破路由带宽墙、破纯冻结 β 墙、真稀疏、防泄漏下游 PPL/分类门禁全通）",
+  "generation": {
+    "one_mechanism_added": "系统性修复 v4–v83 五层固有缺陷: ① hetero_moe v5.0 引入真异构专家 (ExpertSpec/HeteroExpert)、可选 LoRA 破 β 墙、低秩向量门控 (gate_rank>0) 破 v55 路由带宽定理、真稀疏分派、grad_checkpoint 真显存优化、Phase 1 零 z_loss 污染与 InferenceRunner 口径修正；② 新增统一防泄漏下游评测门禁 DownstreamEvalGate（强制三集零重叠+单底座/零参数/阴性对照+Bootstrap CI）；③ 实证揭露并修复 v62 无约束 fit_shared 随机矩阵假象、v62 伪槽/伪稀疏/选模泄漏、v65 caption 泄漏及 v83 P5d 循环论证与欠定拟合；④ 补齐 check_self_containment 动态加载检测与 validate_generations 非治理范围审计。",
+    "parent": "83.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "75.0",
+    "line_children": [],
+    "note": "承接 v83 (S4-AP, 5/6) 的深层审计与范式转向: 从纯冻结合成代理指标 (CKA/回声 R2) 转向 hetero_moe v5.0 真异构可微适配 + 真实 held-out 分类与语言建模 PPL 下游门禁，5/5 预登记修复实验全部 PASS (REMEDIATION_PASS)。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": "hetero_moe",
+    "modules": [
+      "audit_remediation.py"
+    ],
+    "note": "完全自包含（零静态/动态跨研究线加载），直接调用已提升至主包的 hetero_moe v5.0 API；audit_remediation.py 的 SHA256 锁定于 results/metrics.json。"
+  },
+  "claim": {
+    "asserts": "五项预登记审计与修复实验全部通过 (REMEDIATION_PASS): (1) v62 无约束单矩阵 fit_shared 在纯随机高斯矩阵上即可复现 2-W CKA=0.9714 (eff_rank=5.36/64, fidelity=0.9994) 与 3-W CKA=0.6582，正交 Procrustes 消除 +0.4057 虚高并保持满秩 64.0；(2) v83 同时正交化注入与评估标签在无选择性回声管道上人为压低 85.5% 真实串扰 (+0.7692 -> +0.1117)，IdentifiabilityGuard 拒绝 O(256) on N=64 (510 dof/sample) 并给出安全子空间秩 r_safe=8；(3) hetero_moe v5.0 将路由 Jacobian 秩从标量 1 提升至 17（破 v55 定理 3 上界 2）、真稀疏与稠密偏差 0.0 且计算降至 25%、Phase 1 z_loss 梯度污染 0.0、grad_checkpoint 梯度偏差 0.0、4 层 skip_rate=0.750<=1.0；(4) 严格三集下游分类门禁 v5 达 0.9944，显著击败 best_single (0.5222) 与受 β 墙锁死的纯冻结 v4 (0.7667, Δ=+22.8%, 95% CI [+16.7%, +28.9%], p=0.0)；(5) 严格三集序列 LM 门禁 v5 达 PPL=2.338，显著优于 best_single (2.801, 降幅 16.5%)。",
+    "metric": "downstream_lm_ppl_reduction_pct",
+    "direction": "higher_is_better",
+    "value": 16.5,
+    "baseline": {
+      "ref": "best_single_frozen_lm_expert_ppl (2.801)",
+      "value": 0.0
+    },
+    "delta_pct": 16.5,
+    "seeds": 1,
+    "outcome_label": "confirmed",
+    "note": "所有下游分类与 LM 评测均采用严格不相交 train/val/test 三集划分与 2000 次配对 Bootstrap 95% CI，且已由主包单测 tests/test_v5_core_remediation.py (14/14) 与本包权威测试 (10/10) 交叉验证。"
+  },
+  "protocol": {
+    "eval_set": "严格三集零重叠划分 (SplitGuard.verify): 分类 N=900 (540/180/180)，序列 LM 480 条×16 token (288/96/96)；val 集选模，未触碰 test 集报告。",
+    "input": "hetero_moe v5.0 真异构专家银行 (不同宽度/激活/原生 LoRA) + 低秩向量门控 + 真稀疏分派。",
+    "caveat": "本包基准为 CPU 可复现控制实验，旨在提供数学与机制级零泄漏闭环验证；十亿级预训练权重在大规模真实语料上的收益仍需在 GPU 上以同一 DownstreamEvalGate 协议评测。"
+  },
+  "acceptance": {
+    "criterion": "verdict == REMEDIATION_PASS（Exp1–Exp5 全部门禁与下游 Classification/LM PPL Gate 均 PASS）。",
+    "outcome": "pass",
+    "note": "5/5 实验全部通过，verdict = REMEDIATION_PASS。"
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "clean",
+    "audited_in": "docs/LEAKAGE_AUDIT_CHAIN.md",
+    "note": "所有训练/选模/报告严格遵循 SplitGuard 三集零重叠，单底座基线与融合模型共享完全一致的数据划分，阴性对照与可辨识性守卫全部通过。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "v62 的「两两共享等维变换 CKA 0.987+、三模型过定 0.68、等维保真度 0.9998」是跨架构预训练权重特有的几何规律",
+      "verdict": "证伪 —— 纯独立高斯随机矩阵在同输入 x 下经无约束单矩阵 fit_shared 同样产出 2-W CKA=0.9714 (eff_rank=5.36/64, fidelity=0.9994) 与 3-W CKA=0.6582，属秩塌缩 + 无正则 lstsq 数值求逆的线性代数伪像。",
+      "evidence": "research/weight_fusion/v84_inherent_flaw_remediation/results/metrics.json (exp1_v62_artifact_and_fix)"
+    },
+    {
+      "hypothesis": "v83 的 P5d 选择性通过 (ΔR2_O=-0.0005) 证明目标模型具备原生槽选择性，且 N_train=64 上的 O(256) Procrustes 可辨识",
+      "verdict": "证伪 —— 同时对注入向量与探针评估目标做正交残差化在完全无选择性的线性回声管道上即可人为压低 85.5% 真实跨槽串扰；且 O(256) 在 N=64 上含 32,640 自由度 (510 dof/sample) 严重欠定。",
+      "evidence": "research/weight_fusion/v84_inherent_flaw_remediation/results/metrics.json (exp2_v83_selectivity_and_identifiability_fix)"
+    },
+    {
+      "hypothesis": "hetero_moe v4.0 的 x.detach() 可使底座 FFN 中间激活不入 autograd 图并将显存降至 O(L·D)",
+      "verdict": "证伪并修复 —— 当 γ/β 可训练时 PyTorch 仍须保存全部 M 专家 SwiGLU 中间激活；现已通过 grad_checkpoint=True (激活重计算) 与 sparse_dispatch=True (真稀疏) 真正实现显存与计算优化。",
+      "evidence": "hetero_moe/core/fusion.py; research/weight_fusion/v84_inherent_flaw_remediation/results/metrics.json (exp3_v5_core_engineering_and_bandwidth_fix)"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v84_inherent_flaw_remediation.py",
+    "forwarder_spec": "docs/V84_0_INHERENT_FLAW_REMEDIATION.md"
+  },
+  "tests_status": "present"
+}

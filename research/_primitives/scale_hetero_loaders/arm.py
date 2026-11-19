@@ -7,21 +7,12 @@ import torch
 import torch.nn as nn
 
 from .entry_encoder import EntryEncoder
-
-
-def knn_acc(X, y):
-    n = X.shape[0]
-    correct = 0
-    for i in range(n):
-        d = torch.norm(X - X[i], dim=1); d[i] = float("inf")
-        if y[d.argmin()] == y[i]:
-            correct += 1
-    return correct / n
+from .eval import knn_acc
 
 
 def train_arm(h_base, X, y, c_frozen, tr_idx, te_idx, d_entry, d_big, n_cls,
              steps, seed):
-    """训练单臂, 返回 (test_acc, knn)."""
+    """训练单臂, 返回 (test_acc, heldout_knn)."""
     torch.manual_seed(seed)
     n_in = X.shape[1]
     E = EntryEncoder(n_in, d_entry)
@@ -43,4 +34,5 @@ def train_arm(h_base, X, y, c_frozen, tr_idx, te_idx, d_entry, d_big, n_cls,
         h_all = h_base + P(cin_all)
         logits_te = head(h_all[te_idx])
         acc_te = (logits_te.argmax(1) == y[te_idx]).float().mean().item()
-        return acc_te, knn_acc(h_all, y)
+        # 仅在留出集 te_idx 上评估 k-NN，避免混入已拟合的训练集造成记忆泄漏
+        return acc_te, knn_acc(h_all[te_idx], y[te_idx])

@@ -450,14 +450,16 @@ if HAS_TORCH:
             d_state: int = 16,
             chunk_size: int = 16,
             scan_mode: Literal["chunkwise_ssd", "parallel_kogge_stone", "sequential_ref"] = "chunkwise_ssd",
+            use_in_proj: bool = True,
         ):
             super().__init__()
             self.d_model = d_model
             self.d_state = d_state
             self.chunk_size = chunk_size
             self.scan_mode = scan_mode
+            self.use_in_proj = use_in_proj
 
-            self.in_proj = nn.Linear(d_model, 2 * d_model, bias=False)
+            self.in_proj = nn.Linear(d_model, 2 * d_model, bias=False) if use_in_proj else None
             self.x_proj = nn.Linear(d_model, d_model + 2 * d_state, bias=False)
             self.dt_bias = nn.Parameter(torch.full((d_model,), -2.0))
             A = (
@@ -497,6 +499,8 @@ if HAS_TORCH:
             return self.out_proj((y + u * self.D) * F.silu(z))
 
         def forward(self, x: torch.Tensor) -> torch.Tensor:
+            if self.in_proj is None:
+                raise RuntimeError("use_in_proj=False 时请调用 forward_from_projected(u_raw, z)")
             u_raw, z = self.in_proj(x).chunk(2, dim=-1)
             return self.forward_from_projected(u_raw, z)
 
@@ -561,6 +565,7 @@ if HAS_TORCH:
                         config.d_state,
                         config.ssm_chunk_size,
                         config.ssm_scan_mode,
+                        use_in_proj=False,
                     )
                 elif kind == 2:
                     self.conv_dw[key] = nn.Conv1d(

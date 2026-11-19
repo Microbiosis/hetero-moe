@@ -67,6 +67,18 @@ def cross_spectrum(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
     n = A.shape[0]
     A = A / (A.norm(dim=0, keepdim=True) / math.sqrt(n)).clamp(min=1e-8)
     B = B / (B.norm(dim=0, keepdim=True) / math.sqrt(n)).clamp(min=1e-8)
+    da, db = A.shape[1], B.shape[1]
+    if n < min(da, db) and float(da) * float(db) > 4.0e6:
+        # Gram 等价加速: AᵀB 的非零奇异值 ≡ sqrt(eigvalsh(G_a^{1/2} G_b G_a^{1/2}))
+        # 在 n×n 小矩阵上用 float64 求谱以避免零特征值平方根放大浮点误差
+        G_a = (A @ A.T).double()
+        G_b = (B @ B.T).double()
+        lam, U = torch.linalg.eigh(G_a)
+        lam = lam.clamp(min=0.0)
+        G_half = (U * torch.sqrt(lam)) @ U.T
+        ev = torch.linalg.eigvalsh(G_half @ G_b @ G_half).clamp(min=0.0)
+        spec = (torch.sqrt(ev) / max(n - 1, 1)).float()
+        return torch.sort(spec, descending=True).values
     M = (A.T @ B) / max(n - 1, 1)          # 独立时元素 ~ N(0, 1/n)
     return torch.linalg.svdvals(M)
 

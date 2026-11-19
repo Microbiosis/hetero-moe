@@ -2,7 +2,9 @@
 
 | 文件 | 是什么 | 能不能引用 |
 |---|---|---|
-| （暂无 `metrics.json`）| 全网格**尚未在本仓库落盘** | — |
+| `results/metrics.json` | 已落盘的真实表征 `r(t)` 轨迹与预登记裁决（**`V2_collapse: false`**，`r` 从 13 升至 `r_max = r_final = 292`，`born=299 / died=7`） | 可引用为真实数据上原版算子 **未通过预登记 V2 坍缩判据** 的实证（不得引为正面全过） |
+
+> **2026-11-19 勘误同步**：原 STATUS 误称“暂无 `metrics.json`”，已更正。另 `operators.py` 的 Gavish–Donoho 双除 $c_\beta$、`_below` 连续复位、残差零奇异值与 `effective_params = r²` 已在主分支修复（详见 `docs/PAST_SUBPACKAGES_ERRATA.md`）；若需评估修复后算子在真实表征上的 `V2_collapse`，须重跑全网格并落新快照。
 
 ## 已完成的验证
 

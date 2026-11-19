@@ -1,0 +1,51 @@
+{
+  "package": "v64_moa_proposer",
+  "version": "64.0",
+  "generated": "2026-11-12",
+  "status": "code_ready_pending_batch_run",
+  "one_mechanism_added": "把 v62 的同构融合层换成真正的 MoA 异构 proposer（多种归纳偏置分支并行提案）+ 稀疏路由聚合 + 头级异构注意力掩码，接口与 v62 融合层兼容。",
+  "note": "本代**没有端到端数字**。按项目纪律，无支撑的数字不得对外引用；本快照只记录可本地复算的结构性事实。",
+  "locally_verifiable": {
+    "branch_kinds_head": [
+      "CausalSelfAttentionSubOp",
+      "CausalDepthwiseConvSubOp",
+      "SwiGLUMLPSubOp"
+    ],
+    "branch_rotation": "i % 3",
+    "proposer_output_shape": "[B, N, L, D]",
+    "branch_scale_shape": "[1, N, 1, D]",
+    "aggregator_modes": [
+      "cross_attention",
+      "sparse_router",
+      "low_rank_concat"
+    ],
+    "aux_loss_measured": 0.022192,
+    "moa_mask_shape": "[1, H, L, L]",
+    "moa_mask_density_measured": 0.744,
+    "numpy_vs_torch_fwd_max_diff": 0.00001,
+    "numpy_vs_torch_bwd_dx": 1.2e-7,
+    "numpy_vs_torch_bwd_dw": 9.5e-7,
+    "moa_fusion_y_shape": "[B, S, d_space]",
+    "moa_fusion_alpha_shape": "[B, S, num_proposers]"
+  },
+  "implementation_modules": [
+    "research/aligner/v62_dimension_projection_space/moa_operators.py",
+    "research/aligner/v62_dimension_projection_space/moa_fusion.py"
+  ],
+  "falsified": [
+    {
+      "hypothesis": "MoA 异构 proposer 能给端到端精度带来增益",
+      "verdict": "未验证 —— 端到端数字待 Kaggle 批量跑；不得据本代声称 MoA 增益",
+      "evidence": "research/aligner/v64_moa_proposer/SPEC.md §0"
+    },
+    {
+      "hypothesis": "v64 落地时的 4 分支形态（含 SelectiveSSMSubOp）可以持续",
+      "verdict": "证伪 —— SSM chunkwise_ssd 需 diff_log_a 25GB 必 OOM；zero-OOM 版 4 分支 held-out 0.53 输给 3 分支 0.64 ⇒ v67 去掉 SSM 分支",
+      "evidence": "git commit c496d6d"
+    }
+  ],
+  "pending": [
+    "Kaggle 批量验证未执行",
+    "端到端数字待回填"
+  ]
+}

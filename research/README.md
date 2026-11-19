@@ -1,4 +1,4 @@
-# research/ — 8 条研究线总览
+# research/ — 9 条研究线总览
 
 本项目不是线性研究。每个 `research/<line>/` 目录是一条独立研究线, 回答一个具体研究问题。
 
@@ -17,26 +17,26 @@ research/<line>/v<N>_<name>/
 ```
 
 ```bash
-python tools/validate_generations.py                    # L2 交付自包含 (33 包)
-python tools/check_self_containment.py --strict         # L1 import 自包含
+python tools/validate_generations.py                    # L2 交付自包含 (78 包) + 非治理范围审计
+python tools/check_self_containment.py --strict         # L1 静态 + 动态加载自包含 (75 包)
 ```
 
 校验器分两层, 且**两层都要求产物真的随仓库分发** —— 只在作者本机存在不算自包含。
-详见 [`docs/GENERATION_MANIFEST_SCHEMA.md`](../docs/GENERATION_MANIFEST_SCHEMA.md)
-与 [`docs/GENERATION_PILOT_REPORT.md`](../docs/GENERATION_PILOT_REPORT.md)。
+详见 [`docs/GENERATION_MANIFEST_SCHEMA.md`](../docs/GENERATION_MANIFEST_SCHEMA.md)、[`docs/GENERATION_PILOT_REPORT.md`](../docs/GENERATION_PILOT_REPORT.md) 与历史子包勘误总账 [`docs/PAST_SUBPACKAGES_ERRATA.md`](../docs/PAST_SUBPACKAGES_ERRATA.md)。
 
-## 8 条研究线
+## 9 条研究线
 
 | # | 研究线 | 研究问题 | 主要版本 | 关键结论 |
 |---|---|---|---|---|
 | 1 | [routing_evolution](./routing_evolution/) | 异构底座之间路由机制如何演化? | v7→v8→v9 | gate-style 修正 +88%; 中枢"必须有结构" |
 | 2 | [central_diagnostics](./central_diagnostics/) | 为什么 v8 C-1 单独会反向增益? 5 个根因假设 | v19→v20 | H1 U 训练扰动是主因; H5 位置不关键 |
 | 3 | [central_stability](./central_stability/) | 除 v9 gate-style 还有哪些结构修复? | v22→v30→v31 | 4 种中枢模式; v30 softplus +3.0%; v31 grad-scale +1.9% |
-| 4 | [aligner](./aligner/) | 异构底座怎么对齐语义空间? | v10→v13→v15→…→**v62** | mixture > attn > linear; 嵌套对齐器有天花板; v62 把空间改成按功能槽张成的**多子空间之和**, 三模型单变换过定 (0.677) 由成对可复合对齐修复到 0.9925 |
+| 4 | [aligner](./aligner/) | 异构底座怎么对齐语义空间? | v10→v13→v15→…→**v62**→v63→…→**v74** | mixture > attn > linear; 嵌套对齐器有天花板; v62 把空间改成按功能槽张成的**多子空间之和**, 三模型单变换过定 (0.677) 由成对可复合对齐修复到 0.9925 |
 | 5 | [distillation](./distillation/) | 能不能蒸出真正独立的单底座? | v16→v17→v18→**v32**→**v40** | 单教师蒸馏**表观** +47.5%; v32 审计证明该收益全部来自目标泄漏; v40 检验 v17 归因: 分派式消除了加权和的损害但**未超过单教师**, 且形式不变 (加权/均值/轮转无差别), 教师侧 13% headroom 传不到学生 |
 | 6 | [multimodal](./multimodal/) | 多模态能超单模态? | v21→v23→v24 | BERT+ViT 蒸馏可; toy 不可行 |
 | 7 | [corpus_scale](./corpus_scale/) | 中枢机制在真实语料下还稳吗? | v25→v26→v27→v28→v29 | 最优模式依赖数据规模 |
 | 8 | [scale_heterogeneous](./scale_heterogeneous/) | "1大+N小" + "大模型容器"独立范式 | v33→v34→v35→v36→v37→v38→v39 | 容器范式与路由范式是两条路径 |
+| 9 | [weight_fusion](./weight_fusion/) | 异构底座的权重与激活能否跨架构融合，并系统修复项目固有缺陷? | v75→**v84** | v75 证伪 G2 槽共轭；v76–v83 推进 A1 激活管道至 5/6 (`S4AP_FAIL`)；**v84 系统审计并修复全历史固有缺陷（`REMEDIATION_PASS`）**：揭露 v62 随机矩阵假象与 v83 P5d 循环论证/欠定性，将主包升级至 `hetero_moe v5.0`（真异构+真稀疏+向量门控破 v55 带宽墙+LoRA 破纯冻结 β 墙），并在严格三集下游分类与 LM PPL 门禁上双 `PASS` |
 
 ## 关键交叉复用
 
@@ -59,13 +59,13 @@ research/scale_heterogeneous/ (独立范式)
     └── v38/v39 ← v36 + v37
 ```
 
-## 最重要的 5 个发现 (跨线总结)
+## 最重要的 5 个发现 (跨线总结，已剔除被审计撤回项)
 
-1. **mixture > attn > linear** 严格成立 (research/aligner/)
-2. **gate-style 中枢是最稳定的单点修复** +88.1% (research/routing_evolution/v9)
-3. **单教师蒸馏可行 +47.5%, 多教师反而退步** (research/distillation/)
-4. **最优中枢模式依赖数据规模** (research/corpus_scale/v29)
-5. **路由融合 vs 大模型容器是两条独立路径** (research/scale_heterogeneous/)
+1. **mixture > attn > linear** 匹配容量下成立，但嵌套对齐存在天花板 (research/aligner/, v41)
+2. **纯冻结随机投影增益 (`v6/v7/v33`) 与单师蒸馏 `+47.5%/+50%` (`v16/v21`) 均为审计撤回项**，分别源于随机空间伪像 (`v50/v51/v54`) 与目标泄漏 (`v32/v42`)
+3. **标量路由存在严格低秩带宽上界 `rank(J_route) ≤ min(top_k, M-1)`** (`v55`)，且 `v62` 无约束单矩阵对齐可在纯随机矩阵上因秩塌缩复现 (`v84`)
+4. **纯冻结异构底座同时受表征不可通约与 $\beta$ 墙锁死** (`v75` G2 负结果 + `v81–v83` 激活管道局限)
+5. **`hetero_moe v5.0` 通过真异构专家 + 真稀疏分派 + 低秩向量门控 + 可选 LoRA 联合适配**，首次在严格三集防泄漏下游分类与序列 LM PPL 门禁上显著击败最强单底座 (`v84`)
 
 ## 最重要的 5 个负结果 (跨线总结)
 

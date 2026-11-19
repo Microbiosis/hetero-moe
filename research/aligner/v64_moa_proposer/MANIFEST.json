@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "version": "64.0",
+  "package": "v64_moa_proposer",
+  "line": "aligner",
+  "title": "MoA 异构 proposer 融合层 — 多种归纳偏置分支并行提案 + 稀疏路由聚合，接口与 v62 融合层兼容",
+  "generation": {
+    "one_mechanism_added": "把 v62 的同构融合层（4 个 SwiGLU 专家）换成真正的 MoA 异构 proposer：按 i%N 轮转 Attention / Conv / SwiGLU（v64 落地时含 SSM，v67 去掉）分支并行提案，稀疏路由（Top-K + Load-Balancing + Router Z-Loss）聚合，并提供头级异构注意力掩码（sink+local / dilated / full-causal）。",
+    "parent": "63.0",
+    "children": [
+      "65.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [
+      "65.0"
+    ],
+    "note": "aligner 线接 v48→…→v62→v63→…→v74。v63 起为 v62 共享空间的工程化延伸，不改槽/模型/对齐三轴本身。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "research/aligner/v62_dimension_projection_space/moa_operators.py",
+      "research/aligner/v62_dimension_projection_space/moa_fusion.py"
+    ],
+    "note": "实现文件物理位置在 v62 工作目录（moa_operators.py / moa_fusion.py / train_v2.py 的 USE_MOA 开关）。不复制到本包：train_v2.py 用平铺 import（from moa_operators import ...），搬文件会打断整条链；同一机制两份实现会漂移。"
+  },
+  "claim": {
+    "asserts": "MoA 异构 proposer 与稀疏聚合的机制语义成立：分支按 i%3 轮转且三种归纳偏置齐备、sparse_router 只聚合 Top-K 且 aux_loss 非负、三种聚合模式前向通过、头级异构掩码因果、numpy 参考核与 torch 前向/反向逐位一致、MoAFusionOverProjSpace 与 v62 接口兼容",
+    "metric": "unit_test_pass_rate",
+    "direction": "higher_is_better",
+    "value": 1,
+    "baseline": {
+      "ref": "无（本代首次登记）",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": null,
+    "outcome_label": "code_ready_pending_batch_run",
+    "note": "**本代无端到端数字。**claim 只能是机制层面的自洽性，不能说成精度结论。"
+  },
+  "protocol": {
+    "eval_set": "not_applicable",
+    "input": "本代无下游任务评估；权威测试只验证机制语义，不加载 v62 权重（需 GPU + 已训练 ckpt）",
+    "caveat": "引用本代时不得说成精度结论。"
+  },
+  "acceptance": {
+    "criterion": "权威测试 9 项全通过（tests/test_package.py）",
+    "outcome": "pass",
+    "note": "9/9 通过（本地 CPU）。第 7/8 项为 numpy 参考核与 torch 实现的双向逐位一致性断言。"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分，无目标泄漏风险面；且本代无端到端数字可泄漏。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "MoA 异构 proposer 能给端到端精度带来增益",
+      "verdict": "未验证 —— 本代只完成算子层与接口层，端到端数字待 Kaggle 批量跑；不得据本代声称 MoA 增益",
+      "evidence": "research/aligner/v64_moa_proposer/SPEC.md §0"
+    },
+    {
+      "hypothesis": "v64 落地时的 4 分支形态（含 SelectiveSSMSubOp）可以持续",
+      "verdict": "证伪 —— SSM 的 chunkwise_ssd 需要 diff_log_a 中间张量 25GB 必 OOM；zero-OOM 版 4 分支 held-out 仅 0.53，输给 3 分支的 0.64 ⇒ v67 去掉 SSM 分支",
+      "evidence": "git commit c496d6d（v71 实测记录）；机制分析见 research/aligner/v67_three_branch/SPEC.md §1"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v64_moa_proposer.py",
+    "forwarder_spec": "docs/V64_0_MOA_PROPOSER.md"
+  },
+  "tests_status": "present",
+  "external_artifacts": {
+    "note": "训练产物待 Kaggle 批量验证后落盘到 HF redmingwei/HeteroMoEProjSpace-v2/checkpoints/v64.*。"
+  }
+}

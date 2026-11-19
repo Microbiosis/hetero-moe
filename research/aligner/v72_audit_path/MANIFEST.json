@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "version": "72.0",
+  "package": "v72_audit_path",
+  "line": "aligner",
+  "title": "审计脚本 projspace 定位修复 — 绝对路径 + 包目录 fallback",
+  "generation": {
+    "one_mechanism_added": "审计脚本加载 projspace.py 时，先用 __file__ 推导的绝对路径，再 fallback 到包目录候选列表（含 /kaggle/working/hetero-moe/...）。",
+    "parent": "71.0",
+    "children": [
+      "73.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [
+      "73.0"
+    ],
+    "note": "aligner 线接 v48→…→v62→v63→…→v74。v63 起为 v62 共享空间的工程化延伸，不改槽/模型/对齐三轴本身。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "research/aligner/v62_dimension_projection_space/slot_independence_audit.py"
+    ],
+    "note": "纯路径修复代，无新机制。但它修掉的是**审计脚本跑不起来**——一个跑不起来的审计等于没有审计。"
+  },
+  "claim": {
+    "asserts": "审计脚本的 projspace 定位不依赖 cwd：用绝对路径 + 包目录 fallback；在任意工作目录下真跑一遍均 rc=0 且打印出定位到的目录",
+    "metric": "unit_test_pass_rate",
+    "direction": "higher_is_better",
+    "value": 1.0,
+    "baseline": {
+      "ref": "无（本代首次登记）",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": null,
+    "outcome_label": "code_ready_pending_batch_run",
+    "note": "**本代无端到端数字**（它修的是工具可用性，不是模型效果）。"
+  },
+  "protocol": {
+    "eval_set": "not_applicable",
+    "input": "本代无下游任务评估；权威测试只验证机制语义",
+    "caveat": "引用本代时不得说成精度结论。"
+  },
+  "acceptance": {
+    "criterion": "权威测试全部通过（tests/test_package.py）",
+    "outcome": "pass",
+    "note": "4/4 通过（本地 CPU）。第 3/4 项是真的换个工作目录跑一遍，不是看源码"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分，无目标泄漏风险面；且本代无端到端数字可泄漏。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "审计脚本按相对路径找 projspace.py 就能工作",
+      "verdict": "证伪 —— Kaggle notebook 的 cwd 是 /kaggle/working，裸相对路径必然 import 失败；本代改为绝对路径 + fallback",
+      "evidence": "git commit 23af716"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v72_audit_path.py",
+    "forwarder_spec": "docs/V72_0_AUDIT_PATH.md"
+  },
+  "tests_status": "present",
+  "external_artifacts": {
+    "note": "端到端产物待 Kaggle 批量验证后落盘。"
+  }
+}

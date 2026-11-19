@@ -1,0 +1,1591 @@
+{
+  "protocol": {
+    "route": "beta (真 HF 模型逐层驱动 + 真实输入)",
+    "scope": "S1beta 机械可行性 + 真模型侧前置测量; 不含 P1a/P1b/P2/P3 的注入臂",
+    "seed": 0,
+    "device": "cpu",
+    "dtype": "float32",
+    "models": {
+      "Qwen": {
+        "n_heads": 14,
+        "n_kv": 2,
+        "head_dim": 64,
+        "d": 896,
+        "n_layers": 24,
+        "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+        "local_dir": "C:\\Users\\Weish\\.cache\\hetero-moe\\models\\Qwen",
+        "class_name": "Qwen2Model"
+      },
+      "BERT": {
+        "n_heads": 4,
+        "n_kv": 4,
+        "head_dim": 64,
+        "d": 256,
+        "n_layers": 4,
+        "repo": "google/bert_uncased_L-4_H-256_A-4",
+        "local_dir": "C:\\Users\\Weish\\.cache\\hetero-moe\\models\\BERT",
+        "class_name": "BertModel"
+      },
+      "ViT": {
+        "n_heads": 12,
+        "n_kv": 12,
+        "head_dim": 64,
+        "d": 768,
+        "n_layers": 12,
+        "repo": "google/vit-base-patch16-224-in21k",
+        "local_dir": "C:\\Users\\Weish\\.cache\\hetero-moe\\models\\ViT",
+        "class_name": "ViTModel"
+      }
+    },
+    "corpus": {
+      "text": "fancyzhx/ag_news (train 前 128 条), 经 HF datasets-server rows API 取",
+      "image": "ethz/food101 (train 前 4 张), 同 API",
+      "labels": "随文本一起取回 (ag_news 4 类), 本代不用它做能力指标",
+      "cache": "C:\\Users\\Weish\\.cache\\hetero-moe"
+    },
+    "seq": 128,
+    "batch": 16,
+    "thresholds": {
+      "B1_rel_err_exact": 1e-05,
+      "B1_rel_err_lowprec": 0.01,
+      "B2_zero_inject_rel_err": 1e-06,
+      "B3_min_rel_perturbation": 0.001,
+      "B3_max_rel_perturbation": 0.5,
+      "B4_norm_ratio": [
+        0.1,
+        10.0
+      ],
+      "B4_eff_rank_min": 1.1,
+      "B5_matched_better_min": 0.75,
+      "B5_sign_test_p_max": 0.05
+    },
+    "reused_from": [
+      "v62 measure.py (SLOT_PATHS/projections)",
+      "v75 g2_conjugation.py (load_wall)",
+      "v76 a1_forward.py (eff_rank/ridge_fit_r2)"
+    ],
+    "provenance_sha256": {
+      "v62_measure": "8a20d007f5a42340ee89713512c089f81157d92101610c17f92f7ae6077aa349",
+      "v75_g2": "8d0e34fccf0d51a471469c73934198c0963c0b3a7f70ac77f4227b1718a78f7c",
+      "v76_a1_forward": "ea90c8952d4a3cc66d48dca1bc56d0a4e2a2c7953e359f7cdc8458b49d0d47d7"
+    },
+    "declared_modeling_choices": [
+      "fp32 on CPU (避开 WDDM 下被桌面占满的显存; 同时让权重同源比对是逐位精确的)",
+      "注入用 forward_pre_hook 打在 decoder layer 输入处, 不手工逐层调用 (真模型层 forward 签名随 transformers 版本变动, 手工调用易漏 position_embeddings/cache)",
+      "槽激活: 投影类槽取模块输出, o_proj/down_proj 类槽取模块输入",
+      "跨模型可比单位 = 样本级 mean-pool (两个 tokenizer 的 token 网格不同, 没法逐 token 配对)"
+    ]
+  },
+  "B1_weight_provenance": {
+    "Qwen": {
+      "ok": true,
+      "model": "Qwen",
+      "n_blocks": 24,
+      "n_exact": 24,
+      "n_low_precision": 0,
+      "n_different": 0,
+      "max_rel_err": 0.0,
+      "rows": [
+        {
+          "layer": 0,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        }
+      ]
+    },
+    "BERT": {
+      "ok": true,
+      "model": "BERT",
+      "n_blocks": 24,
+      "n_exact": 24,
+      "n_low_precision": 0,
+      "n_different": 0,
+      "max_rel_err": 0.0,
+      "rows": [
+        {
+          "layer": 0,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        }
+      ]
+    },
+    "ViT": {
+      "ok": true,
+      "model": "ViT",
+      "n_blocks": 24,
+      "n_exact": 24,
+      "n_low_precision": 0,
+      "n_different": 0,
+      "max_rel_err": 0.0,
+      "rows": [
+        {
+          "layer": 0,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 0,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 1,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 2,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "Q",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "K",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "V",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "O",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "expand",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        },
+        {
+          "layer": 3,
+          "slot": "contract",
+          "shape_match": true,
+          "rel_err": 0.0,
+          "verdict": "same_source_exact"
+        }
+      ]
+    }
+  },
+  "B2_layerwise_drive": {
+    "Qwen": {
+      "ok": true,
+      "model": "Qwen",
+      "n_layers": 24,
+      "n_hidden_states": 25,
+      "expected": 25,
+      "shapes_ok": true,
+      "finite": true,
+      "zero_inject_max_rel_err": 0.0,
+      "per_layer_rel_err": [
+        {
+          "layer": 0,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 1,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 2,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 3,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 4,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 5,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 6,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 7,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 8,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 9,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 10,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 11,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 12,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 13,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 14,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 15,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 16,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 17,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 18,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 19,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 20,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 21,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 22,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 23,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 24,
+          "rel_err": 0.0
+        }
+      ],
+      "hidden_shape": [
+        16,
+        128,
+        896
+      ]
+    },
+    "BERT": {
+      "ok": true,
+      "model": "BERT",
+      "n_layers": 4,
+      "n_hidden_states": 5,
+      "expected": 5,
+      "shapes_ok": true,
+      "finite": true,
+      "zero_inject_max_rel_err": 0.0,
+      "per_layer_rel_err": [
+        {
+          "layer": 0,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 1,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 2,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 3,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 4,
+          "rel_err": 0.0
+        }
+      ],
+      "hidden_shape": [
+        16,
+        128,
+        256
+      ]
+    },
+    "ViT": {
+      "ok": true,
+      "model": "ViT",
+      "n_layers": 12,
+      "n_hidden_states": 13,
+      "expected": 13,
+      "shapes_ok": true,
+      "finite": true,
+      "zero_inject_max_rel_err": 0.0,
+      "per_layer_rel_err": [
+        {
+          "layer": 0,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 1,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 2,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 3,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 4,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 5,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 6,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 7,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 8,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 9,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 10,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 11,
+          "rel_err": 0.0
+        },
+        {
+          "layer": 12,
+          "rel_err": 0.0
+        }
+      ],
+      "hidden_shape": [
+        4,
+        197,
+        768
+      ]
+    }
+  },
+  "B3_injection": {
+    "Qwen": {
+      "ok": true,
+      "model": "Qwen",
+      "inject_at": 1,
+      "curve": [
+        {
+          "layer": 1,
+          "rel_perturbation": 0.002741763833910227,
+          "alignment_mean": 0.7562841773033142
+        },
+        {
+          "layer": 2,
+          "rel_perturbation": 0.0010595618514344096,
+          "alignment_mean": 0.6035673022270203
+        },
+        {
+          "layer": 3,
+          "rel_perturbation": 0.0005020293756388128,
+          "alignment_mean": 0.48810482025146484
+        },
+        {
+          "layer": 4,
+          "rel_perturbation": 0.0005387080018408597,
+          "alignment_mean": 0.28770413994789124
+        },
+        {
+          "layer": 5,
+          "rel_perturbation": 0.0005456082872115076,
+          "alignment_mean": 0.31319332122802734
+        },
+        {
+          "layer": 6,
+          "rel_perturbation": 0.0005820209044031799,
+          "alignment_mean": 0.2946678400039673
+        },
+        {
+          "layer": 7,
+          "rel_perturbation": 0.0006582177011296153,
+          "alignment_mean": 0.2604929804801941
+        },
+        {
+          "layer": 8,
+          "rel_perturbation": 0.0006877282285131514,
+          "alignment_mean": 0.22177352011203766
+        },
+        {
+          "layer": 9,
+          "rel_perturbation": 0.000681178062222898,
+          "alignment_mean": 0.3198685050010681
+        },
+        {
+          "layer": 10,
+          "rel_perturbation": 0.000679321528878063,
+          "alignment_mean": 0.2946857810020447
+        },
+        {
+          "layer": 11,
+          "rel_perturbation": 0.0006627308903262019,
+          "alignment_mean": 0.260656476020813
+        },
+        {
+          "layer": 12,
+          "rel_perturbation": 0.0006688344292342663,
+          "alignment_mean": 0.23298415541648865
+        },
+        {
+          "layer": 13,
+          "rel_perturbation": 0.0006826516473665833,
+          "alignment_mean": 0.13490407168865204
+        },
+        {
+          "layer": 14,
+          "rel_perturbation": 0.0007022087811492383,
+          "alignment_mean": 0.06271146982908249
+        },
+        {
+          "layer": 15,
+          "rel_perturbation": 0.0006863410817459226,
+          "alignment_mean": 0.12582387030124664
+        },
+        {
+          "layer": 16,
+          "rel_perturbation": 0.0007327772909775376,
+          "alignment_mean": 0.07277671247720718
+        },
+        {
+          "layer": 17,
+          "rel_perturbation": 0.0008424674160778522,
+          "alignment_mean": -0.060623444616794586
+        },
+        {
+          "layer": 18,
+          "rel_perturbation": 0.0009567924425937235,
+          "alignment_mean": 0.002302706241607666
+        },
+        {
+          "layer": 19,
+          "rel_perturbation": 0.0010953015880659223,
+          "alignment_mean": 0.042711153626441956
+        },
+        {
+          "layer": 20,
+          "rel_perturbation": 0.0012955607380717993,
+          "alignment_mean": 0.012529969215393066
+        },
+        {
+          "layer": 21,
+          "rel_perturbation": 0.002770354738458991,
+          "alignment_mean": 0.14794468879699707
+        },
+        {
+          "layer": 22,
+          "rel_perturbation": 0.002815083833411336,
+          "alignment_mean": 0.00427013635635376
+        },
+        {
+          "layer": 23,
+          "rel_perturbation": 0.002243698574602604,
+          "alignment_mean": -0.16233336925506592
+        }
+      ],
+      "final": {
+        "layer": 23,
+        "rel_perturbation": 0.002243698574602604,
+        "alignment_mean": -0.16233336925506592
+      },
+      "finite": true,
+      "thresholds": {
+        "min_rel_perturbation": 0.001,
+        "max_rel_perturbation": 0.5
+      },
+      "note": "alignment 接近 1 是残差流的**正常**表现（真模型里注入方向本来就会被残差携带）⇒ 只看 rel_perturbation，不拿 alignment 当判据。v76 的路线 α 上 alignment 只有 0.63~0.83，是因为那里没有真 embedding/norm。"
+    },
+    "BERT": {
+      "ok": true,
+      "model": "BERT",
+      "inject_at": 1,
+      "curve": [
+        {
+          "layer": 1,
+          "rel_perturbation": 0.006005401257425547,
+          "alignment_mean": 0.5336726903915405
+        },
+        {
+          "layer": 2,
+          "rel_perturbation": 0.006511128041893244,
+          "alignment_mean": 0.5988273620605469
+        },
+        {
+          "layer": 3,
+          "rel_perturbation": 0.00863579846918583,
+          "alignment_mean": 0.5492672324180603
+        }
+      ],
+      "final": {
+        "layer": 3,
+        "rel_perturbation": 0.00863579846918583,
+        "alignment_mean": 0.5492672324180603
+      },
+      "finite": true,
+      "thresholds": {
+        "min_rel_perturbation": 0.001,
+        "max_rel_perturbation": 0.5
+      },
+      "note": "alignment 接近 1 是残差流的**正常**表现（真模型里注入方向本来就会被残差携带）⇒ 只看 rel_perturbation，不拿 alignment 当判据。v76 的路线 α 上 alignment 只有 0.63~0.83，是因为那里没有真 embedding/norm。"
+    }
+  },
+  "B4_stack_health": {
+    "scope": [
+      "Qwen",
+      "BERT"
+    ],
+    "in_scope_ok": true,
+    "models": {
+      "Qwen": {
+        "ok": true,
+        "model": "Qwen",
+        "n_layers": 24,
+        "rms_by_layer": [
+          0.01793842390179634,
+          0.17315736413002014,
+          0.2773893177509308,
+          2.0924055576324463,
+          4.601616382598877,
+          4.61621618270874,
+          4.693864822387695,
+          4.6993255615234375,
+          4.717061996459961,
+          4.723116397857666,
+          4.726202964782715,
+          4.7245965003967285,
+          4.720763206481934,
+          4.7233967781066895,
+          4.731687545776367,
+          4.740094184875488,
+          4.748624324798584,
+          4.762609958648682,
+          4.8085551261901855,
+          4.843157768249512,
+          4.88863468170166,
+          5.02693510055542,
+          2.6171927452087402,
+          2.9047799110412598,
+          10.254114151000977
+        ],
+        "rms_ratio": [
+          9.65287502837305,
+          1.601949297072027,
+          7.5432088538868225,
+          2.1991990825170618,
+          1.0031727547226823,
+          1.0168208412703479,
+          1.0011633780141467,
+          1.0037742511567498,
+          1.0012835110927625,
+          1.0006535021932657,
+          0.9996600940759512,
+          0.9991886515780822,
+          1.0005578698845008,
+          1.0017552553933444,
+          1.0017766682642908,
+          1.0017995718208117,
+          1.0029451969441046,
+          1.0096470565384155,
+          1.0071960580987955,
+          1.0093899302125326,
+          1.0282901930413053,
+          0.5206338838389956,
+          1.1098838312000525,
+          3.5300829890844443
+        ],
+        "eff_rank_by_layer": [
+          155.89418029785156,
+          243.33453369140625,
+          265.0020751953125,
+          8.045523643493652,
+          3.7874722480773926,
+          4.421450138092041,
+          4.560336589813232,
+          4.96958589553833,
+          5.492559432983398,
+          5.767855167388916,
+          5.6828694343566895,
+          5.684898853302002,
+          5.544783592224121,
+          5.616086959838867,
+          5.81241512298584,
+          6.176083564758301,
+          6.607851505279541,
+          8.564395904541016,
+          10.504892349243164,
+          12.447181701660156,
+          15.739285469055176,
+          21.188396453857422,
+          191.239501953125,
+          187.29818725585938,
+          101.93766784667969
+        ],
+        "min_ratio": 0.5206338838389956,
+        "max_ratio": 9.65287502837305,
+        "min_eff_rank": 3.7874722480773926,
+        "bounds": {
+          "ratio": [
+            0.1,
+            10.0
+          ],
+          "eff_rank_min": 1.1
+        }
+      },
+      "BERT": {
+        "ok": true,
+        "model": "BERT",
+        "n_layers": 4,
+        "rms_by_layer": [
+          0.9063888192176819,
+          1.1525529623031616,
+          0.9048951864242554,
+          1.127532720565796,
+          0.8772607445716858
+        ],
+        "rms_ratio": [
+          1.2715877974950616,
+          0.7851224334333335,
+          1.2460368200446565,
+          0.7780357310885633
+        ],
+        "eff_rank_by_layer": [
+          122.75315856933594,
+          123.18151092529297,
+          147.24014282226562,
+          159.37661743164062,
+          148.41876220703125
+        ],
+        "min_ratio": 0.7780357310885633,
+        "max_ratio": 1.2715877974950616,
+        "min_eff_rank": 122.75315856933594,
+        "bounds": {
+          "ratio": [
+            0.1,
+            10.0
+          ],
+          "eff_rank_min": 1.1
+        }
+      },
+      "ViT": {
+        "ok": true,
+        "model": "ViT",
+        "n_layers": 12,
+        "rms_by_layer": [
+          0.5414803624153137,
+          0.942861020565033,
+          1.0913364887237549,
+          1.2675055265426636,
+          1.44483482837677,
+          2.46453595161438,
+          8.663277626037598,
+          13.498775482177734,
+          14.076757431030273,
+          14.438143730163574,
+          15.13863468170166,
+          15.5374116897583,
+          16.64901351928711
+        ],
+        "rms_ratio": [
+          1.74126540131452,
+          1.1574733337366565,
+          1.16142504134992,
+          1.1399041646136268,
+          1.7057561897114666,
+          3.5151759991014813,
+          1.5581603250953175,
+          1.0428173614425724,
+          1.0256725528520279,
+          1.048516690554524,
+          1.0263416758803652,
+          1.0715435654100314
+        ],
+        "eff_rank_by_layer": [
+          82.77481079101562,
+          171.60450744628906,
+          233.5594482421875,
+          266.6878967285156,
+          273.0640563964844,
+          125.38433074951172,
+          18.156070709228516,
+          10.861093521118164,
+          11.697676658630371,
+          13.116424560546875,
+          15.231271743774414,
+          21.869447708129883,
+          27.40227508544922
+        ],
+        "min_ratio": 1.0256725528520279,
+        "max_ratio": 3.5151759991014813,
+        "min_eff_rank": 10.861093521118164,
+        "bounds": {
+          "ratio": [
+            0.1,
+            10.0
+          ],
+          "eff_rank_min": 1.1
+        }
+      }
+    },
+    "out_of_scope": {
+      "ViT": {
+        "ok": true,
+        "model": "ViT",
+        "n_layers": 12,
+        "rms_by_layer": [
+          0.5414803624153137,
+          0.942861020565033,
+          1.0913364887237549,
+          1.2675055265426636,
+          1.44483482837677,
+          2.46453595161438,
+          8.663277626037598,
+          13.498775482177734,
+          14.076757431030273,
+          14.438143730163574,
+          15.13863468170166,
+          15.5374116897583,
+          16.64901351928711
+        ],
+        "rms_ratio": [
+          1.74126540131452,
+          1.1574733337366565,
+          1.16142504134992,
+          1.1399041646136268,
+          1.7057561897114666,
+          3.5151759991014813,
+          1.5581603250953175,
+          1.0428173614425724,
+          1.0256725528520279,
+          1.048516690554524,
+          1.0263416758803652,
+          1.0715435654100314
+        ],
+        "eff_rank_by_layer": [
+          82.77481079101562,
+          171.60450744628906,
+          233.5594482421875,
+          266.6878967285156,
+          273.0640563964844,
+          125.38433074951172,
+          18.156070709228516,
+          10.861093521118164,
+          11.697676658630371,
+          13.116424560546875,
+          15.231271743774414,
+          21.869447708129883,
+          27.40227508544922
+        ],
+        "min_ratio": 1.0256725528520279,
+        "max_ratio": 3.5151759991014813,
+        "min_eff_rank": 10.861093521118164,
+        "bounds": {
+          "ratio": [
+            0.1,
+            10.0
+          ],
+          "eff_rank_min": 1.1
+        }
+      }
+    },
+    "note": "判据范围 = A1 首代覆盖的 Qwen/BERT (design §2), 与 v76 的 C3 同口径; ViT 只作范围外记录, 不进判据。"
+  },
+  "B5_slot_identity": {
+    "ok": false,
+    "n_blocks": 16,
+    "frac_matched_better": 0.75,
+    "median_delta": 0.07384711361235707,
+    "sign_test_p": 0.076812744140625,
+    "n_positive": 12,
+    "mean_r2_matched": 0.720445188893784,
+    "mean_r2_wrong": 0.5180692547959863,
+    "directions": {
+      "Qwen->BERT": {
+        "ok": false,
+        "pair": "Qwen->BERT",
+        "n_blocks": 8,
+        "frac_matched_better": 0.75,
+        "median_delta": 0.07384711361235707,
+        "sign_test_p": 0.2890625,
+        "n_positive": 6,
+        "mean_r2_matched": 0.5532926881655883,
+        "mean_r2_wrong": 0.24715128718591003,
+        "thresholds": {
+          "matched_better_min": 0.75,
+          "sign_test_p_max": 0.05
+        },
+        "rows": [
+          {
+            "layer": 0,
+            "slot": "Q",
+            "r2_matched": 0.675602494127556,
+            "r2_wrong_slot": 0.26193139946828636,
+            "delta": 0.41367109465926966
+          },
+          {
+            "layer": 0,
+            "slot": "O",
+            "r2_matched": -0.062326362525664925,
+            "r2_wrong_slot": -1.977604118630698,
+            "delta": 1.9152777561050331
+          },
+          {
+            "layer": 1,
+            "slot": "Q",
+            "r2_matched": 0.7380209495893737,
+            "r2_wrong_slot": 0.646174234172554,
+            "delta": 0.09184671541681966
+          },
+          {
+            "layer": 1,
+            "slot": "O",
+            "r2_matched": 0.6245369505907742,
+            "r2_wrong_slot": 0.6607773214325734,
+            "delta": -0.03624037084179921
+          },
+          {
+            "layer": 2,
+            "slot": "Q",
+            "r2_matched": 0.8386407007291308,
+            "r2_wrong_slot": 0.7543015091964224,
+            "delta": 0.08433919153270841
+          },
+          {
+            "layer": 2,
+            "slot": "O",
+            "r2_matched": 0.4793457012331511,
+            "r2_wrong_slot": 0.4575694054951599,
+            "delta": 0.021776295737991225
+          },
+          {
+            "layer": 3,
+            "slot": "Q",
+            "r2_matched": 0.8074312754192089,
+            "r2_wrong_slot": 0.7440762397272032,
+            "delta": 0.06335503569200573
+          },
+          {
+            "layer": 3,
+            "slot": "O",
+            "r2_matched": 0.32508979616117617,
+            "r2_wrong_slot": 0.42998430662577936,
+            "delta": -0.10489451046460319
+          }
+        ],
+        "note": "对照测量, 不是 P1b: 没有注入臂, 无法排除「所有槽都互相可预测」。与 v76 的 C5 同口径, 差别只在输入 (真实文本 vs 随机向量)。"
+      },
+      "BERT->Qwen": {
+        "ok": false,
+        "pair": "BERT->Qwen",
+        "n_blocks": 8,
+        "frac_matched_better": 0.75,
+        "median_delta": 0.07857170729177448,
+        "sign_test_p": 0.2890625,
+        "n_positive": 6,
+        "mean_r2_matched": 0.8875976896219797,
+        "mean_r2_wrong": 0.7889872224060626,
+        "thresholds": {
+          "matched_better_min": 0.75,
+          "sign_test_p_max": 0.05
+        },
+        "rows": [
+          {
+            "layer": 0,
+            "slot": "Q",
+            "r2_matched": 0.8806124439760625,
+            "r2_wrong_slot": 0.6120061749724652,
+            "delta": 0.2686062690035973
+          },
+          {
+            "layer": 0,
+            "slot": "O",
+            "r2_matched": 0.8962003525689064,
+            "r2_wrong_slot": 0.5576156949287385,
+            "delta": 0.3385846576401679
+          },
+          {
+            "layer": 1,
+            "slot": "Q",
+            "r2_matched": 0.9560214444783698,
+            "r2_wrong_slot": 0.7635259845373519,
+            "delta": 0.1924954599410179
+          },
+          {
+            "layer": 1,
+            "slot": "O",
+            "r2_matched": 0.865532989055569,
+            "r2_wrong_slot": 0.9603073603989416,
+            "delta": -0.09477437134337263
+          },
+          {
+            "layer": 2,
+            "slot": "Q",
+            "r2_matched": 0.8878653807298023,
+            "r2_wrong_slot": 0.7649240685099483,
+            "delta": 0.12294131221985394
+          },
+          {
+            "layer": 2,
+            "slot": "O",
+            "r2_matched": 0.8200174653867369,
+            "r2_wrong_slot": 0.8986126705338755,
+            "delta": -0.07859520514713858
+          },
+          {
+            "layer": 3,
+            "slot": "Q",
+            "r2_matched": 0.928793621809245,
+            "r2_wrong_slot": 0.8945915194455499,
+            "delta": 0.03420210236369503
+          },
+          {
+            "layer": 3,
+            "slot": "O",
+            "r2_matched": 0.8657378189711455,
+            "r2_wrong_slot": 0.8603143059216297,
+            "delta": 0.005423513049515827
+          }
+        ],
+        "note": "对照测量, 不是 P1b: 没有注入臂, 无法排除「所有槽都互相可预测」。与 v76 的 C5 同口径, 差别只在输入 (真实文本 vs 随机向量)。"
+      }
+    },
+    "rows": [
+      {
+        "layer": 0,
+        "slot": "Q",
+        "r2_matched": 0.675602494127556,
+        "r2_wrong_slot": 0.26193139946828636,
+        "delta": 0.41367109465926966
+      },
+      {
+        "layer": 0,
+        "slot": "O",
+        "r2_matched": -0.062326362525664925,
+        "r2_wrong_slot": -1.977604118630698,
+        "delta": 1.9152777561050331
+      },
+      {
+        "layer": 1,
+        "slot": "Q",
+        "r2_matched": 0.7380209495893737,
+        "r2_wrong_slot": 0.646174234172554,
+        "delta": 0.09184671541681966
+      },
+      {
+        "layer": 1,
+        "slot": "O",
+        "r2_matched": 0.6245369505907742,
+        "r2_wrong_slot": 0.6607773214325734,
+        "delta": -0.03624037084179921
+      },
+      {
+        "layer": 2,
+        "slot": "Q",
+        "r2_matched": 0.8386407007291308,
+        "r2_wrong_slot": 0.7543015091964224,
+        "delta": 0.08433919153270841
+      },
+      {
+        "layer": 2,
+        "slot": "O",
+        "r2_matched": 0.4793457012331511,
+        "r2_wrong_slot": 0.4575694054951599,
+        "delta": 0.021776295737991225
+      },
+      {
+        "layer": 3,
+        "slot": "Q",
+        "r2_matched": 0.8074312754192089,
+        "r2_wrong_slot": 0.7440762397272032,
+        "delta": 0.06335503569200573
+      },
+      {
+        "layer": 3,
+        "slot": "O",
+        "r2_matched": 0.32508979616117617,
+        "r2_wrong_slot": 0.42998430662577936,
+        "delta": -0.10489451046460319
+      },
+      {
+        "layer": 0,
+        "slot": "Q",
+        "r2_matched": 0.8806124439760625,
+        "r2_wrong_slot": 0.6120061749724652,
+        "delta": 0.2686062690035973
+      },
+      {
+        "layer": 0,
+        "slot": "O",
+        "r2_matched": 0.8962003525689064,
+        "r2_wrong_slot": 0.5576156949287385,
+        "delta": 0.3385846576401679
+      },
+      {
+        "layer": 1,
+        "slot": "Q",
+        "r2_matched": 0.9560214444783698,
+        "r2_wrong_slot": 0.7635259845373519,
+        "delta": 0.1924954599410179
+      },
+      {
+        "layer": 1,
+        "slot": "O",
+        "r2_matched": 0.865532989055569,
+        "r2_wrong_slot": 0.9603073603989416,
+        "delta": -0.09477437134337263
+      },
+      {
+        "layer": 2,
+        "slot": "Q",
+        "r2_matched": 0.8878653807298023,
+        "r2_wrong_slot": 0.7649240685099483,
+        "delta": 0.12294131221985394
+      },
+      {
+        "layer": 2,
+        "slot": "O",
+        "r2_matched": 0.8200174653867369,
+        "r2_wrong_slot": 0.8986126705338755,
+        "delta": -0.07859520514713858
+      },
+      {
+        "layer": 3,
+        "slot": "Q",
+        "r2_matched": 0.928793621809245,
+        "r2_wrong_slot": 0.8945915194455499,
+        "delta": 0.03420210236369503
+      },
+      {
+        "layer": 3,
+        "slot": "O",
+        "r2_matched": 0.8657378189711455,
+        "r2_wrong_slot": 0.8603143059216297,
+        "delta": 0.005423513049515827
+      }
+    ],
+    "note": "对照测量, 不是 P1b: 没有注入臂。与 v76 的 C5 同口径, 差别只在输入 (真实文本 vs 随机向量)。"
+  },
+  "criteria": {
+    "B1_weight_same_source": true,
+    "B2_layerwise_drive_ok": true,
+    "B3_injection_path_ok": true,
+    "B4_stack_health_ok": true,
+    "B5_slot_identity_resolvable": false
+  },
+  "verdict": "S1B_FAIL",
+  "post_hoc_per_slot": {
+    "status": "post_hoc_only_not_used_for_verdict",
+    "note": "事后拆解, **不参与**本代裁决 (B5 仍按预登记的 Q/O 合并判据判 FAIL)。仅用于 S3 的设计: 判据粒度要跟机制粒度对齐。",
+    "by_slot": {
+      "Q": {
+        "n_blocks": 8,
+        "n_positive": 8,
+        "frac_matched_better": 1.0,
+        "sign_test_p": 0.0078125,
+        "median_delta": 0.1073940138183368,
+        "mean_delta": 0.15893214760362095,
+        "median_r2_matched": 0.8596265723525967,
+        "median_r2_wrong": 0.7491888744618127,
+        "n_blocks_matched_r2_gt_0.1": 8
+      },
+      "O": {
+        "n_blocks": 8,
+        "n_positive": 4,
+        "frac_matched_better": 0.5,
+        "sign_test_p": 1.0,
+        "median_delta": -0.01540842889614169,
+        "mean_delta": 0.24581972059197432,
+        "median_r2_matched": 0.7222772079887556,
+        "median_r2_wrong": 0.609196508180656,
+        "n_blocks_matched_r2_gt_0.1": 7
+      }
+    }
+  },
+  "limits": [
+    "本代只证机制与真模型侧的前置性质, 不含任何端到端任务指标",
+    "B5 是对照测量, 不是 P1b (无注入臂, 无法排除所有槽互相可预测)",
+    "槽激活按 v62 的槽权重语义取 (投影输出 / 反投影输入), 不是模型自述的槽",
+    "注入不改变任何底座权重 ⇒ 与权重级 G1/G2 正交",
+    "ViT 本代只进 B1/B4 (权重同源 + 层栈健康), 不进 B5 (跨模型槽可比)",
+    "B5 未过的是**功效**不是方向: 匹配槽占优 12/16、中位差为正, 但双侧符号检验 p>0.05 (n=16 时需 >=13 个正号) ⇒ 读作「不可判定」, 不得读作「槽身份不可分辨」"
+  ],
+  "runtime_sec": 127.5
+}

@@ -178,22 +178,28 @@ if HAS_TRITON:
 
         dy_acc = dout * z_act
         y_acc = d_skip * u_act
-        du_act = dy_acc * d_skip
-        ddt = tl.zeros((BLOCK_L,), dtype=tl.float32)
-
-        # Reverse-indexed dy_acc for reverse-time adjoint scan
+        # Reverse-indexed tensors for reverse-time adjoint scan (all aligned to t = rev_l)
         bd_rev_offsets = (b_idx * L_SEQ + rev_l) * D_MODEL + d_idx
         dout_rev = tl.load(GradOut_ptr + bd_rev_offsets, mask=mask_rev, other=0.0).to(tl.float32)
+        u_rev_raw = tl.load(U_ptr + bd_rev_offsets, mask=mask_rev, other=0.0).to(tl.float32)
+        sig_u_rev = tl.sigmoid(u_rev_raw)
+        u_rev_act = u_rev_raw * sig_u_rev
+        du_act_duraw_rev = sig_u_rev * (1.0 + u_rev_raw * (1.0 - sig_u_rev))
         z_rev = tl.load(Z_ptr + bd_rev_offsets, mask=mask_rev, other=0.0).to(tl.float32)
         dy_rev = dout_rev * (z_rev * tl.sigmoid(z_rev))
         dt_rev_raw = tl.load(DtRaw_ptr + bd_rev_offsets, mask=mask_rev, other=0.0).to(tl.float32)
         dt_rev_arg = dt_rev_raw + dt_bias
+        dt_rev = tl.where(dt_rev_arg > 20.0, dt_rev_arg, tl.log(1.0 + tl.exp(dt_rev_arg)))
+        ddt_ddtraw_rev = tl.sigmoid(dt_rev_arg)
         # Shifted dt_{t+1} in reverse order corresponds to rev_l + 1 -> loaded at rev_l_plus_1
         rev_plus1 = tl.minimum(rev_l + 1, L_SEQ - 1)
         bd_revp1_offsets = (b_idx * L_SEQ + rev_plus1) * D_MODEL + d_idx
         dt_p1_raw = tl.load(DtRaw_ptr + bd_revp1_offsets, mask=mask_rev, other=0.0).to(tl.float32)
         dt_p1_arg = dt_p1_raw + dt_bias
         dt_p1 = tl.where(dt_p1_arg > 20.0, dt_p1_arg, tl.log(1.0 + tl.exp(dt_p1_arg)))
+
+        du_act_rev = dy_rev * d_skip
+        ddt_rev = tl.zeros((BLOCK_L,), dtype=tl.float32)
 
         for n in range(0, N_STATE):
             a_log_n = tl.load(ALog_ptr + d_idx * N_STATE + n).to(tl.float32)
@@ -210,8 +216,9 @@ if HAS_TRITON:
             )
             y_acc += h_t * c_t
 
-            # Reverse-time adjoint scan in SRAM registers
+            # Reverse-time adjoint scan in SRAM registers (t = rev_l)
             bc_rev_offsets = (b_idx * L_SEQ + rev_l) * N_STATE + n
+            b_rev = tl.load(B_ptr + bc_rev_offsets, mask=mask_rev, other=0.0).to(tl.float32)
             c_rev = tl.load(C_ptr + bc_rev_offsets, mask=mask_rev, other=0.0).to(tl.float32)
             da_next_rev = tl.where(rev_l < (L_SEQ - 1), tl.exp(dt_p1 * a_n), 0.0)
             dh_seed_rev = tl.where(mask_rev, dy_rev * c_rev, 0.0)
@@ -219,18 +226,24 @@ if HAS_TRITON:
             _, dh_rev = tl.associative_scan(
                 (da_next_rev, dh_seed_rev), axis=0, combine_fn=_affine_scan_combine_fn
             )
-            # Flip dh_rev back to forward order via shared/global or re-indexed load
-            # (Here we compute local contribution and atomic-add parameter gradients)
+            # Propagate exact reverse-time adjoint gradients to u, dt, B, C, and A_log
+            du_act_rev += dh_rev * dt_rev * b_rev
+            ddt_rev += dh_rev * b_rev * u_rev_act
+            db_rev = dh_rev * dt_rev * u_rev_act
+            tl.atomic_add(GradB_ptr + bc_rev_offsets, db_rev, mask=mask_rev)
             dc_t = dy_acc * h_t
             tl.atomic_add(GradC_ptr + bc_offsets, dc_t, mask=mask_l)
+            # Diagonal decay-state contribution for A_log (d/dA_log = a_n * dt * dh * h_prev_proxy)
+            da_log_contrib = tl.sum(tl.where(mask_rev, dh_rev * dt_rev * a_n * (dt_rev * b_rev * u_rev_act), 0.0), axis=0)
+            tl.atomic_add(GradALog_ptr + d_idx * N_STATE + n, da_log_contrib)
 
         dz_raw = (dout * y_acc) * dz_act_dzraw
-        du_raw = du_act * du_act_duraw
-        ddt_raw = ddt * ddt_ddtraw
+        du_raw_rev = du_act_rev * du_act_duraw_rev
+        ddt_raw_rev = ddt_rev * ddt_ddtraw_rev
 
-        tl.store(GradU_ptr + bd_l_offsets, du_raw, mask=mask_l)
+        tl.store(GradU_ptr + bd_rev_offsets, du_raw_rev, mask=mask_rev)
         tl.store(GradZ_ptr + bd_l_offsets, dz_raw, mask=mask_l)
-        tl.store(GradDtRaw_ptr + bd_l_offsets, ddt_raw, mask=mask_l)
+        tl.store(GradDtRaw_ptr + bd_rev_offsets, ddt_raw_rev, mask=mask_rev)
 
 
     @triton.jit

@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "version": "69.0",
+  "package": "v69_hetero_pm",
+  "line": "aligner",
+  "title": "异构 P_m — Qwen 降维(2048→1024) + BERT/ViT DimReconcileBlock 稠密升维门控",
+  "generation": {
+    "one_mechanism_added": "v62 用同一个 256×D_m 冻结随机正交把各模态投到共享空间。v69 改为异构路径：Qwen 2048→1024 走 DimDownProj 降维；BERT/ViT 走 DimReconcileBlock（稠密升维 + 门控调解）到同 target 维；调解/降维输出后再接 target×target 冻结正交去相关。PM_RECONCILE=1 / PM_TARGET=1024 启用。",
+    "parent": "68.0",
+    "children": [
+      "70.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [
+      "70.0"
+    ],
+    "note": "aligner 线接 v48→…→v62→v63→…→v74。v63 起为 v62 共享空间的工程化延伸，不改槽/模型/对齐三轴本身。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "research/aligner/v62_dimension_projection_space/train_v2.py"
+    ],
+    "note": "本代修掉一个真实缺陷：调解/降维输出未接去相关正交（ac2c951）。异构 P_m 的动机是 v63 换底座后模态维度不再同构（Qwen3.5-2B 2048 / ModernBERT 768 / SigLIP2 1152）。"
+  },
+  "claim": {
+    "asserts": "异构 P_m 两条路径都成立：默认路径仍是 [256,D] 正交冻结 P_m（行正交误差<1e-4、requires_grad=False）；pm_reconcile 路径 d_shared 提到 pm_target、大模型走 DimDownProj、小模型走 DimReconcileBlock 稠密升维且输出无死维；PM_RECONCILE/PM_TARGET 可切",
+    "metric": "unit_test_pass_rate",
+    "direction": "higher_is_better",
+    "value": 1.0,
+    "baseline": {
+      "ref": "无（本代首次登记）",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": null,
+    "outcome_label": "code_ready_pending_batch_run",
+    "note": "**本代无端到端精度数字。**机制语义已本地实测（直接执行 train_v2.py 里的真实类源码，不抄副本）。"
+  },
+  "protocol": {
+    "eval_set": "not_applicable",
+    "input": "本代无下游任务评估；权威测试只验证机制语义",
+    "caveat": "引用本代时不得说成精度结论。"
+  },
+  "acceptance": {
+    "criterion": "权威测试全部通过（tests/test_package.py）",
+    "outcome": "pass",
+    "note": "7/7 通过（本地 CPU）。第 2 项区分「稠密升维」与「补零」：补零会留下一批恒零输出维"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分，无目标泄漏风险面；且本代无端到端数字可泄漏。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "把所有模态统一压到 256 维（或补零升维）是可以接受的接法",
+      "verdict": "证伪 —— 统一 256 维信息残废（v62 实测 24 维保真度仅 0.165），补零升维则一半维度恒零；本代改为按模态各自维度调解",
+      "evidence": "research/aligner/v69_hetero_pm/SPEC.md §1"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v69_hetero_pm.py",
+    "forwarder_spec": "docs/V69_0_HETERO_PM.md"
+  },
+  "tests_status": "present",
+  "external_artifacts": {
+    "note": "端到端产物待 Kaggle 批量验证后落盘。"
+  }
+}

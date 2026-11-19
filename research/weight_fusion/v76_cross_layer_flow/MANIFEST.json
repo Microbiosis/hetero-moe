@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "version": "76.0",
+  "package": "v76_cross_layer_flow",
+  "line": "weight_fusion",
+  "title": "A1 跨层信息流: 从权重切片重建逐层前向 (S1 机械可行性)",
+  "generation": {
+    "one_mechanism_added": "A1 的第一步: 从权重切片 (layer0-3 × 6 槽真实权重) 重建每底座的逐层前向 (attention 含 GQA + expand∘contract 复合 FFN), 支持在层边界打断->注入->续跑; 并给出 S1 五项机械自检 (结构合法/口径同源/层栈健康/注入通路/跨模型维数通路)。",
+    "parent": "75.0",
+    "children": [
+      "77.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "75.0",
+    "line_children": [
+      "77.0"
+    ],
+    "note": "weight_fusion 线第 2 代: v75 把权重级共轭跑成负结果, 本代开始主线的新前置关卡 A1 (激活级跨模型跨层信息流)。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "a1_forward.py"
+    ],
+    "note": "本代按**路径**载入同线 v75 的 g2_conjugation.py (复用 load_wall / v62_spectral / fit_transport, 不复制代码) 与 v62 的 measure.py (slot_repr / projections), 口径同源凭证为两者的 sha256 (记入 results/metrics.json 的 protocol)。为什么不按包名 import: weight_fusion 线内同包 import 会被 tools/check_self_containment.py 判成跨线引用 (--strict 报错); 按路径载入与 v75 载入 v62 measure.py 的做法一致。"
+  },
+  "claim": {
+    "asserts": "A1 的计算图前提成立: 能在层边界打断->注入->续跑, 且注入方向被后续层实质改造 (alignment 0.63-0.83, 非原样携带, 100% 样本方向为正)",
+    "metric": "s1_criteria_pass_rate",
+    "direction": "higher_is_better",
+    "value": 1,
+    "baseline": {
+      "ref": "无 (S1 首次执行)",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": 1,
+    "outcome_label": "confirmed",
+    "note": "本代只确认**机制存在**, 不确认语义有用性。S2-S4 (注入算子/指标判据/真模型复现) 未做 ⇒ A1 整体未判定。seed=1: S1 是结构与通路自检, 不含需要多种子的统计推断。"
+  },
+  "protocol": {
+    "eval_set": "not_applicable",
+    "input": "redmingwei/backbone-slices 的 layer0-3 × 6 槽真实权重 (Q/K/V/O/expand/contract); 共享空间 d_shared=256; 输入 h0 为随机向量",
+    "caveat": "路线 α 是**权重级随机输入前向**: 无 embedding / 无 norm 参数 / 无 bias / 无激活 / 无 position embedding ⇒ 没有真语义, 跨模型内容度量在随机输入下退化 (见 falsified)。本代无端到端任务指标, 引用时不得说成能力或精度结论。"
+  },
+  "acceptance": {
+    "criterion": "S1 五项机械自检全过: C1 结构合法 / C2 谱统计逐位复现 v62 §2 (相对容差 5%) / C3 层栈健康 (范数比 ∈ [0.1,10], 有效秩 > 1.1) / C4 注入通路 (后续层被改变且方向未被洗掉) / C5 跨模型维数通路 (正交可逆 + 形状正确)",
+    "outcome": "pass",
+    "note": "5/5。C3 判据范围 = A1 首代覆盖的底座 (Qwen/BERT, 依据 design §2); **ViT 的失败被如实登记为范围外待修缺陷**, 未被抹掉也未计入判据。"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代是前向探针, 无标签、无蒸馏、无目标泄漏面; 注入不改变任何底座权重。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "路线 α (随机输入的权重级前向) 可以承载 A1 的语义层判据 (P1a 穿透 / P1b 槽特异 / P2 深度语义 / P3 守门)",
+      "verdict": "证伪 —— 跨模型槽级 ridge: 匹配槽 R² 0.964~0.992, 但**错槽 R² 几乎相同** (24 行里差值中位数 -0.00008, 正号仅 11/24 = 45.8%) ⇒ 随机输入下所有槽输出都是同一随机输入的线性函数, 槽身份不可分辨 ⇒ 语义层必须上路线 β (真模型逐层驱动 + 真输入 + 标签)",
+      "evidence": "research/weight_fusion/v76_cross_layer_flow/SPEC.md §4; results/metrics.json 的 C5_cross_model.rows"
+    },
+    {
+      "hypothesis": "ViT 可以与 Qwen/BERT 同等进入 A1 首代范围",
+      "verdict": "证伪 —— ViT layer0 残差膨胀 20.11x (判据上限 10x), 有效秩 744→64; 分支定位: FFN 分支 RMS 20.84 而 attention 分支仅 2.10 ⇒ 根因是切片缺 norm gain / embedding 尺度, 非仿射 RMSNorm 压不住该层量级",
+      "evidence": "research/weight_fusion/v76_cross_layer_flow/SPEC.md §3; results/metrics.json 的 C3_health.out_of_scope_defects"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v76_cross_layer_flow.py",
+    "forwarder_spec": "docs/V76_0_CROSS_LAYER_FLOW.md"
+  },
+  "tests_status": "present"
+}

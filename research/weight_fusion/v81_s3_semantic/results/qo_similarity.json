@@ -1,0 +1,133 @@
+{
+  "role": "post_hoc_only —— 对照区分力诊断, 不参与 S3 任何裁决",
+  "question": "同层内 Q 槽与 O 槽是否高度可互换 (若是, P1b/P3② 的对照无区分力)",
+  "metric": "留出集 R2(a_Q -> a_O) (ridge lambda=1e+01)",
+  "caveat_vit_split": "ViT 用位置切分且图序按类排列 ⇒ train 类别 {0,1} 与 test 类别 {2,3} 不相交 ⇒ ViT 读数是跨类别泛化, 不可与文本臂比大小",
+  "by_model_layer": {
+    "Qwen": [
+      {
+        "layer": 0,
+        "D": 896,
+        "cos_raw_mean": -0.012622,
+        "cos_raw_std": 0.013578,
+        "r2_Q_predicts_O": 0.191776
+      },
+      {
+        "layer": 1,
+        "D": 896,
+        "cos_raw_mean": -0.084515,
+        "cos_raw_std": 0.012508,
+        "r2_Q_predicts_O": -0.002905
+      },
+      {
+        "layer": 2,
+        "D": 896,
+        "cos_raw_mean": -0.023896,
+        "cos_raw_std": 0.040537,
+        "r2_Q_predicts_O": 0.113862
+      },
+      {
+        "layer": 3,
+        "D": 896,
+        "cos_raw_mean": 0.05058,
+        "cos_raw_std": 0.094757,
+        "r2_Q_predicts_O": 0.331546
+      },
+      {
+        "layer": 6,
+        "D": 896,
+        "cos_raw_mean": 0.044998,
+        "cos_raw_std": 0.03395,
+        "r2_Q_predicts_O": 0.295512
+      },
+      {
+        "layer": 12,
+        "D": 896,
+        "cos_raw_mean": -0.022842,
+        "cos_raw_std": 0.041668,
+        "r2_Q_predicts_O": -0.011812
+      },
+      {
+        "layer": 18,
+        "D": 896,
+        "cos_raw_mean": -0.009114,
+        "cos_raw_std": 0.05289,
+        "r2_Q_predicts_O": -0.059576
+      },
+      {
+        "layer": 23,
+        "D": 896,
+        "cos_raw_mean": -0.037443,
+        "cos_raw_std": 0.041752,
+        "r2_Q_predicts_O": -0.18195
+      }
+    ],
+    "BERT": [
+      {
+        "layer": 0,
+        "D": 256,
+        "cos_raw_mean": 0.035235,
+        "cos_raw_std": 0.030214,
+        "r2_Q_predicts_O": 0.439905
+      },
+      {
+        "layer": 1,
+        "D": 256,
+        "cos_raw_mean": -0.017983,
+        "cos_raw_std": 0.0252,
+        "r2_Q_predicts_O": 0.445293
+      },
+      {
+        "layer": 2,
+        "D": 256,
+        "cos_raw_mean": 0.046133,
+        "cos_raw_std": 0.030204,
+        "r2_Q_predicts_O": 0.336021
+      },
+      {
+        "layer": 3,
+        "D": 256,
+        "cos_raw_mean": -0.05094,
+        "cos_raw_std": 0.037217,
+        "r2_Q_predicts_O": 0.145952
+      }
+    ],
+    "ViT": [
+      {
+        "layer": 0,
+        "D": 768,
+        "cos_raw_mean": 0.01954,
+        "cos_raw_std": 0.037008,
+        "r2_Q_predicts_O": 0.547075
+      },
+      {
+        "layer": 3,
+        "D": 768,
+        "cos_raw_mean": 0.02546,
+        "cos_raw_std": 0.035575,
+        "r2_Q_predicts_O": 0.045236
+      },
+      {
+        "layer": 6,
+        "D": 768,
+        "cos_raw_mean": -0.00714,
+        "cos_raw_std": 0.028513,
+        "r2_Q_predicts_O": 0.044221
+      },
+      {
+        "layer": 9,
+        "D": 768,
+        "cos_raw_mean": 0.003621,
+        "cos_raw_std": 0.031392,
+        "r2_Q_predicts_O": 0.037113
+      },
+      {
+        "layer": 11,
+        "D": 768,
+        "cos_raw_mean": -0.018209,
+        "cos_raw_std": 0.031161,
+        "r2_Q_predicts_O": 0.134275
+      }
+    ]
+  }
+}

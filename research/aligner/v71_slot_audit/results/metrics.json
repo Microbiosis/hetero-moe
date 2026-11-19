@@ -1,0 +1,40 @@
+{
+  "package": "v71_slot_audit",
+  "version": "71.0",
+  "generated": "2026-11-12",
+  "status": "code_ready_pending_batch_run",
+  "one_mechanism_added": "Dim II：四槽 canonical 前向表示的联合子空间秩 + 两两 |cos| + VIF，判定「满秩且不共线」才叫四槽分工。Dim III：三模态各自梯度经 P_m 投影到同一 256 维槽空间后取 k 维主子空间，用投影算子比较夹角，判定「三模态梯度是否各司其职」。",
+  "note": "本代**没有端到端数字**。按项目纪律，无支撑的数字不得对外引用；本快照只记录可本地复算的结构性事实。",
+  "locally_verifiable": {
+    "dim2_metrics": [
+      "联合子空间秩",
+      "两两|cos|",
+      "VIF"
+    ],
+    "dim3_metrics": [
+      "三模态梯度主子空间夹角"
+    ],
+    "k_default": 8,
+    "judge_dim2": "rank == 4 且 max|cos| < 0.6",
+    "judge_dim3": "max 夹角 < 0.9",
+    "dim2_criterion": "rank==4 且 max|cos|<0.6",
+    "dim3_criterion": "max_angle<0.9",
+    "defaults": {
+      "n": 400,
+      "k": 8,
+      "grad_n": 16
+    },
+    "end_to_end_on_synthetic": true,
+    "synthetic_note": "合成数据下 rank/cos/角度每次都不同，只证明脚本可跑通与口径正确，不构成「四槽独立」的结论"
+  },
+  "implementation_modules": [
+    "research/aligner/v62_dimension_projection_space/slot_independence_audit.py"
+  ],
+  "falsified": [],
+  "bugs_fixed": [],
+  "pending": [
+    "Kaggle 批量验证未执行",
+    "端到端数字待回填"
+  ],
+  "acceptance_note": "7/7 通过（本地 CPU）。第 1 项用合成 ckpt+cache 真跑一遍脚本"
+}

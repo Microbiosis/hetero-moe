@@ -9,6 +9,7 @@
   任务:   跨模态 — 文本无关, 表格分类 10 类
 """
 import gc
+import glob
 import json
 import time
 
@@ -17,7 +18,7 @@ import torch
 from safetensors import safe_open
 from transformers import Qwen3Model, Qwen3Config, AutoTokenizer
 
-from .paths import MSA_DIR, TABLDM_CKPT
+from . import paths as _paths
 
 D_BIG = 2560  # MSA-4B hidden_size
 B_DEFAULT = 12  # query batch
@@ -30,6 +31,7 @@ def get_tabldm_repr(n=B_DEFAULT, n_classes=10, seed=42):
     关键修复 (相对 v35): 仅对查询样本取 [B, 512], 不 `mean(dim=(0,1))` 折叠成常数。
     """
     print(f"  [入口] TabLDM 表格编码 (逐样本, n={n}, n_classes={n_classes})...")
+    _ = _paths.TABLDM_SRC
     try:
         from tabldm import TabLDMClassifier
     except ImportError as e:
@@ -37,7 +39,7 @@ def get_tabldm_repr(n=B_DEFAULT, n_classes=10, seed=42):
             "TabLDM 不可用 (未安装 tabldm 且未找到源码目录)。"
             "请 `pip install /path/to/xiaomi-tabldm` 或设置 V36_TABLDM_SRC 后重试。"
         ) from e
-    clf = TabLDMClassifier(model_path=TABLDM_CKPT, device="cpu")
+    clf = TabLDMClassifier(model_path=_paths.TABLDM_CKPT, device="cpu")
     rng = np.random.RandomState(seed)
     X_train = rng.randn(12, 6).astype(np.float32)
     y_train = rng.randint(0, n_classes, 12)
@@ -60,11 +62,12 @@ def get_tabldm_repr(n=B_DEFAULT, n_classes=10, seed=42):
     return c_struct, y_table
 
 
-def load_big_container(n_layers=None, env_key="V36_BIG_LAYERS"):
+def load_big_container(n_layers=None, env_key="V36_BIG_LAYERS", msa_dir=None):
     n_layers = int(n_layers if n_layers is not None else __import__("os").environ.get(env_key, "1"))
+    msa_dir = msa_dir or _paths.MSA_DIR
     print("  [容器] 加载 MSA-4B 浅层...")
     t0 = time.time()
-    with open(f"{MSA_DIR}/config.json") as f:
+    with open(f"{msa_dir}/config.json", encoding="utf-8") as f:
         msa_cfg = json.load(f)
     qcfg = Qwen3Config(
         hidden_size=msa_cfg["hidden_size"], num_hidden_layers=n_layers,
@@ -81,8 +84,13 @@ def load_big_container(n_layers=None, env_key="V36_BIG_LAYERS"):
     model = Qwen3Model(qcfg).to(torch.bfloat16)
     want = {f"model.layers.{li}." for li in range(n_layers)}
     state = {}
-    for shard in ["model-00001-of-00002.safetensors", "model-00002-of-00002.safetensors"]:
-        with safe_open(f"{MSA_DIR}/{shard}", framework="pt") as f:
+    shards = sorted(glob.glob(f"{msa_dir}/*.safetensors"))
+    if not shards:
+        raise RuntimeError(
+            f"{msa_dir} 下没有 *.safetensors —— MSA-4B 权重未就位。"
+            "请先下载 EverMind-AI/MSA-4B (或设 V36_MSA_DIR 指向本地目录)")
+    for shard in shards:
+        with safe_open(shard, framework="pt") as f:
             for k in f.keys():
                 if k == "model.embed_tokens.weight" or k == "model.norm.weight" \
                    or any(k.startswith(p) for p in want):
@@ -93,15 +101,23 @@ def load_big_container(n_layers=None, env_key="V36_BIG_LAYERS"):
     return model
 
 
-def big_forward(model, input_ids):
-    """无注入的大模型前向 (纯净基线)。"""
+def big_forward(model, input_ids, attention_mask=None):
+    """无注入的大模型前向 (纯净基线，支持传入 attention_mask 屏蔽 pad)."""
     with torch.no_grad():
+        if attention_mask is not None:
+            return model(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state.float()
         return model(input_ids).last_hidden_state.float()
 
 
 def encode_baseline_text(model, tokenizer, texts, s=S_DEFAULT):
-    """文本 → MSA-4B 浅层 → 平均池化 → [B, D_BIG]。与表格完全无关 (baseline)。"""
-    ids = tokenizer(texts, padding="max_length", truncation=True,
-                    max_length=s, return_tensors="pt").input_ids
+    """文本 → MSA-4B 浅层 → 掩码平均池化 → [B, D_BIG]。与表格完全无关 (baseline)。"""
+    enc = tokenizer(texts, padding="max_length", truncation=True,
+                    max_length=s, return_tensors="pt")
+    ids = enc["input_ids"]
+    mask = enc.get("attention_mask")
     with torch.no_grad():
-        return big_forward(model, ids).mean(dim=1)  # [B, 2560]
+        h = big_forward(model, ids, attention_mask=mask)
+        if mask is not None:
+            m = mask.to(dtype=h.dtype, device=h.device).unsqueeze(-1)
+            return (h * m).sum(dim=1) / m.sum(dim=1).clamp_min(1.0)
+        return h.mean(dim=1)  # [B, 2560]

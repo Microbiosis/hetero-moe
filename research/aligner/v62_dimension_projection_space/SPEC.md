@@ -547,3 +547,15 @@ BERT 不动），于是看到的是**正在被撕开**的中间态 —— 前端
 - **没做**：在 v33 的真实 fuse_mse 协议上重跑（本代用的是 ag_news 分类）
 - **没做**：专家权重从真实 FFN 抽取（项目从未做过）
 - **没做**：rank 的逐槽最优解（本代统一取等维 256）
+
+---
+
+## 15. 修复登记（2026-11-13）
+
+| 修复 | 缺陷 | 处置 | 验证 |
+|---|---|---|---|
+| 包内 import 形式 | `projspace.py` / `moa_fusion.py` 用**平铺 import**（`from hyper_proj import ...`），导致 `import research.aligner.v62_dimension_projection_space` 直接 `ModuleNotFoundError` ⇒ **包内权威测试与仓库级转发层 `tests/test_v62_dimension_projection_space.py` 全部跑不起来**（HEAD 即如此，非本轮引入） | 改为按 `__package__` **双模导入**：包上下文走包内相对 import，平铺上下文（独立脚本 / Kaggle 训练 / 审计流程 / v64·v67·v68·v69 的测试 / `_audit_kit.py`）保持原平铺路径 | 包内测试 **16/16** 与转发层同时通过；v64/v67/v68/v69/v74 转发层不受影响 |
+
+> 为什么不能只留相对 import：`train_v2.py` 与 `slot_independence_audit.py` 要以**独立脚本**方式在 Kaggle 上跑，v64/v67/v68/v69 的测试与 `_audit_kit.py` 依赖平铺导入路径 ⇒ 两条路都得活着。
+>
+> 本次改动**不触碰任何算子逻辑**，只改 import 形式；`measure.py` 未改（sha256 不变，见 v75 的口径同源凭证）。

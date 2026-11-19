@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "version": "81.0",
+  "package": "v81_s3_semantic",
+  "line": "weight_fusion",
+  "title": "S3: 语义判据 (token 级探针 R2 + 置换检验) —— 穿透成立, 但槽/深度选择性不成立",
+  "generation": {
+    "one_mechanism_added": "S3 (A1_DESIGN §8 + docs/S3_PROTOCOL.md 全文): 给 A1 激活级路线补上**语义层**判据 —— 在真模型层边界按协议 §2.3 的注入算子注入 (共享空间载体、**不学任何学出来的映射**), 用 **token 级 ridge 探针**在**留出集**上读回源槽激活的 R² 增量, 配 **10^4 次臂间配对置换** (P1a/P1b/P3②) 与 **块内分层置换** (P2); 四臂 × 5 个 nuisance 种子 × 84 块 (文本 64 + ViT 20) × 128 样本全量跑批; P1a/P1b/P2/P3①/P3②/P1c/P4 的阈值与口径**全部跑前写死在源码常量**里, 事后未放宽。",
+    "parent": "80.0",
+    "children": [
+      "82.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "80.0",
+    "line_children": [],
+    "note": "weight_fusion 线第 7 代: v75 权重级共轭 (负结果) -> v76 路线 α 的 S1 -> v77 路线 β 的真模型可用性 (S1B_FAIL) -> v78 前置诊断 -> v79 S2-0 (对齐来源: 负结果, 无可用来源) -> v80 S2 (注入算子 + λ 标定 + 机械闸门: 三步链, 裁决 S2_OPERATOR_READY) -> v81 S3 (语义判据: **裁决 S3_FAIL** —— P1a 穿透过, P1b/P2/P3② 不过; 已知缺陷: ViT 臂标签探针失效 => P1c 不可判定, 留档未修)。 -> v82 S4-P (管道: 注意力位置旁路 + 按专属通道编号; 写入点固定第 0 层, 注意力在写入层测量, 六项判据 P5a/P5b/P5c/P5d/P2'/P3①)。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "s3_flow.py",
+      "s3_ceiling_diag.py",
+      "s3_slot_similarity.py"
+    ],
+    "note": "本代按**路径**载入 v77 的 true_model.py (Backbone / capture_slots / fetch_texts / fetch_models / 语料与模型缓存)、v62 的 measure.py (SLOT_PATHS / projections)、v78 的 s3_preflight.py (_ridge_probe 标签探针口径)、v75 的 g2_conjugation.py (sign_test)、v80 的 s2_operator.py (capture_layers / build_delta / rel_l2); 口径同源凭证为六者的 sha256 (记入 results/metrics.json 的 protocol.provenance_sha256)。不按包名 import 的原因与 v75-v80 一致: 同线 import 会被 tools/check_self_containment.py 判成跨线引用。s3_ceiling_diag.py 与 s3_slot_similarity.py 是**post_hoc_only 的读数解读诊断**, 不参与任何裁决 (判据聚合函数 evaluate_criteria 里不出现它们的任何字段, 由测试锁住)。"
+  },
+  "claim": {
+    "asserts": "S3 的语义层判据已在真模型上跑完并给出机器裁决 **S3_FAIL**: **P1a(信息穿透) 与 P3①(守门) 通过**, **P1b(槽特异) / P2(深度语义) / P3②(选择性) 三项未过**。注入的信息流**确实存在** (arm1−arm0 的 r2_q 块级中位 Δ=+0.003232, 10^4 次置换 p=0.0, 256/320 观测为正; 且 arm1 远优于随机方向臂 arm3, p=0.0 => 效应内容特异), 但**没有槽对应** (arm1−arm2 中位 −0.002455, p=0.9521)、**没有深度对应** (同层 +0.002586 vs 跨层 +0.002295, p=0.8714)、**也不只打开目标槽** (非目标槽 Δ=+0.000836, p=0.0)。⇒ A1 激活级路线的核心前提「跨模型槽对应 + 深度对应」在语义层被证伪。",
+    "metric": "P1a_permutation_p (arm1 vs arm0, 64 个文本块 × 5 个种子, 10^4 次臂间配对置换)",
+    "direction": "lower_is_better",
+    "value": 0,
+    "baseline": {
+      "ref": "预登记显著性水平 α (协议 §3)",
+      "value": 0.01
+    },
+    "delta_pct": -100,
+    "seeds": 5,
+    "outcome_label": "refuted",
+    "note": "⚠️ **引用本代必须成对引用两个事实**: ①**信息流存在** (P1a 过, p=0.0, BERT→Qwen 32/32 块为正、ViT→ViT 20/20 块为正, arm1 ≫ 随机方向臂); ②**没有槽/深度选择性** (P1b/P2/P3② 三项未过) ⇒ 注入搬过去的是**跨槽、跨深度、低秩的共同成分**, 不是「某个槽 × 某个深度」的内容。只引①会读成「晶壁系的信息流成立」, 只引②会读成「完全没有信息流」—— 两个都不对。**绝对 R² 不是穿透量**: arm0 零注入基线在 Qwen→BERT 方向中位已达 0.146 (最高 0.400, 共享成分), 只有 Δ 才是。**穿透强度与注入幅度在 Qwen 中层是同一件事** (最强处 j∈{3,6,12} 正是残差流量级爆炸层, 绝对幅度被放大 ~117 倍)。**P4 未触发** (Δ_P1a 中位 > 0) ⇒ 协议**没有**因本代强制「A1 转训练版」; A1 激活级语义关卡未通过, 但原因不是效应太小。本代**不训练**任何底座权重、**不产生**任何能力指标、**不产生** A1 的总判定。"
+  },
+  "protocol": {
+    "eval_set": "fancyzhx/ag_news train 128 条 (缓存 agnews_128.json, 标签分布 37/32/26/33) 的**前 64 条训练 / 后 64 条留出** (4 类在两侧均覆盖); ViT 臂取 ethz/food101 的**类别均衡** 4 类 × 16 张 = 64 张 (类别 19/45/67/73, 类别种子 20261117), 前 32 训练 / 后 32 留出。",
+    "input": "真 HF 预训练底座 Qwen/Qwen2.5-0.5B-Instruct (24 层, D=896) / google/bert_uncased_L-4_H-256_A-4 (4 层, D=256) / google/vit-base-patch16-224-in21k (12 层, D=768) 的真实权重与真实输入; 槽激活按 v62 槽语义取 (投影类取模块输出 / O 槽取模块输入), 与 v77/v78/v79/v80 同口径; 共享空间用 v62 的 projections(seed) 正交投影 (256 维); 注入强度 λ = 0.03 (块 Frobenius 口径, v80 S2-1 标定值, 本代直接沿用**不重新标定**); fp32 / CPU; 5 个 nuisance 种子只影响共享空间投影 P 与 arm3 的随机方向。",
+    "caveat": "本代只回答「信息流存不存在、有没有槽/深度选择性」, **不产生**任何能力指标, **不训练**任何底座权重。⚠️ **ViT 臂的标签可读性探针失效**: fetch_vit_images 的图序按类排列而探针按位置切分 ⇒ train 类别 {0,1} 与 test 类别 {2,3} 完全不相交 ⇒ 标签准确率恒为 0.0000 ⇒ **P1c 不可判定** (不是负结果)。该缺陷**不影响**主裁决集 (64 个文本块; 文本臂 train/test 4 类全覆盖)。修正需重跑 ViT 臂 (约 1.4 h), 本代**不重跑** (P1c 不参与主裁决, 阈值一条未动), 留档待下一代。⚠️ **探针的 λ 全部落在候选网格上界 1000** (三方向) —— 该网格是跑前写死的, 但上界被触到这一点须随数字一起引用。"
+  },
+  "acceptance": {
+    "criterion": "verdict = S3_PASS 当且仅当 P1a ∧ P1b ∧ P2 ∧ P3① ∧ P3② 全过 (P1c 单独报告不参与主裁决); 阈值 (α=0.01 / 置换 10^4 / 5 个种子 / 64 个文本块 / 扰动区间 (1e-3, 0.5] / 探针 λ 网格) 全部跑前写死在源码常量 THRESHOLDS 里, 事后未放宽。",
+    "outcome": "fail",
+    "note": "**P1a 过** (Δ 中位 +0.003232, p=0.0, 256/320 正); **P1b 没过** (arm1−arm2 中位 −0.002455, p=0.9521 —— 只有 arm1−arm3 那半过, p=0.0); **P2 没过** (同层 +0.002586 vs 跨层 +0.002295, p=0.8714; BERT→Qwen 方向上跨层反而比同层高 25 倍); **P3① 过** (1260 个注入臂块全部落在 (1e-3, 0.5], min 0.019412 / max 0.333984, 违例 0); **P3② 没过** (非目标槽 Δ 中位 +0.000836, p=0.0)。⇒ 裁决 **S3_FAIL**, 退出码 1 (契约内)。**P1c 未参与**: sign_p=1.0, 但因上面记录的 ViT 标签探针缺陷, P1c 实为**不可判定** (ViT 臂的 label_acc 恒为 0.0000), 不是负结果。**P4 未触发** (Δ_P1a 中位 > 0)。"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "clean",
+    "audited_in": "docs/LEAKAGE_AUDIT_CHAIN.md",
+    "note": "本代**不训练任何底座权重**, **不产生**任何能力指标, 注入算子里**没有任何拟合步骤** (沿用 v80 的共享空间载体口径, 不学任何学出来的映射)。唯一的拟合是**探针**: 目标模型读出层上的线性 ridge 读出器, 其 λ 由**训练样本内**的 5 折分层 CV 在跑前写死的网格上选出, **测试样本全程不参与** λ 的选择与任何统计量的计算; R² 一律在留出集上算, SS_tot 围绕**训练集** y 均值 (诚实预测 R²)。语料为公开语料的固定缓存切片 (ag_news 128 条 / food101 类别均衡 64 张), 与 v77/v78/v79/v80 同一批缓存。⇒ 无目标泄漏面。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "跨模型注入的信息流是**按槽定向**的 (注入 Q 槽比注入 O 槽更可读)",
+      "verdict": "**证伪** —— `arm1−arm2` 的块级中位差为 **−0.002455**, 置换 **p = 0.9521**, 仅 112/320 观测为正 ⇒ 两者不可区分; 且在 Q/O **不可互换**的 52 个块上 arm1 与 arm2 完全一样 (中位 −0.000185, 26/52 为正) ⇒ 注入起作用的部分是**跨槽的公共成分**, 不是某个特定的槽。⚠️ 同时说明: P1b 的对照**区分力有限** —— 同层内 Q 槽与 O 槽高度可互换 (留出集 R²(a_Q→a_O): BERT L0/L1 = 0.44/0.45, ViT L0 = 0.55), 在这 32 个块上 arm2 反而明显高于 arm1 (中位 −0.007875, 3/32 为正)。",
+      "evidence": "research/weight_fusion/v81_s3_semantic/SPEC.md §4.1 / §4.4; results/metrics.json (criteria.P1b); results/qo_similarity.json"
+    },
+    {
+      "hypothesis": "跨模型注入的信息流是**按深度对齐**的 (同层优于跨层)",
+      "verdict": "**证伪** —— 同层块 (8 个) 中位 Δ = **+0.002586**, 跨层块 (56 个) 中位 Δ = **+0.002295**, 分层置换 **p = 0.8714** ⇒ 不可区分; 方向上还是**反的**: BERT→Qwen 上跨层中位 **+0.121475** 比同层 **+0.004775** 高 **25 倍**。",
+      "evidence": "research/weight_fusion/v81_s3_semantic/SPEC.md §4.1 / §4.3 / §4.4; results/metrics.json (criteria.P2)"
+    },
+    {
+      "hypothesis": "注入只打开**目标槽** (非目标槽的可读性不普涨)",
+      "verdict": "**证伪** —— 非目标槽 (O) 的 r2_q 增量中位 **+0.000836**, 248/320 观测为正, 置换 **p = 0.0** ⇒ 注入 Q 槽也把 O 槽抬可读了; BERT→Qwen 方向上更明显 (块级中位 **+0.014121**, 31/32 块为正)。",
+      "evidence": "research/weight_fusion/v81_s3_semantic/SPEC.md §4.1 / §4.2 / §4.4; results/metrics.json (criteria.P3_2)"
+    },
+    {
+      "hypothesis": "激活级存在**可用的跨模型槽对应关系** (A1 的核心前提)",
+      "verdict": "**证伪 (与 v79 咬合)** —— 三项选择性判据同时失败, 指向注入搬过去的是**跨槽、跨深度、低秩的共同成分**; 这正是 v78 D1 / v79 查到的机理 (跨模型高 CKA 主要来自低秩共同成分, Q 槽池化后有效秩仅 4.84–38.74) ⇒ **没有可对齐的跨模型槽对应关系**, 激活级没有可用的信息流载体。",
+      "evidence": "research/weight_fusion/v81_s3_semantic/SPEC.md §4.4; research/weight_fusion/v79_align_source/SPEC.md §4"
+    },
+    {
+      "hypothesis": "绝对探针 R² 可以直接当「穿透量」读",
+      "verdict": "**证伪** —— 不注入时 (arm0) 探针已能读出源槽: Qwen→BERT 方向块级中位 R² **+0.146095**、最高 **+0.400313** (59/64 文本块为正) ⇒ 绝对 R² 被**共享成分**占满, 只有 Δ = arm1 − arm0 是穿透量。若不扣除, P1a 会被高估两个数量级。",
+      "evidence": "research/weight_fusion/v81_s3_semantic/SPEC.md §4.2; results/ceiling_diag.json (summary.arm0_baseline_r2)"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v81_s3_semantic.py",
+    "forwarder_spec": "docs/V81_0_S3_SEMANTIC.md",
+    "blocks_checkpoint": "results/blocks.jsonl",
+    "ceiling_diag": "results/ceiling_diag.json",
+    "qo_similarity": "results/qo_similarity.json"
+  },
+  "tests_status": "present"
+}

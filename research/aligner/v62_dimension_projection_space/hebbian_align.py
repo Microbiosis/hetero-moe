@@ -36,19 +36,28 @@ class HebbianSlotAlignment(nn.Module):
         规则：耦合[i,j] += eta * <h_i, h_j> / (|h_i||h_j|)
         当余弦 > threshold 时增强，< 0 时衰减（简化版）。
         """
+        present = [m for m in self.models if m in feats]
+        if not present:
+            return torch.eye(self.n, device=self.coupling.device, dtype=self.coupling.dtype)
+        ref = feats[present[0]]
+        d = ref.shape[-1]
         vecs = []
-        for m in self.models:
+        present_mask = torch.zeros(self.n, device=self.coupling.device, dtype=torch.bool)
+        for i, m in enumerate(self.models):
             if m in feats:
-                v = feats[m].mean(dim=(0, 1))            # [d] 全局均值
+                v = feats[m].mean(dim=(0, 1)).to(self.coupling.device, self.coupling.dtype)
                 v = F.normalize(v, dim=0)
                 vecs.append(v)
+                present_mask[i] = True
             else:
-                vecs.append(torch.zeros_like(self.coupling[0]))
+                vecs.append(torch.zeros(d, device=self.coupling.device, dtype=self.coupling.dtype))
         V = torch.stack(vecs)                            # [n,d]
-        sim = V @ V.T                                    # [n,n] 余弦相似度
-        # Hebbian：同步增强，异步抑制
-        delta = self.eta * sim
-        self.coupling.add_(delta)
+        sim = (V @ V.T).clamp(-1.0, 1.0)                 # [n,n] 余弦相似度
+        # 仅更新双方均存在的模态对；超出 sim_threshold 的强相关对按原值增强，缺失模态对保持原耦合不变
+        pair_mask = present_mask.unsqueeze(1) & present_mask.unsqueeze(0)
+        eff_sim = torch.where(sim > self.sim_threshold, sim, sim * 0.5)
+        updated = self.coupling * (1.0 - self.eta) + self.eta * eff_sim
+        self.coupling.copy_(torch.where(pair_mask, updated, self.coupling))
         # 保持对角线为1（自耦合不变）
         self.coupling.fill_diagonal_(1.0)
         return sim

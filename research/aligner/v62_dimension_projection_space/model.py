@@ -169,36 +169,100 @@ class HeteroMoEProjSpaceModel(PreTrainedModel):
         res = self.load_state_dict(sd, strict=False)
         return res.missing_keys, res.unexpected_keys
 
+    @staticmethod
+    def _find_slot_modules(backbone: nn.Module, model_name: str) -> Dict[str, nn.Module]:
+        """定位末层真实注意力 Q/K/V/O 投影模块（兼容 transformers 4.x/5.x ViT 命名）。"""
+        slot_suffixes = {
+            'Qwen': {'Q': ('self_attn.q_proj',), 'K': ('self_attn.k_proj',),
+                     'V': ('self_attn.v_proj',), 'O': ('self_attn.o_proj',)},
+            'BERT': {'Q': ('attention.self.query',), 'K': ('attention.self.key',),
+                     'V': ('attention.self.value',), 'O': ('attention.output.dense',)},
+            'ViT':  {'Q': ('attention.q_proj', 'attention.attention.query'),
+                     'K': ('attention.k_proj', 'attention.attention.key'),
+                     'V': ('attention.v_proj', 'attention.attention.value'),
+                     'O': ('attention.o_proj', 'attention.output.dense')},
+        }.get(model_name, {})
+        found: Dict[str, nn.Module] = {}
+        for name, mod in backbone.named_modules():
+            for slot, sufs in slot_suffixes.items():
+                if any(name.endswith(suf) for suf in sufs):
+                    found[slot] = mod          # 遍历至末层，自然保留最后一层
+        return found
+
+    def _project_slot_act(self, act: torch.Tensor, base_p: torch.Tensor) -> torch.Tensor:
+        """将真实槽激活 [B,S,D_slot] 投影至共享空间 d_shared（兼容 GQA K/V 窄于 d_model 的情况）。"""
+        d_slot = act.shape[-1]
+        if d_slot == base_p.shape[1]:
+            return act @ base_p.t()
+        # GQA 等非方阵槽（如 Qwen K/V 维 128 < 896）: 截断或零填充列后正交投影
+        if d_slot < base_p.shape[1]:
+            return act @ base_p[:, :d_slot].t()
+        return act[..., :base_p.shape[1]] @ base_p.t()
+
     def forward(self, qwen_input_ids=None, qwen_attention_mask=None,
                 bert_input_ids=None, bert_attention_mask=None,
-                bert_token_type_ids=None, pixel_values=None):
+                bert_token_type_ids=None, pixel_values=None,
+                use_real_slots: bool = True):
         hs: Dict[str, torch.Tensor] = {}
+        raw_slots: Dict[str, Dict[str, torch.Tensor]] = {}
+
+        def _run_with_hooks(m_name: str, backbone: nn.Module, call_fn):
+            captured: Dict[str, torch.Tensor] = {}
+            handles = []
+            if use_real_slots:
+                for slot, mod in self._find_slot_modules(backbone, m_name).items():
+                    def _hook(_mod, _inp, out, _s=slot):
+                        t = out[0] if isinstance(out, tuple) else out
+                        captured[_s] = t
+                    handles.append(mod.register_forward_hook(_hook))
+            try:
+                out_h = call_fn()
+            finally:
+                for hdl in handles:
+                    hdl.remove()
+            if captured:
+                raw_slots[m_name] = captured
+            return out_h
+
         if qwen_input_ids is not None:
-            hs['Qwen'] = self.qwen(
-                input_ids=qwen_input_ids,
-                attention_mask=qwen_attention_mask).last_hidden_state
+            hs['Qwen'] = _run_with_hooks(
+                'Qwen', self.qwen,
+                lambda: self.qwen(
+                    input_ids=qwen_input_ids,
+                    attention_mask=qwen_attention_mask).last_hidden_state,
+            )
         if bert_input_ids is not None:
-            hs['BERT'] = self.bert(
-                input_ids=bert_input_ids,
-                attention_mask=bert_attention_mask,
-                token_type_ids=bert_token_type_ids).last_hidden_state
+            hs['BERT'] = _run_with_hooks(
+                'BERT', self.bert,
+                lambda: self.bert(
+                    input_ids=bert_input_ids,
+                    attention_mask=bert_attention_mask,
+                    token_type_ids=bert_token_type_ids).last_hidden_state,
+            )
         if pixel_values is not None:
-            hs['ViT'] = self.vit(pixel_values=pixel_values).last_hidden_state
+            hs['ViT'] = _run_with_hooks(
+                'ViT', self.vit,
+                lambda: self.vit(pixel_values=pixel_values).last_hidden_state,
+            )
         if not hs:
             raise ValueError('至少需要一个模态的输入')
 
         projs: Dict[str, torch.Tensor] = {}
+        slot_acts: Dict[str, Dict[str, torch.Tensor]] = {}
         for i, m in enumerate(MODAL_NAMES):
             if m in hs:
                 projs[m] = hs[m] @ self.P_m[i].t()
+                if m in raw_slots:
+                    slot_acts[m] = {
+                        k: self._project_slot_act(v, self.P_m[i])
+                        for k, v in raw_slots[m].items()
+                    }
 
-        feats = {m: {k: projs[m] for k in self.proj_space.slot_names}
-                 for m in projs}
+        feats = self.proj_space.build_slot_feats(projs, slot_acts=slot_acts or None)
         _struct, canonical, _aux = self.proj_space(feats, return_aux=True)
         y, alpha = self.fusion.forward_with_routing(canonical)
-        # alpha      : 专家选择 [B,S,n_experts]，top-k 稀疏（真的省算力）
+        # alpha      : 专家选择 [B,S,n_experts]，top-k 真稀疏分派（仅计算活跃 token）
         # slot_alpha : 槽门控   [B,S,n_slots]  ，全槽软分布（四个槽各贡献多少）
-        # 两者都是 4 维，但语义完全不同，必须分开给出，否则会被误读。
         return ProjSpaceOutput(y=y, alpha=alpha, slot_alpha=_aux['alpha'])
 
     def describe(self) -> str:

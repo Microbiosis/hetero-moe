@@ -35,7 +35,7 @@
     "delta_pct": null,
     "seeds": 5,
     "outcome_label": "mixed",
-    "note": "逐包结论见 results/metrics.json 的 per_package (聚合数字不作结论引用)。\n8 个补跑的包**三口径全部同向**: 正向的 v33 (+26.7%→+26.5%) / v34 (+6.4%→+6.5%) / v19 (+4.3%→+1.5~+2.4%) 在样本外站得住; 负向的 v8 / v12 / v20 / v30 / v31 (C-1 有害 / 无叠加增益 / 放 attn 更差 / gate 变体对融合 MSE 无差别) 也照样复现。\n⚠️ v19 方向对但**效应量只剩 34%~54%** —— 引用『长训练改善 C-1』要带上这个量级。\nv35 因第三方 tabldm 依赖缺失未能实测, 保持 pending (occams/Xiaomi-TabLDM 仓库经 HfApi.list_repo_files 核实只有 10 个文件、零个 .py)。\n另有 7 个包据实核实其**原生就有留出协议**(v36/v37/v38/v39/v23/v24/v23b), 此前 MANIFEST 里『本包无 held-out 评估』的说法是错的, 已逐条更正。"
+    "note": "逐包结论见 results/metrics.json 的 per_package（2026-11-19 已合并恢复此前被 scale_hetero runner 覆写丢失的 6 个中枢包，现完整涵盖全部 9 个被审包 v8/v12/v19/v20/v30/v31/v33/v34/v35；原始实测数字未改动）。\n⚠️ v35 已实际跑完并落盘于 results/scale_hetero_heldout.json 及 results/metrics.json（heldout_noise=-12.94%, heldout_stimulus=-2.90%, 判 invalidated；原 note 称受阻 pending 已过时）。\n⚠️ 2026-11-19 第二轮代码审计发现：run_v47_central_heldout.py 60 次运行共享可变 attn_pools.W_o（v20 爆炸至 83,678 后污染 v30/v31）、v12 误用 BroadcastWorkspace(0.1) 与未裁剪 AdamW、v30/v31 测在 detach 死层上、v35 big_forward 含 no_grad 且 head2 继承基线权重多训 100 步。引用 v47 时须遵守 docs/PAST_SUBPACKAGES_ERRATA.md 的结论边界。"
   },
   "protocol": {
     "eval_set": "三个口径: in_sample (与原 runner 同构) / heldout_noise (seed+1000, 同刺激换噪声) / heldout_stimulus (换文本, 未见刺激)",
@@ -45,7 +45,7 @@
   "acceptance": {
     "criterion": "每个被审计包的 leakage_audit.status 都必须有实测或据实核实的依据, 不允许『没查但写成 clean』",
     "outcome": "pass",
-    "note": "9 个包实测; 7 个包核实其原生留出协议 (此前 MANIFEST 写的『无 held-out 评估』是错的, 已更正); v35 受阻, 保持 pending 并写明还需做什么"
+    "note": "全部 9 个被审包 (v8/v12/v19/v20/v30/v31/v33/v34/v35) 均已实测并合并入 results/metrics.json；另有 7 个包核实原生留出协议。代码级混杂边界见 docs/PAST_SUBPACKAGES_ERRATA.md。"
   },
   "leakage_audit": {
     "status": "not_applicable",

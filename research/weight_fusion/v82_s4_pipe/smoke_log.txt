@@ -1,0 +1,78 @@
+[run] lambda=1
+[corpus] ag_news 128 条 / ViT 64 张
+
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]
+Loading weights:  16%|█▌        | 47/290 [00:00<00:00, 441.20it/s]
+Loading weights:  33%|███▎      | 95/290 [00:00<00:00, 451.56it/s]
+Loading weights:  49%|████▉     | 143/290 [00:00<00:00, 443.85it/s]
+Loading weights:  65%|██████▌   | 189/290 [00:00<00:00, 428.44it/s]
+Loading weights:  80%|████████  | 232/290 [00:00<00:00, 423.86it/s]
+Loading weights:  95%|█████████▍| 275/290 [00:00<00:00, 405.11it/s]
+Loading weights: 100%|██████████| 290/290 [00:00<00:00, 437.66it/s]
+[source] Qwen: 16 个 (层,槽) 组合
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 23668.38it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[source] BERT: 8 个 (层,槽) 组合
+
+Loading weights:   0%|          | 0/200 [00:00<?, ?it/s]
+Loading weights:  13%|█▎        | 26/200 [00:00<00:00, 232.75it/s]
+Loading weights: 100%|██████████| 200/200 [00:00<00:00, 1015.26it/s]
+[source] ViT: 10 个 (层,槽) 组合
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 23658.98it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pilot] Qwen->BERT: probe-lambda=1000 (CV R2=0.1241)
+[block] Qwen->BERT ly=0 seed=0 完成 (累计 44 行, 121s)
+
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]
+Loading weights:   8%|▊         | 22/290 [00:00<00:01, 187.13it/s]
+Loading weights:  14%|█▍        | 41/290 [00:00<00:01, 184.43it/s]
+Loading weights:  21%|██        | 60/290 [00:00<00:01, 177.21it/s]
+Loading weights:  29%|██▉       | 85/290 [00:00<00:01, 194.25it/s]
+Loading weights:  37%|███▋      | 107/290 [00:00<00:00, 200.40it/s]
+Loading weights:  45%|████▌     | 131/290 [00:00<00:00, 204.50it/s]
+Loading weights:  53%|█████▎    | 153/290 [00:00<00:00, 199.03it/s]
+Loading weights:  61%|██████    | 177/290 [00:00<00:00, 210.09it/s]
+Loading weights:  69%|██████▊   | 199/290 [00:01<00:00, 195.18it/s]
+Loading weights:  76%|███████▌  | 219/290 [00:01<00:00, 195.70it/s]
+Loading weights:  83%|████████▎ | 240/290 [00:01<00:00, 183.66it/s]
+Loading weights:  91%|█████████ | 263/290 [00:01<00:00, 187.38it/s]
+Loading weights: 100%|██████████| 290/290 [00:01<00:00, 200.09it/s]
+[pilot] BERT->Qwen: probe-lambda=1000 (CV R2=0.0686)
+
+Loading weights:   0%|          | 0/200 [00:00<?, ?it/s]
+Loading weights:  16%|█▌        | 31/200 [00:00<00:00, 308.21it/s]
+Loading weights: 100%|██████████| 200/200 [00:00<00:00, 1177.27it/s]
+[pilot] ViT->ViT: probe-lambda=1000 (CV R2=0.2040)
+[verdict] S4PIPE_FAIL  (failed: ['P5a', 'P5b', 'P5c', "P2'"])

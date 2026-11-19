@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "version": "63.0",
+  "package": "v63_nine_routes",
+  "line": "aligner",
+  "title": "九条路线执行矩阵 — 路由/鲁棒性/可解释/部署/审计五大类，本代代码就位待批量验证",
+  "generation": {
+    "one_mechanism_added": "一次性铺开九条自修改/增强路线（硬约束路由 / 动态路由 / 模态 dropout / 少样本迁移 / LLM 语义解码 / INT4 量化 / 轻量底座 / 自动化审计），并把 v62 关键判据固化为可复用审计模块",
+    "parent": "62.0",
+    "children": [
+      "64.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [
+      "64.0"
+    ],
+    "note": "aligner 线接 v48→…→v62→v63。v63 把 v62 的共享空间用于九条工程路线，不改槽/模型/对齐三轴本身。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "routing/hard_router.py",
+      "routing/dynamic_router.py",
+      "robustness/modality_dropout.py",
+      "robustness/transfer_eval.py",
+      "interpret/decode_slots.py",
+      "deploy/quantize_int4.py",
+      "deploy/lite_backbones.py",
+      "audit/audit_v63.py"
+    ],
+    "note": "本代新写 8 个脚本 + README。路线 #1/#2/#3 复用 v62 包的 self_repair.py / hyper_proj.py / fusion.py（由 train_v2.py 的 USE_* 开关启用），不复制到本包，避免同一机制两份实现漂移。"
+  },
+  "claim": {
+    "asserts": "九条路线代码就位且机制语义可本地证伪：HardLoadRouter 硬稀疏 + 批次级容量惩罚成立；DynamicSlotRouter 逐 token 动态稀疏、可微、推理态确定；审计脚本固化 8 项判据且阈值取自 v62 实测",
+    "metric": "unit_test_pass_rate",
+    "direction": "higher_is_better",
+    "value": 1,
+    "baseline": {
+      "ref": "无（本代首次登记）",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": null,
+    "outcome_label": "code_ready_pending_batch_run",
+    "note": "**本代无端到端数字。**Kaggle 批量验证（批 A 评估类 / 批 B 训练类）尚未执行，故 claim 只能是机制层面的自洽性，不能说成「九条路线有效」。端到端产物的落盘位置见 SPEC §5，验证后回填 results/metrics.json 的 pending 段。"
+  },
+  "protocol": {
+    "eval_set": "not_applicable",
+    "input": "本代无下游任务评估；权威测试只验证机制语义，不加载 v62 权重（需 GPU + 已训练 ckpt）",
+    "caveat": "九条路线多数需重训或外部 API（LLM 解码），本地 CPU 只能验证接口自洽。引用本代时不得说成精度结论。"
+  },
+  "acceptance": {
+    "criterion": "① 8 个脚本语法可编译；② HardLoadRouter 每 token 恰 2 槽非零且和为 1；③ 偏斜输入容量惩罚 > 0、均衡输入为 0；④ DynamicSlotRouter 激活槽数在 [min,max] 内；⑤ 训练态门控对 logits 可微；⑥ 推理态两次前向逐位一致；⑦ 审计判据阈值在位；⑧ cka/effective_rank 数学工具正确",
+    "outcome": "pass",
+    "note": "8/8 通过（本地 CPU）。判据 ③④⑤⑥ 在 tests/test_package.py 中有真实断言，非走过场。"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分，无目标泄漏风险面；且本代无端到端数字可泄漏。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "Q 槽塌缩到接近 0，需要自修复机制介入",
+      "verdict": "前提不成立 —— v62.3/v62.4 实测 Q 槽 EMA 全程 0.11–0.25，从未跌破 0.01 触发阈值，自修复一次都没触发",
+      "evidence": "research/aligner/v63_nine_routes/README.md（当前结论，2026-11-03）"
+    },
+    {
+      "hypothesis": "槽塌缩是普遍现象，self_repair 是通用保险",
+      "verdict": "证伪 —— 塌缩只出现在 v62.0–v62.2（router lazy / 槽 top-k 两种 bug），v62.3 修好后四槽全部分工正常（熵 0.647）",
+      "evidence": "research/aligner/v62_dimension_projection_space/SPEC.md §9"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v63_nine_routes.py",
+    "forwarder_spec": "docs/V63_0_NINE_ROUTES.md"
+  },
+  "tests_status": "present",
+  "external_artifacts": {
+    "note": "批 B 训练产物应落盘到 HF redmingwei/HeteroMoEProjSpace-v2/checkpoints/v63.*；批 A 评估产物应落盘到本包 results/。两者目前均未产生。"
+  }
+}

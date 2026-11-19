@@ -46,7 +46,12 @@ class LearnedWeightOptimizer(nn.Module):
             inp = torch.cat([sv, gnorm, lval]).unsqueeze(0).float()
         out = self.net(inp).squeeze(0)
         Uf = out[:self.d * self.rank].view(self.d, self.rank)
-        Vf = out[self.d * self.rank:].view(self.rank, W.shape[1])
+        Vf = out[self.d * self.rank:].view(self.rank, self.d)
+        d_out, d_in = W.shape[0], W.shape[1]
+        if d_out != self.d:
+            Uf = F.interpolate(Uf.t().unsqueeze(0), size=d_out, mode='linear', align_corners=False).squeeze(0).t()
+        if d_in != self.d:
+            Vf = F.interpolate(Vf.unsqueeze(0), size=d_in, mode='linear', align_corners=False).squeeze(0)
         return self.scale * (Uf @ Vf)
 
     def step(self, W: torch.Tensor, grad: torch.Tensor,

@@ -20,6 +20,31 @@ import os, sys, argparse
 import numpy as np
 
 
+def linear_cka_matrix(reps: dict, slots: list) -> np.ndarray:
+    """旋转不变的线性 CKA 矩阵 [S, S]，避免展平坐标余弦对正交旋转的盲区。"""
+    centered = []
+    for k in slots:
+        X = np.asarray(reps[k], dtype=np.float64)
+        X = X - X.mean(axis=0, keepdims=True)
+        centered.append(X)
+    n_s = len(slots)
+    cka = np.eye(n_s, dtype=np.float64)
+    for i in range(n_s):
+        Xi = centered[i]
+        ni = float(np.linalg.norm(Xi.T @ Xi, 'fro'))
+        for j in range(i + 1, n_s):
+            Xj = centered[j]
+            nj = float(np.linalg.norm(Xj.T @ Xj, 'fro'))
+            denom = ni * nj
+            if denom <= 1e-18:
+                val = 0.0
+            else:
+                num = float(np.linalg.norm(Xi.T @ Xj, 'fro') ** 2)
+                val = float(np.clip(num / denom, 0.0, 1.0))
+            cka[i, j] = cka[j, i] = val
+    return cka
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--ckpt', required=True)
@@ -49,7 +74,7 @@ def main():
     print('projspace 目录:', pkg, flush=True)
 
     dev = 'cuda' if torch.cuda.is_available() else 'cpu'
-    ck = torch.load(args.ckpt, map_location='cpu')
+    ck = torch.load(args.ckpt, map_location='cpu', weights_only=False)
     sd = ck.get('model', ck)
 
     # --- 关键：proj_space 必须完整加载，missing 不允许静默 ---
@@ -58,6 +83,8 @@ def main():
     ps = DimProjectionSpace(256, MEASURED, 4, 2)
     missing, unexpected = ps.load_state_dict(ps_sd, strict=False)
     assert not missing, 'proj_space 权重缺失(等于审计了随机空间): %s' % missing[:6]
+    if unexpected:
+        print('[WARN] proj_space 存在未挂载键(%d): %s' % (len(unexpected), unexpected[:6]), flush=True)
     print('proj_space 加载完成 (%d 键), unexpected=%d' % (len(ps_sd), len(unexpected)), flush=True)
     ps = ps.to(dev).eval()
 
@@ -76,6 +103,10 @@ def main():
     hb = np.load(f'{cache}/h_bert{args.suf}.npy', mmap_mode='r')
     hv = np.load(f'{cache}/h_vit{args.suf}.npy', mmap_mode='r')
     print('cache:', hq.shape, hb.shape, hv.shape, flush=True)
+    for i, (mname, arr) in enumerate([('Qwen', hq), ('BERT', hb), ('ViT', hv)]):
+        assert P_m[i].shape == (D, arr.shape[-1]), (
+            'P_m.%d (%s) 形状 %s 与缓存维度 (%d, %d) 不匹配'
+            % (i, mname, tuple(P_m[i].shape), D, arr.shape[-1]))
 
     def canon_of(q_t, b_t, v_t):
         pr = {'Qwen': q_t @ P_m[0].t(),
@@ -111,13 +142,17 @@ def main():
     off = ~np.eye(len(slots), dtype=bool)
     rank = int(np.linalg.matrix_rank(Fm, tol=1e-5))
     vifs = np.diag(np.linalg.inv(Fm.T @ Fm + 1e-8*np.eye(len(slots))))
+    cka_mat = linear_cka_matrix(reps, slots)
+    cka_mean = float(cka_mat[off].mean())
+    cka_max = float(cka_mat[off].max())
     print('联合子空间秩: %d/%d (满秩才名实相符)' % (rank, len(slots)))
     print('两两|cos| 均值 %.4f 最大 %.4f' % (cos[off].mean(), cos[off].max()))
+    print('旋转不变线性 CKA 均值 %.4f 最大 %.4f (>0.85=正交旋转下仍高度冗余)' % (cka_mean, cka_max))
     print('VIF: %s (>10=严重共线)' % np.round(vifs, 2).tolist())
-    print('判定:', '✅ 四槽表示独立' if (rank == len(slots) and cos[off].max() < 0.6)
-          else '❌ 四槽共线/秩不足 → 印证"融合只是源身份探测器"')
-    print('[DIM2_RESULT] rank=%d/%d mean_cos=%.4f max_cos=%.4f vif=%s' % (
-        rank, len(slots), cos[off].mean(), cos[off].max(),
+    print('判定:', '✅ 四槽表示独立' if (rank == len(slots) and cos[off].max() < 0.6 and cka_max < 0.85)
+          else '❌ 四槽共线/旋转冗余/秩不足 → 印证"融合只是源身份探测器"')
+    print('[DIM2_RESULT] rank=%d/%d mean_cos=%.4f max_cos=%.4f mean_cka=%.4f max_cka=%.4f vif=%s' % (
+        rank, len(slots), cos[off].mean(), cos[off].max(), cka_mean, cka_max,
         np.round(vifs, 2).tolist()), flush=True)
 
     # ---------- Dim III ----------

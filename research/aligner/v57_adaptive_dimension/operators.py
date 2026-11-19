@@ -97,13 +97,16 @@ def noise_sigma(s: torch.Tensor, n: int, d: int) -> float:
 
 
 def optimal_hard_threshold(s: torch.Tensor, n: int, d: int) -> float:
-    """τ = ω(β)·σ̂·√max(n,d) —— 未知噪声下的最优奇异值硬阈值。
+    """τ = ω(β)·median(s) —— Gavish–Donoho (2014) 未知噪声下的最优奇异值硬阈值。
 
-    量纲检查: 纯噪声的谱上边缘 ≈ σ(√n+√d), β=1 时为 2σ√n;
-    ω(1)=2.86, 故 τ≈2.86σ√n **恰好高于**噪声明——这正是它该在的位置。
+    注意: 多项式近似 ω(β) = 0.56β³ - 0.95β² + 1.82β + 1.43 已经包含了 1/c_β 因子
+    (即 ω(β) = λ*(β) / c_β，如 β=1 时 ω(1) = 2.858 = 2.3094 / 0.808)，直接乘以
+    奇异值中位数 median(s) 即可，不可再额外除以 c_β。
     """
+    if s.numel() == 0:
+        return 0.0
     beta = min(n, d) / max(n, d)
-    return omega(beta) * noise_sigma(s, n, d) * math.sqrt(max(n, d))
+    return omega(beta) * float(s.median())
 
 
 # ----------------------------------------------------------------------
@@ -164,9 +167,9 @@ class GrowthLog:
 
     def events(self) -> list[str]:
         out = []
-        for s, b, d in zip(self.steps, self.born, self.died):
+        for s, rv, b, d in zip(self.steps, self.r, self.born, self.died):
             if b or d:
-                out.append(f"step {s}: r={self.r[len(out)] if False else ''} +{b}/-{d}")
+                out.append(f"step {s}: r={rv} +{b}/-{d}")
         return out
 
 
@@ -227,13 +230,13 @@ class AdaptiveSubspace(nn.Module):
 
     # -- 前向 --
     def forward(self, Z: torch.Tensor, update: bool = True) -> torch.Tensor:
-        """返回低维坐标 [n, r]; update=True 时同时做生死判定。"""
-        Z = Z.detach().float()
+        """返回低维坐标 [n, r]; update=True 时同时做生死判定 (保留 Z 的梯度流)."""
+        Zf = Z.float()
         if update:
-            self._collapse_and_expand(Z)
+            self._collapse_and_expand(Zf.detach())
         if self.r == 0:
-            return torch.zeros(Z.shape[0], 0, device=Z.device)
-        return Z @ self.V
+            return Zf.new_zeros((Zf.shape[0], 0))
+        return Zf @ self.V
 
     # -- 生死 --
     @torch.no_grad()
@@ -247,17 +250,24 @@ class AdaptiveSubspace(nn.Module):
             R = Z - SpectralProject(Z, self.V)
         else:
             R = Z
-        # 用全矩阵奇异值估噪声 (含信号, 中位数仍稳健)
+        # R = Z (I - V V^T) 在 V^⊥ (维数 d - r) 上同构于 n × (d - r) 矩阵；
+        # 剔除因投影产生的 r 个结构零奇异值，避免 r >= d/2 时 median(s_all) 塌成 0。
         s_all = torch.linalg.svdvals(R)
-        tau = optimal_hard_threshold(s_all, n, d) * self.tau_scale
-        sig = noise_sigma(s_all, n, d)
+        d_res = d - self.r
+        if d_res > 0:
+            s_res = s_all[:min(n, d_res)]
+            tau = optimal_hard_threshold(s_res, n, d_res) * self.tau_scale
+            sig = noise_sigma(s_res, n, d_res)
+        else:
+            tau = 0.0
+            sig = 0.0
 
         # ---- 2) 死亡: 方向能量跌到噪声地板以下, 连续 window 步 ----
         if self.r > 0:
             e = self.energy(Z)
             floor = max(self.death_frac * sig ** 2, 1e-12)
             below = (e < floor)
-            self._below = self._below + below.long()
+            self._below = torch.where(below, self._below + 1, torch.zeros_like(self._below))
             alive = self._below < self.death_window
             # 刚出生的方向给 window 步宽限 (不立刻判死)
             if not bool(alive.all()):
@@ -296,8 +306,10 @@ class AdaptiveSubspace(nn.Module):
                 if cand:
                     newV = torch.stack(cand, 1)
                     self.V = torch.cat([self.V, newV], 1).contiguous()
-                    self._below = torch.cat(
-                        [self._below, torch.zeros(len(cand), dtype=torch.long)])
+                    self._below = torch.cat([
+                        self._below,
+                        torch.zeros(len(cand), dtype=torch.long, device=self._below.device),
+                    ])
                     n_born = len(cand)
 
         self.log.add(self._step, self.r, n_born, n_died, self.captured(Z))
@@ -344,8 +356,9 @@ class AdaptiveOperator(nn.Module):
 
     @property
     def effective_params(self) -> int:
+        # V 是固定缓冲，前向仅经由 V^T W V 的 r×r 有效子块，其余方向零梯度
         r = self.effective_rank
-        return r * r + 2 * r * (self.W.shape[1] - r)
+        return r * r
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.space is None or self.space.r == 0:

@@ -1,0 +1,87 @@
+[run] lambda=1
+[run] 分批: {'Qwen->BERT': [6, 12, 18, 23]}
+[corpus] ag_news 128 条 / ViT 64 张
+
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]
+Loading weights:  13%|█▎        | 37/290 [00:00<00:00, 357.22it/s]
+Loading weights:  27%|██▋       | 77/290 [00:00<00:00, 371.66it/s]
+Loading weights:  40%|███▉      | 115/290 [00:00<00:00, 365.04it/s]
+Loading weights:  52%|█████▏    | 152/290 [00:00<00:00, 330.04it/s]
+Loading weights:  66%|██████▌   | 190/290 [00:00<00:00, 320.80it/s]
+Loading weights:  78%|███████▊  | 225/290 [00:00<00:00, 315.94it/s]
+Loading weights:  89%|████████▊ | 257/290 [00:00<00:00, 298.09it/s]
+Loading weights:  99%|█████████▉| 287/290 [00:00<00:00, 286.72it/s]
+Loading weights: 100%|██████████| 290/290 [00:00<00:00, 315.21it/s]
+[source] Qwen: 16 个 (层,槽) 组合
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 4024.59it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[source] BERT: 8 个 (层,槽) 组合
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 3545.10it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pilot] Qwen->BERT: probe-lambda=1000 (CV R2=0.1241)
+[block] Qwen->BERT ly=6 seed=0 完成 (累计 92 行, 189s)
+[block] Qwen->BERT ly=12 seed=0 完成 (累计 104 行, 197s)
+[block] Qwen->BERT ly=18 seed=0 完成 (累计 116 行, 205s)
+[block] Qwen->BERT ly=23 seed=0 完成 (累计 128 行, 214s)
+[block] Qwen->BERT ly=6 seed=1 完成 (累计 140 行, 224s)
+[block] Qwen->BERT ly=12 seed=1 完成 (累计 152 行, 232s)
+[block] Qwen->BERT ly=18 seed=1 完成 (累计 164 行, 241s)
+[block] Qwen->BERT ly=23 seed=1 完成 (累计 176 行, 249s)
+[block] Qwen->BERT ly=6 seed=2 完成 (累计 188 行, 258s)
+[block] Qwen->BERT ly=12 seed=2 完成 (累计 200 行, 267s)
+[block] Qwen->BERT ly=18 seed=2 完成 (累计 212 行, 279s)
+[block] Qwen->BERT ly=23 seed=2 完成 (累计 224 行, 291s)
+[block] Qwen->BERT ly=6 seed=3 完成 (累计 236 行, 303s)
+[block] Qwen->BERT ly=12 seed=3 完成 (累计 248 行, 314s)
+[block] Qwen->BERT ly=18 seed=3 完成 (累计 260 行, 323s)
+[block] Qwen->BERT ly=23 seed=3 完成 (累计 272 行, 333s)
+[block] Qwen->BERT ly=6 seed=4 完成 (累计 284 行, 341s)
+[block] Qwen->BERT ly=12 seed=4 完成 (累计 296 行, 350s)
+[block] Qwen->BERT ly=18 seed=4 完成 (累计 308 行, 361s)
+[block] Qwen->BERT ly=23 seed=4 完成 (累计 320 行, 374s)
+Traceback (most recent call last):
+  File "E:\hetero-moe\research\weight_fusion\v82_s4_pipe\s4_pipe.py", line 1258, in <module>
+    if __name__ == "__main__":
+                 ^^^^^^
+  File "E:\hetero-moe\research\weight_fusion\v82_s4_pipe\s4_pipe.py", line 1245, in main
+    print("[run] 分批: %s" % {k: sorted(v) for k, v in only.items()}, flush=True)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\hetero-moe\research\weight_fusion\v82_s4_pipe\s4_pipe.py", line 1139, in run_formal
+    ack.close()
+           ^^^^^
+  File "E:\hetero-moe\research\weight_fusion\v82_s4_pipe\s4_pipe.py", line 712, in evaluate_criteria
+    "median_same_layer": p2_same, "median_cross_layer": p2_cross,
+                                                         ^^^^^^^^^
+KeyError: 'n_perm'

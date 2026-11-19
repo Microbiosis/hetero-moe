@@ -45,6 +45,10 @@ class CrossArchMeanAligner(SemanticAligner):
         )
 
     def forward(self, h_list: List[torch.Tensor]) -> torch.Tensor:
+        if len(h_list) != len(self.down_projections):
+            raise ValueError(
+                f"expected {len(self.down_projections)} modality tensors, got {len(h_list)}"
+            )
         aligned = [proj(h) for proj, h in zip(self.down_projections, h_list)]
         return torch.stack(aligned).mean(dim=0)
 
@@ -92,6 +96,10 @@ class CrossArchAttnAligner(SemanticAligner):
         return t.view(B, S, self.num_heads, self.head_dim).transpose(1, 2)
 
     def forward(self, h_list: List[torch.Tensor]) -> torch.Tensor:
+        if len(h_list) != len(self.down_projections):
+            raise ValueError(
+                f"expected {len(self.down_projections)} modality tensors, got {len(h_list)}"
+            )
         # 1. 各底座降维
         z_list = [proj(h) for proj, h in zip(self.down_projections, h_list)]
         z_stack = torch.stack(z_list, dim=0)        # [M, B, S, D]

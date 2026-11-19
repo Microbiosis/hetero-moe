@@ -11,13 +11,22 @@ import torch
 
 
 def knn_acc(X, y, k=1):
-    """Leave-one-out 1-NN 分类准确率 (无参数)."""
+    """Leave-one-out k-NN 分类准确率 (无参数, k=1 时退化为精确 1-NN)."""
     n = X.shape[0]
+    if n <= 1:
+        return 0.0
+    k_eff = max(1, min(int(k), n - 1))
     correct = 0
     for i in range(n):
         dists = torch.norm(X - X[i], dim=1)
         dists[i] = float("inf")
-        if y[dists.argmin()] == y[i]:
+        if k_eff == 1:
+            pred = y[dists.argmin()]
+        else:
+            nn_labels = y[torch.topk(dists, k_eff, largest=False).indices]
+            vals, counts = torch.unique(nn_labels, return_counts=True)
+            pred = vals[counts.argmax()]
+        if pred == y[i]:
             correct += 1
     return correct / n
 

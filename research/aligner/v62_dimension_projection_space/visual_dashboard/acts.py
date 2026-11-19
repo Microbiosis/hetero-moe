@@ -202,9 +202,9 @@ def act3(ax, t, p):
             ax.text(bx + bw2 / 2, by + bh + 2.2,
                     'router 输出的 EMA（1500 步训练中）', color=DIM, fontsize=8.5,
                     ha='center', alpha=bt)
+    ent_tail = f' / slot_ent {traj[-1]["slot_ent"]:.3f}（训练末）' if traj else ''
     ax.text(2.5, 6.2,
-            f'四槽都在正常分工：门控熵 {D.get("slot_entropy",0.647):.3f}（held-out）'
-            f' / slot_ent {traj[-1]["slot_ent"]:.3f}（训练末）',
+            f'四槽都在正常分工：门控熵 {D.get("slot_entropy",0.647):.3f}（held-out）{ent_tail}',
             color=GREEN, fontsize=10.5, alpha=seg(t, 0.62, 0.76), va='center')
 
 

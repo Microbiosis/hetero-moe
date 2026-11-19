@@ -102,13 +102,19 @@ def freeze_u(central: nn.Module) -> None:
 
 
 def freeze_c(central: nn.Module) -> None:
-    """修正 A 变体: 冻结中枢向量 c. 调试 / 消融用.
+    """修正 A 变体: 冻结中枢向量 c (含阻断后续 EMA 更新). 调试 / 消融用.
 
     对所有 4 种模式都生效 (c 都是 nn.Parameter).
     """
     if not hasattr(central, "c"):
         raise TypeError(f"{type(central).__name__} 没有 c 属性.")
     central.c.requires_grad_(False)
+    if hasattr(central, "freeze_c"):
+        central.freeze_c = True
+    if hasattr(central, "cw") and hasattr(central.cw, "c"):
+        central.cw.c.requires_grad_(False)
+        if hasattr(central.cw, "freeze_c"):
+            central.cw.freeze_c = True
 
 
 def set_u_init_scale(central: nn.Module, scale: float = 0.001) -> None:
@@ -174,8 +180,8 @@ class CentralTheory(nn.Module):
             self.c = self.cw.c
             self.U = self.cw.U
         elif mode == "gate":
-            # 委托给 v9_gate_central.GateStyleWorkspace
-            self.cw = GateStyleWorkspace(d_shared, num_experts, alpha=0.1)
+            # 委托给 v9_gate_central.GateStyleWorkspace (正确透传 ema_decay)
+            self.cw = GateStyleWorkspace(d_shared, num_experts, ema_decay=ema_decay, alpha=0.1)
             self.c = self.cw.c
             self.W_t = self.cw.W_t
             self.alpha = self.cw.alpha
@@ -197,23 +203,23 @@ class CentralTheory(nn.Module):
         elif self.mode == "gate":
             return self.cw.augment_router_logits(z)
         elif self.mode == "router-norm":
-            z_with_bias = z + self.U @ self.c
+            z_with_bias = z + self.U @ self.c.clone()
             return self.router_norm(z_with_bias)
         else:  # adaptive-ema
-            return z + self.U @ self.c
+            return z + self.U @ self.c.clone()
 
     @torch.no_grad()
-    def ema_update(self, expert_outputs, base_decay: float = 0.9):
+    def ema_update(self, expert_outputs, base_decay: Optional[float] = None):
         """EMA 更新 c.
 
         关键改进:
-            - 仅在 self._ema_enabled=True 且 self.training=True 时执行 (对齐 v8 语义)
-            - adaptive-ema 前 warmup_steps 步用 base_decay=0.9 (避免 c.norm()=0 → decay=0.5 震荡)
-            - 自适应 decay = sigmoid(adaptive_alpha · ||c||), α 初始化为 0 保证
-              warmup 期间几乎退化为 broadcast 行为
+            - 仅在 self._ema_enabled=True、self.training=True 且 c 未被 freeze_c 时执行
+            - 未显式传 base_decay 时遵循构造参数 self.ema_decay
+            - 支持 2D/3D 专家输出 (避免 2D 输入将 c 塌缩为标量)
+            - adaptive-ema 前 warmup_steps 步用 base_decay (避免 c.norm()=0 → decay=0.5 震荡)
         """
-        # 稳定性 patch 1: EMA 仅在训练时启用
-        if not self._ema_enabled or not self.training:
+        # 稳定性 patch 1: EMA 仅在训练且 c 未冻结时启用
+        if not self._ema_enabled or not self.training or not self.c.requires_grad:
             return
         # broadcast / gate 委托给 v9_gate_central
         if self.mode in ("broadcast", "gate"):
@@ -223,12 +229,14 @@ class CentralTheory(nn.Module):
         if not expert_outputs:
             return
         stacked = torch.stack(expert_outputs, dim=0)
-        new_c = stacked.mean(dim=(0, 1, 2))
+        reduce_dims = tuple(range(stacked.ndim - 1))
+        new_c = stacked.mean(dim=reduce_dims)
+        eff_decay = self.ema_decay if base_decay is None else base_decay
 
         if self.mode == "adaptive-ema":
-            # 稳定性 patch 2: warmup 期间用 base_decay (避免初始震荡)
+            # 稳定性 patch 2: warmup 期间用 eff_decay (避免初始震荡)
             if self._step_count < self.adaptive_warmup_steps:
-                decay = base_decay
+                decay = eff_decay
             else:
                 # α·||c|| → 训练稳定后 α 自然增长, decay 趋近 1 (慢更新)
                 adaptive_decay = torch.sigmoid(
@@ -236,7 +244,7 @@ class CentralTheory(nn.Module):
                 ).item()
                 decay = adaptive_decay
         else:
-            decay = base_decay
+            decay = eff_decay
         self.c.data.mul_(decay).add_(new_c, alpha=1.0 - decay)
         self._step_count += 1
 

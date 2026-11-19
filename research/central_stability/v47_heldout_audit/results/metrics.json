@@ -5,7 +5,7 @@
   "line": "central_stability",
   "metric": "fuse_mse",
   "direction": "lower_is_better",
-  "recorded_by": "examples/run_v47_scale_hetero_heldout.py (5 seeds × 3 口径)",
+  "recorded_by": "merged: examples/run_v47_central_heldout.py + examples/run_v47_scale_hetero_heldout.py (5 seeds × 3 口径)",
   "statistic": "配对逐种子中位数 + 逐种子胜出数 (不用均值 — v40 起的纪律)",
   "scopes": [
     "in_sample",
@@ -14,11 +14,41 @@
   ],
   "seeds": 5,
   "audited": [
+    "v8",
+    "v12",
+    "v19",
+    "v20",
+    "v30",
+    "v31",
+    "v35",
     "v33",
-    "v34",
-    "v35"
+    "v34"
   ],
   "verdicts": {
+    "v8": {
+      "heldout_noise": "invalidated",
+      "heldout_stimulus": "invalidated"
+    },
+    "v12": {
+      "heldout_noise": "invalidated",
+      "heldout_stimulus": "invalidated"
+    },
+    "v19": {
+      "heldout_noise": "clean",
+      "heldout_stimulus": "clean"
+    },
+    "v20": {
+      "heldout_noise": "invalidated",
+      "heldout_stimulus": "invalidated"
+    },
+    "v30": {
+      "heldout_noise": "invalidated",
+      "heldout_stimulus": "invalidated"
+    },
+    "v31": {
+      "heldout_noise": "invalidated",
+      "heldout_stimulus": "invalidated"
+    },
     "v35": {
       "heldout_noise": "invalidated",
       "heldout_stimulus": "invalidated"
@@ -34,6 +64,96 @@
   },
   "blocked": {},
   "per_package": {
+    "v8": {
+      "in_sample_median_pct": -306.73,
+      "heldout_noise": {
+        "median_pct": -51.02,
+        "wins": "1/5",
+        "verdict": "invalidated",
+        "retention": null
+      },
+      "heldout_stimulus": {
+        "median_pct": -50.6,
+        "wins": "1/5",
+        "verdict": "invalidated",
+        "retention": null
+      }
+    },
+    "v12": {
+      "in_sample_median_pct": -43.04,
+      "heldout_noise": {
+        "median_pct": -41.38,
+        "wins": "2/5",
+        "verdict": "invalidated",
+        "retention": null
+      },
+      "heldout_stimulus": {
+        "median_pct": -69.37,
+        "wins": "1/5",
+        "verdict": "invalidated",
+        "retention": null
+      }
+    },
+    "v19": {
+      "in_sample_median_pct": 4.34,
+      "heldout_noise": {
+        "median_pct": 1.48,
+        "wins": "3/5",
+        "verdict": "clean",
+        "retention": 0.342
+      },
+      "heldout_stimulus": {
+        "median_pct": 2.36,
+        "wins": "3/5",
+        "verdict": "clean",
+        "retention": 0.545
+      }
+    },
+    "v20": {
+      "in_sample_median_pct": -117.56,
+      "heldout_noise": {
+        "median_pct": -137.38,
+        "wins": "2/5",
+        "verdict": "invalidated",
+        "retention": null
+      },
+      "heldout_stimulus": {
+        "median_pct": -153.94,
+        "wins": "2/5",
+        "verdict": "invalidated",
+        "retention": null
+      }
+    },
+    "v30": {
+      "in_sample_median_pct": -0.44,
+      "heldout_noise": {
+        "median_pct": -0.43,
+        "wins": "0/5",
+        "verdict": "invalidated",
+        "retention": null
+      },
+      "heldout_stimulus": {
+        "median_pct": -0.42,
+        "wins": "0/5",
+        "verdict": "invalidated",
+        "retention": null
+      }
+    },
+    "v31": {
+      "in_sample_median_pct": -0.11,
+      "heldout_noise": {
+        "median_pct": -0.1,
+        "wins": "0/5",
+        "verdict": "invalidated",
+        "retention": null
+      },
+      "heldout_stimulus": {
+        "median_pct": -0.1,
+        "wins": "0/5",
+        "verdict": "invalidated",
+        "retention": null
+      }
+    },
     "v35": {
       "in_sample_median_pct": -12.94,
       "heldout_noise": {
@@ -79,5 +199,6 @@
         "retention": 1.025
       }
     }
-  }
+  },
+  "errata_note": "2026-11-19 恢复此前被 scale_hetero runner 覆写丢失的 6 个中枢包 (v8/v12/v19/v20/v30/v31) 合并记录；原始实测数字未改动，代码级混杂边界详见 docs/PAST_SUBPACKAGES_ERRATA.md。"
 }

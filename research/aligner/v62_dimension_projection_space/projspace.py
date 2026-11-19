@@ -48,7 +48,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-from hyper_proj import HyperLinear
+# 包内相对 import 优先 (research.aligner.v62_dimension_projection_space.projspace);
+# 平铺 import 兜底 (独立脚本 / Kaggle 训练 / 审计流程: 本目录已在 sys.path)。
+if __package__:
+    from .hyper_proj import HyperLinear
+else:
+    from hyper_proj import HyperLinear
 
 
 @dataclass
@@ -131,8 +136,8 @@ class DimProjectionSpace(nn.Module):
             for m1, m2 in combinations(sp.models, 2):
                 for a, b in ((m1, m2), (m2, m1)):
                     lin = nn.Linear(sp.dim, sp.dim, bias=False)
-                    if sp.dim == d_shared:
-                        nn.init.orthogonal_(lin.weight)
+                    # align 恒为方阵 (sp.dim, sp.dim)，无论 sp.dim 是否等于 d_shared 均应正交保距初始化
+                    nn.init.orthogonal_(lin.weight)
                     self.align[f'{k}|{a}>{b}'] = lin
 
         # ---- 融合权重（参考帧下）----
@@ -168,10 +173,16 @@ class DimProjectionSpace(nn.Module):
         self.total_dim = sum(sp.dim for sp in self.subspaces.values())
 
         # ---- 路线2/4/6/8：自修改权重模块（默认关闭）----
-        from recurrent_gate import RecurrentSlotGate
-        from hebbian_align import HebbianSlotAlignment
-        from memory_router import MemoryAugmentedRouter
-        from modality_adapter import ModalityAdapterBank
+        if __package__:
+            from .recurrent_gate import RecurrentSlotGate
+            from .hebbian_align import HebbianSlotAlignment
+            from .memory_router import MemoryAugmentedRouter
+            from .modality_adapter import ModalityAdapterBank
+        else:
+            from recurrent_gate import RecurrentSlotGate
+            from hebbian_align import HebbianSlotAlignment
+            from memory_router import MemoryAugmentedRouter
+            from modality_adapter import ModalityAdapterBank
 
         # 路线2：递归槽门控（替换静态 slot_gate）
         if use_recurrent_gate:
@@ -183,10 +194,14 @@ class DimProjectionSpace(nn.Module):
         # 路线4：Hebbian 模态耦合
         if use_hebbian:
             self.hebbian = HebbianSlotAlignment()
-        # 路线6：模态条件 adapter
+        # 路线6：模态条件 adapter（按每槽实际输出维 sp.dim 构造，兼容 pm_reconcile d_shared != sp.dim）
         if use_modality_adapter:
             self.adapter_bank = ModalityAdapterBank(
-                slots=self.slot_names, d=d_shared, rank=8)
+                slots=self.slot_names,
+                d=d_shared,
+                rank=8,
+                slot_dims={k: sp.dim for k, sp in self.subspaces.items()},
+            )
 
     # ------------------------------------------------------------------
     def _path(self, slot: str, model: str) -> List[str]:
@@ -206,6 +221,55 @@ class DimProjectionSpace(nn.Module):
                 return [k1, k2]
         return []
 
+    def build_slot_feats(
+        self,
+        projs: Dict[str, torch.Tensor],
+        slot_acts: Optional[Dict[str, Dict[str, torch.Tensor]]] = None,
+        strict_real_slots: bool = False,
+    ) -> Dict[str, Dict[str, torch.Tensor]]:
+        """构造四槽特征：优先使用真实注意力 Q/K/V/O 激活，缺省时显式标记为启发式回退。
+
+        修复缺陷: 此前 slot_acts=None 时静默用启发式变换冒充真实 Q/K/V/O 槽。
+        现记录 self.last_slot_source ('real_slots' | 'mixed' | 'heuristic_fallback')，
+        且 strict_real_slots=True 时缺失真实槽激活将显式报错。
+        """
+        out: Dict[str, Dict[str, torch.Tensor]] = {}
+        n_real = 0
+        n_heur = 0
+        for m, h in projs.items():
+            out[m] = {}
+            for k in self.slot_names:
+                if slot_acts and m in slot_acts and k in slot_acts[m]:
+                    out[m][k] = slot_acts[m][k]
+                    n_real += 1
+                else:
+                    if strict_real_slots:
+                        raise ValueError(
+                            f'strict_real_slots=True 但缺少真实槽激活: model={m!r}, slot={k!r}'
+                        )
+                    n_heur += 1
+                    if k == 'Q':
+                        c = h - h.mean(dim=1, keepdim=True)
+                        out[m][k] = F.layer_norm(c, (h.shape[-1],))
+                    elif k == 'K':
+                        scale = torch.sigmoid(h.norm(dim=-1, keepdim=True) / (h.shape[-1] ** 0.5))
+                        out[m][k] = h * scale
+                    elif k == 'O' and h.shape[1] >= 3:
+                        ctx = F.avg_pool1d(
+                            F.pad(h.transpose(1, 2), (1, 1), mode='replicate'),
+                            kernel_size=3, stride=1,
+                        ).transpose(1, 2)
+                        out[m][k] = 0.5 * h + 0.5 * ctx
+                    else:
+                        out[m][k] = h
+        if n_real > 0 and n_heur == 0:
+            self.last_slot_source = 'real_slots'
+        elif n_real > 0:
+            self.last_slot_source = 'mixed'
+        else:
+            self.last_slot_source = 'heuristic_fallback'
+        return out
+
     def forward(self, feats: Dict[str, Dict[str, torch.Tensor]],
                 return_aux: bool = False):
         """feats: {model: {slot: [B,S,d_shared]}}
@@ -215,37 +279,58 @@ class DimProjectionSpace(nn.Module):
           canonical: [B,S,Σdim_s]      扁平拼接，喂给融合层
           alpha:     [B,S,E]           路由权重
         """
-        # ---- 路线4：Hebbian 推理时更新（前向最开始）----
-        if self.use_hebbian and hasattr(self, 'hebbian'):
+        # ---- 路线4：Hebbian 更新（仅训练态更新，避免 eval 推理态漂移；聚合全部可用槽）----
+        if self.use_hebbian and hasattr(self, 'hebbian') and self.training:
             with torch.no_grad():
-                self.hebbian({m: feats[m][self.slot_names[0]] for m in feats
-                              if self.slot_names[0] in feats.get(m, {})})
+                agg_feats = {}
+                for m in feats:
+                    avail = [feats[m][s] for s in self.slot_names if s in feats.get(m, {})]
+                    if avail:
+                        agg_feats[m] = torch.stack([v.mean(dim=1) for v in avail], dim=0).mean(dim=0, keepdim=True)
+                if agg_feats:
+                    self.hebbian(agg_feats)
 
         per_slot: Dict[str, torch.Tensor] = {}
         B = S = None
 
+        def _apply_proj(slot_name: str, model_name: str, inp: torch.Tensor) -> torch.Tensor:
+            key = f'{slot_name}|{model_name}'
+            mod = self.proj[key]
+            use_adapt = (
+                self.use_modality_adapter and hasattr(self, 'adapter_bank')
+                and slot_name in self.adapter_bank.INJECTION.get(model_name, [])
+            )
+            if not use_adapt:
+                return mod(inp)
+            _mid = {'Qwen': 0, 'BERT': 1, 'ViT': 2}.get(model_name, 0)
+            # 若同时启用 use_hyper (HyperLinear)，先叠加低秩动态权重 delta，避免绕过 HyperLinear
+            if hasattr(mod, 'delta'):
+                W_base = mod.weight.unsqueeze(0) + mod.delta(inp)
+                ad = self.adapter_bank.get_adapter(slot_name, model_name)
+                A_ad, B_ad = ad(_mid)
+                W_eff = W_base + (ad.scale * (A_ad @ B_ad)).unsqueeze(0)
+                if inp.dim() == 2:
+                    return torch.bmm(W_eff, inp.unsqueeze(-1)).squeeze(-1)
+                return torch.einsum('bsd,bod->bso', inp, W_eff)
+            W_eff = self.adapter_bank.get_adapter(slot_name, model_name).adapt(mod.weight, _mid)
+            return F.linear(inp, W_eff)
+
         for k, sp in self.subspaces.items():
             aligned: List[torch.Tensor] = []
-            for m in sp.models:
+            present_idx: List[int] = []
+            for m_idx, m in enumerate(sp.models):
                 key = f'{k}|{m}'
                 if key not in self.proj:
                     continue
                 if m not in feats or k not in feats[m]:
                     continue
-                # ---- 路线6：模态条件 adapter（修改投影权重后线性变换）----
-                if (self.use_modality_adapter and hasattr(self, 'adapter_bank')
-                        and k in self.adapter_bank.INJECTION.get(m, [])):
-                    _mid = {'Qwen': 0, 'BERT': 1, 'ViT': 2}.get(m, 0)
-                    W_eff = self.adapter_bank.get_adapter(k, m).adapt(
-                        self.proj[key].weight, _mid)
-                    x = F.linear(feats[m][k], W_eff)
-                else:
-                    x = self.proj[key](feats[m][k])
+                x = _apply_proj(k, m, feats[m][k])
                 if B is None:
                     B, S = x.shape[0], x.shape[1]
                 for step in self._path(k, m):
                     x = self.align[step](x)
                 aligned.append(x)
+                present_idx.append(m_idx)
             if not aligned:
                 continue
             if len(aligned) == 1 or k not in self.cross_attn:
@@ -253,33 +338,40 @@ class DimProjectionSpace(nn.Module):
             else:
                 # 序列长度可能不同（Qwen/BERT 128, ViT 197）→ 交叉注意力对齐
                 q = aligned[0]
-                kv = torch.cat(aligned[1:], dim=1)
-                fused, _ = self.cross_attn[k](q, kv, kv)
-                w_base = F.softmax(self.fuse_w[k], dim=0)
+                idx_t = torch.tensor(present_idx, dtype=torch.long, device=self.fuse_w[k].device)
+                w_base = F.softmax(self.fuse_w[k].index_select(0, idx_t), dim=0)
                 # ---- 路线4：Hebbian 耦合矩阵调制融合权重 ----
                 if self.use_hebbian and hasattr(self, 'hebbian'):
                     slot_feats = {m: feats[m][k] for m in sp.models
                                   if m in feats and k in feats.get(m, {})}
                     w_hebb = self.hebbian.gate_for_slot(slot_feats).to(
                         w_base.device)
-                    w = w_base * w_hebb                      # 可学习 × 动态耦合
+                    w = w_base * w_hebb[:len(w_base)]        # 可学习 × 动态耦合
                     w = w / (w.sum() + 1e-9)
                 else:
                     w = w_base
+                if len(aligned) > 2:
+                    w_rest = w[1:] / (w[1:].sum() + 1e-9) * (len(aligned) - 1)
+                    kv = torch.cat([aligned[1 + idx_m] * w_rest[idx_m]
+                                    for idx_m in range(len(aligned) - 1)], dim=1)
+                else:
+                    kv = torch.cat(aligned[1:], dim=1)
+                fused, _ = self.cross_attn[k](q, kv, kv)
                 per_slot[k] = w[0] * q + (1 - w[0]) * fused
 
         if not per_slot:
             raise ValueError('没有任何有效输入')
 
-        dev = next(self.parameters()).device
-        # 各槽 seq 长度可能不同 → 池化到统一长度再拼接
+        ref_tensor = next(iter(per_slot.values()))
+        dev = ref_tensor.device
+        dtype = ref_tensor.dtype
+        # 各槽 seq 长度可能不同 → 自适应平均池化到统一长度再拼接（保留全部视觉 patch 信息）
         s_min = min(v.shape[1] for v in per_slot.values())
 
         def _pool(v: torch.Tensor) -> torch.Tensor:
             if v.shape[1] == s_min:
                 return v
-            idx = torch.linspace(0, v.shape[1] - 1, s_min).long().to(v.device)
-            return v[:, idx, :]
+            return F.adaptive_avg_pool1d(v.transpose(1, 2), s_min).transpose(1, 2)
 
         S = s_min
         # ---- 路线2：递归槽门控 或 静态 slot_gate ----
@@ -287,7 +379,7 @@ class DimProjectionSpace(nn.Module):
             # 用当前 canonical（近似：per_slot 拼接）驱动 GRU
             gate_in = torch.cat(
                 [_pool(per_slot[k]) if k in per_slot
-                 else torch.zeros(B, S, self.subspaces[k].dim, device=dev)
+                 else torch.zeros(B, S, self.subspaces[k].dim, device=dev, dtype=dtype)
                  for k in self.subspaces], dim=-1)      # [B,S,total_dim]
             gate = self.recurrent_gate(gate_in)         # [B,S,n_slots]
             gate_global = gate.mean(dim=1)              # [B,n_slots] 兜底
@@ -316,12 +408,11 @@ class DimProjectionSpace(nn.Module):
                     continue
                 if m not in feats or k not in feats[m]:
                     rp.append(torch.zeros(B, S, self.subspaces[k].dim,
-                                          device=dev, dtype=next(self.parameters()).dtype))
+                                          device=dev, dtype=dtype))
                     continue
-                v = self.proj[key](feats[m][k])
+                v = _apply_proj(k, m, feats[m][k])
                 if v.shape[1] != S:
-                    idx = torch.linspace(0, v.shape[1] - 1, S).long().to(v.device)
-                    v = v[:, idx, :]
+                    v = F.adaptive_avg_pool1d(v.transpose(1, 2), S).transpose(1, 2)
                 rp.append(v)
 
         if self.route_slots and rp and self.router is not None:
@@ -334,7 +425,7 @@ class DimProjectionSpace(nn.Module):
             else:
                 alpha = F.softmax(self.router(xin), dim=-1)
         else:
-            alpha = torch.ones(B, S, self.n_slots, device=dev) / self.n_slots
+            alpha = torch.ones(B, S, self.n_slots, device=dev, dtype=dtype) / self.n_slots
 
         # 有效门控 = 全局槽权重 × 逐 token 槽激活，归一化到和为 1
         # 路线2 时 gate 已是 [B,S,n_slots]（GRU 逐 token 输出），直接用；
@@ -347,7 +438,7 @@ class DimProjectionSpace(nn.Module):
 
         canonical = torch.cat(
             [_pool(per_slot[k]) * eff[..., i:i + 1] if k in per_slot
-             else torch.zeros(B, S, self.subspaces[k].dim, device=dev)
+             else torch.zeros(B, S, self.subspaces[k].dim, device=dev, dtype=dtype)
              for i, k in enumerate(self.subspaces)],
             dim=-1)
 
@@ -386,7 +477,8 @@ class DimProjectionSpace(nn.Module):
         out = torch.zeros_like(struct)
         for slot, idx in recipe.items():
             i = self.slot_names.index(slot)
-            out[:, :, i, :] = struct[:, idx:idx + 1, i, :].expand(-1, S, -1)
+            # 兼容负索引（如 idx=-1），避免 -1:0 产生空切片
+            out[:, :, i, :] = struct.select(1, idx)[:, i, :].unsqueeze(1).expand(-1, S, -1)
         return out
 
     # ------------------------------------------------------------------

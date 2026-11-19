@@ -107,14 +107,17 @@ class CrossModalVisionLanguageFusionSubOp(nn.Module):
         alpha_txt_init: float = 0.80,
         beta_bilinear_init: float = 0.65,
         lam_norm: float = 0.35,
+        use_in_proj: bool = True,
         **kwargs,
     ):
         super().__init__()
         self.d_model = d_model
         self.num_anchors = num_anchors
         self.lam_norm = lam_norm
+        self.use_in_proj = use_in_proj
 
-        self.in_proj = nn.Linear(d_model, 2 * d_model, bias=False)
+        # 当上游已独立投影并直接调用 forward_from_projected 时，允许关闭 in_proj 以消除 64.5% 零梯度死参数
+        self.in_proj = nn.Linear(d_model, 2 * d_model, bias=False) if use_in_proj else None
         # Bidirectional 2D-aware local spatial neighborhood conv (padding='same' / symmetric)
         self.spatial_dw_conv = nn.Conv1d(
             d_model, d_model, kernel_size=5, padding=2, groups=d_model
@@ -153,6 +156,8 @@ class CrossModalVisionLanguageFusionSubOp(nn.Module):
         return self.out_proj(fused)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if self.in_proj is None:
+            raise RuntimeError("use_in_proj=False 时请直接调用 forward_from_projected(v_raw, t_raw)")
         v_raw, t_raw = self.in_proj(x).chunk(2, dim=-1)
         return self.forward_from_projected(v_raw, t_raw)
 

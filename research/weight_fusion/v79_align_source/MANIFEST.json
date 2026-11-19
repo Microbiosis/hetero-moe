@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "version": "79.0",
+  "package": "v79_align_source",
+  "line": "weight_fusion",
+  "title": "S2-0: 定死 align[s|A→B] 的来源 (真模型激活上的成对对齐拟合与核验)",
+  "generation": {
+    "one_mechanism_added": "S2-0 (S3_PROTOCOL §2.3 的头号工程风险条): 在**真模型激活**上核验跨模型槽对齐映射的来源 —— 四个候选 (甲: v75 的成对对齐流程 (切片+随机输入+闭式 ridge+cyclic LOO); 乙: 真模型激活上现拟合 ridge / procrustes / low-rank) 的**留出集**三路对照 (matched vs 错槽 vs 不对齐), 外加 post_hoc 机理诊断 (池化表示有效秩 / 去 top1 PC 后复测 / 训练集内 vs 留出集)。",
+    "parent": "78.0",
+    "children": [
+      "80.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "78.0",
+    "line_children": [],
+    "note": "weight_fusion 线第 5 代: v75 权重级共轭 (负结果) -> v76 路线 α 的 S1 -> v77 路线 β 的真模型可用性 (S1B_FAIL) -> v78 前置诊断 (把 S3 口径查清) -> v79 S2-0 (把 S3 的对齐来源定死: 负结果, 无可用来源)。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "s2_0_align.py"
+    ],
+    "note": "本代按**路径**载入 v78 的 s3_preflight.py (真模型 + 槽激活 + 语料, 经 v77 的 true_model.py)、v75 的 g2_conjugation.py (闭式 fit_transport / 切片 / 随机输入种子 / outputs) 与 v62 的 measure.py (cka / projections); 口径同源凭证为三者的 sha256 (记入 results/metrics.json 的 protocol.provenance_sha256)。不按包名 import 的原因与 v75-v78 一致: 同线 import 会被 tools/check_self_containment.py 判成跨线引用。"
+  },
+  "claim": {
+    "asserts": "作为预登记对象的『跨模型槽对齐映射』在真模型激活上**不存在可用的版本**: 四个候选在留出集上的 matched−noalign 中位差全部 ≤ 0 (最好的 ridge −0.0831); 且池化映射在训练集上也不比基线高 (中位 0.5082 < 基线 0.5990) ⇒ 不是过拟合, 是没东西可学。同时 A1 成立 (不对齐基线上同槽 0.6958 vs 错槽 0.4112, 29/32, p<1e-4) ⇒ 槽的差别跨模型可见, 但那**不是**一个可被映射学出来的对应关系。",
+    "metric": "A2_median_delta_cka (最佳候选的留出集 matched − noalign 中位差)",
+    "direction": "higher_is_better",
+    "value": 0,
+    "baseline": {
+      "ref": "不对齐基线 (no-align, 即不做任何映射)",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": 1,
+    "outcome_label": "falsified",
+    "note": "**负结果**: A2 (优于不对齐) 对全部候选不成立。机器裁决 ALIGN_SOURCE_NOT_FOUND (退出码 1, 属契约内)。含义: S3 的注入算子不能沿用 S3_PROTOCOL §2.3 写的「align[s|A→B] = 一个 256×256 映射」这一形式 ⇒ 协议必须修订后才能开跑 (修订记录见 S3_PROTOCOL §2.3; **修订已于 2026-11-17 完成**: 保留共享空间载体、不学任何学出来的映射)。post_hoc 机理 (低秩共同成分主导) 不参与本代裁决, 只用于解释与后续设计。"
+  },
+  "protocol": {
+    "eval_set": "fancyzhx/ag_news train 128 条 (与 v77/v78 同一缓存 agnews_128.json、同种子同 offset; 标签分布 37/32/26/33); 按标签分层切分: 63 条训练 (拟合) / 64 条留出 (评估)",
+    "input": "真 HF 预训练底座 Qwen/Qwen2.5-0.5B-Instruct (取前 4 层) 与 google/bert_uncased_L-4_H-256_A-4 (4 层) 的真实权重与真实输入; 槽激活按 v62 槽语义取 (投影类取模块输出 / O 槽取模块输入), 与 v77/v78 同口径; 共享空间用 v62 的 projections(0) 正交投影; fp32 / CPU",
+    "caveat": "本代**只回答对齐映射的来源**, 不产生任何 P1a/P1b/P2/P3 判据, 也不改动 v77/v78 的裁决。评估网格只覆盖两个底座的前 4 层 (切片只覆盖 0-3)。对齐映射只能拟合在**样本级池化**口径上 (两个模型的 token 网格不同, 无法逐 token 配对) ⇒ 本代结论覆盖的是对齐映射唯一可能的口径。"
+  },
+  "acceptance": {
+    "criterion": "四项判据全过才算找到来源: 功效闸门 (评估块 >= 32) / A1 (存在某候选使 matched > 错槽, 留出集双侧符号检验 p < 0.05) / A2 (存在某候选使 matched > 不对齐, 同上) / A3 (ridge 在 lambda ∈ {0.1, 1.0, 10.0} 上 A1/A2 均成立) / A4 (按『留出集 matched−noalign 中位数最大』唯一选出来源)。阈值跑前写死, 事后未放宽。",
+    "outcome": "fail",
+    "note": "功效闸门过 (32 块/候选/槽); A1 过; **A2 对全部候选不过** (matched−noalign 中位差: none 0.0000 / procrustes 0.0000 / v75_synth −0.0129 / ridge −0.0831 / lowrank16 −0.2772); A3 不过 (lambda=0.1 与 10 的 A2 均为负); ⇒ 无来源可选, 裁决 ALIGN_SOURCE_NOT_FOUND。脚本退出码: 找到来源返 0, 否则返 1 ⇒ 本代退出码 1, 属设计如此, 不是崩溃。"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分, 无目标泄漏面: 只做真模型前向 + 槽激活 + 线性拟合与度量; 不训练任何底座权重, 不产出能力指标。训练/留出切分按标签分层且互不相交; post_hoc 诊断同样只用这两半。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "存在一个可用的跨模型槽对齐映射: 把源模型槽激活的共享空间表示映到目标模型的对应槽, 且比「什么都不做」更同槽",
+      "verdict": "证伪 —— 四个候选在留出集上的 matched−noalign 中位差全部 ≤ 0 (none 0.0000 / procrustes 0.0000 / v75_synth −0.0129 / ridge −0.0831 / lowrank16 −0.2772); 且池化映射在**训练集**上也不比基线高 (中位 0.5082 < 基线 0.5990) ⇒ 不是过拟合, 是没东西可学",
+      "evidence": "research/weight_fusion/v79_align_source/SPEC.md §3; results/metrics.json 的 by_candidate / post_hoc.in_sample_vs_heldout"
+    },
+    {
+      "hypothesis": "v77 的 B5『槽身份在真模型上可分辨』与 v78 的 Q 槽 8/8 反映的是跨模型的**槽特异**对应关系",
+      "verdict": "本代**不能直接否证** (post_hoc, 不参与裁决), 但给出强反证压力: Q 槽 mean-pool 后有效秩只有 4.84-38.74 (O 槽 58.15-69.13) ⇒ 跨模型的高 CKA 主要来自**低秩共同成分**而非槽特异对应; 去掉 top1 PC 后, 连块级映射对基线的优势也消失 (A2 −0.0261, p=1.0)",
+      "evidence": "research/weight_fusion/v79_align_source/SPEC.md §4; results/metrics.json 的 post_hoc.pooled_eff_rank / post_hoc.residualized_top1pc_blockspecific_ridge"
+    },
+    {
+      "hypothesis": "对齐映射可以改到 token 级拟合, 以配合 S3 拍板的 token 级探针口径",
+      "verdict": "不可能 —— 两个模型的 token 网格不同, **无法逐 token 配对** ⇒ 对齐映射只能拟合在样本级池化口径上; 而本代证明样本级口径下没有可用的映射 ⇒ 『对齐映射』这个对象与 token 级口径**不相容**",
+      "evidence": "research/weight_fusion/v79_align_source/SPEC.md §5; docs/S3_PROTOCOL.md §2.3 修订记录"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "align_maps": "results/align_maps.pt",
+    "forwarder_tests": "tests/test_v79_align_source.py",
+    "forwarder_spec": "docs/V79_0_ALIGN_SOURCE.md"
+  },
+  "tests_status": "present"
+}

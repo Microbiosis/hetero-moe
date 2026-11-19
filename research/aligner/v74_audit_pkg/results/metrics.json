@@ -1,0 +1,33 @@
+{
+  "package": "v74_audit_pkg",
+  "version": "74.0",
+  "generated": "2026-11-12",
+  "status": "code_ready_pending_batch_run",
+  "one_mechanism_added": "审计脚本的算子来源支持两条通路：① git clone（可能不完整：git tree 有文件但工作区缺）；② /v62pkg 直接下载算子文件（免 clone）。同时把脚本内部 _BASE 统一到 930f2f7。",
+  "note": "本代**没有端到端数字**。按项目纪律，无支撑的数字不得对外引用；本快照只记录可本地复算的结构性事实。",
+  "locally_verifiable": {
+    "pkg_channel": "/v62pkg",
+    "base_commit": "930f2f7",
+    "implemented_in_commits": [
+      "aa7184d",
+      "e67722a"
+    ],
+    "base_unified_to": "930f2f7",
+    "download_list_includes_recurrent_gate": true,
+    "head_regression": true,
+    "head_audit_functional": true
+  },
+  "implementation_modules": [
+    "research/aligner/v62_dimension_projection_space/slot_independence_audit.py"
+  ],
+  "falsified": [],
+  "bugs_fixed": [
+    "审计脚本内部 _BASE 统一到 930f2f7（旧 commit 缺 recurrent_gate.py 导致 import 失败）",
+    "审计脚本支持 /v62pkg（notebook 直接下载算子文件，免 git clone）"
+  ],
+  "pending": [
+    "Kaggle 批量验证未执行",
+    "端到端数字待回填"
+  ],
+  "acceptance_note": "5/5 通过（本地 CPU）。第 1-3 项断言历史提交（稳定事实），第 4 项显式记录 HEAD 回归状态"
+}

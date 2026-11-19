@@ -95,7 +95,7 @@
   "leakage_audit": {
     "required": true,
     "status": "not_applicable",
-    "note": "本代的负结论不依赖收益幅度, 而是相对单教师的符号; 目标项泄漏只会同向抬高两者, 不足以把负号翻成正号。但若要引用具体百分比, 需先做 beta_h=0 重测"
+    "note": "2026-11-19 勘误修正：经逐行复核，examples/run_v17_multi_teacher.py:159-163 与 distill.py 本就以 beta_h=0.0 运行（不含直接目标泄漏项，原注称需先做 beta_h=0 重测系误记）。但本代多教师退步（-16.7% / -6.7% / -3.4%）受全局共享 attn_pools.W_o 在首 run 后永久冻结及 V8Trainer 漏训 aligner 混杂，详见 docs/PAST_SUBPACKAGES_ERRATA.md。"
   },
   "falsified": [
     {

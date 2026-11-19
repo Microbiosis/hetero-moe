@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "version": "68.0",
+  "package": "v68_arch_ablation",
+  "line": "aligner",
+  "title": "四分支 zero-OOM SSM 恢复 + 架构图 + 单模态消融",
+  "generation": {
+    "one_mechanism_added": "① zero-OOM 版 SSM：用 autograd checkpointing + 状态 tile，d_state=16 时显存仅 4.6MB，从而恢复四分支；② 三模态异构融合 pipeline 架构图（紫色论文风）；③ ABL 环境变量做单模态消融（text/all），_feats helper 控制是否给 ViT。",
+    "parent": "67.0",
+    "children": [
+      "69.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [
+      "69.0"
+    ],
+    "note": "aligner 线接 v48→…→v62→v63→…→v74。v63 起为 v62 共享空间的工程化延伸，不改槽/模型/对齐三轴本身。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "research/aligner/v62_dimension_projection_space/moa_operators_zerooom.py",
+      "research/aligner/v62_dimension_projection_space/moa_triton_zerooom.py",
+      "research/aligner/v62_dimension_projection_space/hetero_arch_v68.png",
+      "research/aligner/v62_dimension_projection_space/train_v2.py"
+    ],
+    "note": "zero-OOM 版四分支 held-out 仅 0.53，仍输给三分支 0.64 ⇒ 恢复四分支**未能反超**，v71 因此又退回三分支。这是本代最重要的一条结论：显存问题解决了，但收益没有。"
+  },
+  "claim": {
+    "asserts": "zero-OOM SSM 前向与串行参考一致(max diff 5.55e-17)、解析反向与数值有限差分一致(相对误差 3.57e-09)、峰值显存低于 SSD 与 Kogge-Stone 两种旧实现、架构图是合法 PNG、ABL 消融开关真能拿掉 ViT 通道",
+    "metric": "unit_test_pass_rate",
+    "direction": "higher_is_better",
+    "value": 1.0,
+    "baseline": {
+      "ref": "无（本代首次登记）",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": null,
+    "outcome_label": "code_ready_pending_batch_run",
+    "note": "**本代机制已本地实测，但本代路线已被后续实测否掉**（四分支 held-out 0.53 < 三分支 0.64）—— 机制成立 ≠ 路线值得。"
+  },
+  "protocol": {
+    "eval_set": "not_applicable",
+    "input": "本代无下游任务评估；权威测试只验证机制语义",
+    "caveat": "引用本代时不得说成精度结论。"
+  },
+  "acceptance": {
+    "criterion": "权威测试全部通过（tests/test_package.py）",
+    "outcome": "pass",
+    "note": "6/6 通过（本地 CPU）。第 2 项是解析梯度对五个参数分别做中心差分验证"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分，无目标泄漏风险面；且本代无端到端数字可泄漏。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "恢复四分支并配 zero-OOM SSM 能提升端到端效果",
+      "verdict": "证伪 —— 四分支 held-out 0.53，输给 3 分支 0.64；zero-OOM 实现本身正确（前向/反向均已位级验证），但接回 proposer 会掉 0.11",
+      "evidence": "git commit c496d6d；research/aligner/v68_arch_ablation/SPEC.md §3"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v68_arch_ablation.py",
+    "forwarder_spec": "docs/V68_0_ARCH_ABLATION.md"
+  },
+  "tests_status": "present",
+  "external_artifacts": {
+    "note": "端到端产物待 Kaggle 批量验证后落盘。"
+  }
+}

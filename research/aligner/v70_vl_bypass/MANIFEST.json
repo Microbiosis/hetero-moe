@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "version": "70.0",
+  "package": "v70_vl_bypass",
+  "line": "aligner",
+  "title": "VL 跨模态融合旁路 — CrossModalVisionLanguageFusionSubOp 接入",
+  "generation": {
+    "one_mechanism_added": "CrossModalVisionLanguageFusionSubOp：双向 2D 感知局部空间深度卷积（视觉流）+ 低秩跨模态锚点共注意力（零距离衰减，文本流）+ Hadamard-Bilinear 门控，在单个融合 kernel 内完成；输出经 vl_out_proj 投到 canonical 维后**残差并入**，不破坏四槽结构。USE_VL=1 启用。",
+    "parent": "69.0",
+    "children": [
+      "71.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [
+      "71.0"
+    ],
+    "note": "aligner 线接 v48→…→v62→v63→…→v74。v63 起为 v62 共享空间的工程化延伸，不改槽/模型/对齐三轴本身。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "research/aligner/v62_dimension_projection_space/vl_fusion.py",
+      "research/aligner/v62_dimension_projection_space/train_v2.py"
+    ],
+    "note": "算子 203K 参数。修掉三个真实 bug：① vl_out 是 256 维而 canonical 是 1024 维，需过 Linear 投影再残差；② patch 维硬编码 128（实际 ViT 是 197）；③ ViT 197 patch 未池化到文本 128 token 就融合。另修 VSR 图像改从 HF 预打包 zip 拉取（绕开 Kaggle COCO 联网限制）。"
+  },
+  "claim": {
+    "asserts": "VL 旁路算子成立：前向形状正确、forward_from_projected 要求两路等长、beta=0 时输出是视觉与文本的凸组合、锚点共注意力零距离衰减（末位文本影响首位视觉）、门控参数梯度非零、USE_VL 可切、VL 输出投到 canonical 维度再残差",
+    "metric": "unit_test_pass_rate",
+    "direction": "higher_is_better",
+    "value": 1.0,
+    "baseline": {
+      "ref": "无（本代首次登记）",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": null,
+    "outcome_label": "code_ready_pending_batch_run",
+    "note": "**本代无端到端精度数字。**算子机制已本地实测。"
+  },
+  "protocol": {
+    "eval_set": "not_applicable",
+    "input": "本代无下游任务评估；权威测试只验证机制语义",
+    "caveat": "引用本代时不得说成精度结论。"
+  },
+  "acceptance": {
+    "criterion": "权威测试全部通过（tests/test_package.py）",
+    "outcome": "pass",
+    "note": "7/7 通过（本地 CPU）。第 3 项把 out_proj 置成恒等后验证门控的凸组合性质"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分，无目标泄漏风险面；且本代无端到端数字可泄漏。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "ViT hidden 之前携带的是有效视觉表示",
+      "verdict": "证伪 —— 曾因图像下载失败静默填占位图，导致 ViT hidden 全零；修法：下载成功率断言 + 灰图占位 + UA 头，并补样本间 cosine / patch 差异 / 灰图对照的有效性检查",
+      "evidence": "git commit aa8a8d7 / 6c02fd8"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v70_vl_bypass.py",
+    "forwarder_spec": "docs/V70_0_VL_BYPASS.md"
+  },
+  "tests_status": "present",
+  "external_artifacts": {
+    "note": "端到端产物待 Kaggle 批量验证后落盘。"
+  }
+}

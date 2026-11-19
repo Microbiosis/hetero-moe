@@ -188,7 +188,7 @@ F_m(h) &= \big(\mathrm{SiLU}(h W^{\text{gate}}_m) \odot (h W^{\text{up}}_m)\big)
 \end{align}
 where $Q_{\text{INT4}}$ is group-wise (group size 128) 4-bit fake quantization with a straight-through estimator in the backward pass. Three deliberate choices shape the layer.
 
-\textbf{Gradient truncation.} The expert input is detached ($\stopgrad$), so the frozen bases' intermediate activations never enter the autograd graph. Activation memory drops from $O(M L D_{\text{ff}})$ to $O(L D_{\text{shared}})$ plus adapter parameters, which is what makes $M$-base fusion trainable on CPU at all. The cost is that experts cannot shape upstream representations through gradients; the router and gates carry all adaptation.
+\textbf{Gradient truncation vs.\ activation checkpointing.} In the v4.0 prototype, the expert input was detached ($\stopgrad$) so experts could not shape upstream representations through gradients, placing all cross-layer adaptation on the router and gates. Note an autograd caveat corrected in our v5.0 implementation (\texttt{hetero\_moe/core/fusion.py}): because $\gamma_m$ and $\beta_m$ remain trainable, detaching $x$ alone does \emph{not} prevent PyTorch from retaining intermediate SwiGLU activations for backpropagating into $(\gamma_m, \beta_m)$. True $O(M L D_{\text{ff}}) \to O(L D_{\text{shared}})$ peak activation memory reduction is instead achieved via per-expert activation recomputation (\texttt{grad\_checkpoint=True}) alongside true sparse token dispatch (\texttt{sparse\_dispatch=True}), with cross-layer gradients restored by default (\texttt{detach\_input=False}).
 
 \textbf{Sparse routing with straight-through gradients.} The router computes logits $z = x W_r^\top$ from the \emph{clean} pre-noise input, $\alpha = \softmax(z/\tau)$, and the hard selection $\hat\alpha = \topk(\alpha, K)$ ($K{=}1$ unless stated) is applied in the forward pass while the backward pass follows the softmax weights, in the spirit of straight-through estimators \citep{bengio2013}. Routing on the clean input keeps router decisions from chasing the quantization noise it would otherwise induce. The temperature $\tau$ is the hub's sole channel of influence and is $1$ unless a hub is fitted (\S\ref{sec:hub}).
 
@@ -614,9 +614,9 @@ The two repairs of \S\ref{sec:diagnosis} target a real defect---$\text{grad\_nor
 \textbf{Student} & \textbf{Evaluation} & \textbf{Teacher} & \textbf{Distilled} & \textbf{vs.\ teacher} \\
 \midrule
 v13: MLP student (no pretraining) & train-dist.\ target & 0.3245 & 0.3076 & $+5.4\%$ \\
-v16: TinyBERT + LoRA ($0.60\%$) & train-dist.\ target$^\dagger$ & 0.2764 & 0.1380 & $+50.1\%$ \\
-v18: TinyBERT + LoRA & held-out real text & --- & 0.1574 & viable \\
-v21: BERT+ViT multimodal & train-dist.\ target$^\dagger$ & 0.3238 & 0.1620 & $+50.0\%$ \\
+v16: TinyBERT + LoRA ($0.60\%$) & train-dist.\ target$^\dagger$ & 0.2764 & 0.1380 & $+50.1\%$ (\emph{leakage, v32}) \\
+v18: TinyBERT + LoRA & held-out real text & --- & 0.1574 & viable (mixed obj.) \\
+v21: BERT+ViT multimodal & train-dist.\ target$^\dagger$ & 0.3238 & 0.1620 & $+50.0\%$ (\emph{leakage, v42}) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -624,7 +624,7 @@ v21: BERT+ViT multimodal & train-dist.\ target$^\dagger$ & 0.3238 & 0.1620 & $+5
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{figs/fig_distill.pdf}
-\caption{(a) Single-teacher chimera distillation: distilled students beat their multi-base teacher in every setting. (b) Multi-teacher distillation regresses across all configurations (v17); a dispatch-style reformulation removes the harm but does not produce a gain (v40). Lower is better.}
+\caption{(a) Single-teacher chimera distillation: apparent student margins over the multi-base teacher under the mixed objective ($\beta_{\text{h}}{=}0.3$), shown in \S\ref{sec:distill-exp} (v32/v42) to originate entirely from target leakage rather than concept transfer. (b) Multi-teacher distillation regresses across all configurations (v17); a dispatch-style reformulation removes the harm but does not produce a gain (v40). Lower is better.}
 \label{fig:distill}
 \end{figure}
 
@@ -664,14 +664,14 @@ The audits above are not a miscellaneous collection of corrections; taken togeth
 \toprule
 \textbf{Finding} & \textbf{In-sample} & \textbf{Held-out} & \textbf{Verdict} \\
 \midrule
-Attention-path advantage (v46) & $+82.7\%$ & $+70.6\%$ & \textbf{survives} \\
+Attention-path advantage (v46) & $+82.7\%$ & $+70.6\%$ & \textbf{retracted} (random-space artifact, v51) \\
 Alignment-ladder ceiling (v41) & $+36.5\%$ vs.\ attn & capacity-matched & \textbf{survives} \\
 Hub: router-norm best (v44) & best & best ($5/5$) & \textbf{survives (corrected)} \\
 Hub: gate-style central gain (v43) & $+44.5\%$ & $+4.0\%$ & shrinks to noise \\
 Corpus-scale boundary (v45) & present & absent & \textbf{not established} \\
 Long-training gain (v19) & $+4.3\%$ & $+1.5\%$ & shrinks ($34\%$ retained) \\
 Gradient repairs (v30/v31) & $-0.44\%$ / $-0.11\%$ & same & no effect \\
-Scale-heterogeneous fusion (v33, \S\ref{sec:scale-hetero-exp}) & $+26.7\%$ & $+26.5\%$ (noise), $+26.5\%$ (stimulus) & \textbf{survives} \\
+Scale-heterogeneous fusion (v33, \S\ref{sec:scale-hetero-exp}) & $+26.7\%$ & $+26.5\%$ (noise), $+26.5\%$ (stimulus) & \textbf{retracted} (random-space artifact, v50/v54) \\
 Entry injection into a container (v35) & $-11.1\%$ & $-3.3\%$ (stimulus) & no gain \\
 \bottomrule
 \end{tabular}

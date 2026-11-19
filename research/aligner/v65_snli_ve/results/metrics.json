@@ -1,0 +1,57 @@
+{
+  "package": "v65_snli_ve",
+  "version": "65.0",
+  "generated": "2026-11-12",
+  "status": "code_ready_pending_batch_run",
+  "one_mechanism_added": "把评测任务从 ag_news 4 分类换成 SNLI-VE 3 类蕴含判断——后者要求**图文配对**推理（只看 caption 不可能答对），从而把多模态从\"输入拼接\"变成\"必须用视觉证据\"。train_v2 的 N_CLS 环境变量使同一脚本可切换任务。",
+  "note": "本代**没有端到端数字**。按项目纪律，无支撑的数字不得对外引用；本快照只记录可本地复算的结构性事实。",
+  "locally_verifiable": {
+    "n_cls": 3,
+    "dataset": "Flickr30k 图文对",
+    "n_cls_parameterized": true,
+    "extraction_script_compiles": true,
+    "label_map": {
+      "entailment": 0,
+      "neutral": 1,
+      "contradiction": 2
+    },
+    "maxlen": 128,
+    "vit_seq": 197,
+    "hidden_dims": [
+      2048,
+      768,
+      1152
+    ],
+    "n_records_target": 5000,
+    "img_dir_candidates": 2,
+    "n_cls_switchable": [
+      3,
+      4
+    ],
+    "cache_repo": "redmingwei/hetero-moe-cache-v65"
+  },
+  "implementation_modules": [
+    "research/aligner/v62_dimension_projection_space/extract_snli_ve_v65.py"
+  ],
+  "falsified": [
+    {
+      "h": "多模态融合的优势在真实图文任务上会显现",
+      "v": "未验证 —— 本代只完成数据管线与任务切换，端到端数字待 Kaggle 批量跑；不得据本代声称多模态增益",
+      "e": "research/aligner/v65_snli_ve/SPEC.md §3"
+    }
+  ],
+  "bugs_fixed": [
+    "IMG_DIR 路径：自动探测 flickr30k 图像目录",
+    "records 空断言早失败",
+    "训练前 MoA sanity check + notebook 崩溃上传 traceback 到 HF",
+    "N_CLS 未定义导致 NameError（此前 edit 失败）",
+    "LOCAL_CACHE：Kaggle 预下载到本地再训练，避免外网断",
+    "extract 保存到固定 cache_v65 目录 + UPLOAD 开关",
+    "sanity check 的 tr_idx 未定义 bug（MoA forward 已在 v64 验证）"
+  ],
+  "pending": [
+    "Kaggle 批量验证未执行",
+    "端到端数字待回填"
+  ],
+  "acceptance_note": "10/10 通过（本地 CPU）。本代是静态契约测试：提取脚本需 GPU+网络、train_v2 一 import 就开训，都无法在本地执行"
+}

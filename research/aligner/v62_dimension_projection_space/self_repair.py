@@ -74,17 +74,27 @@ class SlotHealthMonitor:
             name = self.slot_names[idx]
             ema_before = float(self.ema[idx])
 
-            # 1. router 输出列重新初始化（仅当该槽参与路由时）
+            # 1. router 输出行及对应 bias 重新初始化（并同步清零 optimizer 动量状态）
             if hasattr(module, 'router') and module.router is not None:
                 nn.init.normal_(module.router.weight[idx, :], std=0.02)
+                if getattr(module.router, 'bias', None) is not None:
+                    module.router.bias[idx].zero_()
                 if optimizer is not None:
                     st = optimizer.state.get(module.router.weight)
                     if st is not None:
                         for k, v in st.items():
                             if k == 'step':
                                 continue
-                            if v.shape == module.router.weight.shape:
+                            if isinstance(v, torch.Tensor) and v.shape == module.router.weight.shape:
                                 v[idx, :].zero_()
+                    if getattr(module.router, 'bias', None) is not None:
+                        bst = optimizer.state.get(module.router.bias)
+                        if bst is not None:
+                            for k, v in bst.items():
+                                if k == 'step':
+                                    continue
+                                if isinstance(v, torch.Tensor) and v.shape == module.router.bias.shape:
+                                    v[idx].zero_()
 
             # 2. slot_gate 提升，确保 softmax 后不被其他槽压制
             if hasattr(module, 'slot_gate'):

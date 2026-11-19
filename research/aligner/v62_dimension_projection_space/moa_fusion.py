@@ -19,10 +19,17 @@ import os
 import torch
 import torch.nn as nn
 
-from moa_operators import (
-    MoAOperatorConfig, IterativeMoAOperatorBlock,
-    NumpyMoAOperatorKernels,
-)
+# 包内相对 import 优先; 平铺 import 兜底 (train_v2.py 等独立脚本按平铺路径跑)。
+if __package__:
+    from .moa_operators import (
+        MoAOperatorConfig, IterativeMoAOperatorBlock,
+        NumpyMoAOperatorKernels,
+    )
+else:
+    from moa_operators import (
+        MoAOperatorConfig, IterativeMoAOperatorBlock,
+        NumpyMoAOperatorKernels,
+    )
 
 
 class MoAFusionOverProjSpace(nn.Module):
@@ -65,23 +72,26 @@ class MoAFusionOverProjSpace(nn.Module):
     def forward_with_routing(self, x: torch.Tensor):
         """兼容 v62 接口：返回 (y, alpha)。
 
-        alpha 用 proposal_importance 扩展为 [B,S,num_proposers] 占位，
-        让 train_v2 的负载均衡统计有值可算（真实均衡由 aux_loss 保证）。
+        优先返回逐 token 可微 router_probs [B,S,num_proposers]（和为 1），
+        无 router_probs 时回退到 proposal_importance 扩展占位。
         """
         y, aux_loss, metrics = self.block(x)
         self.last_aux_loss = aux_loss
+        router_probs = metrics.get('router_probs')
+        if router_probs is not None:
+            return y, router_probs
         imp = metrics.get('proposal_importance')          # [num_proposers]
         B, S, _ = x.shape
         if imp is None:
-            alpha = torch.ones(B, S, self.num_proposers, device=x.device) / self.num_proposers
+            alpha = torch.ones(B, S, self.num_proposers, device=x.device, dtype=x.dtype) / self.num_proposers
         else:
-            alpha = imp.view(1, 1, -1).expand(B, S, -1).to(x.device)
+            alpha = imp.view(1, 1, -1).expand(B, S, -1).to(device=x.device, dtype=x.dtype)
         return y, alpha
 
     def describe(self) -> str:
         n = sum(p.numel() for p in self.parameters())
         return ('MoAFusionOverProjSpace\n'
-                '  d_space=%d, proposers=%d (Attn/SSM/Conv/SwiGLU 异构)\n'
+                '  d_space=%d, proposers=%d (Attn/Conv/SwiGLU 三分支异构)\n'
                 '  aggregator=%s top_k=%d, refinement_steps=%d\n'
                 '  参数=%d（v62 同构MoE为 %d）'
                 % (self.d_space, self.num_proposers, self.cfg.aggregator_mode,
