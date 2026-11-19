@@ -26,9 +26,8 @@ API:
     eval:         knn_acc, concat_norm_then_knn
     arm:          train_arm
 """
-from .paths import (
-    MSA_DIR, EMB_DIR, RER_DIR, TABLDM_CKPT, first_existing,
-)
+from . import paths as _paths
+from .paths import first_existing
 from .encoders import (
     load_msa_big, load_small, load_tokenizer, encode,
 )
@@ -42,6 +41,18 @@ from .entry_encoder import (
 )
 from .eval import knn_acc, concat_norm_then_knn
 from .arm import train_arm
+
+_LAZY_PATH_NAMES = ("MSA_DIR", "EMB_DIR", "RER_DIR", "TABLDM_CKPT", "TABLDM_SRC")
+
+
+def __getattr__(name: str):
+    if name in _LAZY_PATH_NAMES:
+        return getattr(_paths, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    return sorted(set(globals()) | set(_LAZY_PATH_NAMES))
 
 __all__ = [
     # paths

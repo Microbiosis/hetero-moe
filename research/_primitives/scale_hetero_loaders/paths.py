@@ -99,22 +99,28 @@ def resolve(env_key: str, local_candidates, *, hub_subpath: str | None = None,
         f"    (b) 先 pip install huggingface_hub 并确保可访问 Hub, 程序会自动下载")
 
 
-MSA_DIR = resolve(
-    "V36_MSA_DIR",
-    ["/workspace/models/MSA-4B", "/workspace/MSA-4B"],
-    what="MSA-4B 浅层 backbone (D=2560)")
+def _resolve_msa_dir() -> str:
+    return resolve(
+        "V36_MSA_DIR",
+        ["/workspace/models/MSA-4B", "/workspace/MSA-4B"],
+        what="MSA-4B 浅层 backbone (D=2560)")
 
-EMB_DIR = resolve(
-    "V36_EMB_DIR",
-    ["/workspace/models/skillcorpus-embedding-0.6b",
-     os.path.expanduser("~/.cache/huggingface/embedding")],
-    what="skillcorpus-embedding-0.6b (D=1024)")
 
-RER_DIR = resolve(
-    "V36_RER_DIR",
-    ["/workspace/models/skillcorpus-reranker-0.6b",
-     os.path.expanduser("~/.cache/huggingface/reranker")],
-    what="skillcorpus-reranker-0.6b (D=1024)")
+def _resolve_emb_dir() -> str:
+    return resolve(
+        "V36_EMB_DIR",
+        ["/workspace/models/skillcorpus-embedding-0.6b",
+         os.path.expanduser("~/.cache/huggingface/embedding")],
+        what="skillcorpus-embedding-0.6b (D=1024)")
+
+
+def _resolve_rer_dir() -> str:
+    return resolve(
+        "V36_RER_DIR",
+        ["/workspace/models/skillcorpus-reranker-0.6b",
+         os.path.expanduser("~/.cache/huggingface/reranker")],
+        what="skillcorpus-reranker-0.6b (D=1024)")
+
 
 # TabLDM 的分类头权重 —— 是仓库内的**文件**而非目录, 故单独用 find_file
 def _resolve_ckpt() -> str:
@@ -137,8 +143,6 @@ def _resolve_ckpt() -> str:
         "    (a) 设置环境变量 V36_TABLDM_CKPT=<clf_default.ckpt 路径>\n"
         "    (b) 先 pip install huggingface_hub 并确保可访问 Hub(occams/Xiaomi-TabLDM)")
 
-
-TABLDM_CKPT = _resolve_ckpt()
 
 # ---- TabLDM 源码 (inference-only 包, 未发布到 PyPI) ----
 #
@@ -201,4 +205,24 @@ def _resolve_tabldm_src() -> str | None:
     return got
 
 
-TABLDM_SRC = _resolve_tabldm_src()
+_LAZY_RESOLVERS = {
+    "MSA_DIR": _resolve_msa_dir,
+    "EMB_DIR": _resolve_emb_dir,
+    "RER_DIR": _resolve_rer_dir,
+    "TABLDM_CKPT": _resolve_ckpt,
+    "TABLDM_SRC": _resolve_tabldm_src,
+}
+_LAZY_CACHE: dict[str, str | None] = {}
+
+
+def __getattr__(name: str):
+    """按需延迟解析路径，避免纯 PyTorch 工具在 import 时触发联网下载或 git clone。"""
+    if name in _LAZY_RESOLVERS:
+        if name not in _LAZY_CACHE:
+            _LAZY_CACHE[name] = _LAZY_RESOLVERS[name]()
+        return _LAZY_CACHE[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    return sorted(set(globals()) | set(_LAZY_RESOLVERS))

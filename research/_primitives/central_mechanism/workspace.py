@@ -71,16 +71,18 @@ class BroadcastWorkspace(nn.Module):
 
     def augment_router_logits(self, z_router: torch.Tensor) -> torch.Tensor:
         """z_router: [B, S, M] → z_router + U @ c."""
-        bias = self.U @ self.c  # [M]
+        # 使用可微 clone 隔离存储，避免随后同一步 forward 内 ema_update 的 .data 原地更新破坏反传梯度
+        bias = self.U @ self.c.clone()  # [M]
         return z_router + bias
 
     @torch.no_grad()
     def ema_update(self, expert_outputs: List[torch.Tensor]) -> None:
-        """EMA 更新中枢 c (与 v8 一致)."""
-        if not expert_outputs:
+        """EMA 更新中枢 c (仅训练态且未冻结时生效，支持 2D/3D 专家输出)."""
+        if not self.training or not self.c.requires_grad or not expert_outputs:
             return
         stacked = torch.stack(expert_outputs, dim=0)
-        new_c = stacked.mean(dim=(0, 1, 2))
+        reduce_dims = tuple(range(stacked.ndim - 1))
+        new_c = stacked.mean(dim=reduce_dims)
         self.c.data.mul_(self.ema_decay).add_(new_c, alpha=1.0 - self.ema_decay)
 
     def snapshot(self) -> torch.Tensor:
@@ -135,17 +137,18 @@ class GateStyleWorkspace(nn.Module):
 
         初始状态: W_t=0, c=0 → temperature=1 → z_router 不变 (v7 行为).
         """
-        t_scalar = self.W_t @ self.c
-        temperature = 1.0 + self.alpha * torch.tanh(t_scalar)
+        t_scalar = self.W_t @ self.c.clone()
+        temperature = torch.clamp(1.0 + self.alpha * torch.tanh(t_scalar), min=1e-4)
         return z_router / temperature
 
     @torch.no_grad()
     def ema_update(self, expert_outputs: List[torch.Tensor]) -> None:
-        """EMA 更新中枢 c (与 v8 一致)."""
-        if not expert_outputs:
+        """EMA 更新中枢 c (仅训练态且未冻结时生效，支持 2D/3D 专家输出)."""
+        if not self.training or self.freeze_c or not self.c.requires_grad or not expert_outputs:
             return
         stacked = torch.stack(expert_outputs, dim=0)
-        new_c = stacked.mean(dim=(0, 1, 2))
+        reduce_dims = tuple(range(stacked.ndim - 1))
+        new_c = stacked.mean(dim=reduce_dims)
         self.c.data.mul_(self.ema_decay).add_(new_c, alpha=1.0 - self.ema_decay)
 
     def snapshot(self) -> torch.Tensor:
@@ -207,6 +210,7 @@ def make_workspace(
         nn.Module: GateStyleWorkspace 或 BroadcastWorkspace 实例
     """
     if mode == "gate":
+        kwargs.pop("init_scale", None)
         return GateStyleWorkspace(d_shared=d_shared, num_experts=num_experts, **kwargs)
     elif mode == "broadcast":
         # 2026-10-11 修正: BroadcastWorkspace 没有 alpha 参数 (它的广播幅度由
@@ -214,8 +218,14 @@ def make_workspace(
         # 于是任何 c1_mode="broadcast" 的层都在构造时 TypeError, v19 与 v12 的
         # broadcast 对照臂**从未真正跑起来过**。这里把 alpha 译成 init_scale:
         # 两者都只决定中枢广播的初始幅度, 语义一致。
-        if "alpha" in kwargs:
+        if "alpha" in kwargs and "init_scale" not in kwargs:
             kwargs["init_scale"] = kwargs.pop("alpha")
-        return BroadcastWorkspace(d_shared=d_shared, num_experts=num_experts, **kwargs)
+        else:
+            kwargs.pop("alpha", None)
+        freeze_c = kwargs.pop("freeze_c", False)
+        cw = BroadcastWorkspace(d_shared=d_shared, num_experts=num_experts, **kwargs)
+        if freeze_c:
+            cw.c.requires_grad_(False)
+        return cw
     else:
         raise ValueError(f"unknown mode {mode!r}; expected 'gate' or 'broadcast'")

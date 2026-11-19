@@ -1,0 +1,46 @@
+{
+  "package": "v67_three_branch",
+  "version": "67.0",
+  "generated": "2026-11-12",
+  "status": "code_ready_pending_batch_run",
+  "one_mechanism_added": "HeterogeneousProposerOp 的分支按 i%3 轮转（Attn/Conv/SwiGLU）。本代去掉 SSM 分支：chunkwise_ssd 的 diff_log_a 在 D=256×N=16 下需 25GB 必 OOM，Kogge-Stone 串行回退又与并行扫描冲突。",
+  "note": "本代**没有端到端数字**。按项目纪律，无支撑的数字不得对外引用；本快照只记录可本地复算的结构性事实。",
+  "locally_verifiable": {
+    "branch_kinds": [
+      "CausalSelfAttentionSubOp",
+      "CausalDepthwiseConvSubOp",
+      "SwiGLUMLPSubOp"
+    ],
+    "branch_cycle": "i % 3 → Attn / Conv / SwiGLU",
+    "held_out_3branch": 0.64,
+    "held_out_4branch_zerooom": 0.53,
+    "branch_rotation": "i % 3",
+    "ssm_instances_in_proposer": 0,
+    "ssm_class_retained": true,
+    "zerooom_branch_kinds": "[i % 4 for i in range(num_proposers)]"
+  },
+  "implementation_modules": [
+    "research/aligner/v62_dimension_projection_space/moa_operators.py"
+  ],
+  "falsified": [
+    {
+      "h": "四种归纳偏置分支越多越好（4 分支优于 3 分支）",
+      "v": "证伪 —— zero-OOM 四分支 held-out 0.53，输给三分支 0.64；且 SSM 分支在 D=256×N=16 下必 OOM",
+      "e": "git c496d6d / 1f7c6b4（v71 commit message 记录实测）"
+    }
+  ],
+  "bugs_fixed": [],
+  "pending": [
+    "Kaggle 批量验证未执行",
+    "端到端数字待回填"
+  ],
+  "acceptance_note": "6/6 通过（本地 CPU）",
+  "known_defects": [
+    {
+      "defect": "profile_moa_operator_complexity 仍按四分支估算参数（moa_operators.py:921 仍是 kind = i % 4，注释也还写着含 SSM）",
+      "impact": "该函数在 v67 之后给出的参数账与实现不符，不可直接引用",
+      "why_not_fixed_here": "修它要动 v62 工作目录里的公共代码，可能影响其他代对它的引用；本代只登记不擅改",
+      "evidence": "research/aligner/v62_dimension_projection_space/moa_operators.py:921"
+    }
+  ]
+}

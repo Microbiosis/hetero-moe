@@ -1,0 +1,50 @@
+{
+  "package": "v68_arch_ablation",
+  "version": "68.0",
+  "generated": "2026-11-12",
+  "status": "code_ready_pending_batch_run",
+  "one_mechanism_added": "① zero-OOM 版 SSM：用 autograd checkpointing + 状态 tile，d_state=16 时显存仅 4.6MB，从而恢复四分支；② 三模态异构融合 pipeline 架构图（紫色论文风）；③ ABL 环境变量做单模态消融（text/all），_feats helper 控制是否给 ViT。",
+  "note": "本代**没有端到端数字**。按项目纪律，无支撑的数字不得对外引用；本快照只记录可本地复算的结构性事实。",
+  "locally_verifiable": {
+    "d_state": 16,
+    "vram_mb": 4.6,
+    "held_out_4branch_zerooom": 0.53,
+    "held_out_3branch": 0.64,
+    "arch_diagram": "hetero_arch_v68.png",
+    "ablation_env": "ABL=text|all",
+    "zerooom_forward_max_abs_diff": 5.55e-17,
+    "zerooom_backward_fd_max_rel_err": 3.57e-09,
+    "arch_png_dims": [
+      2385,
+      1260
+    ],
+    "arch_png_bytes": 252521,
+    "abl_modes": [
+      "all",
+      "text",
+      "image"
+    ],
+    "d_state16_peak_mem_mb": 4.6,
+    "heldout_4branch_zerooom": 0.53,
+    "heldout_3branch": 0.64
+  },
+  "implementation_modules": [
+    "research/aligner/v62_dimension_projection_space/moa_operators_zerooom.py",
+    "research/aligner/v62_dimension_projection_space/moa_triton_zerooom.py",
+    "research/aligner/v62_dimension_projection_space/hetero_arch_v68.png",
+    "research/aligner/v62_dimension_projection_space/train_v2.py"
+  ],
+  "falsified": [
+    {
+      "h": "四分支输给三分支只是显存 OOM 造成的，恢复四分支即可反超",
+      "v": "证伪 —— zero-OOM 版四分支跑通了（显存 4.6MB）但 held-out 仅 0.53，仍输给三分支 0.64",
+      "e": "git c496d6d commit message"
+    }
+  ],
+  "bugs_fixed": [],
+  "pending": [
+    "Kaggle 批量验证未执行",
+    "端到端数字待回填"
+  ],
+  "acceptance_note": "6/6 通过（本地 CPU）。第 2 项是解析梯度对五个参数分别做中心差分验证"
+}

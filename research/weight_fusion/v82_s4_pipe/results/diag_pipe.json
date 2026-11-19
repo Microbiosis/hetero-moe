@@ -1,0 +1,26 @@
+{
+  "arm1_minus_arm0_total_pipe_attn": {
+    "n": 7680,
+    "n_positive": 4415,
+    "median_delta": 0.0004424690268933773,
+    "sign_p": 1.0
+  },
+  "arm1_slot_Q_content_channel_gain": {
+    "n": 7680,
+    "n_positive": 4359,
+    "median_delta": 0.000511696096509695,
+    "sign_p": 1.0
+  },
+  "arm2_wrong_slot_O_content_channel_gain": {
+    "n": 7680,
+    "n_positive": 4613,
+    "median_delta": 0.000969564076513052,
+    "sign_p": 1.0
+  },
+  "channel_addressing_per_sample": {
+    "n": 7680,
+    "n_positive": 3787,
+    "median_delta": -8.434290066361427e-05,
+    "sign_p": 0.7870074130572553
+  }
+}

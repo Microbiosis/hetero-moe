@@ -1,0 +1,28 @@
+{
+  "package": "v72_audit_path",
+  "version": "72.0",
+  "generated": "2026-11-12",
+  "status": "code_ready_pending_batch_run",
+  "one_mechanism_added": "审计脚本加载 projspace.py 时，先用 __file__ 推导的绝对路径，再 fallback 到包目录候选列表（含 /kaggle/working/hetero-moe/...）。",
+  "note": "本代**没有端到端数字**。按项目纪律，无支撑的数字不得对外引用；本快照只记录可本地复算的结构性事实。",
+  "locally_verifiable": {
+    "locators": [
+      "absolute from __file__",
+      "package dir fallback"
+    ],
+    "candidate_count": 2,
+    "cwd_independent_verified": true
+  },
+  "implementation_modules": [
+    "research/aligner/v62_dimension_projection_space/slot_independence_audit.py"
+  ],
+  "falsified": [],
+  "bugs_fixed": [
+    "审计脚本 projspace 定位：绝对路径 + 包目录 fallback（Kaggle cwd 是 /kaggle/working）"
+  ],
+  "pending": [
+    "Kaggle 批量验证未执行",
+    "端到端数字待回填"
+  ],
+  "acceptance_note": "4/4 通过（本地 CPU）。第 3/4 项是真的换个工作目录跑一遍，不是看源码"
+}

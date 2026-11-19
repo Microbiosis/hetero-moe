@@ -1,0 +1,41 @@
+{
+  "package": "v66_vsr_triton",
+  "version": "66.0",
+  "generated": "2026-11-12",
+  "status": "code_ready_pending_batch_run",
+  "one_mechanism_added": "① VSR 真视觉空间关系任务：caption 只断言空间关系、必须看图判断真假，避免语言捷径；② 四个 @triton.jit 融合内核（Branch-RMSNorm+LayerScale / 多 proposer GEMM+SwiGLU / 稀疏 top-k 加权聚合 / 块稀疏 MoA 在线 softmax），附 TritonTileSimulator 逐 program 位级验证与精确 HBM 流量分析。",
+  "note": "本代**没有端到端数字**。按项目纪律，无支撑的数字不得对外引用；本快照只记录可本地复算的结构性事实。",
+  "locally_verifiable": {
+    "kernels": 4,
+    "kernel_names": [
+      "FusedBranchRMSNormScale (Fwd+Bwd)",
+      "FusedMoAProposerSwiGLU",
+      "SparseTopKAggregator",
+      "BlockSparseMoAFlashAttention"
+    ],
+    "verifier": "TritonTileSimulator（numpy 逐 program 模拟）",
+    "runs_on_cpu": true,
+    "k1_max_abs_diff": 4.44e-16,
+    "k1_bandwidth_reduction_pct": 63.4,
+    "k2_max_abs_diff": 2.84e-14,
+    "k2_saved_act_bytes": 9728,
+    "k3_max_abs_diff": 0.0,
+    "k3_traffic_ratio": 0.389,
+    "k3_top_k_over_n": "2/8",
+    "k4_max_abs_diff": 5.55e-16,
+    "k4_skipped_tile_pct": 13.9
+  },
+  "implementation_modules": [
+    "research/aligner/v62_dimension_projection_space/extract_vsr_v66.py",
+    "research/aligner/v62_dimension_projection_space/moa_triton_kernels.py"
+  ],
+  "falsified": [],
+  "bugs_fixed": [
+    "VSR 图像下载加 UA 头 + 失败灰图占位 + 成功率断言（修 ViT hidden 全零 bug）"
+  ],
+  "pending": [
+    "Kaggle 批量验证未执行",
+    "端到端数字待回填"
+  ],
+  "acceptance_note": "8/8 通过（本地 CPU）。第 1/3/5/7 项为位级一致性断言，第 2/4/6 项为精确 HBM 字节账"
+}

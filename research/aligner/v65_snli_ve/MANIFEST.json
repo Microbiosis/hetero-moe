@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "version": "65.0",
+  "package": "v65_snli_ve",
+  "line": "aligner",
+  "title": "SNLI-VE 真多模态 — Flickr30k 图文配对蕴含判断（3 类）+ N_CLS 参数化",
+  "generation": {
+    "one_mechanism_added": "把评测任务从 ag_news 4 分类换成 SNLI-VE 3 类蕴含判断——后者要求**图文配对**推理（只看 caption 不可能答对），从而把多模态从\"输入拼接\"变成\"必须用视觉证据\"。train_v2 的 N_CLS 环境变量使同一脚本可切换任务。",
+    "parent": "64.0",
+    "children": [
+      "66.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [
+      "66.0"
+    ],
+    "note": "aligner 线接 v48→…→v62→v63→…→v74。v63 起为 v62 共享空间的工程化延伸，不改槽/模型/对齐三轴本身。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "research/aligner/v62_dimension_projection_space/extract_snli_ve_v65.py"
+    ],
+    "note": "提取脚本在 v62 包内。本代修掉一串真实缺陷：IMG_DIR 路径探测、records 空断言早失败、训练前 MoA sanity check、N_CLS 未定义（NameError）、LOCAL_CACHE 离线支持、sanity check 的 tr_idx 未定义 bug。"
+  },
+  "claim": {
+    "asserts": "SNLI-VE 数据管线契约成立：3 类标签映射固定、文本=caption+hypothesis 成对、三个底座 hidden 形状固定(2048/768/1152, 128/128/197)、配对过少早失败、IMG_DIR 自动探测、UPLOAD 开关、N_CLS 可在 3/4 类间切、CACHE_SUFFIX→HF repo 名映射、LOCAL_CACHE 离线路径可切",
+    "metric": "unit_test_pass_rate",
+    "direction": "higher_is_better",
+    "value": 1.0,
+    "baseline": {
+      "ref": "无（本代首次登记）",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": null,
+    "outcome_label": "code_ready_pending_batch_run",
+    "note": "**本代无端到端数字。**claim 只能是数据管线契约层面的自洽，不能说成多模态增益。"
+  },
+  "protocol": {
+    "eval_set": "not_applicable",
+    "input": "本代无下游任务评估；权威测试只验证机制语义",
+    "caveat": "引用本代时不得说成精度结论。"
+  },
+  "acceptance": {
+    "criterion": "权威测试全部通过（tests/test_package.py）",
+    "outcome": "pass",
+    "note": "10/10 通过（本地 CPU）。本代是静态契约测试：提取脚本需 GPU+网络、train_v2 一 import 就开训，都无法在本地执行"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分，无目标泄漏风险面；且本代无端到端数字可泄漏。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "v62-v64 的多模态评估能体现多模态能力",
+      "verdict": "证伪 —— 那些协议里图像与文本互不相干（ag_news 文本 + food101 随机图），视觉通道携带不了任何关于标签的信息；本代换成 SNLI-VE 才是第一个「必须看图才能答」的任务",
+      "evidence": "research/aligner/v65_snli_ve/SPEC.md §1"
+    },
+    {
+      "hypothesis": "多模态融合的优势在真实图文任务上会显现",
+      "verdict": "未验证 —— 端到端数字待 Kaggle 批量跑；不得据本代声称多模态增益",
+      "evidence": "research/aligner/v65_snli_ve/SPEC.md §0"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v65_snli_ve.py",
+    "forwarder_spec": "docs/V65_0_SNLI_VE.md"
+  },
+  "tests_status": "present",
+  "external_artifacts": {
+    "note": "端到端产物待 Kaggle 批量验证后落盘。"
+  }
+}

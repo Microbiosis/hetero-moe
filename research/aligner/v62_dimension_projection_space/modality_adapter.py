@@ -55,20 +55,22 @@ class ModalityAdapter(nn.Module):
 
 
 class ModalityAdapterBank(nn.Module):
-    """管理多个槽/层的 adapter 集合。"""
+    """管理多个槽/层的 adapter 集合（支持每槽非方阵 d_in != d_out）。"""
 
-    def __init__(self, slots=('Q', 'K', 'V', 'O'), d: int = 256, rank: int = 8):
+    def __init__(self, slots=('Q', 'K', 'V', 'O'), d: int = 256, rank: int = 8,
+                 slot_dims: Dict[str, int] | None = None):
         super().__init__()
         self.adapters = nn.ModuleDict()
         for s in slots:
-            self.adapters[s] = ModalityAdapter(d, d, rank=rank)
+            d_out = slot_dims[s] if (slot_dims and s in slot_dims) else d
+            self.adapters[s] = ModalityAdapter(d, d_out, rank=rank)
 
-    # 槽-模态注入表（v62 实测：文本→Q/O，视觉→K/V）
+    # 槽-模态注入表（对齐 MEASURED_SUBSPACES 各槽实际参与的底座，避免 modal_emb 出现死行）
     INJECTION = {
         'Qwen': ['Q', 'O'],
-        'BERT': ['K', 'V'],
-        'ViT':  ['K', 'V'],
+        'BERT': ['Q', 'K', 'V', 'O'],
+        'ViT':  ['Q', 'K', 'V', 'O'],
     }
 
-    def get_adapter(self, slot: str, modality: str):
+    def get_adapter(self, slot: str, modality: str = ''):
         return self.adapters[slot]

@@ -52,27 +52,37 @@ class MiniCorpus:
         self.train_sentences = _MINI_CORPUS
         self.held_out = _HELD_OUT
 
-    def train_batch(self, batch_size: int = 4) -> torch.Tensor:
-        """随机采样 batch_size 句, tokenize 到 [batch_size, max_length]."""
+    def train_batch(self, batch_size: int = 4, return_mask: bool = False):
+        """随机采样 batch_size 句, tokenize 到 [batch_size, max_length].
+        return_mask=True 时返回 (input_ids, attention_mask) 以屏蔽 [PAD]。
+        """
+        if batch_size <= 0:
+            raise ValueError(f"batch_size must be positive, got {batch_size}")
         idx = torch.randint(0, len(self.train_sentences), (batch_size,)).tolist()
         sentences = [self.train_sentences[i] for i in idx]
         enc = self.tokenizer(
             sentences, padding="max_length", truncation=True,
             max_length=self.max_length, return_tensors="pt",
         )
+        if return_mask:
+            return enc["input_ids"], enc["attention_mask"]
         return enc["input_ids"]
 
-    def eval_batch(self, batch_size: int = 6) -> torch.Tensor:
+    def eval_batch(self, batch_size: int = 6, return_mask: bool = False):
         """返回 held-out 句子 tokenize."""
+        if batch_size <= 0:
+            raise ValueError(f"batch_size must be positive, got {batch_size}")
         enc = self.tokenizer(
             self.held_out[:batch_size], padding="max_length", truncation=True,
             max_length=self.max_length, return_tensors="pt",
         )
+        if return_mask:
+            return enc["input_ids"], enc["attention_mask"]
         return enc["input_ids"]
 
-    def all_eval(self) -> torch.Tensor:
+    def all_eval(self, return_mask: bool = False):
         """返回所有 held-out 句子的 tokenize."""
-        return self.eval_batch(len(self.held_out))
+        return self.eval_batch(len(self.held_out), return_mask=return_mask)
 
 
 def cycle_batches(corpus: MiniCorpus, batch_size: int = 4) -> Iterator[torch.Tensor]:

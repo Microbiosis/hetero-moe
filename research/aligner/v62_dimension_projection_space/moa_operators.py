@@ -751,7 +751,8 @@ if HAS_TORCH:
                 selection_mask = torch.zeros_like(router_probs).scatter_(
                     dim=-1, index=top_k_indices, value=1.0
                 )
-                f_i = selection_mask.mean(dim=(0, 1))
+                # 归一化 f_i 使 Σ_i f_i = 1.0，均匀分布时 load_balance_loss = N * Σ f_i P_i = 1.0
+                f_i = selection_mask.mean(dim=(0, 1)) / max(1, self.top_k)
                 P_i = router_probs.mean(dim=(0, 1))
                 load_balance_loss = N * torch.sum(f_i * P_i)
                 aux_loss = (
@@ -761,6 +762,7 @@ if HAS_TORCH:
                 agg = torch.einsum("bln,bnld->bld", sparse_weights, proposals)
                 synthesized = self.out_proj(agg)
                 metrics["proposal_importance"] = f_i.detach()
+                metrics["router_probs"] = router_probs
 
             else:
                 p_concat = proposals.permute(0, 2, 1, 3).contiguous().view(B, L, N * D)
@@ -838,14 +840,18 @@ if HAS_TORCH:
             halting_accum = torch.zeros(B, L, 1, device=x.device, dtype=x.dtype)
             remainder = torch.ones(B, L, 1, device=x.device, dtype=x.dtype)
             weighted_state = torch.zeros_like(x)
-            ponder_steps = torch.zeros(B, L, 1, device=x.device, dtype=x.dtype)
+            n_updates = torch.zeros(B, L, 1, device=x.device, dtype=x.dtype)
+            ponder_cost = torch.zeros(B, L, 1, device=x.device, dtype=x.dtype)
 
             for step_idx, stage in enumerate(self.stages):
                 h, step_aux, last_metrics = stage(h)
                 total_aux_loss = total_aux_loss + step_aux
 
                 if step_idx == self.num_steps - 1:
+                    still_running = (halting_accum < self.config.halting_threshold).to(x.dtype)
                     step_weight = remainder
+                    n_updates = n_updates + still_running
+                    ponder_cost = ponder_cost + still_running * remainder
                 else:
                     p_halt = torch.sigmoid(self.halting_gate(h))
                     still_running = (halting_accum < self.config.halting_threshold).to(x.dtype)
@@ -854,12 +860,14 @@ if HAS_TORCH:
                     step_weight = overflow * remainder + (1.0 - overflow) * p_halt * still_running
                     halting_accum = halting_accum + step_weight
                     remainder = remainder - step_weight
-                    ponder_steps = ponder_steps + still_running
+                    n_updates = n_updates + still_running
+                    # 可微 ponder cost: 未停机步累计余量梯度，溢出停机步保留 (1 - p_halt) 梯度使 halting_gate 恒有反传信号
+                    ponder_cost = ponder_cost + still_running * (1.0 - overflow * p_halt)
 
                 weighted_state = weighted_state + step_weight * h
 
-            total_aux_loss = total_aux_loss + 0.001 * ponder_steps.mean()
-            last_metrics["mean_refinement_steps"] = (ponder_steps.mean() + 1.0).detach()
+            total_aux_loss = total_aux_loss + 0.001 * ponder_cost.mean()
+            last_metrics["mean_refinement_steps"] = n_updates.mean().detach()
             return self.final_norm(weighted_state), total_aux_loss, last_metrics
 
 
@@ -915,15 +923,13 @@ def profile_moa_operator_complexity(config: MoAOperatorConfig, seq_len: int = 10
     # 1. Homogeneous Parallel Proposer (N SwiGLU branches: 3 * D * D_ffn per branch)
     homo_proposer_params = N * (3 * D * D_ffn + 2 * D_ffn + D) + 2 * D
 
-    # 2. Heterogeneous Proposer (Attention + SSM + DepthwiseConv + SwiGLU cycled across N)
+    # 2. Heterogeneous Proposer (v67+: Attention + DepthwiseConv + SwiGLU 3-branch rotation)
     hetero_proposer_params = 0
     for i in range(N):
-        kind = i % 4
+        kind = i % 3
         if kind == 0:  # Attention: 4 * D^2
             hetero_proposer_params += 4 * D * D
-        elif kind == 1:  # SSM: 3 * D^2 + D * (D + 2*d_state) + 2*D*d_state
-            hetero_proposer_params += 4 * D * D + 4 * D * config.d_state
-        elif kind == 2:  # Causal Depthwise Conv: 3 * D^2 + D * kernel
+        elif kind == 1:  # Causal Depthwise Conv: 3 * D^2 + D * kernel
             hetero_proposer_params += 3 * D * D + D * config.conv_kernel_size
         else:  # SwiGLU: 3 * D * D_ffn
             hetero_proposer_params += 3 * D * D_ffn

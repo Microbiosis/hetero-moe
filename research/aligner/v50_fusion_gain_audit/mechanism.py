@@ -84,7 +84,7 @@ def linear_probe(train_x, train_y, test_x, test_y, n_class: int, steps: int = 30
     test_x / test_y 同理 (held-out)
     """
     torch.manual_seed(seed)
-    probe = LinearProbe(train_x.shape[-1], n_class)
+    probe = LinearProbe(train_x.shape[-1], n_class).to(train_x.device)
     opt = torch.optim.AdamW(probe.parameters(), lr=lr, weight_decay=weight_decay)
     n = train_x.shape[0]
     g = torch.Generator().manual_seed(seed + 17)

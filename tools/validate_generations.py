@@ -223,6 +223,43 @@ def check_lineage(pkgs: List[Dict]) -> List[str]:
     return errors
 
 
+def audit_unmanaged_scope(root: Path, targets: List[Path], max_py_per_pkg: int = 15) -> Dict[str, List[str]]:
+    """审计 research/ 下的非版本化目录、内嵌虚拟环境与单包文件膨胀（消除静默失明）。"""
+    findings: Dict[str, List[str]] = {
+        "unmanaged_dirs": [],
+        "embedded_venvs": [],
+        "bloated_packages": [],
+    }
+    res_dir = root / "research"
+    if res_dir.is_dir():
+        for line_dir in sorted(res_dir.iterdir()):
+            if not line_dir.is_dir() or line_dir.name.startswith("_"):
+                continue
+            has_versioned = any(
+                c.is_dir() and re.match(r"v\d+[a-z]*_", c.name)
+                for c in line_dir.iterdir()
+            )
+            if not has_versioned:
+                n_py = sum(
+                    1 for p in line_dir.rglob("*.py")
+                    if ".venv" not in p.parts and "venv" not in p.parts and "__pycache__" not in p.parts
+                )
+                findings["unmanaged_dirs"].append(f"research/{line_dir.name}/ ({n_py} .py，非 v<N>_* 治理目录)")
+            for sub in line_dir.iterdir():
+                if sub.is_dir() and sub.name in (".venv", "venv"):
+                    findings["embedded_venvs"].append(str(sub.relative_to(root)).replace("\\", "/"))
+
+    for pkg in targets:
+        py_files = [
+            p for p in pkg.rglob("*.py")
+            if "__pycache__" not in p.parts and "tests" not in p.relative_to(pkg).parts[:-1]
+        ]
+        if len(py_files) > max_py_per_pkg:
+            rel = str(pkg.relative_to(root)).replace("\\", "/")
+            findings["bloated_packages"].append(f"{rel} ({len(py_files)} 个实现 .py > 阈值 {max_py_per_pkg})")
+    return findings
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("packages", nargs="*", help="包名 (如 v16_bert_student) 或全路径片段")
@@ -230,6 +267,8 @@ def main() -> int:
                     help="缺文件只警告不失败 (用于存量摸底)")
     ap.add_argument("--require-leakage-audit", action="store_true",
                     help="leakage_audit.status 不得为 pending")
+    ap.add_argument("--strict-scope", action="store_true",
+                    help="若存在非治理目录或内嵌 .venv 则返回非零")
     args = ap.parse_args()
 
     targets = discover_generations()
@@ -300,6 +339,23 @@ def main() -> int:
         print("       这些包的自包含只在本地生效; 其 MANIFEST/SPEC/results/tests 不随仓库分发。")
     if unknown:
         print(f"  └─ 入库状态无法判定: {len(unknown)} 包 (git 不可用)")
+
+    # ---- 治理范围与膨胀审计 (消除对非 v<N>_* 子域 / .venv / 超大包的盲视) ----
+    scope = audit_unmanaged_scope(ROOT, targets)
+    n_scope_issues = sum(len(v) for v in scope.values())
+    print("  ----------------------------")
+    print(f"  治理范围审计: 非治理子域 {len(scope['unmanaged_dirs'])} 处 · "
+          f"内嵌虚拟环境 {len(scope['embedded_venvs'])} 处 · "
+          f"超限膨胀包 {len(scope['bloated_packages'])} 处")
+    for item in scope["unmanaged_dirs"]:
+        print(f"      [UNMANAGED-DIR] {item}")
+    for item in scope["embedded_venvs"]:
+        print(f"      [EMBEDDED-VENV] {item}")
+    for item in scope["bloated_packages"]:
+        print(f"      [PACKAGE-BLOAT] {item}")
+
+    if args.strict_scope and (scope["unmanaged_dirs"] or scope["embedded_venvs"]):
+        return 1
     return 0 if ok else 1
 
 

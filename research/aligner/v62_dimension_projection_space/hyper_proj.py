@@ -47,10 +47,10 @@ class HyperLinear(nn.Module):
         """x: [B,S,d_in] → [B, 2*d_in]（沿序列维度求 mean/std）。"""
         if x.dim() == 3:
             mu = x.mean(dim=1)
-            sd = x.std(dim=1)
+            sd = x.std(dim=1, unbiased=False)
         elif x.dim() == 2:
             mu = x.mean(dim=0, keepdim=True).expand(x.shape[0], -1)
-            sd = x.std(dim=0, keepdim=True).expand(x.shape[0], -1)
+            sd = x.std(dim=0, unbiased=False, keepdim=True).expand(x.shape[0], -1)
         else:
             raise ValueError('x 应为 [B,S,d] 或 [N,d]，得到 %s' % tuple(x.shape))
         return torch.cat([mu, sd], dim=-1)
@@ -65,11 +65,16 @@ class HyperLinear(nn.Module):
         return torch.bmm(U, V.transpose(1, 2)) * self.scale
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """x: [B,S,d_in] → [B,S,d_out]。接口与 nn.Linear 兼容。"""
-        B, S, D = x.shape
-        d = self.delta(x)                                   # [B, d_out, d_in]
-        W_eff = self.weight.unsqueeze(0) + d                # [B, d_out, d_in]
-        return torch.bmm(x, W_eff.transpose(1, 2))          # [B,S,d_out]
+        """x: [B,S,d_in] 或 [N,d_in] → 同前置维度的 [..., d_out]。接口与 nn.Linear 兼容。"""
+        if x.dim() == 2:
+            d = self.delta(x)                               # [N, d_out, d_in]
+            W_eff = self.weight.unsqueeze(0) + d            # [N, d_out, d_in]
+            return torch.bmm(x.unsqueeze(1), W_eff.transpose(1, 2)).squeeze(1)
+        if x.dim() == 3:
+            d = self.delta(x)                               # [B, d_out, d_in]
+            W_eff = self.weight.unsqueeze(0) + d            # [B, d_out, d_in]
+            return torch.bmm(x, W_eff.transpose(1, 2))      # [B,S,d_out]
+        raise ValueError('x 应为 [B,S,d] 或 [N,d]，得到 %s' % tuple(x.shape))
 
     def describe(self) -> str:
         n_train = sum(p.numel() for p in self.parameters() if p.requires_grad)

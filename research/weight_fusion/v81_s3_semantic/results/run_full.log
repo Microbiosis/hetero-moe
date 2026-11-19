@@ -1,0 +1,157 @@
+[corpus] ag_news 128 条 / ViT 64 张 (4 类 x 16)
+
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]
+Loading weights:  20%|█▉        | 57/290 [00:00<00:00, 567.13it/s]
+Loading weights:  39%|███▉      | 114/290 [00:00<00:00, 490.06it/s]
+Loading weights:  57%|█████▋    | 164/290 [00:00<00:00, 488.93it/s]
+Loading weights:  74%|███████▍  | 214/290 [00:00<00:00, 480.25it/s]
+Loading weights:  91%|█████████ | 263/290 [00:00<00:00, 436.63it/s]
+Loading weights: 100%|██████████| 290/290 [00:00<00:00, 473.62it/s]
+[source] Qwen: 抓到 16 个 (层,槽) 组合的样本级激活
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 34813.61it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[source] BERT: 抓到 8 个 (层,槽) 组合的样本级激活
+
+Loading weights:   0%|          | 0/200 [00:00<?, ?it/s]
+Loading weights:  20%|██        | 40/200 [00:00<00:00, 343.78it/s]
+Loading weights: 100%|██████████| 200/200 [00:00<00:00, 1392.97it/s]
+[source] ViT: 抓到 10 个 (层,槽) 组合的样本级激活
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 28999.47it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pilot] Qwen->BERT: token-lambda=1000 (CV R2=0.0396) / pooled-lambda=100 (CV R2=0.5744) / label-lambda=10 (CV acc=0.8188)
+[block] Qwen->BERT ly=0 j=0 完成 (累计 20 行, 64s)
+[block] Qwen->BERT ly=1 j=0 完成 (累计 40 行, 75s)
+[block] Qwen->BERT ly=2 j=0 完成 (累计 60 行, 86s)
+[block] Qwen->BERT ly=3 j=0 完成 (累计 80 行, 97s)
+[block] Qwen->BERT ly=6 j=0 完成 (累计 100 行, 107s)
+[block] Qwen->BERT ly=12 j=0 完成 (累计 120 行, 118s)
+[block] Qwen->BERT ly=18 j=0 完成 (累计 140 行, 128s)
+[block] Qwen->BERT ly=23 j=0 完成 (累计 160 行, 139s)
+[block] Qwen->BERT ly=0 j=1 完成 (累计 180 行, 151s)
+[block] Qwen->BERT ly=1 j=1 完成 (累计 200 行, 162s)
+[block] Qwen->BERT ly=2 j=1 完成 (累计 220 行, 173s)
+[block] Qwen->BERT ly=3 j=1 完成 (累计 240 行, 184s)
+[block] Qwen->BERT ly=6 j=1 完成 (累计 260 行, 195s)
+[block] Qwen->BERT ly=12 j=1 完成 (累计 280 行, 206s)
+[block] Qwen->BERT ly=18 j=1 完成 (累计 300 行, 216s)
+[block] Qwen->BERT ly=23 j=1 完成 (累计 320 行, 227s)
+[block] Qwen->BERT ly=0 j=2 完成 (累计 340 行, 239s)
+[block] Qwen->BERT ly=1 j=2 完成 (累计 360 行, 250s)
+[block] Qwen->BERT ly=2 j=2 完成 (累计 380 行, 261s)
+[block] Qwen->BERT ly=3 j=2 完成 (累计 400 行, 273s)
+[block] Qwen->BERT ly=6 j=2 完成 (累计 420 行, 284s)
+[block] Qwen->BERT ly=12 j=2 完成 (累计 440 行, 295s)
+[block] Qwen->BERT ly=18 j=2 完成 (累计 460 行, 306s)
+[block] Qwen->BERT ly=23 j=2 完成 (累计 480 行, 318s)
+[block] Qwen->BERT ly=0 j=3 完成 (累计 500 行, 330s)
+[block] Qwen->BERT ly=1 j=3 完成 (累计 520 行, 340s)
+[block] Qwen->BERT ly=2 j=3 完成 (累计 540 行, 351s)
+[block] Qwen->BERT ly=3 j=3 完成 (累计 560 行, 361s)
+[block] Qwen->BERT ly=6 j=3 完成 (累计 580 行, 373s)
+[block] Qwen->BERT ly=12 j=3 完成 (累计 600 行, 383s)
+[block] Qwen->BERT ly=18 j=3 完成 (累计 620 行, 394s)
+[block] Qwen->BERT ly=23 j=3 完成 (累计 640 行, 404s)
+
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]
+Loading weights:  12%|█▏        | 34/290 [00:00<00:00, 324.60it/s]
+Loading weights:  24%|██▍       | 69/290 [00:00<00:00, 329.98it/s]
+Loading weights:  35%|███▌      | 102/290 [00:00<00:00, 322.64it/s]
+Loading weights:  47%|████▋     | 135/290 [00:00<00:00, 324.14it/s]
+Loading weights:  58%|█████▊    | 169/290 [00:00<00:00, 317.82it/s]
+Loading weights:  71%|███████   | 205/290 [00:00<00:00, 321.07it/s]
+Loading weights:  82%|████████▏ | 238/290 [00:00<00:00, 312.74it/s]
+Loading weights:  95%|█████████▍| 275/290 [00:00<00:00, 318.35it/s]
+Loading weights: 100%|██████████| 290/290 [00:00<00:00, 326.75it/s]
+[pilot] BERT->Qwen: token-lambda=1000 (CV R2=0.1832) / pooled-lambda=100 (CV R2=0.6354) / label-lambda=0.1 (CV acc=0.8538)
+[block] BERT->Qwen ly=0 j=0 完成 (累计 660 行, 1476s)
+[block] BERT->Qwen ly=1 j=0 完成 (累计 680 行, 2149s)
+[block] BERT->Qwen ly=2 j=0 完成 (累计 700 行, 2829s)
+[block] BERT->Qwen ly=3 j=0 完成 (累计 720 行, 3364s)
+[block] BERT->Qwen ly=0 j=1 完成 (累计 740 行, 3855s)
+[block] BERT->Qwen ly=1 j=1 完成 (累计 760 行, 4288s)
+[block] BERT->Qwen ly=2 j=1 完成 (累计 780 行, 4711s)
+[block] BERT->Qwen ly=3 j=1 完成 (累计 800 行, 5129s)
+[block] BERT->Qwen ly=0 j=2 完成 (累计 820 行, 5605s)
+[block] BERT->Qwen ly=1 j=2 完成 (累计 840 行, 6026s)
+[block] BERT->Qwen ly=2 j=2 完成 (累计 860 行, 6470s)
+[block] BERT->Qwen ly=3 j=2 完成 (累计 880 行, 6912s)
+[block] BERT->Qwen ly=0 j=3 完成 (累计 900 行, 7401s)
+[block] BERT->Qwen ly=1 j=3 完成 (累计 920 行, 7859s)
+[block] BERT->Qwen ly=2 j=3 完成 (累计 940 行, 8320s)
+[block] BERT->Qwen ly=3 j=3 完成 (累计 960 行, 8758s)
+[block] BERT->Qwen ly=0 j=6 完成 (累计 980 行, 9255s)
+[block] BERT->Qwen ly=1 j=6 完成 (累计 1000 行, 9689s)
+[block] BERT->Qwen ly=2 j=6 完成 (累计 1020 行, 10131s)
+[block] BERT->Qwen ly=3 j=6 完成 (累计 1040 行, 10587s)
+[block] BERT->Qwen ly=0 j=12 完成 (累计 1060 行, 11098s)
+[block] BERT->Qwen ly=1 j=12 完成 (累计 1080 行, 11552s)
+[block] BERT->Qwen ly=2 j=12 完成 (累计 1100 行, 11995s)
+[block] BERT->Qwen ly=3 j=12 完成 (累计 1120 行, 12439s)
+[block] BERT->Qwen ly=0 j=18 完成 (累计 1140 行, 13019s)
+[block] BERT->Qwen ly=1 j=18 完成 (累计 1160 行, 13454s)
+[block] BERT->Qwen ly=2 j=18 完成 (累计 1180 行, 13882s)
+[block] BERT->Qwen ly=3 j=18 完成 (累计 1200 行, 14732s)
+[block] BERT->Qwen ly=0 j=23 完成 (累计 1220 行, 15371s)
+[block] BERT->Qwen ly=1 j=23 完成 (累计 1240 行, 15860s)
+[block] BERT->Qwen ly=2 j=23 完成 (累计 1260 行, 16527s)
+[block] BERT->Qwen ly=3 j=23 完成 (累计 1280 行, 17469s)
+
+Loading weights:   0%|          | 0/200 [00:00<?, ?it/s]
+Loading weights:  12%|█▏        | 23/200 [00:00<00:00, 198.03it/s]
+Loading weights:  22%|██▏       | 43/200 [00:00<00:01, 143.26it/s]
+Loading weights:  30%|██▉       | 59/200 [00:00<00:00, 144.52it/s]
+Loading weights: 100%|██████████| 200/200 [00:00<00:00, 470.88it/s]
+[pilot] ViT->ViT: token-lambda=1000 (CV R2=0.1760) / pooled-lambda=100 (CV R2=0.2541) / label-lambda=1000 (CV acc=0.7587)
+[block] ViT->ViT ly=3 j=0 完成 (累计 1300 行, 18003s)
+[block] ViT->ViT ly=6 j=0 完成 (累计 1320 行, 18343s)
+[block] ViT->ViT ly=9 j=0 完成 (累计 1340 行, 18746s)
+[block] ViT->ViT ly=11 j=0 完成 (累计 1360 行, 18860s)
+[block] ViT->ViT ly=0 j=3 完成 (累计 1380 行, 19006s)
+[block] ViT->ViT ly=6 j=3 完成 (累计 1400 行, 19099s)
+[block] ViT->ViT ly=9 j=3 完成 (累计 1420 行, 19182s)
+[block] ViT->ViT ly=11 j=3 完成 (累计 1440 行, 19268s)
+[block] ViT->ViT ly=0 j=6 完成 (累计 1460 行, 19372s)
+[block] ViT->ViT ly=3 j=6 完成 (累计 1480 行, 19529s)
+[block] ViT->ViT ly=9 j=6 完成 (累计 1500 行, 19610s)
+[block] ViT->ViT ly=11 j=6 完成 (累计 1520 行, 19731s)
+[block] ViT->ViT ly=0 j=9 完成 (累计 1540 行, 20037s)
+[block] ViT->ViT ly=3 j=9 完成 (累计 1560 行, 20405s)
+[block] ViT->ViT ly=6 j=9 完成 (累计 1580 行, 20770s)
+[block] ViT->ViT ly=11 j=9 完成 (累计 1600 行, 21139s)
+[block] ViT->ViT ly=0 j=11 完成 (累计 1620 行, 21554s)
+[block] ViT->ViT ly=3 j=11 完成 (累计 1640 行, 21918s)
+[block] ViT->ViT ly=6 j=11 完成 (累计 1660 行, 22263s)
+[block] ViT->ViT ly=9 j=11 完成 (累计 1680 行, 22616s)
+[verdict] S3_FAIL  (failed: ['P1b', 'P2', 'P3_2'])

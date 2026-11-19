@@ -9,7 +9,7 @@ def approx_w(s, fs):
     return w * fs * 1.15 / 16.0
 
 def analyze(fn):
-    src = pathlib.Path(fn).read_text()
+    src = pathlib.Path(fn).read_text(encoding='utf-8')
     tree = ast.parse(src); bad_total = 0
     for node in tree.body:
         if not isinstance(node, ast.FunctionDef) or not node.name.startswith('act'): continue

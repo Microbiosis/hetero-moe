@@ -266,6 +266,7 @@ if HAS_TRITON:
         stride_kb, stride_kh, stride_kl, stride_kd,
         stride_vb, stride_vh, stride_vl, stride_vd,
         stride_ob, stride_oh, stride_ol, stride_od,
+        N_HEADS: tl.constexpr,
         L_SEQ: tl.constexpr,
         D_HEAD: tl.constexpr,
         WINDOW_SIZE: tl.constexpr,
@@ -285,10 +286,18 @@ if HAS_TRITON:
         """
         pid_m = tl.program_id(0)
         pid_bh = tl.program_id(1)
+        b_idx = pid_bh // N_HEADS
+        h_idx = pid_bh % N_HEADS
+        head_mode = h_idx % 3
         offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
         offs_d = tl.arange(0, D_HEAD)
 
-        q_ptrs = Q_ptr + pid_bh * stride_qh + offs_m[:, None] * stride_ql + offs_d[None, :] * stride_qd
+        q_base = Q_ptr + b_idx * stride_qb + h_idx * stride_qh
+        k_base = K_ptr + b_idx * stride_kb + h_idx * stride_kh
+        v_base = V_ptr + b_idx * stride_vb + h_idx * stride_vh
+        o_base = Out_ptr + b_idx * stride_ob + h_idx * stride_oh
+
+        q_ptrs = q_base + offs_m[:, None] * stride_ql + offs_d[None, :] * stride_qd
         q = tl.load(q_ptrs, mask=(offs_m[:, None] < L_SEQ), other=0.0)
 
         # Online softmax running statistics in SRAM registers
@@ -296,30 +305,46 @@ if HAS_TRITON:
         l_i = tl.zeros((BLOCK_M,), dtype=tl.float32)
         acc_o = tl.zeros((BLOCK_M, D_HEAD), dtype=tl.float32)
 
+        min_q_idx = pid_m * BLOCK_M
         max_q_idx = (pid_m + 1) * BLOCK_M
 
         for start_n in range(0, max_q_idx, BLOCK_N):
-            offs_n = start_n + tl.arange(0, BLOCK_N)
-            k_ptrs = K_ptr + pid_bh * stride_kh + offs_n[:, None] * stride_kl + offs_d[None, :] * stride_kd
-            v_ptrs = V_ptr + pid_bh * stride_vh + offs_n[:, None] * stride_vl + offs_d[None, :] * stride_vd
+            # Block-sparse skipping for Sink + Local Window heads (head_mode == 0)
+            block_end_n = start_n + BLOCK_N
+            is_sink_block = start_n < NUM_SINKS
+            is_window_block = block_end_n > (min_q_idx - WINDOW_SIZE)
+            if (head_mode != 0) or is_sink_block or is_window_block:
+                offs_n = start_n + tl.arange(0, BLOCK_N)
+                k_ptrs = k_base + offs_n[:, None] * stride_kl + offs_d[None, :] * stride_kd
+                v_ptrs = v_base + offs_n[:, None] * stride_vl + offs_d[None, :] * stride_vd
 
-            k = tl.load(k_ptrs, mask=(offs_n[:, None] < L_SEQ), other=0.0)
-            v = tl.load(v_ptrs, mask=(offs_n[:, None] < L_SEQ), other=0.0)
+                k = tl.load(k_ptrs, mask=(offs_n[:, None] < L_SEQ), other=0.0)
+                v = tl.load(v_ptrs, mask=(offs_n[:, None] < L_SEQ), other=0.0)
 
-            qk = tl.dot(q, tl.trans(k)) * sm_scale
-            causal_mask = offs_m[:, None] >= offs_n[None, :]
-            qk = tl.where(causal_mask & (offs_n[None, :] < L_SEQ), qk, -float("inf"))
+                qk = tl.dot(q, tl.trans(k)) * sm_scale
+                dist = offs_m[:, None] - offs_n[None, :]
+                causal_mask = (dist >= 0) & (offs_n[None, :] < L_SEQ)
+                if head_mode == 0:
+                    moa_mask = causal_mask & ((offs_n[None, :] < NUM_SINKS) | (dist <= WINDOW_SIZE))
+                elif head_mode == 1:
+                    moa_mask = causal_mask & (((dist % DILATION) == 0) | (dist <= 1))
+                else:
+                    moa_mask = causal_mask
+                qk = tl.where(moa_mask, qk, -float("inf"))
 
-            # Online Softmax update
-            m_ij = tl.maximum(m_i, tl.max(qk, axis=1))
-            p = tl.exp(qk - m_ij[:, None])
-            alpha = tl.exp(m_i - m_ij)
-            l_i = l_i * alpha + tl.sum(p, axis=1)
-            acc_o = acc_o * alpha[:, None] + tl.dot(p.to(v.dtype), v)
-            m_i = m_ij
+                # Online Softmax update (guard all-masked rows to prevent (-inf) - (-inf) = NaN)
+                row_max = tl.max(qk, axis=1)
+                m_ij = tl.maximum(m_i, row_max)
+                m_ij_safe = tl.where(m_ij > -float("inf"), m_ij, 0.0)
+                m_i_safe = tl.where(m_i > -float("inf"), m_i, m_ij_safe)
+                p = tl.where(moa_mask, tl.exp(qk - m_ij_safe[:, None]), 0.0)
+                alpha = tl.where(m_i > -float("inf"), tl.exp(m_i_safe - m_ij_safe), 0.0)
+                l_i = l_i * alpha + tl.sum(p, axis=1)
+                acc_o = acc_o * alpha[:, None] + tl.dot(p.to(v.dtype), v)
+                m_i = m_ij
 
-        acc_o = acc_o / l_i[:, None]
-        out_ptrs = Out_ptr + pid_bh * stride_oh + offs_m[:, None] * stride_ol + offs_d[None, :] * stride_od
+        acc_o = acc_o / tl.maximum(l_i[:, None], 1e-12)
+        out_ptrs = o_base + offs_m[:, None] * stride_ol + offs_d[None, :] * stride_od
         tl.store(out_ptrs, acc_o, mask=(offs_m[:, None] < L_SEQ))
 
 
@@ -638,7 +663,8 @@ class TritonTileSimulator:
         attn_mat_bytes = 4 * B * H * L * L * bytes_per_elem
         eager_bytes = qkv_bytes + attn_mat_bytes
         active_block_ratio = executed_blocks / max(total_causal_blocks, 1)
-        triton_bytes = int(B * H * L * D_h * bytes_per_elem * (2 + 2 * active_block_ratio))
+        # 精确分块 HBM 字节账: Q 读 + O 写各一次 + 每个实际执行的 (Q_block, KV_block) 读一次 K 与 V tile
+        triton_bytes = int((2 * B * H * L * D_h + 2 * executed_blocks * block_n * D_h) * bytes_per_elem)
         stats = {
             "active_tile_ratio": active_block_ratio,
             "skipped_tile_pct": (1.0 - active_block_ratio) * 100.0,

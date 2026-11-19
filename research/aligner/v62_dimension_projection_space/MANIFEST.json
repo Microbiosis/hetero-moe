@@ -7,11 +7,15 @@
   "generation": {
     "one_mechanism_added": "把「共享空间」从单一 256 维矩阵改成 Σ_s S_s —— 每个功能槽一个子空间，每个模型在每个子空间里有独立投影，模型之间用**成对可复合**的对齐（A_ac = A_bc ∘ A_ab），并加环路一致性约束使多条路径自洽",
     "parent": "57.0",
-    "children": []
+    "children": [
+      "63.0"
+    ]
   },
   "lineage": {
     "line_parent": "10.0",
-    "line_children": [],
+    "line_children": [
+      "63.0"
+    ],
     "note": "aligner 线接 v48→v49→v50→v51→v52→v53→v57→v58→v59→v60→v61。v58–v61 转向面积律/局部性观测量，本代回到 v48 的「投影空间」问题但换问法"
   },
   "implementation": {
@@ -22,10 +26,21 @@
       "fusion.py",
       "model.py",
       "measure.py",
-      "cleanroom.py"
+      "cleanroom.py",
+      "_audit_kit.py"
     ],
-    "note": "projspace.py 是算子本体；model.py 是完整打包模型（三骨干 + 投影空间 + 融合层）；measure.py 可离线复算 results/metrics.json 的四个主键；cleanroom.py 在干净目录里只靠 clone + Hub 下载验证交付可用性"
+    "note": "projspace.py 是算子本体；model.py 是完整打包模型（三骨干 + 投影空间 + 融合层）；measure.py 可离线复算 results/metrics.json 的四个主键；cleanroom.py 在干净目录里只靠 clone + Hub 下载验证交付可用性；_audit_kit.py 是测试支撑工具（v71-v74 的权威测试用它检视本目录源码、造合成审计输入），不是实现模块"
   },
+  "repairs": [
+    {
+      "date": "2026-11-13",
+      "scope": "包内 import 形式 (projspace.py / moa_fusion.py)",
+      "defect": "两处用**平铺 import** (from hyper_proj import ... / from moa_operators import ...), 导致 `import research.aligner.v62_dimension_projection_space` 直接 ModuleNotFoundError ⇒ **包内权威测试与仓库级转发层 tests/test_v62_dimension_projection_space.py 全部跑不起来**。HEAD 即如此, 非本轮引入。",
+      "fix": "改为按 `__package__` 双模导入: 包上下文走包内相对 import, 平铺上下文 (独立脚本 / Kaggle 训练 / 审计流程 / v64·v67·v68·v69 的测试 / _audit_kit.py) 保持原平铺路径。",
+      "why_not_absolute": "只留相对 import 会打断 train_v2.py 与 slot_independence_audit.py 以独立脚本方式在 Kaggle 上运行; 只留平铺 import 则包级 import 仍失败 ⇒ 两条路都得活着。",
+      "verified_by": "包内权威测试 16/16 与仓库级转发层同时通过; v64/v67/v68/v69/v74 转发层不受影响 (仍走平铺路径)。"
+    }
+  ],
   "consumers": [],
   "claim": {
     "asserts": "投影空间不是单一尺寸的超参，而是按功能槽张成的一组子空间之和；单变换对齐三个模型必然失败（过定），用成对可复合对齐加环路一致性可以修复；等维对齐无损而压维丢信息",

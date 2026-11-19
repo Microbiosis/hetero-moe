@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0",
+  "version": "82.0",
+  "package": "v82_s4_pipe",
+  "line": "weight_fusion",
+  "title": "S4-P: 管道 —— 给信息一条带地址的独立通路 (注意力位置旁路 + 按专属通道编号); 裁决 S4PIPE_FAIL",
+  "generation": {
+    "one_mechanism_added": "S4-P (A1_DESIGN §16 + docs/MAINLINE_ROUTE.md §4.14): 给 A1 激活级路线补上**管道机制** —— 在目标模型正文**之前**开 K=8 个专属位置 (管道), 把源信息写进去并让模型把它们当真 token, **按通道编号**区分槽身份; 四臂 × 5 nuisance 种子 × 64 个文本块 × 128 样本全量跑批 (1280 行); 六项判据 P5a/P5b/P5c/P5d/P2′/P3① 的阈值与口径**全部跑前写死在源码常量**里, 事后未放宽; ViT 平行臂于跑前**整臂撤出** (SPEC §0.1 修订 9); λ = 1.0 由写死候选集 {0.5,1,2,3} + 写死选择规则标定得出 (results/calib.json)。",
+    "parent": "81.0",
+    "children": [
+      "83.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "75.0",
+    "line_children": [],
+    "note": "weight_fusion 线第 8 代: v75 权重级共轭 (负结果) -> v76 路线 α 的 S1 -> v77 路线 β 的真模型可用性 (S1B_FAIL) -> v78 前置诊断 -> v79 S2-0 (对齐来源: 负结果) -> v80 S2 (注入算子 + λ 标定: S2_OPERATOR_READY) -> v81 S3 (语义判据: S3_FAIL) -> v82 S4-P (管道: **裁决 S4PIPE_FAIL** —— P5b 通道寻址 与 P5c 贯通、P3① 守门 通过, 但 P5a 管道连通 / P5d 选择性 / P2′ 深度语义 未过)。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "s4_pipe.py",
+      "summarize_v82.py",
+      "pipe_probe.py",
+      "pipe_probe2.py",
+      "pipe_probe3.py",
+      "pipe_probe4.py",
+      "carrier_probe.py",
+      "readout_diag.py"
+    ],
+    "note": "本代按**路径**载入 v81 的 s3_flow.py (Backbone / capture_slots / fetch_texts / fetch_models / perm_paired / perm_group_stratified / sign_test)、v77 的 true_model.py、v62 的 measure.py (SLOT_PATHS / projections)、v75 的 g2_conjugation.py; 口径同源凭证为四者的 sha256 (记入 results/metrics.json 的 protocol.provenance_sha256)。不按包名 import 的原因与 v75-v81 一致: 同线 import 会被 tools/check_self_containment.py 判成跨线引用。pipe_probe*.py 是**跑前**的机制可行性探针, **不参与任何裁决** (判据聚合函数 evaluate_criteria 里不出现它们的字段, 由测试锁住); pipe_probe4.py 的读数**不可用** (ridge lambda 固定 10 严重欠正则, R2 为负), 只作方法学记录。跑批因单任务运行时限分 5 批执行 (逐批断点续跑), 最后由 --aggregate 从全量 checkpoint 重算判据 —— 判据函数与正式跑批**完全相同**。 carrier_probe.py / readout_diag.py 是**跑后**的两段 post_hoc 诊断 (载体性质 / 读出端解读), **不参与任何裁决** (判据聚合函数 evaluate_criteria 里不出现它们的字段, 由测试锁住)。"
+  },
+  "claim": {
+    "asserts": "S4-P 的六项判据已在真模型上跑完并给出机器裁决 **S4PIPE_FAIL**: **P5b(管道可分/按通道编号寻址)、P5c(贯通)、P3①(守门) 通过**, **P5a(管道连通)、P5d(选择性)、P2′(深度语义) 三项未过**。⚠️ **引用本代必须成对引用三个事实**: ①**贯通成立且比 S3 更强** —— P5c 的 arm1−arm0 正文 token 级 r2_q 增量中位 **+0.004419** (236/320 观测为正), 置换 **p = 0.0** (S3 的 P1a 是 +0.003232; 但两者口径不同, **不可直接比大小**); ②**但信息不是靠「模型注意到管道」过去的** —— P5a 的管道总注意力差块级中位 **+0.000463** (34/60 正, 置换 **p = 0.3108**), 逐样本更弱 (4415/7680 正 = 57.5%, 符号检验 **p = 1.0**), 内容特异性对照 arm1−arm3 反而为**负** (−0.000983, 24/60 正, p = 0.9053) ⇒ 管道**不被按内容读取**; ③**通道寻址只在块级聚合上成立** —— P5b 块级配对置换 **p = 0.0** (39/60 正), 但逐样本 3787/7680 = 49.3% 正、符号检验 **p = 0.787** ⇒ 不能当作「逐样本可寻址」的证据。⇒ **A1 激活级路线仍没有建立可用的、带地址的跨模型信息流**: ⚠️ **post_hoc 读数更正了「卡在读出端」这个判断** (results/diag_readout.json, post_hoc_only, 不参与裁决): 正文侧 (token 级 r2_q) 的 **内容特异性 arm1−arm3 块级中位 +0.011373** (281/320 正, 置换 **p = 0.0**) ⇒ 管道**确实按内容**把信息带到了正文 (注意力权重不敏感, 但**值向量**携带内容并被读出); **槽特异性 arm1−arm2 块级中位 +0.002700** (置换 **p = 0.0**), 但分方向后**只在 BERT→Qwen 成立** (+0.004155, p = 0.0; Qwen→BERT +0.000788, **p = 0.1324**) ⇒ 与 S3 的 P1b (−0.002455, p = 0.9521) 同口径相比, 管道在 **BERT→Qwen 方向把「分不清」变成了「分得清」**。⇒ **容器与传递两关管道都过了**; 真正剩下的是**深度对应 (P2′)** 与**非目标槽普涨 (P5d)**, 两者都与容器/共享空间的线性性质无关 ⇒ 指向**源侧语义本身**。",
+    "metric": "P5c_permutation_p (arm1 vs arm0, 64 个文本块 × 5 个种子, 10^4 次臂间配对置换)",
+    "direction": "lower_is_better",
+    "value": 0,
+    "baseline": {
+      "ref": "预登记显著性水平 α (SPEC §3)",
+      "value": 0.01
+    },
+    "delta_pct": -100,
+    "seeds": 5,
+    "outcome_label": "refuted",
+    "note": "⚠️ **绝对 R² 不是穿透量**: arm0 (管道开、内容为 0) 的正文 r2_q 基线在 Qwen→BERT 方向中位已达 **+0.159112** (最高 **+0.370718**, 共享成分), 只有 Δ 才是穿透量。⚠️ **贯通强 ≠ 机制对**: P5c 过只说明「正文里能读回源槽信息」, 而 P5a 不过说明**不是模型主动去读管道**得到的 —— 最可能的解释是管道位的 **value 向量被改写**、以**与内容无关的固定权重**传导到正文 (post_hoc 诊断, results/diag_pipe.json)。⚠️ **无选择性**: 注入 Q 槽也把非目标槽 O 抬高 (P5d 中位 +0.001921, 250/320 正, p = 0.0), 与 S3 的 P3② 同样失败 ⇒ 注入搬过去的仍是**跨槽的共同成分**。⚠️ **无深度对应**: 同层 +0.000399 vs 跨层 +0.004495 (**跨层高 11 倍**), 分层置换 p = 0.9351。⚠️ **ViT 臂已于跑前整臂撤出** ⇒ 本代只覆盖 BERT↔Qwen。⚠️ 与 **S3 (v81) 不可直接比大小** (写入点在第 0 层 / 正文截断到 120 位 / arm0 是「管道开、内容为 0」)。本代**不训练**任何底座权重、**不产生**任何能力指标、**不产生** A1 的总判定。 ⚠️ **载体是线性的** (post_hoc_only, results/diag_carrier.json): 共享空间 = 256 维线性子空间 (v62 measure.projections() = 随机正交投影), 载体 Δ=(a_s@P_Aᵀ)@P_B 是**线性**映射, 注入端唯一的非线性是逐样本范数归一化 (只改幅度、不改方向); 实测 BERT→Qwen 方向**等距** (范数比 1.000000, 成对夹角差 7.586e-08), Qwen→BERT 范数比 0.531143 (幅度被压, 方差保留 0.282257, r2_project 中位 0.282114) ⇒ **P2′/P5d 的失败不能归因于「空间是线性的」** ⇒ 「换非线性 / 扩共享空间维度」的期望收益已下调."
+  },
+  "protocol": {
+    "eval_set": "fancyzhx/ag_news train 128 条 (缓存 agnews_128.json, 标签分布 37/32/26/33) 的**前 64 条训练 / 后 64 条留出** (4 类两侧均覆盖); **只有文本两个方向** (BERT↔Qwen): Qwen→BERT 32 块 (8 源层 × 4 读出层) + BERT→Qwen 32 块 (4 源层 × 8 读出层) = 64 个文本块 × 4 臂 × 5 个 nuisance 种子 = 1280 行。",
+    "input": "真 HF 预训练底座 Qwen/Qwen2.5-0.5B-Instruct (24 层, D=896) / google/bert_uncased_L-4_H-256_A-4 (4 层, D=256); 槽激活按 v62 槽语义取 (投影类取模块输出 / O 槽取模块输入), 与 v77-v81 同口径; 共享空间用 v62 的 projections(seed) 正交投影 (256 维); 注入强度 **λ = 1.0** (S4P-1 标定值: 候选集 {0.5,1,2,3} 中 λ=2/3 因末层扰动越守门上限 0.3 而不可行, 取最大可行候选); fp32 / CPU; 5 个 nuisance 种子只影响共享空间投影 P 与 arm3 的随机方向; 管道机制 = 序列布局 [管道 8 位 | 正文 120 位] + 目标模型第 0 层 forward_pre_hook 只写管道位 + 按通道编号寻址 (Q 槽→通道 0, O 槽→通道 1)。",
+    "caveat": "本代只回答「管道这条通路有没有建立起来」, **不产生**任何能力指标, **不训练**任何底座权重, **不产生** A1 的总判定。⚠️ 与 v81 **不可直接比大小**: 写入点在**第 0 层** (S3 是层边界注入)、正文被截断到 120 位、arm0 是「管道开、内容为 0」(S3 的管道不可见)、注意力**只在写入层**测量 (深层注意力对内容不稳定, pipe_probe3 实测)。⚠️ **P5a/P5b 的块集合是 12 个 (方向,源层) 组** (不是 64 块) ⇒ 观测数 60; P5c/P5d/P2′ 是 64 块 / 320 观测; P3① 是 960 个注入臂行。⚠️ **通道寻址只在块级聚合上成立**: P5b 块级 p = 0.0 但逐样本 p = 0.787 (post_hoc 诊断), 引用时必须一起给。⚠️ **ViT 臂已于跑前整臂撤出** (SPEC §0.1 修订 9) ⇒ 只覆盖 BERT↔Qwen, ViT 上的结论外推不了; 撤出实测依据: ViT 末层扰动 40 条记录里 20 条越守门上限 0.3, 且 arm1−arm2 的管道注意力差 5/5 块为负 (results/calib_records.jsonl 的 ViT 行)。⚠️ 跑批分 5 批执行 (单任务运行时限所迫, 逐批断点续跑), 累计约 5.9 ks (本机 CPU); 最后由 --aggregate 从全量 checkpoint 重算判据。"
+  },
+  "acceptance": {
+    "criterion": "verdict = S4PIPE_READY 当且仅当 P5a ∧ P5b ∧ P5c ∧ P5d ∧ P2′ ∧ P3① 全过; 阈值 (α=0.01 / 置换 10^4 / 5 个种子 / 64 个文本块 / 扰动区间 (1e-3, 0.5] / λ 候选集与选择规则) 全部跑前写死在源码常量 THRESHOLDS 里, 事后未放宽。",
+    "outcome": "fail",
+    "note": "**P5a 没过** (arm1−arm0 管道总注意力中位 +0.000463, 34/60 正, 置换 p = 0.3108; 内容特异性 arm1−arm3 中位 −0.000983, 24/60 正, p = 0.9053 —— 模型**不按内容**多读管道); **P5b 过了** (flip 的 arm1−arm2 中位 +0.002305, 39/60 正, 置换 p = 0.0; 但逐样本 p = 0.787, 见 claim.note); **P5c 过了** (r2_q 增量中位 +0.004419, 236/320 正, p = 0.0); **P5d 没过** (非目标槽 r2_o 增量中位 +0.001921, 250/320 正, p = 0.0); **P2′ 没过** (同层 +0.000399 vs 跨层 +0.004495, p = 0.9351); **P3① 过了** (960 个注入臂行, 末层扰动 min 0.062012 / max 0.292561, 越界 0)。⇒ 裁决 **S4PIPE_FAIL**, 退出码 1 (契约内)。⚠️ **post_hoc 补测** (results/diag_readout.json, 不参与裁决): 正文侧 r2_q 的内容特异 arm1−arm3 = **+0.011373** (p = 0.0) 与槽特异 arm1−arm2 = **+0.002700** (p = 0.0; 仅 BERT→Qwen 方向) ⇒ 裁决不变, 但**解释**要改: 管道**过了传递关**, 卡点在**深度对应与源侧槽身份**, 不是读出端。"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "clean",
+    "audited_in": "docs/LEAKAGE_AUDIT_CHAIN.md",
+    "note": "本代**不训练任何底座权重**, **不产生**任何能力指标, 注入算子里**没有任何拟合步骤** (沿用 v80/v81 的共享空间载体口径, 不学任何学出来的映射)。唯一的拟合是**探针**: 目标模型读出层上的线性 ridge 读出器, 其 λ 由**训练样本内**的 5 折分层 CV 在跑前写死的网格上选出, **测试样本全程不参与** λ 的选择与任何统计量的计算; R² 一律在留出集上算, 且只读正文里的真实 token (pad 位不参与)。λ 标定用的是同一批 128 条语料的 seed 0 前向, 与正式跑批共享语料但**不参与**正式判据的任何统计量; 标定的门控阈值跑前写死。语料为公开语料的固定缓存切片 (ag_news 128 条), 与 v77-v81 同一批缓存。⇒ 无目标泄漏面。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "在正文之前开一条管道, 目标模型就会**按内容**去读这条管道",
+      "verdict": "**证伪** —— P5a 的管道总注意力差块级中位 **+0.000463** (34/60 观测为正), 置换 **p = 0.3108**; 逐样本更弱 (4415/7680 = 57.5% 正, 符号检验 **p = 1.0**); 内容特异性对照 arm1−arm3 反而为**负** (中位 −0.000983, 24/60 正, p = 0.9053) ⇒ 管道里的内容既不吸引注意力, 也不比随机方向更吸引。注意: P5c (贯通) 同时通过 ⇒ **内容确实到了正文, 但不是靠「模型注意到管道」** (最可能: 管道位的 value 向量被改写, 以与内容无关的固定权重传导)。",
+      "evidence": "research/weight_fusion/v82_s4_pipe/SPEC.md §4; results/metrics.json (criteria.P5a); results/diag_pipe.json (逐样本 sign_p)"
+    },
+    {
+      "hypothesis": "**按专属通道编号**就能让模型稳定寻址到某个槽 (S3 的 P1b 在本代被解决)",
+      "verdict": "**部分成立、不足以当作证据** —— P5b 块级配对置换 **p = 0.0** (39/60 观测为正, 中位 +0.002305), 相对 S3 的 P1b (p = 0.9521) 是**质变**; 但**逐样本**层面 3787/7680 = 49.3% 为正、符号检验 **p = 0.787** ⇒ 「有内容的通道更受看」只是**块级聚合现象**, 不是稳定的逐样本机制。⇒ 注意力侧只能说「管道提供了比残差流更好的容器」, 不能说「按地址投递已成立」。⚠️ 但**正文侧**给出更强的证据: 槽特异性 arm1−arm2 块级中位 **+0.002700, 置换 p = 0.0** (S3 同口径是 −0.002455, p = 0.9521) ⇒ 管道在 **BERT→Qwen 方向把「分不清」变成了「分得清」** (该方向 +0.004155, p = 0.0); Qwen→BERT 方向仍不成立 (+0.000788, p = 0.1324)。",
+      "evidence": "research/weight_fusion/v82_s4_pipe/SPEC.md §4; results/metrics.json (criteria.P5b); results/diag_pipe.json"
+    },
+    {
+      "hypothesis": "管道只打开**目标槽**, 不普涨非目标槽",
+      "verdict": "**证伪** —— 非目标槽 (O) 的正文 r2_o 增量中位 **+0.001921** (250/320 观测为正), 置换 **p = 0.0** ⇒ 注入 Q 槽也把 O 槽抬高 (与 S3 的 P3② 同型失败)。分方向: Qwen→BERT +0.000658 (107/160 正)、BERT→Qwen +0.003460 (143/160 正) ⇒ BERT→Qwen 方向上更明显。",
+      "evidence": "research/weight_fusion/v82_s4_pipe/SPEC.md §4; results/metrics.json (criteria.P5d)"
+    },
+    {
+      "hypothesis": "管道保留了跨模型的**深度对应** (同层优于跨层)",
+      "verdict": "**证伪** —— 同层块 (8 个) 中位 **+0.000399**, 跨层块 (56 个) 中位 **+0.004495** ⇒ **跨层高 11 倍**, 分层置换 **p = 0.9351**。分方向: Qwen→BERT 同层 −0.000844 vs 跨层 +0.002603; BERT→Qwen 同层 +0.004689 vs 跨层 +0.008937。⇒ 深度对应不但不存在, 方向还与 S3 一致地**反着**。",
+      "evidence": "research/weight_fusion/v82_s4_pipe/SPEC.md §4; results/metrics.json (criteria.P2_prime)"
+    },
+    {
+      "hypothesis": "S3 的「信息流分不清」是**容器问题**, 换个带地址的容器就能解决",
+      "verdict": "**部分证伪** —— 管道确实把「分不清」的最强对照 (P1b) 从 p = 0.9521 推到块级 p = 0.0, 且**贯通比 S3 更强** (P5c 中位 +0.004419 vs S3 的 P1a +0.003232); 但同一代里**逐样本通道寻址不成立** (p = 0.787)、**管道不被按内容读取** (p = 1.0)、**选择性仍失败**、**深度对应仍不存在** ⇒ 「分不清」**基本不再是拦路虎** (正文侧内容特异 +0.011373 p = 0.0, 槽特异 +0.002700 p = 0.0 且仅 BERT→Qwen 方向) ⇒ 剩下的两个失败项 (**P2′ 深度对应** 与 **P5d 非目标槽普涨**) 都与容器/共享空间性质无关 ⇒ 指向**源侧语义本身** (源模型层间语义不对齐; Qwen 源侧的 Q/O 槽本身混在一起)。",
+      "evidence": "research/weight_fusion/v82_s4_pipe/SPEC.md §1.1 / §4; research/weight_fusion/v81_s3_semantic/SPEC.md §4; results/diag_pipe.json"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v82_s4_pipe.py",
+    "forwarder_spec": "docs/V82_0_S4_PIPE.md",
+    "calibration": "results/calib.json",
+    "calibration_records": "results/calib_records.jsonl",
+    "blocks_checkpoint": "results/blocks.jsonl",
+    "attention_checkpoint": "results/attention.jsonl",
+    "pipe_diagnosis": "results/diag_pipe.json",
+    "readout_diagnosis": "results/diag_readout.json",
+    "carrier_diagnosis": "results/diag_carrier.json",
+    "smoke_metrics": "results/metrics_smoke.json",
+    "batch_snapshot": "results/part_qwenbert.json",
+    "calibration_log": "results/calib_records.jsonl"
+  },
+  "tests_status": "present"
+}

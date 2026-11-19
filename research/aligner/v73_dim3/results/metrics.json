@@ -1,0 +1,45 @@
+{
+  "package": "v73_dim3",
+  "version": "73.0",
+  "generated": "2026-11-12",
+  "status": "code_ready_pending_batch_run",
+  "one_mechanism_added": "三个关键修正：① 断言 proj_space 权重**完整加载**（missing_keys 必须为空）——此前 load_state_dict(strict=False) 静默忽略失败键，等于在审计随机空间；② 梯度路径必须过 P_m 投影到 256 维槽空间才能比夹角（此前直接喂 raw hidden）；③ 用 Gram 矩阵 eigh 替代全 SVD 提主子空间，夹角用投影算子比较（结果等价，CPU 从几十分钟到秒级）。",
+  "note": "本代**没有端到端数字**。按项目纪律，无支撑的数字不得对外引用；本快照只记录可本地复算的结构性事实。",
+  "locally_verifiable": {
+    "eigh_instead_of_svd": true,
+    "speedup": "CPU 从几十分钟到秒级",
+    "grad_n_default": 16,
+    "asserts_full_weight_load": true,
+    "requires_p_m_projection": true,
+    "missing_proj_space_key_rejected": true,
+    "gram_eigh_vs_full_svd_proj_diff": 8.53e-16,
+    "vit_truncation_tokens": 128,
+    "covered_by_this_rewrite": [
+      "v72 的定位候选",
+      "v74 的 /v62pkg 候选与 _BASE 下载逻辑"
+    ]
+  },
+  "implementation_modules": [
+    "research/aligner/v62_dimension_projection_space/slot_independence_audit.py"
+  ],
+  "falsified": [
+    {
+      "h": "此前 v71 审计脚本产出的 Dim II/Dim III 结论可信",
+      "v": "作废 —— 曾用随机初始化的 DimProjectionSpace + load_state_dict(strict=False)，加载失败的键被静默忽略，等于审计「随机空间」而非训练好的模型",
+      "e": "research/aligner/v73_dim3/SPEC.md §2"
+    }
+  ],
+  "bugs_fixed": [
+    "断言 proj_space 权重完整加载（不再审计随机空间）",
+    "feats 前必须过 P_m 投影(2048→256) + P_m 形状校验",
+    "Dim III 梯度路径也要过 P_m 投影(src @ P_m.T)",
+    "P_m 键名错（ParameterList 用 P_m.N）+ shape 校验 [256,2048/768/1152]",
+    "Dim III 矩阵维度：g @ P_m.T（P_m 是 [256,D_m] 需转置）",
+    "Dim III 能量量纲错误"
+  ],
+  "pending": [
+    "Kaggle 批量验证未执行",
+    "端到端数字待回填"
+  ],
+  "acceptance_note": "7/7 通过（本地 CPU）。第 1 项是**负例测试**：删掉一个 proj_space 键后脚本必须 rc!=0 且不产出任何审计结论"
+}

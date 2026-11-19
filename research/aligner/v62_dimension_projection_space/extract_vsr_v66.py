@@ -148,15 +148,16 @@ with torch.no_grad():
         for j in range(i, min(i+VBS, len(records))):
             imgs.append(_load_img(j))
         p = proc(images=imgs, return_tensors='pt').to(DEV)
-        h = vm(pixel_values=p['pixel_values']).last_hidden_state  # [b,729,1152]
+        pv = p['pixel_values'].to(dtype=vm.dtype)
+        h = vm(pixel_values=pv).last_hidden_state  # [b,729,1152]
         if h.shape[1] != VIT_SEQ:
             idx = torch.linspace(0, h.shape[1]-1, VIT_SEQ).long().to(DEV)
             h = h[:, idx, :]
         Hv[i:i+VBS] = h.cpu().numpy().astype(np.float16)
         if (i//VBS) % 20 == 0: print('  vit %d/%d %.0fs' % (i, len(records), time.time()-t0), flush=True)
-np.save(f'{OUT}/h_vit_vsr.npy', Hv); _up('h_vit_vsr.npy')
 print('  [stats] 图像下载失败 %d/%d（灰图占位）' % (_stats['img_fail'], len(records)), flush=True)
 assert _stats['img_fail'] < len(records) * 0.2, '图像下载失败率>20%%，视觉hidden不可信'
+np.save(f'{OUT}/h_vit_vsr.npy', Hv); _up('h_vit_vsr.npy')
 
 np.save(f'{OUT}/food_labels_vsr.npy', labels); _up('food_labels_vsr.npy')
 print('[done] VSR v66 提取 %.0fs' % (time.time()-t0), flush=True)

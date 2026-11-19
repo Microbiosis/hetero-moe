@@ -47,7 +47,8 @@ class RecursiveFeedbackHead(nn.Module):
             deltas: list of n_slots tensors, each [slot_dim,slot_dim]（batch 级共享）
         """
         conf = self.conf(y)                              # [B,S,n_slots]
-        mu = y.detach().mean(dim=(0, 1))                 # [d_fused] 全局均值
+        conf_slot = conf.mean(dim=(0, 1))                # [n_slots] 槽级平均置信度
+        mu = y.mean(dim=(0, 1))                          # [d_fused] 保持可微图连接
         raw = self.gen(mu)                               # [out_dim]
 
         deltas = []
@@ -56,7 +57,8 @@ class RecursiveFeedbackHead(nn.Module):
             chunk = raw[i * per_slot:(i + 1) * per_slot]
             U = chunk[:self.slot_dim * self.rank].view(self.slot_dim, self.rank)
             V = chunk[self.slot_dim * self.rank:].view(self.rank, self.slot_dim)
-            deltas.append(torch.matmul(U, V))            # [d,d]
+            # 置信度调制 delta，确保 self.conf 与 self.gen 均接入反向梯度图
+            deltas.append(conf_slot[i] * torch.matmul(U, V))   # [d,d]
         return conf, deltas
 
     def apply_feedback(self, proj_weights: list, y: torch.Tensor,
@@ -67,10 +69,17 @@ class RecursiveFeedbackHead(nn.Module):
         """
         conf, deltas = self.forward(y)
         with torch.no_grad():
+            slot_keys = list(slot_idx_map)
             for slot_name, idx in slot_idx_map.items():
                 w = proj_weights[idx]
-                d = deltas[list(slot_idx_map).index(slot_name)]
-                w.add_(self.lambda_ * d.mean(dim=(0, 1)))
+                d = deltas[slot_keys.index(slot_name)].to(w.device, w.dtype)
+                if d.shape == w.shape:
+                    # 直接应用完整的 [slot_dim, slot_dim] 低秩矩阵增量（修复原 d.mean(dim=(0,1)) 塌成单标量的 bug）
+                    w.add_(self.lambda_.to(w.device, w.dtype) * d)
+                else:
+                    # 非同形权重按目标维度切片/适配，避免隐式塌成标量
+                    r, c = min(w.shape[0], d.shape[0]), min(w.shape[1], d.shape[1])
+                    w[:r, :c].add_(self.lambda_.to(w.device, w.dtype) * d[:r, :c])
         return conf
 
     def extra_repr(self):

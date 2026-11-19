@@ -26,7 +26,7 @@
     "note": "自写 autograd.Function 做子空间投影的直通梯度: 显式承认『选哪几个方向』是离散决策、没有梯度"
   },
   "claim": {
-    "asserts": "维度不该是超参。v48–v56 六代都在扫同一族固定维度超参 (D_shared 96/252/256/384, hidden 4..2048), 结论都是『不是它』。本代把维度改成状态: r 由数据决定, 双向。算子层面给出 P_V·W·P_V —— 参数总量不随 r 变, 变的是有多少参数被激活 (r=5 时 1255/16384)。",
+    "asserts": "维度不该是超参。v48–v56 六代都在扫同一族固定维度超参 (D_shared 96/252/256/384, hidden 4..2048), 结论都是『不是它』。本代把维度改成状态: r 由数据决定, 双向。算子层面给出 P_V·W·P_V —— 参数总量不随 r 变, 变的是有效子块 V^T W V 的激活参数 (r²；r=5 时 25/16384，原误记 1255/16384)。",
     "metric": "rank_recovery_exactness",
     "direction": "exact_match",
     "value": 4,
@@ -35,8 +35,8 @@
       "value": null
     },
     "seeds": 1,
-    "outcome_label": "positive",
-    "note": "单元测试 10/10; 真实秩 {0,3,8,20} 全部精确估出; 坍缩测试 r 8→0。全网格 (真实表征上的 r(t) 轨迹) 待 Space 落桶"
+    "outcome_label": "mixed",
+    "note": "2026-11-19 勘误对齐：合成单元测试 10/10 通过（真实秩 {0,3,8,20} 精确估出）；但已落盘的真实表征全网格 results/metrics.json 实测 V1_expand=true、V3_not_constant=true、**V2_collapse=false**（r 从 13 持续扩张至 r_max=r_final=292，born=299/died=7，未通过预登记生死线 V2）。另已原位修复 operators.py 中 Gavish–Donoho 双除 c_β、_below 复位、残差零奇异值及 CUDA 设备缺陷，详见 docs/PAST_SUBPACKAGES_ERRATA.md。"
   },
   "protocol": {
     "eval_set": "合成: 固定正交基 + 已知秩 k 的信号 + 高斯噪声 (d=512)",
@@ -69,6 +69,7 @@
   "artifacts": {
     "spec": "SPEC.md",
     "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
     "forwarder_tests": "tests/test_v57_adaptive_dimension.py",
     "status": "results/STATUS.md"
   },

@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "version": "75.0",
+  "package": "v75_weight_conjugation",
+  "line": "weight_fusion",
+  "title": "槽级共轭的权重级有效性检验 (G1 口径回归 + G2 保留/生成两问)",
+  "generation": {
+    "one_mechanism_added": "把主线 G1/G2 从设计变成可证伪实验: ① G1 口径回归 (原生六槽逐位复现 v62 §2); ② 前提审计 (把 v62 headline 的族/形状构成拆开); ③ G2 拆成保留/生成两问, 五臂 (不搬/按槽/同谱随机/错槽/槽无关) × 三粒度, 跨层拟合 + 配对置换, 阈值跑前写死。",
+    "parent": "74.0",
+    "children": [
+      "76.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "74.0",
+    "line_children": [],
+    "note": "weight_fusion 线自 v75 开线: 承接 aligner 线 v62 的共享空间 (proj/align) 与 v74 的收官; 本线回答的问题是权重级合并, 与 aligner 线的激活级对齐不是同一件事。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "g2_conjugation.py"
+    ],
+    "note": "本代按**路径**载入 aligner 线 v62 的 measure.py (research/aligner/v62_dimension_projection_space/measure.py) 复用 cka/js 口径, 不复制代码 —— 按路径载入可避免连带触发 v62 包的 __init__ (transformers / model.py 等重依赖), 只取 measure.py 本身。该复用**跨线**, 但因走路径载入, tools/check_self_containment.py 的静态 import 扫描看不到它, 故在此显式登记。口径同源凭证: measure.py 的 sha256 = 8a20d007f5a42340ee89713512c089f81157d92101610c17f92f7ae6077aa349 (已写入 results/metrics.json 的 protocol.v62_measure_sha256)。"
+  },
+  "claim": {
+    "asserts": "槽级搬运没有造出同槽偏好: 按槽搬运 (B_slot) 在预登记 alpha=0.01 上既未击败同谱随机搬运 (C_random) 也未击败槽无关搬运 (Bplus_pooled); 且前提审计显示 v62 '内切' 结论的族平衡分量不显著 ⇒ G2 的前提本身不成立。",
+    "metric": "cka_separation (同槽 - 异槽, 函数相似度, 块中位数)",
+    "direction": "higher_is_better",
+    "value": 0.00428888884683451,
+    "baseline": {
+      "ref": "C_random (同奇异值、随机方向搬运)",
+      "value": 0.0024722317295769874
+    },
+    "delta_pct": null,
+    "seeds": 5,
+    "outcome_label": "falsified",
+    "note": "G2-b 生成检验证伪: B_slot 与 C_random 的差 (+0.00284) 配对置换 p=0.0498, 未过预登记的 alpha=0.01, 不得按 0.05 事后放行; B_slot 与 Bplus_pooled 的差 (+0.00153) p=0.3686。唯一显著优于的对照是错槽搬运 (B_minus_C_wrongslot p=0.0068), 说明'用本槽拟合的对齐'比'用别的槽拟合的对齐'更贴合, 但这不等于槽身份被搬运 —— 槽无关汇总对齐同样有效。delta_pct 留空: 两个数都接近 0, 相对差无意义。"
+  },
+  "protocol": {
+    "eval_set": "not_applicable",
+    "input": "三底座 (Qwen/BERT/ViT) layer0-3 的真实权重切片, 取等形状功能单元 (attention 四槽的方阵 + FFN 复合算子 contract∘expand), 共 52 个单元 / 72 个原始张量; 共享空间算子 M = P·Wᵀ·Pᵀ (d_shared=256, 与 v62 同口径)",
+    "caveat": "本代无端到端任务指标, 只有权重级机制层的相似度统计; 引用时不得说成精度结论。共享空间算子在 BERT (D=256) 上与 W 相似、在 Qwen/ViT 上是压缩投影, 故跨模型的**谱**不可直接比 (JS 只作次要口径), 函数相似度 (CKA) 不受影响。"
+  },
+  "acceptance": {
+    "criterion": "G1 口径回归相对误差 <= 5%; G2-a 要求原生基线有功效 (p < 0.05) 且 B_slot 分离度为正、块内分层置换 p < 0.01; G2-b 要求 B_slot 在配对置换下 p < 0.01 地击败 C_random / C_wrongslot / Bplus_pooled 三个对照",
+    "outcome": "fail",
+    "note": "G1 通过 (相对差 5.2e-8); G2-a 因原生基线无功效判 INCONCLUSIVE (不是否证); G2-b 判 FAIL (B_slot 未击败 C_random 与 Bplus_pooled)。脚本退出码: 主判据通过返 0, 否则返 1 ⇒ 本代退出码为 1, 属设计如此, 不是崩溃。"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分, 无目标泄漏面; 循环论证风险另由协议处理: 同层拟合只作机械通路自检, 只有跨层拟合进入判据。已知近似 (Qwen SwiGLU 缺 gate 路) 与压缩投影的局限见 SPEC.md §7。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "G2: 槽级搬运后, 同槽跨架构的权重比异槽跨架构的更相似 (MAINLINE_ROUTE §1.4 生死线)",
+      "verdict": "证伪 —— B_slot 在预登记 alpha=0.01 下未击败同谱随机搬运 (p=0.0498) 与槽无关搬运 (p=0.3686); family 与 slot_attn 粒度差距更大 (p=0.9994 / p=0.7212)",
+      "evidence": "research/weight_fusion/v75_weight_conjugation/SPEC.md §4-§6; results/metrics.json 的 verdict_by_granularity"
+    },
+    {
+      "hypothesis": "v62 §2 的 '内切' (同功能跨架构谱更相似, JS 0.0302 vs 0.0401, p=0.0002) 是功能槽对应的证据",
+      "verdict": "证伪/须限定 —— headline 混入了族与形状构成: 异功能一侧的 1440 对里 768 对是跨族 (同槽对按构造必同族); 族平衡分离度仅 +0.00104, 族分层置换 p=0.3318 不显著; CKA 口径的原生共享空间基线 (A0_none) 同样不显著 (slot 分层 p=0.7014)",
+      "evidence": "research/weight_fusion/v75_weight_conjugation/SPEC.md §3; results/metrics.json 的 premise_shape_effect_audit.F_family_balanced"
+    },
+    {
+      "hypothesis": "槽级对齐可以跨深度迁移, 因此能用跨层拟合检验 G2",
+      "verdict": "证伪 —— 跨层搬运后的槽检索准确率 0.264 (随机水平), 同层自检却是 1.000 ⇒ 槽级对齐不跨深度携带槽身份, 跨层口径先天低功效",
+      "evidence": "research/weight_fusion/v75_weight_conjugation/SPEC.md §6; results/metrics.json 的 arms.B_slot.retrieval"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v75_weight_conjugation.py",
+    "forwarder_spec": "docs/V75_0_WEIGHT_CONJUGATION.md"
+  },
+  "tests_status": "present"
+}

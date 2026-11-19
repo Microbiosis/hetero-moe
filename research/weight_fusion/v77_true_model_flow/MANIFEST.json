@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "version": "77.0",
+  "package": "v77_true_model_flow",
+  "line": "weight_fusion",
+  "title": "A1 路线 β: 真 HF 模型的逐层驱动与层边界注入 (S1β)",
+  "generation": {
+    "one_mechanism_added": "路线 β 的第一步: 载入三个真 HF 预训练底座, 用 forward hook 在 decoder layer 的输入处实现「层边界打断 -> 注入 -> 续跑」, 并抓真模型里的功能槽激活 (投影类槽取模块输出 / o_proj·down_proj 类槽取模块输入, 与 v62 的槽权重语义一致); 给出 S1β 五项机械自检 (B1 权重同源 / B2 逐层驱动 / B3 注入通路 / B4 层栈健康 / B5 槽身份可分辨对照)。",
+    "parent": "76.0",
+    "children": [
+      "78.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "76.0",
+    "line_children": [],
+    "note": "weight_fusion 线第 3 代: v75 权重级共轭 (负结果) -> v76 路线 α 的 S1 机械可行性 -> v77 路线 β 的真模型可用性。v76 证伪了「路线 α 能承载语义层判据」, 本代做路线 β。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "true_model.py"
+    ],
+    "note": "本代按**路径**载入同线 v75 的 g2_conjugation.py (load_wall)、v76 的 a1_forward.py (eff_rank / ridge_fit_r2), 以及 v62 的 measure.py (SLOT_PATHS / projections); 口径同源凭证为三者的 sha256 (记入 results/metrics.json 的 protocol.provenance_sha256)。不按包名 import 的原因与 v75/v76 一致: 同线 import 会被 tools/check_self_containment.py 判成跨线引用 (--strict 报错)。"
+  },
+  "claim": {
+    "asserts": "路线 β 可用: 切片权重与真模型参数**逐位同源** (B1, 72/72 块 rel_err=0), 真模型逐层驱动与零注入的打断/续跑**位级等价** (B2), 层边界注入真的改变后续层输出 (B3), 真模型层栈健康 (B4; 含 ViT 在真模型上没有 v76 的缺陷)。",
+    "metric": "s1b_criteria_pass_rate",
+    "direction": "higher_is_better",
+    "value": 0.8,
+    "baseline": {
+      "ref": "无 (S1β 首次执行)",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": 1,
+    "outcome_label": "partially_confirmed",
+    "note": "五项判据过 4 项: B1-B4 机制层全过, 且 B1/B2 是**位级**证据 (相对误差 0.0)。唯一未过的 B5 是**对照测量** (不是 P1b), 方向为正但功效不足 ⇒ 判为不可判定。机制层与对照测量必须分开读, 不得只引其中一面。"
+  },
+  "protocol": {
+    "eval_set": "fancyzhx/ag_news train (128 条, 四类均衡 37/32/26/33) + ethz/food101 train (4 张真图); 均经 HF datasets-server rows API 取",
+    "input": "真 HF 预训练底座 (Qwen/Qwen2.5-0.5B-Instruct / google/bert_uncased_L-4_H-256_A-4 / google/vit-base-patch16-224-in21k) 的真实权重与真实输入; fp32 / CPU",
+    "caveat": "本代**没有**端到端任务指标: 注入不改变任何底座权重, 也没有标签级能力指标 (ag_news 的标签随文本取回但本代不用) ⇒ 不得说成能力或精度结论。B5 是对照测量而非 P1b (无注入臂)。跨模型可比单位 = 样本级 mean-pool (两个 tokenizer 的 token 网格不同, 无法逐 token 配对)。"
+  },
+  "acceptance": {
+    "criterion": "S1β 五项机械自检全过: B1 权重逐位同源 (相对误差 <= 1e-5) / B2 零注入的打断续跑与原前向位级等价 (<= 1e-6) / B3 注入通路 (最终输出相对扰动 ∈ (1e-3, 0.5) 且有限) / B4 层栈健康 (判据范围 = 首代覆盖的 Qwen/BERT; 相邻层 RMS 比 ∈ [0.1,10], 有效秩 > 1.1) / B5 匹配槽占优 >= 12/16 且双侧符号检验 p < 0.05",
+    "outcome": "fail",
+    "note": "4/5 过。唯一未过的是 **B5** (对照测量): 匹配槽占优 12/16、中位差 +0.0738、平均 R² 0.720 vs 0.518 —— **方向为正但未达预登记显著性** (双侧符号检验 p=0.0768; n=16 时需 >= 13 个正号才 p<0.05) ⇒ 读作「不可判定 (功效不足)」, **不是**「槽身份在真模型上不可分辨」的否证。阈值一条未放宽。事后拆到槽看: Q 槽 8/8 占优 (p=0.0078)、O 槽 4/8 —— 该拆解在快照里明确标注 post_hoc_only, 不参与本代裁决, 只为 S3 的判据粒度设计提供依据。"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代是前向探针: 无标签训练、无蒸馏、无目标泄漏面; 注入不改变任何底座权重。语料标签随文本取回但本代不用它做能力指标。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "真模型里注入方向会被残差流原样携带 (alignment 接近 1)",
+      "verdict": "证伪 —— BERT 4 层后 alignment +0.549; Qwen 走 22 层后 **-0.162** (方向被彻底改写甚至翻转) ⇒ 不能只靠方向对齐判定「信息流过去了」, 必须用可读性指标 (S3 的 P1a/P1b)。",
+      "evidence": "research/weight_fusion/v77_true_model_flow/SPEC.md §4.3; results/metrics.json 的 B3_injection"
+    },
+    {
+      "hypothesis": "Qwen 的 hidden state 可直接喂线性探针读语义 (各层有效秩健康)",
+      "verdict": "证伪 —— Qwen 第 3 层后有效秩塌到 3.8~8.6 (第 0~2 层是 156~265) ⇒ massive activations 主导残差流; S3 的探针读数必须控制有效秩 (去均值/标准化/换层/换子空间), 否则 P1a/P1b 会被少数维绑架。",
+      "evidence": "research/weight_fusion/v77_true_model_flow/SPEC.md §4.2; results/metrics.json 的 B4_stack_health.models.Qwen.eff_rank_by_layer"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v77_true_model_flow.py",
+    "forwarder_spec": "docs/V77_0_TRUE_MODEL_FLOW.md"
+  },
+  "tests_status": "present"
+}

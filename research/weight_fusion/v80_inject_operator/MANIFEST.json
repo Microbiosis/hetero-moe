@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "version": "80.0",
+  "package": "v80_inject_operator",
+  "line": "weight_fusion",
+  "title": "S2: 注入算子下沉到真模型层边界 (先导失败 -> λ 标定 -> 闸门重跑)",
+  "generation": {
+    "one_mechanism_added": "S2 (A1_DESIGN §8): 把 S3 的注入算子真做出来 —— 按协议 §2.3 修订后口径 (保留共享空间载体、**不学任何学出来的映射**) 在**真模型层边界**用 forward_pre_hook 注入, 四臂 (arm0/arm1/arm2/arm3) 在全部 84 个块 (文本对 64 + ViT 自跨层 20) 上跑通 + 六项机械闸门; 并含 **S2-1 注入强度 λ 的标定** (写死候选集 + 写死选择规则) —— λ 是被先导运行的证伪逼出来的重新预登记, 不是事后放宽。",
+    "parent": "79.0",
+    "children": [
+      "81.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "79.0",
+    "line_children": [
+      "81.0"
+    ],
+    "note": "weight_fusion 线第 6 代: v75 权重级共轭 (负结果) -> v76 路线 α 的 S1 -> v77 路线 β 的真模型可用性 (S1B_FAIL) -> v78 前置诊断 (把 S3 口径查清) -> v79 S2-0 (对齐来源: 负结果, 无可用来源) -> v80 S2 (把注入算子落地 + S2-1 λ 标定 + 机械闸门: 三步链, 裁决 S2_OPERATOR_READY; 先导 λ=0.1 的 FAIL 留档未被撤销) -> v81 S3 (语义判据: token 级探针 R2 + 置换检验, 按 docs/S3_PROTOCOL.md 预登记协议开跑)。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "s2_operator.py",
+      "s2_lambda_calib.py"
+    ],
+    "note": "本代按**路径**载入 v77 的 true_model.py (Backbone / Injector / capture_slots / text_batches / 语料与模型缓存) 与 v62 的 measure.py (SLOT_PATHS / projections); 口径同源凭证为三者的 sha256 (记入 results/metrics.json 的 protocol.provenance_sha256)。不按包名 import 的原因与 v75-v79 一致: 同线 import 会被 tools/check_self_containment.py 判成跨线引用。s2_lambda_calib.py 按路径复用 s2_operator.py 的注入/捕获工具, 其候选集与选择规则写死在源码常量里。"
+  },
+  "claim": {
+    "asserts": "S3 的注入算子已实现并在真模型层边界可执行, 且**六项机械闸门全过**: 零注入的「打断 -> 续跑」与原前向**逐位等价** (17 个注入点 × 逐层 rel_err 恰为 0.0), 注入量逐样本精确归一化到 λ=0.03 (252 行最大偏差 2.51e-7), 四臂在 84 个块上全部跑通, 读出层扰动全部落在 (1e-3, 0.5) (min 0.00479 / max 0.0806), final 输出扰动全部 <= 0.3000 (P3① 上限 0.5) 且无一 < 1e-3, arm3 与真实内容去相关 (最大 |cos| 0.2448, 违例 0)。本代走的是三步链: (1) 先导运行 λ=0.1 => **S2_OPERATOR_FAIL** (C4 被证伪: 36/252 臂块超限, 全部在 BERT->Qwen 的 j∈{3,6,12}); (2) S2-1 标定 (写死候选集 {0.01..0.05} + 写死选择规则) => **λ* = 0.03**; (3) 闸门重跑 λ=0.03 => **S2_OPERATOR_READY**。",
+    "metric": "C4_max_rel_perturbation_final (λ=0.03)",
+    "direction": "lower_is_better",
+    "value": 0.299991995,
+    "baseline": {
+      "ref": "协议 §3 P3① 的输出相对扰动上限",
+      "value": 0.5
+    },
+    "delta_pct": -40,
+    "seeds": 1,
+    "outcome_label": "supported",
+    "note": "**先导失败未被撤销**: λ=0.1 在 Qwen 第 3/6/12 层把最终输出打坏 55-80% 这条事实依然成立 (先导运行留档于 results/run_lambda0p1.json, 其源码同址归档且 sha256 与快照逐位吻合) ⇒ 引用本代**必须成对引用两次运行**。λ 的口径歧义 (块 Frobenius vs 逐 token RMS, 绝对幅度差 √D≈30 倍; v77 B3 同注入点 0.0022 vs 本代 0.1041, 比值 46-49×) 已由 S2-1 标定**重新预登记**为 λ=0.03 (协议 §2.3 修订记录第 6 条) —— 这是**被证伪逼出来的**重新预登记, 不是阈值放宽: 六项判据一字未改, 只换了 λ。阈值一条未放宽。本代**不产生**任何 P1a/P1b/P2/P3 语义判据 ⇒ A1 整体仍未判定。"
+  },
+  "protocol": {
+    "eval_set": "fancyzhx/ag_news train 128 条 (与 v77/v78/v79 同一缓存 agnews_128.json) 的**第 1 批 16 条** (S2 是机械闸门, 统计功效不在本代); ViT 臂取 ethz/food101 的 16 张 (机械闸门不做标签读数)",
+    "input": "真 HF 预训练底座 Qwen/Qwen2.5-0.5B-Instruct (24 层) / google/bert_uncased_L-4_H-256_A-4 (4 层) / google/vit-base-patch16-224-in21k (12 层) 的真实权重与真实输入; 槽激活按 v62 槽语义取 (投影类取模块输出 / O 槽取模块输入), 与 v77/v78/v79 同口径; 共享空间用 v62 的 projections(0) 正交投影; fp32 / CPU",
+    "caveat": "本代**只回答「注入算子能不能落地、四臂能不能跑通、机械前提过不过」**, 不产生任何 P1a/P1b/P2/P3 判据, 也不改动 v77/v78/v79 的裁决。层网格按协议 §2.1 的 L_Q/L_B/L_V 走满 (文本 64 块 + ViT 20 块)。注入按**样本级广播** (两模型 token 网格不可配对, v79 已证)。λ=0.03 由 S2-1 在 84 块 × 5 个候选上按写死的规则选出 (协议 §2.3 修订记录第 6 条); 标定与闸门都在 16 样本上做, S3 用 128 条 ⇒ P3① 的 40% 余量即为此留。"
+  },
+  "acceptance": {
+    "criterion": "六项机械闸门全过才算 S2 通过: G1 arm0 逐位等价 (rel_err == 0, 协议 §4 开跑前清单第 2 条) / C2 注入范数比 == λ (= 0.03, 由 S2-1 标定选出; 先导运行为 0.1) / C3 读出层扰动落进 (1e-3, 0.5) 的文本块数 >= 32 / C4 全部块 final 输出相对扰动 <= 0.5 / C5 arm3 与 arm1/arm2 的 |cos| >= 0.35 的样本数 == 0 / C6 全部输出有限。阈值跑前写死, 事后未放宽。",
+    "outcome": "pass",
+    "note": "G1 过 (17 个注入点 × 逐层 rel_err 恰为 0.0 —— **协议 §4 开跑前清单第 2 条已满足**, S3 的机械前提成立); C2 过 (252 行最大偏差 2.51e-7); C3 过 (三臂各 64/64 文本块在范围内, 读出层 max 0.0806); C4 过 (252 块最大 0.3000 <= 0.5, 且无一 < 1e-3); C5 过 (最大 |cos| 0.2448, 违例 0); C6 过。⇒ 裁决 S2_OPERATOR_READY, 退出码 0。**先导运行 (λ=0.1) 的 FAIL 裁决留档且未被撤销** (results/run_lambda0p1.json)。"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分, 无目标泄漏面: 只做真模型前向 + 槽激活 + 注入 + 范数/扰动度量; **不训练任何底座权重, 不产出能力指标, 注入算子里没有任何拟合步骤** (不学任何学出来的映射)。λ 的标定是**规则选择** (写死的候选集 + 写死的选择规则), 不是看结果挑数字 —— 且它选的是**更保守**的一侧 (λ* = 0.03 < 原 0.1)。语料为公开语料的固定缓存切片。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "λ=0.1 (块 Frobenius 口径) 的注入不会把 B 搞坏 (协议 §3 P3①: 输出相对扰动 ∈ (1e-3, 0.5))",
+      "verdict": "**证伪 (且未被撤销)** —— 先导运行里 BERT→Qwen 方向的 j∈{3,6,12} 共 36 个臂块的 final 输出相对扰动达 0.55-0.80 (最大 0.8011), 超出 0.5 上限; 其余 68 块在范围内; 失效**内容无关** (三臂比值 < 1.6)。⇒ 处置: 由 S2-1 重新预登记 λ=0.03 (协议 §2.3 修订记录第 6 条), 闸门重跑后 C4 成立; 先导运行留档于 results/run_lambda0p1.json",
+      "evidence": "research/weight_fusion/v80_inject_operator/SPEC.md §4.1; results/run_lambda0p1.json; results/run_lambda0p1_source.py"
+    },
+    {
+      "hypothesis": "协议 §2.3 的注入算子按字面写法就能开跑 S3",
+      "verdict": "**不成立 (已重新预登记)** —— 「‖Δ_B‖ = 0.1·‖h_B^j‖」有两种读法, 绝对幅度差 √D ≈ 30 倍: 块 Frobenius (字面读法) 在 Qwen 中层打坏 B; 逐 token RMS (v77 B3 口径) final 扰动只 0.0022 但读出层只剩 P3① 下界的 ~2 倍 (未经实测, 线性外推)。⇒ 已由 S2-1 标定选定为块 Frobenius + λ=0.03",
+      "evidence": "research/weight_fusion/v80_inject_operator/SPEC.md §4.2-§4.3; results/lambda_calibration.json; docs/S3_PROTOCOL.md §2.3 修订记录第 6 条"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v80_inject_operator.py",
+    "forwarder_spec": "docs/V80_0_INJECT_OPERATOR.md",
+    "lambda_calibration": "results/lambda_calibration.json",
+    "lambda01_leading_run": "results/run_lambda0p1.json",
+    "lambda01_leading_source": "results/run_lambda0p1_source.py"
+  },
+  "tests_status": "present"
+}

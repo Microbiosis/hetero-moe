@@ -128,10 +128,8 @@ class Canvas:
         w0 = ((y[1] - y[2]) * (X - x[2]) + (x[2] - x[1]) * (Y - y[2])) / area
         w1 = ((y[2] - y[0]) * (X - x[2]) + (x[0] - x[2]) * (Y - y[2])) / area
         w2 = 1.0 - w0 - w1
-        if area > 0:
-            inside = (w0 >= 0) & (w1 >= 0) & (w2 >= 0)
-        else:
-            inside = (w0 <= 0) & (w1 <= 0) & (w2 <= 0)
+        # w0, w1 已除以有向面积 area，故三角形内部恒满足 w0, w1, w2 >= 0（与绕序符号无关）
+        inside = (w0 >= 0) & (w1 >= 0) & (w2 >= 0)
         if not inside.any():
             return
         # 透视校正：屏幕空间对 1/z 线性插值

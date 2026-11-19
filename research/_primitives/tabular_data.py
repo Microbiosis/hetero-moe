@@ -160,7 +160,12 @@ _HIGH_PAY = {"Exec-managerial", "Prof-specialty", "Tech-support"}
 _HOURS_THR = 45        # 工时阈值 — 只在**表格数值侧**
 
 
-def load_adult_crossmodal(n: int = 512, seed: int = 42, decouple: bool = True):
+def load_adult_crossmodal(
+    n: int = 512,
+    seed: int = 42,
+    decouple: bool = True,
+    balanced_4cell: bool = False,
+):
     """跨模态构造: 文本(类别特征) + 表格(数值特征), 标签需**两侧联合**。
 
     ``y = 1`` iff ``(职业 ∈ 高薪集) XOR (工时 ≥ 45)``
@@ -195,13 +200,33 @@ def load_adult_crossmodal(n: int = 512, seed: int = 42, decouple: bool = True):
             y = 1 if (occ in _HIGH_PAY) != (hours >= _HOURS_THR) else 0
             rows.append((cat, nums, y))
 
-    pos = [r for r in rows if r[2] == 1]
-    neg = [r for r in rows if r[2] == 0]
     rng = np.random.RandomState(seed)
-    half = n // 2
-    pi = rng.choice(len(pos), half, replace=len(pos) < half)
-    ni = rng.choice(len(neg), n - half, replace=len(neg) < n - half)
-    sel = [pos[i] for i in pi] + [neg[i] for i in ni]
+    if balanced_4cell:
+        # 四格 XOR 均衡采样 (occ in _HIGH_PAY, hours >= _HOURS_THR) → 每格精确 n//4，单侧贝叶斯上限均为 0.50
+        cells = {
+            (False, False): [],
+            (True, False): [],
+            (False, True): [],
+            (True, True): [],
+        }
+        for r in rows:
+            cat, nums, _ = r
+            cells[(cat[3] in _HIGH_PAY, nums[5] >= _HOURS_THR)].append(r)
+        q = n // 4
+        rem = n - 4 * q
+        sel = []
+        for ci, key in enumerate(((False, False), (True, False), (False, True), (True, True))):
+            bucket = cells[key]
+            take = q + (1 if ci < rem else 0)
+            idx = rng.choice(len(bucket), take, replace=len(bucket) < take)
+            sel.extend(bucket[i] for i in idx)
+    else:
+        pos = [r for r in rows if r[2] == 1]
+        neg = [r for r in rows if r[2] == 0]
+        half = n // 2
+        pi = rng.choice(len(pos), half, replace=len(pos) < half)
+        ni = rng.choice(len(neg), n - half, replace=len(neg) < n - half)
+        sel = [pos[i] for i in pi] + [neg[i] for i in ni]
     order = rng.permutation(len(sel)).tolist()
     sel = [sel[i] for i in order]
 
@@ -224,22 +249,33 @@ def load_adult_crossmodal(n: int = 512, seed: int = 42, decouple: bool = True):
 
 def load_online_shoppers(n: int = 512, seed: int = 0) -> Tuple[np.ndarray, np.ndarray]:
     """Online Shoppers Intention(公开数据集)→ ``([n,6], [n])``。"""
-    for cand in (_V39_DATA, _V38_DATA):
+    import csv
+
+    cols = (
+        "Administrative",
+        "Informational",
+        "ProductRelated",
+        "BounceRates",
+        "ExitRates",
+        "PageValues",
+    )
+    env_dir = os.environ.get("ADULT_DATA_DIR")
+    candidates = ([env_dir] if env_dir else []) + [_V39_DATA, _V38_DATA]
+    for cand in candidates:
         p = os.path.join(cand, "online_shoppers_intention.csv")
         if os.path.exists(p):
-            rows = [r for r in open(p, encoding="utf-8", errors="ignore").read().splitlines()[1:]]
-            header = ["bounce", "session", "dow", "month", "year", "special"]
             data, ys = [], []
-            for r in rows:
-                parts = r.split(",")
-                if len(parts) < 18:
-                    continue
-                try:
-                    data.append([float(parts[header.index(h)]) for h in header])
-                except ValueError:
-                    continue
-                ys.append(1 if parts[17] == "TRUE" else 0)
-            X = np.asarray(data, dtype=np.float32); y = np.asarray(ys, dtype=np.int64)
+            with open(p, encoding="utf-8", errors="ignore", newline="") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    try:
+                        vals = [float(row[c].strip()) for c in cols]
+                    except (ValueError, KeyError, AttributeError):
+                        continue
+                    data.append(vals)
+                    ys.append(1 if str(row.get("Revenue", "")).strip().upper() == "TRUE" else 0)
+            X = np.asarray(data, dtype=np.float32)
+            y = np.asarray(ys, dtype=np.int64)
             X = (X - X.mean(0)) / (X.std(0) + 1e-6)
             rng = np.random.RandomState(seed)
             idx = rng.choice(len(y), min(n, len(y)), replace=False)

@@ -27,16 +27,28 @@ class SparseRouterSTE(torch.autograd.Function):
     """
 
     @staticmethod
-    def forward(ctx, alpha, k):
+    def forward(ctx, alpha, k, renorm: bool = False):
         _, idx = torch.topk(alpha, k, dim=-1)
         mask = torch.zeros_like(alpha).scatter_(-1, idx, 1.0)
+        sparse = alpha * mask
+        ctx.renorm = bool(renorm)
+        if ctx.renorm:
+            denom = sparse.sum(dim=-1, keepdim=True).clamp(min=1e-12)
+            out = sparse / denom
+            ctx.save_for_backward(mask, out, denom)
+            return out
         ctx.save_for_backward(mask)
-        return alpha * mask
+        return sparse
 
     @staticmethod
     def backward(ctx, grad_output):
+        if getattr(ctx, "renorm", False):
+            mask, out, denom = ctx.saved_tensors
+            dot = (grad_output * out).sum(dim=-1, keepdim=True)
+            grad_alpha = (grad_output - dot) * mask / denom
+            return grad_alpha, None, None
         (mask,) = ctx.saved_tensors
-        return grad_output * mask, None
+        return grad_output * mask, None, None
 
 
 @torch.no_grad()

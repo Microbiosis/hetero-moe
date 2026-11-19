@@ -109,12 +109,13 @@ del bm; torch.cuda.empty_cache()
 print('\n[4/5] SigLIP2-so400m 提取 ...', flush=True)
 from transformers import AutoImageProcessor, AutoModel as AMv
 vproc = AutoImageProcessor.from_pretrained('google/siglip2-so400m-patch14-384')
-vm = AMv.from_pretrained('google/siglip2-so400m-patch14-384',
-                         torch_dtype=torch.float16).to(DEV).eval()
+vm_full = AMv.from_pretrained('google/siglip2-so400m-patch14-384',
+                              torch_dtype=torch.float16).to(DEV).eval()
+vm = vm_full.vision_model
 # 先跑一张拿 patch 数
 with torch.no_grad():
     _p = vproc(images=[fd[0]['image'].convert('RGB')], return_tensors='pt').to(DEV)
-    _h = vm(pixel_values=_p['pixel_values']).last_hidden_state
+    _h = vm(pixel_values=_p['pixel_values'].to(dtype=vm.dtype)).last_hidden_state
     NPATCH, VHD = _h.shape[1], _h.shape[2]
 print('  SigLIP2 patch=%d hidden=%d' % (NPATCH, VHD), flush=True)
 Hv = np.zeros((N_IMG, NPATCH, VHD), dtype=np.float16)
@@ -122,7 +123,7 @@ with torch.no_grad():
     for i in range(0, N_IMG, BS):
         imgs = [fd[j]['image'].convert('RGB') for j in range(i, min(i + BS, N_IMG))]
         p = vproc(images=imgs, return_tensors='pt').to(DEV)
-        h = vm(pixel_values=p['pixel_values']).last_hidden_state
+        h = vm(pixel_values=p['pixel_values'].to(dtype=vm.dtype)).last_hidden_state
         Hv[i:i + BS] = h.cpu().numpy().astype(np.float16)
         if (i // BS) % 20 == 0:
             print('  vit %d/%d  %.0fs' % (i, N_IMG, time.time() - t0), flush=True)

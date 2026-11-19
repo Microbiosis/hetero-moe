@@ -1,0 +1,139 @@
+
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]
+Loading weights:  16%|█▌        | 47/290 [00:00<00:00, 465.12it/s]
+Loading weights:  32%|███▏      | 94/290 [00:00<00:00, 448.84it/s]
+Loading weights:  49%|████▊     | 141/290 [00:00<00:00, 443.33it/s]
+Loading weights:  66%|██████▌   | 192/290 [00:00<00:00, 458.85it/s]
+Loading weights:  82%|████████▏ | 239/290 [00:00<00:00, 453.88it/s]
+Loading weights: 100%|██████████| 290/290 [00:00<00:00, 464.72it/s]
+[source] Qwen 抓完
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 34111.75it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[source] BERT 抓完
+
+Loading weights:   0%|          | 0/200 [00:00<?, ?it/s]
+Loading weights:  16%|█▌        | 31/200 [00:00<00:00, 303.82it/s]
+Loading weights: 100%|██████████| 200/200 [00:00<00:00, 1004.05it/s]
+[source] ViT 抓完
+[calib-resume] 已有 0 条标定记录, 直接复用
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 22737.69it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[calib] Qwen->BERT lam=0.5 ly=0 完成 (82s)
+[calib] Qwen->BERT lam=0.5 ly=1 完成 (84s)
+[calib] Qwen->BERT lam=0.5 ly=2 完成 (86s)
+[calib] Qwen->BERT lam=0.5 ly=3 完成 (88s)
+[calib] Qwen->BERT lam=0.5 ly=6 完成 (89s)
+[calib] Qwen->BERT lam=0.5 ly=12 完成 (91s)
+[calib] Qwen->BERT lam=0.5 ly=18 完成 (93s)
+[calib] Qwen->BERT lam=0.5 ly=23 完成 (94s)
+[calib] Qwen->BERT lam=1 ly=0 完成 (96s)
+[calib] Qwen->BERT lam=1 ly=1 完成 (97s)
+[calib] Qwen->BERT lam=1 ly=2 完成 (99s)
+[calib] Qwen->BERT lam=1 ly=3 完成 (100s)
+[calib] Qwen->BERT lam=1 ly=6 完成 (102s)
+[calib] Qwen->BERT lam=1 ly=12 完成 (103s)
+[calib] Qwen->BERT lam=1 ly=18 完成 (105s)
+[calib] Qwen->BERT lam=1 ly=23 完成 (107s)
+[calib] Qwen->BERT lam=2 ly=0 完成 (108s)
+[calib] Qwen->BERT lam=2 ly=1 完成 (110s)
+[calib] Qwen->BERT lam=2 ly=2 完成 (111s)
+[calib] Qwen->BERT lam=2 ly=3 完成 (112s)
+[calib] Qwen->BERT lam=2 ly=6 完成 (114s)
+[calib] Qwen->BERT lam=2 ly=12 完成 (115s)
+[calib] Qwen->BERT lam=2 ly=18 完成 (116s)
+[calib] Qwen->BERT lam=2 ly=23 完成 (117s)
+[calib] Qwen->BERT lam=3 ly=0 完成 (119s)
+[calib] Qwen->BERT lam=3 ly=1 完成 (120s)
+[calib] Qwen->BERT lam=3 ly=2 完成 (122s)
+[calib] Qwen->BERT lam=3 ly=3 完成 (124s)
+[calib] Qwen->BERT lam=3 ly=6 完成 (126s)
+[calib] Qwen->BERT lam=3 ly=12 完成 (127s)
+[calib] Qwen->BERT lam=3 ly=18 完成 (128s)
+[calib] Qwen->BERT lam=3 ly=23 完成 (130s)
+
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]
+Loading weights:  14%|█▍        | 41/290 [00:00<00:00, 408.78it/s]
+Loading weights:  28%|██▊       | 82/290 [00:00<00:00, 312.93it/s]
+Loading weights:  41%|████      | 119/290 [00:00<00:00, 319.42it/s]
+Loading weights:  54%|█████▍    | 156/290 [00:00<00:00, 319.67it/s]
+Loading weights:  65%|██████▌   | 189/290 [00:00<00:00, 313.43it/s]
+Loading weights:  78%|███████▊  | 227/290 [00:00<00:00, 329.30it/s]
+Loading weights:  90%|█████████ | 261/290 [00:00<00:00, 311.34it/s]
+Loading weights: 100%|██████████| 290/290 [00:00<00:00, 326.45it/s]
+[calib] BERT->Qwen lam=0.5 ly=0 完成 (329s)
+[calib] BERT->Qwen lam=0.5 ly=1 完成 (422s)
+[calib] BERT->Qwen lam=0.5 ly=2 完成 (519s)
+[calib] BERT->Qwen lam=0.5 ly=3 完成 (612s)
+[calib] BERT->Qwen lam=1 ly=0 完成 (705s)
+[calib] BERT->Qwen lam=1 ly=1 完成 (801s)
+[calib] BERT->Qwen lam=1 ly=2 完成 (898s)
+[calib] BERT->Qwen lam=1 ly=3 完成 (994s)
+[calib] BERT->Qwen lam=2 ly=0 完成 (1088s)
+[calib] BERT->Qwen lam=2 ly=1 完成 (1175s)
+[calib] BERT->Qwen lam=2 ly=2 完成 (1263s)
+[calib] BERT->Qwen lam=2 ly=3 完成 (1359s)
+[calib] BERT->Qwen lam=3 ly=0 完成 (1456s)
+[calib] BERT->Qwen lam=3 ly=1 完成 (1545s)
+[calib] BERT->Qwen lam=3 ly=2 完成 (1638s)
+[calib] BERT->Qwen lam=3 ly=3 完成 (1732s)
+
+Loading weights:   0%|          | 0/200 [00:00<?, ?it/s]
+Loading weights:  17%|█▋        | 34/200 [00:00<00:00, 316.12it/s]
+Loading weights: 100%|██████████| 200/200 [00:00<00:00, 1189.80it/s]
+[calib] ViT->ViT lam=0.5 ly=0 完成 (1769s)
+[calib] ViT->ViT lam=0.5 ly=3 完成 (1791s)
+[calib] ViT->ViT lam=0.5 ly=6 完成 (1814s)
+[calib] ViT->ViT lam=0.5 ly=9 完成 (1835s)
+[calib] ViT->ViT lam=0.5 ly=11 完成 (1856s)
+[calib] ViT->ViT lam=1 ly=0 完成 (1879s)
+[calib] ViT->ViT lam=1 ly=3 完成 (1898s)
+[calib] ViT->ViT lam=1 ly=6 完成 (1921s)
+[calib] ViT->ViT lam=1 ly=9 完成 (1944s)
+[calib] ViT->ViT lam=1 ly=11 完成 (1967s)
+[calib] ViT->ViT lam=2 ly=0 完成 (1987s)
+[calib] ViT->ViT lam=2 ly=3 完成 (2007s)
+[calib] ViT->ViT lam=2 ly=6 完成 (2026s)
+[calib] ViT->ViT lam=2 ly=9 完成 (2051s)
+[calib] ViT->ViT lam=2 ly=11 完成 (2075s)
+[calib] ViT->ViT lam=3 ly=0 完成 (2099s)
+[calib] ViT->ViT lam=3 ly=3 完成 (2119s)
+[calib] ViT->ViT lam=3 ly=6 完成 (2140s)
+[calib] ViT->ViT lam=3 ly=9 完成 (2169s)
+[calib] ViT->ViT lam=3 ly=11 完成 (2196s)
+[calib] lam=0.5 feasible=False (max_final=0.5455, cond2 失败 3, cond3 失败 1)
+[calib] lam=1 feasible=False (max_final=0.5673, cond2 失败 3, cond3 失败 1)
+[calib] lam=2 feasible=False (max_final=0.6179, cond2 失败 2, cond3 失败 1)
+[calib] lam=3 feasible=False (max_final=0.9336, cond2 失败 1, cond3 失败 0)
+[calib] CALIB_NO_FEASIBLE_LAMBDA -> lambda*=None

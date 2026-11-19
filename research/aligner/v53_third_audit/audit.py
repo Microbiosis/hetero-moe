@@ -166,14 +166,17 @@ class KNNProbe:
     def fit(self, X, y, n_class):
         self.X = X.double()
         self.y = y.long()
+        self.n_class = int(n_class)
         return self
 
     def predict(self, X):
         X = X.double()
         d = torch.cdist(X, self.X)
-        nn_idx = d.topk(self.k, largest=False).indices
-        votes = torch.zeros(X.shape[0], int(self.y.max().item()) + 1, dtype=torch.float64)
-        votes.scatter_add_(1, self.y[nn_idx], torch.ones(X.shape[0], self.k, dtype=torch.float64))
+        k_eff = max(1, min(self.k, self.X.shape[0]))
+        nn_idx = d.topk(k_eff, largest=False).indices
+        n_cls = max(self.n_class, int(self.y.max().item()) + 1)
+        votes = torch.zeros(X.shape[0], n_cls, dtype=torch.float64, device=X.device)
+        votes.scatter_add_(1, self.y[nn_idx], torch.ones(X.shape[0], k_eff, dtype=torch.float64, device=X.device))
         return votes.argmax(-1)
 
 

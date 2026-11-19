@@ -16,7 +16,7 @@ import torch
 from safetensors import safe_open
 from transformers import Qwen3Model, Qwen3Config, AutoModel, AutoTokenizer
 
-from .paths import MSA_DIR, EMB_DIR, RER_DIR
+from . import paths as _paths
 
 
 def load_msa_big(msa_dir=None, n_layers=None, env_key="V33_BIG_LAYERS"):
@@ -25,12 +25,12 @@ def load_msa_big(msa_dir=None, n_layers=None, env_key="V33_BIG_LAYERS"):
     资源优化: 不加载完整 36 层 8GB 权重, 只取 embed_tokens + 前 N 层 + norm
     (~1GB)。融合实验只需 D=2560 的隐藏态表征, 单层即保留大维度特征。
     """
-    msa_dir = msa_dir or MSA_DIR
+    msa_dir = msa_dir or _paths.MSA_DIR
     if n_layers is None:
         n_layers = int(os.environ.get(env_key, "1"))
     print(f"  [大] 加载 MSA-4B 浅层 ({n_layers}层, 非完整36层)...")
     t0 = time.time()
-    with open(f"{msa_dir}/config.json") as f:
+    with open(f"{msa_dir}/config.json", encoding="utf-8") as f:
         msa_cfg = json.load(f)
     qcfg = Qwen3Config(
         hidden_size=msa_cfg["hidden_size"],
@@ -96,5 +96,8 @@ def encode(texts, tok, model, S):
     """用模型原生 tokenizer 编码文本, 返回 last_hidden_state [B, S, D] (detached)。"""
     enc = tok(texts, padding="max_length", truncation=True, max_length=S, return_tensors="pt")
     with torch.no_grad():
-        h = model(enc["input_ids"]).last_hidden_state
+        h = model(
+            input_ids=enc["input_ids"],
+            attention_mask=enc.get("attention_mask"),
+        ).last_hidden_state
     return h.detach()  # [B, S, D]

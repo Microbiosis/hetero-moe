@@ -1,0 +1,199 @@
+
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]
+Loading weights:   7%|▋         | 21/290 [00:00<00:02, 124.96it/s]
+Loading weights:  12%|█▏        | 34/290 [00:00<00:03, 69.64it/s] 
+Loading weights:  15%|█▌        | 44/290 [00:00<00:03, 72.51it/s]
+Loading weights:  18%|█▊        | 53/290 [00:00<00:04, 53.66it/s]
+Loading weights:  23%|██▎       | 67/290 [00:00<00:03, 64.89it/s]
+Loading weights:  28%|██▊       | 80/290 [00:01<00:02, 78.56it/s]
+Loading weights:  31%|███       | 90/290 [00:01<00:02, 70.47it/s]
+Loading weights:  34%|███▍      | 99/290 [00:01<00:02, 69.07it/s]
+Loading weights:  37%|███▋      | 107/290 [00:01<00:02, 61.39it/s]
+Loading weights:  40%|████      | 117/290 [00:01<00:03, 55.96it/s]
+Loading weights:  45%|████▌     | 131/290 [00:02<00:02, 53.44it/s]
+Loading weights:  49%|████▉     | 143/290 [00:02<00:02, 54.22it/s]
+Loading weights:  53%|█████▎    | 155/290 [00:02<00:02, 55.85it/s]
+Loading weights:  58%|█████▊    | 167/290 [00:02<00:02, 59.58it/s]
+Loading weights:  62%|██████▏   | 179/290 [00:02<00:01, 68.31it/s]
+Loading weights:  64%|██████▍   | 187/290 [00:02<00:01, 66.50it/s]
+Loading weights:  67%|██████▋   | 194/290 [00:03<00:01, 58.79it/s]
+Loading weights:  70%|███████   | 203/290 [00:03<00:01, 63.65it/s]
+Loading weights:  72%|███████▏  | 210/290 [00:03<00:01, 58.60it/s]
+Loading weights:  76%|███████▌  | 219/290 [00:03<00:01, 59.37it/s]
+Loading weights:  79%|███████▉  | 229/290 [00:03<00:00, 64.43it/s]
+Loading weights:  82%|████████▏ | 239/290 [00:03<00:00, 68.40it/s]
+Loading weights:  86%|████████▌ | 249/290 [00:03<00:00, 59.86it/s]
+Loading weights:  90%|█████████ | 261/290 [00:04<00:00, 59.87it/s]
+Loading weights:  95%|█████████▍| 275/290 [00:04<00:00, 69.57it/s]
+Loading weights: 100%|██████████| 290/290 [00:04<00:00, 65.88it/s]
+[source] Qwen 槽激活重算完成
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 4129.57it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[source] BERT 槽激活重算完成
+
+Loading weights:   0%|          | 0/200 [00:00<?, ?it/s]
+Loading weights:   4%|▎         | 7/200 [00:00<00:03, 61.13it/s]
+Loading weights:   8%|▊         | 16/200 [00:00<00:02, 68.69it/s]
+Loading weights:  13%|█▎        | 26/200 [00:00<00:02, 80.10it/s]
+Loading weights:  18%|█▊        | 37/200 [00:00<00:01, 87.60it/s]
+Loading weights:  24%|██▎       | 47/200 [00:00<00:01, 85.83it/s]
+Loading weights:  28%|██▊       | 56/200 [00:00<00:01, 78.44it/s]
+Loading weights:  35%|███▌      | 70/200 [00:00<00:01, 95.24it/s]
+Loading weights:  70%|███████   | 140/200 [00:00<00:00, 268.79it/s]
+Loading weights: 100%|██████████| 200/200 [00:00<00:00, 215.58it/s]
+[source] ViT 槽激活重算完成
+[ceiling] 已写出 E:\hetero-moe\research\weight_fusion\v81_s3_semantic\results\ceiling_diag.json
+{
+  "all_text_blocks": {
+    "arm0_baseline_r2": {
+      "n": 64,
+      "median": 0.08935368855096598,
+      "mean": 0.10551125228439706,
+      "min": -0.04369966493200028,
+      "max": 0.4003132324241806,
+      "n_positive": 59
+    },
+    "delta_arm1_minus_arm0": {
+      "n": 64,
+      "median": 0.00243509921411722,
+      "mean": 0.056044443106151004,
+      "min": -0.00086118303635907,
+      "max": 0.3246207085063113,
+      "n_positive": 55
+    },
+    "r2_project_ceiling": {
+      "n": 64,
+      "median": 0.6492208054430805,
+      "mean": 0.6447432671723294,
+      "min": 0.28314686740229444,
+      "max": 0.9999999999987059,
+      "n_positive": 64
+    },
+    "delta_over_project_lower_bound": {
+      "n": 64,
+      "median": 0.004697233314693054,
+      "mean": 0.057216206700346564,
+      "min": -0.0029457904829431596,
+      "max": 0.3246207085075299,
+      "n_positive": 55
+    }
+  },
+  "BERT->Qwen": {
+    "arm0_baseline_r2": {
+      "n": 32,
+      "median": 0.059532306640988464,
+      "mean": 0.0543028830175499,
+      "min": -0.04369966493200028,
+      "max": 0.12715846032180578,
+      "n_positive": 28
+    },
+    "delta_arm1_minus_arm0": {
+      "n": 32,
+      "median": 0.06939594606985283,
+      "mean": 0.11114085471151852,
+      "min": 0.0015767332988250171,
+      "max": 0.3246207085063113,
+      "n_positive": 32
+    },
+    "r2_project_ceiling": {
+      "n": 32,
+      "median": 0.999999999997806,
+      "mean": 0.999999999997641,
+      "min": 0.9999999999962461,
+      "max": 0.9999999999987059,
+      "n_positive": 32
+    },
+    "delta_over_project_lower_bound": {
+      "n": 32,
+      "median": 0.06939594607005524,
+      "mean": 0.11114085471178925,
+      "min": 0.0015767332988270576,
+      "max": 0.3246207085075299,
+      "n_positive": 32
+    }
+  },
+  "Qwen->BERT": {
+    "arm0_baseline_r2": {
+      "n": 32,
+      "median": 0.14609450883119185,
+      "mean": 0.15671962155124422,
+      "min": -0.014365445845222924,
+      "max": 0.4003132324241806,
+      "n_positive": 31
+    },
+    "delta_arm1_minus_arm0": {
+      "n": 32,
+      "median": 0.0008252400208073607,
+      "mean": 0.0009480315007834896,
+      "min": -0.00086118303635907,
+      "max": 0.004706032235598623,
+      "n_positive": 23
+    },
+    "r2_project_ceiling": {
+      "n": 32,
+      "median": 0.2882101361716725,
+      "mean": 0.2894865343470179,
+      "min": 0.28314686740229444,
+      "max": 0.29844161088991483,
+      "n_positive": 32
+    },
+    "delta_over_project_lower_bound": {
+      "n": 32,
+      "median": 0.0028554676339436324,
+      "mean": 0.0032915586889038745,
+      "min": -0.0029457904829431596,
+      "max": 0.01627374347423381,
+      "n_positive": 23
+    }
+  },
+  "ViT->ViT": {
+    "arm0_baseline_r2": {
+      "n": 20,
+      "median": -0.03877567600569953,
+      "mean": -0.030659163508752686,
+      "min": -0.4398898748828477,
+      "max": 0.3113094879370538,
+      "n_positive": 8
+    },
+    "delta_arm1_minus_arm0": {
+      "n": 20,
+      "median": 0.01793621895767894,
+      "mean": 0.05245897185576684,
+      "min": 0.0019998207503438836,
+      "max": 0.3780422733232791,
+      "n_positive": 20
+    },
+    "r2_project_ceiling": {
+      "n": 20,
+      "median": 0.33178018192880787,
+      "mean": 0.3327964404822234,
+      "min": 0.32561278365692214,
+      "max": 0.34116362343267304,
+      "n_positive": 20
+    },
+    "delta_over_project_lower_bound": {
+      "n": 20,
+      "median": 0.05394242862298247,
+      "mean": 0.15927321422161614,
+      "min": 0.006052878503981675,
+      "max": 1.1610179093017388,
+      "n_positive": 20
+    }
+  }
+}

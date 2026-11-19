@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "version": "66.0",
+  "package": "v66_vsr_triton",
+  "line": "aligner",
+  "title": "VSR 真视觉任务 + MoA Triton 融合内核库",
+  "generation": {
+    "one_mechanism_added": "① VSR 真视觉空间关系任务：caption 只断言空间关系、必须看图判断真假，避免语言捷径；② 四个 @triton.jit 融合内核（Branch-RMSNorm+LayerScale / 多 proposer GEMM+SwiGLU / 稀疏 top-k 加权聚合 / 块稀疏 MoA 在线 softmax），附 TritonTileSimulator 逐 program 位级验证与精确 HBM 流量分析。",
+    "parent": "65.0",
+    "children": [
+      "67.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "10.0",
+    "line_children": [
+      "67.0"
+    ],
+    "note": "aligner 线接 v48→…→v62→v63→…→v74。v63 起为 v62 共享空间的工程化延伸，不改槽/模型/对齐三轴本身。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "research/aligner/v62_dimension_projection_space/extract_vsr_v66.py",
+      "research/aligner/v62_dimension_projection_space/moa_triton_kernels.py"
+    ],
+    "note": "TritonTileSimulator 是 numpy 逐 program 模拟器，可在**无 GPU 的本地 CPU** 上复算内核位级正确性 —— 本代是 v63–v74 中唯一能本地复算硬指标的代。"
+  },
+  "claim": {
+    "asserts": "VSR 真视觉任务数据管线 + 四个 Triton 融合内核的位级正确性与精确 HBM 流量账成立（内核1 带宽降 63.4%、内核2 中间张量不回写、内核3 只读 K 个 proposer、内核4 跳过 13.9% 的 tile）",
+    "metric": "unit_test_pass_rate",
+    "direction": "higher_is_better",
+    "value": 1.0,
+    "baseline": {
+      "ref": "无（本代首次登记）",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": null,
+    "outcome_label": "code_ready_pending_batch_run",
+    "note": "**本代无端到端精度数字。**位级正确性与 HBM 流量账是本地实测；融合内核的端到端收益待 Kaggle 批量验证。"
+  },
+  "protocol": {
+    "eval_set": "not_applicable",
+    "input": "本代无下游任务评估；权威测试只验证机制语义",
+    "caveat": "引用本代时不得说成精度结论。"
+  },
+  "acceptance": {
+    "criterion": "权威测试全部通过（tests/test_package.py）",
+    "outcome": "pass",
+    "note": "8/8 通过（本地 CPU）。第 1/3/5/7 项为位级一致性断言，第 2/4/6 项为精确 HBM 字节账"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代不含蒸馏/重建成分，无目标泄漏风险面；且本代无端到端数字可泄漏。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "SSM 分支可以既快又省显存地跑起来",
+      "verdict": "证伪 —— O(L) 串行扫描 launch-bound；chunkwise SSD 的 Q×Q 中间张量 4GB OOM；Kogge-Stone 在 D256×N16 下 1.5GB OOM；回退串行+d_state 压缩后仍未保住端到端收益（v67 去掉 SSM 分支）",
+      "evidence": "research/aligner/v66_vsr_triton/SPEC.md §4.1"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v66_vsr_triton.py",
+    "forwarder_spec": "docs/V66_0_VSR_TRITON.md"
+  },
+  "tests_status": "present",
+  "external_artifacts": {
+    "note": "端到端产物待 Kaggle 批量验证后落盘。"
+  }
+}

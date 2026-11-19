@@ -27,9 +27,9 @@ def serialize_slot(W: np.ndarray, topk: int = 8) -> dict:
         'top_singular_values': S[:topk].round(4).tolist(),
         'sv_ratio_top1_topk': float(S[0] / (S[:topk].sum() + 1e-9)),
         'col_norm_top_idx': np.argsort(-col_norms)[:topk].tolist(),
-        'col_norm_top_val': np.sort(-col_norms)[:topk].round(4).tolist(),
+        'col_norm_top_val': (-np.sort(-col_norms)[:topk]).round(4).tolist(),
         'row_norm_top_idx': np.argsort(-row_norms)[:topk].tolist(),
-        'row_norm_top_val': np.sort(-row_norms)[:topk].round(4).tolist(),
+        'row_norm_top_val': (-np.sort(-row_norms)[:topk]).round(4).tolist(),
         'weight_std': float(W.std()),
         'weight_mean': float(W.mean()),
         'sparsity': float((np.abs(W) < 1e-3).mean()),
@@ -72,11 +72,17 @@ def main():
     slots = ['Q', 'K', 'V', 'O']
     lines = []
     for s in slots:
-        # 取该槽第一个模型的投影矩阵
-        key = f'proj_space.proj.{s}|Qwen.weight'
-        if key not in model_sd:
-            key = f'proj.proj.{s}|Qwen.weight'
-        if key not in model_sd:
+        # 优先按该槽实际参与的模态查找投影矩阵（K/V 槽仅含 BERT/ViT，不含 Qwen）
+        key = None
+        for m in ('Qwen', 'BERT', 'ViT'):
+            for prefix in ('proj_space.proj', 'proj.proj'):
+                cand = f'{prefix}.{s}|{m}.weight'
+                if cand in model_sd:
+                    key = cand
+                    break
+            if key is not None:
+                break
+        if key is None:
             print(f'[warn] 找不到 {s} 槽权重，跳过')
             continue
         W = model_sd[key].numpy()

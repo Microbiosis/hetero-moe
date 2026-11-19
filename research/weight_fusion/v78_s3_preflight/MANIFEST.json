@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "version": "78.0",
+  "package": "v78_s3_preflight",
+  "line": "weight_fusion",
+  "title": "A1/S3 前置诊断: 把 v77 留下的缺陷归因清楚 (D1-D4)",
+  "generation": {
+    "one_mechanism_added": "诊断代: 本代**不引入新机制**, 只对 v77 暴露的三类缺陷做根因归因 —— D1 有效秩塌陷归因 (少数维主导 vs 少数 token 主导, 外加五种预处理下的有效秩对照) / D2 槽共同成分审计 (共同成分占比 + 去掉共同成分后的诊断性复测) / D3 标签可读性 (逐层 + 逐预处理), 并由 D1/D3 的实测算出 D4 推荐预处理, 为 S3 的预登记口径提供依据。",
+    "parent": "77.0",
+    "children": [
+      "79.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "77.0",
+    "line_children": [],
+    "note": "weight_fusion 线第 4 代: v75 权重级共轭 (负结果) -> v76 路线 α 的 S1 机械可行性 -> v77 路线 β 的真模型可用性 (S1B_FAIL) -> v78 前置诊断 (给 S3 定口径)。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "s3_preflight.py"
+    ],
+    "note": "本代按**路径**载入同线 v77 的 true_model.py (Backbone / capture_slots / eff_rank / ridge_fit_r2 / text_batches / fetch_texts), 口径同源凭证为其 sha256 (记入 results/metrics.json 的 protocol.provenance_sha256)。不按包名 import 的原因与 v75/v76/v77 一致: 同线 import 会被 tools/check_self_containment.py 判成跨线引用 (--strict 报错)。"
+  },
+  "claim": {
+    "asserts": "v77 的三类缺陷/未知已被归因到可行动的根因: (1) Qwen 深层有效秩塌陷 = **少数维主导 + BOS token** (BERT 干净); (2) 槽共同成分确实主导 (PC1 占 88.8% 方差), 但**去掉它不是 B5 的解法** —— 残差化后合并判据更差 (10/16, p=0.4545), Q 槽几乎不变 (8/8, p=0.0078), O 槽掉到 2/8; (3) 样本级 mean-pool 的标签探针健康 (有效秩 47-62, 准确率 0.61-0.70) ⇒ **v77 关于「探针会被绑架」的推论过强, 本代订正之**。",
+    "metric": "preflight_diagnostics_pass_rate",
+    "direction": "higher_is_better",
+    "value": 1,
+    "baseline": {
+      "ref": "无 (S3 前置诊断首次执行)",
+      "value": 0
+    },
+    "delta_pct": null,
+    "seeds": 1,
+    "outcome_label": "confirmed",
+    "note": "本代确认的是**诊断** (三项诊断全部达成, 机器裁决 PREFLIGHT_DIAGNOSED), **不是** A1 的判据: 本代不产生任何 P1a/P1b/P2/P3 判据, 不改动 v77 的裁决 (仍是 S1B_FAIL) ⇒ S3 仍未开跑, A1 整体**未判定**。所有「去掉共同成分后更好」的读数都是**口径事后定的诊断性复测**, 不作为判据。"
+  },
+  "protocol": {
+    "eval_set": "fancyzhx/ag_news train 128 条 (与 v77 同一缓存文件 agnews_128.json、同种子同 offset; 标签分布 37/32/26/33)",
+    "input": "真 HF 预训练底座 Qwen/Qwen2.5-0.5B-Instruct (24 层) 与 google/bert_uncased_L-4_H-256_A-4 (4 层) 的真实权重与真实输入; fp32 / CPU",
+    "caveat": "本代**没有**注入臂、**没有**端到端能力指标 ⇒ 不得说成能力或精度结论。标签探针只用 64 训 / 64 测, 是粗读。共同成分的 PCA 在全部样本上估计 (无监督变换)。诊断只覆盖 Qwen/BERT (首代范围)。"
+  },
+  "acceptance": {
+    "criterion": "三项诊断全部达成: D1 (Qwen 存在某层 top4 维方差占比 >= 0.50 或 top4 token 能量占比 >= 0.50, 即塌陷来源可归因) / D2 (共同成分对某槽表示的解释 R^2 最大值 >= 0.50) / D3 (Qwen 至少一层的标签探针准确率 >= 0.40)。阈值跑前写死, 事后未放宽。",
+    "outcome": "pass",
+    "note": "三项全过, 机器裁决 PREFLIGHT_DIAGNOSED。**这只说明诊断做完**, 不说明 A1 成立: 本代没有注入臂, 不产生 P1a/P1b/P2/P3。"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "not_applicable",
+    "audited_in": null,
+    "note": "本代是**诊断代**: 不含蒸馏/重建成分, 无目标泄漏面 —— 注入臂不存在, 底座权重不被改动。标签探针按 64 训 / 64 测切分, 只用于「这一层还读不读得出语义」的粗读, 不进任何判据; D2 的 PCA 是无监督变换, 其复测读数标为诊断性。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "v77 的 B5 功效不足是因为错槽基线被共同成分抬高 ⇒ 去掉共同成分就能救回合并判据",
+      "verdict": "证伪 —— 残差化后合并判据反而更差 (10/16, p=0.4545 vs 原始 12/16, p=0.0768); 分槽后 Q 槽几乎不变 (8/8, p=0.0078, 中位差 +0.1078 vs 原始 +0.1074), O 槽掉到 2/8 (p=0.289) ⇒ B5 的解法是**按槽分设判据 + 扩块数**, 不是残差化。",
+      "evidence": "research/weight_fusion/v78_s3_preflight/SPEC.md §2; results/metrics.json 的 D2_common_component"
+    },
+    {
+      "hypothesis": "v77 的证伪「Qwen 的 hidden state 不能直接喂线性探针读语义」⇒ S3 探针会被少数维绑架",
+      "verdict": "部分订正 —— v77 的推论**过强**: token 级有效秩塌陷**成立** (深层 3.8-10.5, top1 维独占 95-97% 方差), 但**样本级 mean-pool 探针不受影响** (pooled 有效秩 47-62, 标签准确率 0.61-0.70) ⇒ 探针单位取样本级 mean-pool 即可; 只有 token 级探针才必须逐维标准化或去 BOS。",
+      "evidence": "research/weight_fusion/v78_s3_preflight/SPEC.md §3 / §4; results/metrics.json 的 D3_label_readout"
+    },
+    {
+      "hypothesis": "O 槽跨模型对应不成立 (4/8) 是因为 O 槽的取法与 Q 槽不同源",
+      "verdict": "证伪 —— 残差化后 O 槽从 4/8 掉到 2/8 (p=0.289, 中位差 -0.054), 说明 O 槽的「匹配」几乎全是共同成分 (句子语义), 不是槽特异 ⇒ 不是取法问题, 是 O 槽本身不跨模型携带槽特异信息。",
+      "evidence": "research/weight_fusion/v78_s3_preflight/SPEC.md §2; results/metrics.json 的 D2_common_component.by_slot_residualized"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v78_s3_preflight.py",
+    "forwarder_spec": "docs/V78_0_S3_PREFLIGHT.md"
+  },
+  "tests_status": "present"
+}

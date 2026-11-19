@@ -146,22 +146,24 @@ class RidgeProbe:
 
     @staticmethod
     def _onehot(y, n_class):
-        Y = torch.zeros(y.shape[0], n_class)
-        Y[torch.arange(y.shape[0]), y] = 1.0
+        Y = torch.zeros(y.shape[0], n_class, device=y.device)
+        Y[torch.arange(y.shape[0], device=y.device), y] = 1.0
         return Y
 
     def fit(self, X, y, n_class):
+        dev = X.device
         X = X.double()
-        Y = self._onehot(y, n_class).double()
-        Xb = torch.cat([X, torch.ones(X.shape[0], 1, dtype=torch.float64)], 1)
-        A = Xb.T @ Xb + self.alpha * torch.eye(Xb.shape[1], dtype=torch.float64)
+        Y = self._onehot(y.to(dev), n_class).double()
+        Xb = torch.cat([X, torch.ones(X.shape[0], 1, dtype=torch.float64, device=dev)], 1)
+        A = Xb.T @ Xb + self.alpha * torch.eye(Xb.shape[1], dtype=torch.float64, device=dev)
         self.W = torch.linalg.solve(A, Xb.T @ Y)
         return self
 
     def predict(self, X):
+        dev = X.device
         X = X.double()
-        Xb = torch.cat([X, torch.ones(X.shape[0], 1, dtype=torch.float64)], 1)
-        return (Xb @ self.W).argmax(-1)
+        Xb = torch.cat([X, torch.ones(X.shape[0], 1, dtype=torch.float64, device=dev)], 1)
+        return (Xb @ self.W.to(dev)).argmax(-1)
 
 
 def probe_accuracy(X, y, n_class, alpha=1e-3, split=0.8, seed=0):

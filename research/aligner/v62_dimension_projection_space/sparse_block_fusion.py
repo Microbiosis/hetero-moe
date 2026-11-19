@@ -40,6 +40,8 @@ class SparseBlockFusion(nn.Module):
         self.n_blocks = n_blocks
         self.block_ff = block_ff
         self.top_blocks = top_blocks
+        self.num_experts = num_experts
+        self.last_router_probs = None
 
         self.blocks = nn.ModuleList([SwiGLUBlock(d_space, block_ff)
                                      for _ in range(n_blocks)])
@@ -54,14 +56,16 @@ class SparseBlockFusion(nn.Module):
     def forward(self, x: torch.Tensor):
         """
         x: [B,S,d_space]
-        returns: (y [B,S,d_space], aux dict with block_load)
+        returns: (y [B,S,d_space], aux dict with differentiable block_probs and block_load)
         """
         B, S, D = x.shape
         h = x * self.gammas + self.betas
         h_mean = h.detach().mean(dim=1)                  # [B,D] 样本级统计
         g = F.softmax(self.block_gate(h_mean), dim=-1)   # [B,n_blocks]
+        self.last_router_probs = g
 
         topg, topi = torch.topk(g, self.top_blocks, dim=-1)  # [B,k]
+        # 避免重叠切片原地写 (out[sel] = out[sel] + ...) 触发 autograd 版本冲突
         out = torch.zeros_like(x)
         # 逐块计算，只算被选中的（稀疏）
         for b in range(self.n_blocks):
@@ -70,19 +74,23 @@ class SparseBlockFusion(nn.Module):
                 continue
             sel = mask.nonzero(as_tuple=True)[0]
             w_b = (g[sel, b] * self.block_alpha).view(-1, 1, 1)  # [n_sel,1,1]
-            out[sel] = out[sel] + w_b * self.blocks[b](h[sel])
-        return x + out, {'block_load': g.detach(),
+            contrib = (w_b * self.blocks[b](h[sel])).to(out.dtype)
+            out = out.index_add(0, sel, contrib)
+        return x + out, {'block_probs': g,
+                         'block_load': g.detach(),
                          'top_blocks': topi.detach()}
 
     def forward_with_routing(self, x: torch.Tensor):
-        """兼容 FusionOverProjSpace 接口：返回 (y, alpha)。"""
+        """兼容 FusionOverProjSpace 接口：返回 (y, alpha)，保留 block_gate 梯度流。"""
         y, aux = self.forward(x)
         B, S, _ = x.shape
-        # 稀疏块无专家概念，alpha 用块门控的 top-k 归一化占位
-        alpha = torch.zeros(B, S, self.n_blocks, device=x.device)
-        alpha.scatter_(-1, aux['top_blocks'].unsqueeze(1).expand(-1, S, -1),
-                       aux['block_load'].gather(1, aux['top_blocks'])
-                       .unsqueeze(1).expand(-1, S, -1))
+        # 用保留梯度的 block_probs 构造 top-k 归一化路由权重，避免负载均衡损失梯度被截断
+        g = aux['block_probs']                           # [B, n_blocks] (可微)
+        topi = aux['top_blocks']                         # [B, k]
+        topv = g.gather(1, topi)                         # [B, k]
+        topv = topv / topv.sum(dim=-1, keepdim=True).clamp(min=1e-9)
+        alpha_b = torch.zeros(B, self.n_blocks, device=x.device, dtype=g.dtype).scatter(-1, topi, topv)
+        alpha = alpha_b.unsqueeze(1).expand(-1, S, -1)
         return y, alpha
 
     def describe(self) -> str:

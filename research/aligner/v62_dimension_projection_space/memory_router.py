@@ -34,7 +34,8 @@ class MemoryAugmentedRouter(nn.Module):
 
         self.register_buffer('mem_key', torch.randn(n_memory, d_mem) * 0.02)
         self.register_buffer('mem_val', torch.zeros(n_memory, n_slots))
-        self.register_buffer('mem_age', torch.zeros(n_memory))
+        # 初始化为递增正年龄，保证首次写入依次填满 0..n_memory-1 全部槽位后再按 LRU 驱逐最老槽
+        self.register_buffer('mem_age', torch.arange(n_memory, 0, -1, dtype=torch.float32))
 
         self.q_proj = nn.Linear(d_in, d_mem)
         self.router = nn.Linear(d_in + n_slots, n_slots)
@@ -42,16 +43,17 @@ class MemoryAugmentedRouter(nn.Module):
     # ------------------------------------------------------------------
     @torch.no_grad()
     def write(self, q: torch.Tensor, v: torch.Tensor):
-        """q: [B,d_mem]；v: [B,n_slots]。带负反馈的写入。"""
+        """q: [B,d_mem]；v: [B,n_slots]。带负反馈与真实 LRU 驱逐的写入。"""
         # 负反馈1：旧记忆衰减，越老的记忆影响越小
         self.mem_val.mul_(self.decay)
         self.mem_key.mul_(self.decay ** 0.5)
 
-        idx = int(torch.argmin(self.mem_age).item())
-        self.mem_key[idx] = q.mean(0)
-        self.mem_val[idx] = v.mean(0)
-        self.mem_age[idx] = 0
+        # LRU 驱逐：选择年龄最大的槽位（修复原 argmin 永久覆盖 0 号槽的 bug）
+        idx = int(torch.argmax(self.mem_age).item())
+        self.mem_key[idx] = q.detach().mean(0)
+        self.mem_val[idx] = v.detach().mean(0)
         self.mem_age += 1
+        self.mem_age[idx] = 0
 
         # 负反馈2：过载减压——某槽累积超过全槽均值 × 阈值时，缩放该列
         col_sum = self.mem_val.sum(dim=0)
@@ -61,15 +63,16 @@ class MemoryAugmentedRouter(nn.Module):
             if overload.any():
                 self.mem_val[:, overload] *= self.relief
 
-    @torch.no_grad()
     def read(self, q: torch.Tensor) -> torch.Tensor:
-        """q: [B,d_mem] → retrieved [B,n_slots]，带居中负反馈。"""
-        scores = q @ self.mem_key.T
+        """q: [B,d_mem] → retrieved [B,n_slots]，保留 q_proj 梯度通路并带居中负反馈。"""
+        # clone 隔离同前向内后续 write() 的原地 buffer 更新，避免 autograd 版本冲突
+        mem_k = self.mem_key.detach().clone()
+        mem_v = self.mem_val.detach().clone()
+        scores = q @ mem_k.T
         w = F.softmax(scores / (self.d_mem ** 0.5), dim=-1)
-        retrieved = w @ self.mem_val
-        # 负反馈3：减去 memory 全局趋势，只返回"相对偏差"。
-        # 若所有记忆都指向 V 槽，居中后 V 的检索值反而降低，切断正反馈。
-        retrieved = retrieved - self.mem_val.mean(dim=0, keepdim=True)
+        retrieved = w @ mem_v
+        # 负反馈3：减去 memory 全局趋势，只返回"相对偏差"，并用 alpha 控制注入幅度
+        retrieved = (retrieved - mem_v.mean(dim=0, keepdim=True)) * self.alpha
         return retrieved
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -90,7 +93,9 @@ class MemoryAugmentedRouter(nn.Module):
     def reset_memory(self):
         self.mem_key.normal_(0, 0.02)
         self.mem_val.zero_()
-        self.mem_age.zero_()
+        self.mem_age.copy_(
+            torch.arange(self.n_memory, 0, -1, device=self.mem_age.device, dtype=self.mem_age.dtype)
+        )
 
     def extra_repr(self):
         return ('d_in=%d, n_slots=%d, memory=%d×%d, decay=%.2f, '

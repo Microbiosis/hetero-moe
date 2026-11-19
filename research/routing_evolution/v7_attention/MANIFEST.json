@@ -30,7 +30,7 @@
     "asserts": "跨架构族 Attn + FFN 双路由; 通路分解显示增益集中在 attention 通路",
     "metric": "fuse_mse",
     "direction": "lower_is_better",
-    "value": 8.0,
+    "value": 1.0626,
     "baseline": null,
     "delta_pct": null,
     "seeds": 5,

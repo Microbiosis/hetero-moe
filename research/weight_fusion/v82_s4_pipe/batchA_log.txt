@@ -1,0 +1,73 @@
+[run] lambda=1
+[run] 分批: {'Qwen->BERT': [0, 1, 2, 3]}
+[corpus] ag_news 128 条 / ViT 64 张
+
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]
+Loading weights:  14%|█▍        | 41/290 [00:00<00:00, 407.69it/s]
+Loading weights:  28%|██▊       | 82/290 [00:00<00:00, 358.86it/s]
+Loading weights:  42%|████▏     | 121/290 [00:00<00:00, 355.69it/s]
+Loading weights:  54%|█████▍    | 157/290 [00:00<00:00, 342.58it/s]
+Loading weights:  67%|██████▋   | 193/290 [00:00<00:00, 339.73it/s]
+Loading weights:  79%|███████▊  | 228/290 [00:00<00:00, 330.92it/s]
+Loading weights:  90%|█████████ | 262/290 [00:00<00:00, 325.74it/s]
+Loading weights: 100%|██████████| 290/290 [00:00<00:00, 327.48it/s]
+[source] Qwen: 16 个 (层,槽) 组合
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 11719.62it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[source] BERT: 8 个 (层,槽) 组合
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 23668.38it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[pilot] Qwen->BERT: probe-lambda=1000 (CV R2=0.1241)
+[block] Qwen->BERT ly=0 seed=0 完成 (累计 92 行, 189s)
+[block] Qwen->BERT ly=1 seed=0 完成 (累计 104 行, 196s)
+[block] Qwen->BERT ly=2 seed=0 完成 (累计 116 行, 205s)
+[block] Qwen->BERT ly=3 seed=0 完成 (累计 128 行, 214s)
+[block] Qwen->BERT ly=0 seed=1 完成 (累计 140 行, 224s)
+[block] Qwen->BERT ly=1 seed=1 完成 (累计 152 行, 232s)
+[block] Qwen->BERT ly=2 seed=1 完成 (累计 164 行, 241s)
+[block] Qwen->BERT ly=3 seed=1 完成 (累计 176 行, 249s)
+[block] Qwen->BERT ly=0 seed=2 完成 (累计 188 行, 258s)
+[block] Qwen->BERT ly=1 seed=2 完成 (累计 200 行, 268s)
+[block] Qwen->BERT ly=2 seed=2 完成 (累计 212 行, 279s)
+[block] Qwen->BERT ly=3 seed=2 完成 (累计 224 行, 292s)
+[block] Qwen->BERT ly=0 seed=3 完成 (累计 236 行, 305s)
+[block] Qwen->BERT ly=1 seed=3 完成 (累计 248 行, 315s)
+[block] Qwen->BERT ly=2 seed=3 完成 (累计 260 行, 324s)
+[block] Qwen->BERT ly=3 seed=3 完成 (累计 272 行, 334s)
+[block] Qwen->BERT ly=0 seed=4 完成 (累计 284 行, 342s)
+[block] Qwen->BERT ly=1 seed=4 完成 (累计 296 行, 351s)
+[block] Qwen->BERT ly=2 seed=4 完成 (累计 308 行, 363s)
+[block] Qwen->BERT ly=3 seed=4 完成 (累计 320 行, 375s)
+[verdict] S4PIPE_FAIL  (failed: ['P5a', 'P5b', 'P5c', 'P5d', "P2'"])

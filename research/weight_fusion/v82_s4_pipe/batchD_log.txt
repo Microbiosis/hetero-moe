@@ -1,0 +1,65 @@
+[run] lambda=1
+[run] 分批: {'BERT->Qwen': [0, 1, 2, 3]}
+[corpus] ag_news 128 条 / ViT 64 张
+
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]
+Loading weights:  16%|█▌        | 47/290 [00:00<00:00, 458.71it/s]
+Loading weights:  33%|███▎      | 95/290 [00:00<00:00, 457.74it/s]
+Loading weights:  49%|████▉     | 143/290 [00:00<00:00, 467.52it/s]
+Loading weights:  66%|██████▌   | 191/290 [00:00<00:00, 458.97it/s]
+Loading weights:  82%|████████▏ | 237/290 [00:00<00:00, 458.50it/s]
+Loading weights:  98%|█████████▊| 283/290 [00:00<00:00, 441.89it/s]
+Loading weights: 100%|██████████| 290/290 [00:00<00:00, 461.65it/s]
+[source] Qwen: 16 个 (层,槽) 组合
+
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 71/71 [00:00<00:00, 23666.50it/s]
+[transformers] BertModel LOAD REPORT from: C:\Users\Weish\.cache\hetero-moe\models\BERT
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+cls.predictions.decoder.bias               | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.decoder.weight             | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[source] BERT: 8 个 (层,槽) 组合
+[resume] blocks.jsonl 已有 1120 条
+[resume] attention.jsonl 已有 220 条
+
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]
+Loading weights:  14%|█▍        | 42/290 [00:00<00:00, 417.74it/s]
+Loading weights:  29%|██▉       | 84/290 [00:00<00:00, 416.36it/s]
+Loading weights:  45%|████▌     | 131/290 [00:00<00:00, 421.86it/s]
+Loading weights:  61%|██████    | 177/290 [00:00<00:00, 415.71it/s]
+Loading weights:  78%|███████▊  | 227/290 [00:00<00:00, 416.70it/s]
+Loading weights:  93%|█████████▎| 269/290 [00:00<00:00, 413.65it/s]
+Loading weights: 100%|██████████| 290/290 [00:00<00:00, 426.34it/s]
+[pilot] BERT->Qwen: probe-lambda=1000 (CV R2=0.0686)
+[block] BERT->Qwen ly=0 seed=0 完成 (累计 184 行, 390s)
+[block] BERT->Qwen ly=1 seed=0 完成 (累计 208 行, 390s)
+[block] BERT->Qwen ly=2 seed=0 完成 (累计 232 行, 390s)
+[block] BERT->Qwen ly=3 seed=0 完成 (累计 256 行, 390s)
+[block] BERT->Qwen ly=0 seed=1 完成 (累计 280 行, 390s)
+[block] BERT->Qwen ly=1 seed=1 完成 (累计 304 行, 390s)
+[block] BERT->Qwen ly=2 seed=1 完成 (累计 328 行, 390s)
+[block] BERT->Qwen ly=3 seed=1 完成 (累计 352 行, 390s)
+[block] BERT->Qwen ly=0 seed=2 完成 (累计 376 行, 390s)
+[block] BERT->Qwen ly=1 seed=2 完成 (累计 400 行, 390s)
+[block] BERT->Qwen ly=2 seed=2 完成 (累计 424 行, 390s)
+[block] BERT->Qwen ly=3 seed=2 完成 (累计 448 行, 390s)
+[block] BERT->Qwen ly=0 seed=3 完成 (累计 472 行, 390s)
+[block] BERT->Qwen ly=1 seed=3 完成 (累计 496 行, 520s)
+[block] BERT->Qwen ly=2 seed=3 完成 (累计 520 行, 717s)
+[block] BERT->Qwen ly=3 seed=3 完成 (累计 544 行, 938s)
+[block] BERT->Qwen ly=0 seed=4 完成 (累计 568 行, 1153s)
+[block] BERT->Qwen ly=1 seed=4 完成 (累计 592 行, 1384s)
+[block] BERT->Qwen ly=2 seed=4 完成 (累计 616 行, 1601s)
+[block] BERT->Qwen ly=3 seed=4 完成 (累计 640 行, 1794s)
+[verdict] S4PIPE_FAIL  (failed: ['P5a', 'P5b', 'P5d', "P2'"])

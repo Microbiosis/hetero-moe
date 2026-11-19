@@ -42,7 +42,7 @@ print('  vision_model 子模块:', type(vm).__name__, flush=True)
 
 with torch.no_grad():
     _p = proc(images=[fd[0]['image'].convert('RGB')], return_tensors='pt').to(DEV)
-    _h = vm(pixel_values=_p['pixel_values']).last_hidden_state
+    _h = vm(pixel_values=_p['pixel_values'].to(dtype=vm.dtype)).last_hidden_state
     NPATCH, VHD = _h.shape[1], _h.shape[2]
 print('  SigLIP2 patch=%d hidden=%d' % (NPATCH, VHD), flush=True)
 
@@ -52,7 +52,7 @@ with torch.no_grad():
     for i in range(0, N_IMG, BS):
         imgs = [fd[j]['image'].convert('RGB') for j in range(i, min(i + BS, N_IMG))]
         p = proc(images=imgs, return_tensors='pt').to(DEV)
-        h = vm(pixel_values=p['pixel_values']).last_hidden_state
+        h = vm(pixel_values=p['pixel_values'].to(dtype=vm.dtype)).last_hidden_state
         Hv[i:i + BS] = h.cpu().numpy().astype(np.float16)
         if (i // BS) % 20 == 0:
             print('  vit %d/%d  %.0fs' % (i, N_IMG, time.time() - t0), flush=True)

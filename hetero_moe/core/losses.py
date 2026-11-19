@@ -55,7 +55,11 @@ def balance_loss(alpha: torch.Tensor, alpha_hat: torch.Tensor, top_k: int) -> to
     topk_idx = alpha.topk(top_k, dim=-1).indices  # [B, S, K]
     # 𝟙[m ∈ TopK(α)]
     in_topk = (topk_idx.unsqueeze(-1) == torch.arange(M, device=alpha.device)).any(dim=2).float()
-    P = in_topk.mean(dim=(0, 1))  # [M]
+    P_hard = in_topk.mean(dim=(0, 1))  # [M]
+    # STE 桥接完整 softmax 概率 alpha，确保前向值严格等于 M·Σ f_m·P_m 的同时，
+    # 未被选入 Top-K 的专家也能通过完整 alpha 获得负载均衡梯度，避免死专家死锁。
+    p_dense = alpha.mean(dim=(0, 1))
+    P = P_hard + (p_dense - p_dense.detach())
     return M * (f * P).sum()
 
 

@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "version": "83.0",
+  "package": "v83_s4_aligned_pipe",
+  "line": "weight_fusion",
+  "title": "S4-AP: Q-K 接收场正交对齐 + 源侧同层正交解耦管道 —— P5a/P5b/P5c/P5d/P3① 五项通过 + 双向槽特异全通 (5/6, 裁决 S4AP_FAIL)",
+  "generation": {
+    "one_mechanism_added": "S4-AP: 针对 v82 (S4-P) 的三处算法缺陷做纯前向、训练集内闭式修复 (零测试集泄漏): ① 目标模型第 0 层闭式 Q-K 接收场拉回 (含 Qwen RoPE 正/逆旋转 + GQA 14->2 组平均 + RMSNorm) + 训练集 train_idx 上的正交 Procrustes 对齐 Ω_s ∈ O(256) (严格等距); ② O 槽改为抓取 o_proj 真输出 (SLOT_SOURCE_V83['O']='out') + 训练集内同层 (a_Q, a_O) 正交残差化解耦 (a_{Q⊥O}, a_{O⊥Q}); ③ 全量 64 文本块 × 4 臂 × 5 种子 (1280 行, λ*=0.5) 重跑 + GQA M_vo 谱瓶颈诊断。",
+    "parent": "82.0",
+    "children": [
+      "84.0"
+    ]
+  },
+  "lineage": {
+    "line_parent": "75.0",
+    "line_children": [
+      "84.0"
+    ],
+    "note": "weight_fusion 线第 9 代: v75 -> v76 -> v77 -> v78 -> v79 -> v80 -> v81 (S3_FAIL, 2/5) -> v82 (S4PIPE_FAIL, 3/6) -> v83 S4-AP (**5/6 通过**: P5a 管道连通 / P5b 通道寻址 / P5c 贯通 / P5d 选择性 / P3① 守门 全部通过, 正文侧槽特异双向 p=0.0, 逐样本寻址 p=0.0; 同层/跨层倒挂已逆转为同层 +0.031275 > 跨层 +0.021382, 仅 P2′ p=0.1256 未达 0.01 ⇒ 机器裁决 S4AP_FAIL)。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": null,
+    "modules": [
+      "s4_aligned_pipe.py",
+      "diag_mvo_readout.py"
+    ],
+    "note": "本代按路径载入 v82 的 s4_pipe.py、v81 的 s3_flow.py、v77 的 true_model.py、v75 的 g2_conjugation.py 与 v62 的 measure.py; 口径同源凭证为六者的 sha256 (记入 results/metrics.json 的 protocol.provenance_sha256)。diag_mvo_readout.py 为 post_hoc_only 诊断脚本 (双向槽特异 / 逐样本寻址 / Qwen GQA M_vo 谱瓶颈), 不参与任何主判据裁决。"
+  },
+  "claim": {
+    "asserts": "S4-AP 在 64 文本块 × 4 臂 × 5 种子 (1280 行, λ* = 0.5) 上把主判据从 v82 的 3/6 推进到 **5/6 通过**: ① **P5a 管道连通通过** (`arm1−arm0` 中位 +0.006740, 60/60 正, p = 0.0; `arm1−arm3` 中位 +0.006520, 60/60 正, p = 0.0; 逐样本 74.5% / 70.7% 正, p ≤ 3e-288); ② **P5b 管道可分通过** (`flip` 的 `arm1−arm2` 中位 +0.011850, 60/60 正, p = 0.0; 逐样本 6232/7680 = **81.15% 正, p = 0.0**, 解决了 v82 逐样本 p = 0.787 的缺陷); ③ **P5c 正文贯通通过** (`r2_q` 增量中位 **+0.022340**, **320/320 全正**, p = 0.0, 比 v82 的 +0.004419 提升 5.1 倍); ④ **P5d 选择性通过** (非目标槽 `r2_o` 增量中位 **−0.000524**, p = 0.7448 ≥ 0.05, 彻底消除非目标槽普涨); ⑤ **P3① 守门通过** (960 行末层扰动 0.0613~0.1715, 违例 0); ⑥ **P2′ 深度语义**: 同层中位 **+0.031275** > 跨层中位 **+0.021382** (消除了 v82 的 11 倍倒挂), 但分层置换 p = 0.1256 未达 α = 0.01 ⇒ 裁决 `S4AP_FAIL`。post_hoc 诊断证明: 正文侧槽特异 `arm1−arm2` 在 **Qwen→BERT (+0.039456, 160/160 正, p = 0.0)** 与 **BERT→Qwen (+0.016549, 158/160 正, p = 0.0)** 双向全部打通; P2′ 显著性受限于 Qwen L0 的 GQA Value-Output 算子 `M_vo^(0)` 秩仅 128 且 Frobenius 范数仅 0.2862 (比 BERT L0 小 42.9 倍、比 Qwen L23 小 65.1 倍)。",
+    "metric": "P5c_permutation_p (arm1 vs arm0, 64 个文本块 × 5 个种子, 10^4 次臂间配对置换)",
+    "direction": "lower_is_better",
+    "value": 0,
+    "baseline": {
+      "ref": "预登记显著性水平 α (SPEC §3)",
+      "value": 0.01
+    },
+    "delta_pct": -100,
+    "seeds": 5,
+    "outcome_label": "partially_confirmed",
+    "note": "五项机制判据 (P5a/P5b/P5c/P5d/P3①) 与双向槽特异全部通过, 仅 P2′ 因单点第 0 层写入撞上 Qwen L0 的 GQA M_vo 42.9 倍范数瓶颈而停在 p = 0.1256 (方向已正: 同层 +0.031275 > 跨层 +0.021382)。本代不训练任何底座权重, 不产生任何能力指标。"
+  },
+  "protocol": {
+    "eval_set": "fancyzhx/ag_news train 128 条 (缓存 agnews_128.json) 的前 64 条训练 / 后 64 条留出; 文本两个方向 (Qwen->BERT 32 块 + BERT->Qwen 32 块) = 64 块 × 4 臂 × 5 种子 = 1280 行。",
+    "input": "真 HF 预训练底座 Qwen/Qwen2.5-0.5B-Instruct / google/bert_uncased_L-4_H-256_A-4; Q 与 O 槽均取模块真实输出 ('out'), 并在 train_idx 上做同层正交残差化 (λ_orth=10.0); 载体经目标第 0 层闭式 Q-K 接收场 + train_idx 正交 Procrustes Ω_s ∈ O(256) 对齐; 注入强度 λ* = 0.5 (由候选集 {0.25, 0.5, 1.0, 2.0} 标定得出, 12/12 组全过)。",
+    "caveat": "正交 Procrustes Ω_s 与同层 Q/O 正交残差化严格只用 train_idx (前 64 条样本) 求解, 测试集样本 (后 64 条) 全程不参与任何矩阵拟合或超参选择。本代不训练任何底座权重, 不产生任何能力指标。"
+  },
+  "acceptance": {
+    "criterion": "verdict = S4AP_READY 当且仅当 P5a ∧ P5b ∧ P5c ∧ P5d ∧ P2′ ∧ P3① 全过 (α = 0.01, 置换 10^4 次)。",
+    "outcome": "fail",
+    "note": "**5/6 通过**: P5a 过 (p = 0.0) / P5b 过 (块级与逐样本均 p = 0.0) / P5c 过 (+0.022340, 320/320 正, p = 0.0) / P5d 过 (−0.000524, p = 0.7448) / P3① 过 (0 违例); 仅 **P2′** 未达 α = 0.01 (同层 +0.031275 > 跨层 +0.021382, p = 0.1256) ⇒ 机器裁决 `S4AP_FAIL`。"
+  },
+  "leakage_audit": {
+    "required": false,
+    "status": "clean",
+    "audited_in": "docs/LEAKAGE_AUDIT_CHAIN.md",
+    "note": "本代不训练任何底座权重, 不产生任何能力指标。源侧同层正交残差化算子 (orthogonalize_slot_pair)、载体正交 Procrustes 矩阵 (fit_orthogonal_procrustes) 以及 token 级 ridge 探针 (含 5 折 CV 选 λ) 全部严格限制在 train_idx (前 64 条训练样本) 内求解, 留出测试集 test_idx (后 64 条样本) 全程不参与任何矩阵估计或超参选择 (由 test_procrustes_is_orthogonal_isometry_and_train_only 单测锁住)。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "v82 的结论「管道机制本身无法按内容吸引目标模型第 0 层注意力 (P5a 必然失败)」",
+      "verdict": "**证伪 (实为载体坐标系未对齐)** —— 当用目标第 0 层闭式 Q-K 接收场在训练集上做正交 Procrustes 对齐 (Ω_s ∈ O(256), 不改任何模型权重, 严格等距) 后, P5a 的 `arm1−arm0` 与 `arm1−arm3` 在 **60/60 观测上全正 (置换 p = 0.0)**, 逐样本通道寻址正号率从 49.3% (p = 0.787) 跃升至 **81.15% (6232/7680, p = 0.0)**。",
+      "evidence": "research/weight_fusion/v83_s4_aligned_pipe/SPEC.md §3; results/metrics.json (criteria.P5a, criteria.P5b); results/diag_mvo_readout.json"
+    },
+    {
+      "hypothesis": "v82 的结论「管道无法解决非目标槽普涨 (P5d) 与 Qwen->BERT 方向的槽特异」",
+      "verdict": "**证伪 (实为 O 槽误取输入 + 同层句子主成分未解耦)** —— 改为抓取 o_proj 真输出并在训练集内做同层 Q/O 正交残差化后, P5d 非目标槽增量降为 **−0.000524 (p = 0.7448 ≥ 0.05, 通过)**, 且正文侧槽特异 `arm1−arm2` 在 **Qwen->BERT (+0.039456, 160/160 正, p = 0.0)** 与 **BERT->Qwen (+0.016549, 158/160 正, p = 0.0)** 双向均显著成立。",
+      "evidence": "research/weight_fusion/v83_s4_aligned_pipe/SPEC.md §3 / §4.1; results/metrics.json (criteria.P5d); results/diag_mvo_readout.json"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/metrics.json",
+    "forwarder_tests": "tests/test_v83_s4_aligned_pipe.py",
+    "forwarder_spec": "docs/V83_0_S4_ALIGNED_PIPE.md",
+    "calibration": "results/calib.json",
+    "calibration_records": "results/calib_records.jsonl",
+    "blocks_checkpoint": "results/blocks.jsonl",
+    "attention_checkpoint": "results/attention.jsonl",
+    "mvo_readout_diagnosis": "results/diag_mvo_readout.json",
+    "smoke_metrics": "results/metrics_smoke.json"
+  },
+  "tests_status": "present"
+}
