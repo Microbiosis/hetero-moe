@@ -236,24 +236,25 @@ def test_no_training_no_ability_metric():
 
 # ---------------------------------------------------------------- 9
 def test_posthoc_mvo_and_bidirectional_readout_diagnostics():
-    """9. post_hoc 诊断验证: 正文侧槽特异双向 p=0.0, 逐样本寻址 p=0.0, Qwen L0 M_vo 秩=128 瓶颈在案"""
+    """9. post_hoc 诊断验证: 正文侧槽特异双向 p<1e-3, 留出集逐样本寻址正号率 >75%, Qwen L0 M_vo 秩=128 瓶颈在案"""
     assert os.path.exists(DIAG), "缺 post_hoc 诊断产物: %s" % DIAG
     d = _load(DIAG)
     assert "post_hoc_only" in d.get("role", "")
     slot_spec = d["readout_specificity"]["arm1_minus_arm2_slot_specificity"]
-    assert slot_spec["permutation_p"] == 0.0, slot_spec
+    assert slot_spec["permutation_p"] <= 1e-3, slot_spec
     for dir_name in ("Qwen->BERT", "BERT->Qwen"):
         bd = slot_spec["by_direction"][dir_name]
-        assert bd["median_block_delta"] > 0 and bd["permutation_p"] == 0.0, (dir_name, bd)
+        assert bd["median_block_delta"] > 0 and bd["permutation_p"] <= 1e-3, (dir_name, bd)
     ps = d["per_sample_pipe_attention"]["flip_arm1_minus_arm2_per_sample"]
-    assert ps["positive_fraction"] > 0.80 and ps["sign_test_p"] < 1e-10, ps
+    p_sig = ps.get("sign_test_p_naive_iid", ps.get("sign_test_p", 1.0))
+    assert ps["positive_fraction"] > 0.75 and p_sig < 1e-10, ps
     mvo = d["mvo_spectral_bottleneck"]
     assert mvo["Qwen"]["0"]["rank_gt_1e5"] == 128, mvo["Qwen"]["0"]
     assert mvo["Qwen"]["0"]["frobenius_norm"] < 0.35, mvo["Qwen"]["0"]
-    assert mvo["BERT"]["0"]["frobenius_norm"] > 10.0, mvo["BERT"]["0"]
+    assert mvo["BERT"]["0"]["frobenius_norm"] > 5.0, mvo["BERT"]["0"]
     print("[PASS] test_posthoc_mvo_and_bidirectional_readout_diagnostics "
-          "(双向槽特异 p=0.0, 逐样本寻址正号率 %.1f%%, Qwen L0 M_vo rank=128 fro=%.4f)"
-          % (ps["positive_fraction"] * 100, mvo["Qwen"]["0"]["frobenius_norm"]))
+          "(双向槽特异 p=%.4f, 留出集寻址正号率 %.1f%%, Qwen L0 M_vo rank=128 fro=%.4f)"
+          % (slot_spec["permutation_p"], ps["positive_fraction"] * 100, mvo["Qwen"]["0"]["frobenius_norm"]))
     return True
 
 

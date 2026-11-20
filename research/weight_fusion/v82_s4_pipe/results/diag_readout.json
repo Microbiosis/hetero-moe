@@ -4,120 +4,120 @@
   "note": "正文侧 r2_q 的臂间差是 S3 (v81) 同款口径 (P1a/P1b 的同一统计量), 故 arm1-arm2 可与 v81 的 P1b 直接比较; 基线 arm0 两代口径不同 (S3 管道不可见 / v82 管道开内容0) 但臂间差不受 arm0 影响。",
   "arm1_minus_arm0_presence": {
     "n_obs": 320,
-    "n_blocks": 320,
+    "n_blocks": 64,
     "median_obs_delta": 0.004418947341955859,
     "n_positive_obs": 236,
-    "median_block_delta": 0.004418947341955859,
-    "mean_block_delta": 0.008464372751591941,
-    "permutation_p": 0.0,
+    "median_block_delta": 0.0042722274719930176,
+    "mean_block_delta": 0.007654459292289709,
+    "permutation_p": 9.999000099990002e-05,
     "n_perm": 10000,
     "by_direction": {
       "Qwen->BERT": {
         "n_obs": 160,
-        "n_blocks": 160,
+        "n_blocks": 32,
         "median_obs_delta": 0.002450730584356575,
         "n_positive_obs": 104,
-        "median_block_delta": 0.002450730584356575,
-        "mean_block_delta": 0.00423318327440517,
-        "permutation_p": 0.0
+        "median_block_delta": 0.0025024824512442922,
+        "mean_block_delta": 0.0026932261409160635,
+        "permutation_p": 0.006799320067993201
       },
       "BERT->Qwen": {
         "n_obs": 160,
-        "n_blocks": 160,
+        "n_blocks": 32,
         "median_obs_delta": 0.007730537089745915,
         "n_positive_obs": 132,
-        "median_block_delta": 0.007730537089745915,
-        "mean_block_delta": 0.012695562228778712,
-        "permutation_p": 0.0
+        "median_block_delta": 0.009124472514242643,
+        "mean_block_delta": 0.012615692443663354,
+        "permutation_p": 9.999000099990002e-05
       }
     }
   },
   "arm1_minus_arm3_content_specificity": {
     "n_obs": 320,
-    "n_blocks": 320,
+    "n_blocks": 64,
     "median_obs_delta": 0.011373053587697413,
     "n_positive_obs": 281,
-    "median_block_delta": 0.011373053587697413,
-    "mean_block_delta": 0.015497849236835587,
-    "permutation_p": 0.0,
+    "median_block_delta": 0.013610903160469423,
+    "mean_block_delta": 0.015038092008905405,
+    "permutation_p": 9.999000099990002e-05,
     "n_perm": 10000,
     "by_direction": {
       "Qwen->BERT": {
         "n_obs": 160,
-        "n_blocks": 160,
+        "n_blocks": 32,
         "median_obs_delta": 0.011683377756843305,
         "n_positive_obs": 139,
-        "median_block_delta": 0.011683377756843305,
-        "mean_block_delta": 0.014370748034555994,
-        "permutation_p": 0.0
+        "median_block_delta": 0.01189989625572857,
+        "mean_block_delta": 0.013412124819484117,
+        "permutation_p": 9.999000099990002e-05
       },
       "BERT->Qwen": {
         "n_obs": 160,
-        "n_blocks": 160,
+        "n_blocks": 32,
         "median_obs_delta": 0.011194777814068801,
         "n_positive_obs": 142,
-        "median_block_delta": 0.011194777814068801,
-        "mean_block_delta": 0.01662495043911518,
-        "permutation_p": 0.0
+        "median_block_delta": 0.014428094994062113,
+        "mean_block_delta": 0.016664059198326694,
+        "permutation_p": 9.999000099990002e-05
       }
     }
   },
   "arm1_minus_arm2_slot_specificity": {
     "n_obs": 320,
-    "n_blocks": 320,
+    "n_blocks": 64,
     "median_obs_delta": 0.0027001656686569953,
     "n_positive_obs": 194,
-    "median_block_delta": 0.0027001656686569953,
-    "mean_block_delta": 0.004933904195225229,
-    "permutation_p": 0.0,
+    "median_block_delta": 0.0036739774326988717,
+    "mean_block_delta": 0.0047486598628726385,
+    "permutation_p": 9.999000099990002e-05,
     "n_perm": 10000,
     "by_direction": {
       "Qwen->BERT": {
         "n_obs": 160,
-        "n_blocks": 160,
+        "n_blocks": 32,
         "median_obs_delta": 0.0007878834082303832,
         "n_positive_obs": 84,
-        "median_block_delta": 0.0007878834082303832,
-        "mean_block_delta": 0.001383439855031314,
-        "permutation_p": 0.1324
+        "median_block_delta": 0.001143780166283026,
+        "mean_block_delta": 0.0014304197686628856,
+        "permutation_p": 0.14858514148585142
       },
       "BERT->Qwen": {
         "n_obs": 160,
-        "n_blocks": 160,
+        "n_blocks": 32,
         "median_obs_delta": 0.004155082836949764,
         "n_positive_obs": 110,
-        "median_block_delta": 0.004155082836949764,
-        "mean_block_delta": 0.008484368535419142,
-        "permutation_p": 0.0
+        "median_block_delta": 0.005939733769633027,
+        "mean_block_delta": 0.008066899957082391,
+        "permutation_p": 9.999000099990002e-05
       }
     }
   },
   "arm3_minus_arm0_random_noise": {
     "n_obs": 320,
-    "n_blocks": 320,
+    "n_blocks": 64,
     "median_obs_delta": -0.004985700421661465,
     "n_positive_obs": 61,
-    "median_block_delta": -0.004985700421661465,
-    "mean_block_delta": -0.007033476485243646,
+    "median_block_delta": -0.005160694504106944,
+    "mean_block_delta": -0.006901615294202697,
     "permutation_p": 1.0,
     "n_perm": 10000,
     "by_direction": {
       "Qwen->BERT": {
         "n_obs": 160,
-        "n_blocks": 160,
+        "n_blocks": 32,
         "median_obs_delta": -0.008816251164867117,
         "n_positive_obs": 25,
-        "median_block_delta": -0.008816251164867117,
-        "mean_block_delta": -0.010137564760150824,
+        "median_block_delta": -0.009748001364403458,
+        "mean_block_delta": -0.010247886302171001,
         "permutation_p": 1.0
       },
       "BERT->Qwen": {
         "n_obs": 160,
-        "n_blocks": 160,
+        "n_blocks": 32,
         "median_obs_delta": -0.002624370472111892,
         "n_positive_obs": 36,
-        "median_block_delta": -0.002624370472111892,
-        "mean_block_delta": -0.0039293882103364685,
+        "median_block_delta": -0.003301939790929298,
+        "mean_block_delta": -0.0035553442862343923,
         "permutation_p": 1.0
       }
     }
@@ -125,8 +125,8 @@
   "comparison_v81_P1b": {
     "v81_S3_arm1_minus_arm2_r2q": -0.002455,
     "v81_p": 0.9521,
-    "v82_S4P_arm1_minus_arm2_r2q": 0.0027001656686569953,
-    "v82_p": 0.0,
+    "v82_S4P_arm1_minus_arm2_r2q": 0.0036739774326988717,
+    "v82_p": 9.999000099990002e-05,
     "note": "同口径 (正文 token 级 r2_q 的 arm1-arm2), 臂间差不受两代 arm0 口径影响"
   }
 }

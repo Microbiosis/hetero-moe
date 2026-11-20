@@ -32,6 +32,7 @@ class SparseRouterSTE(torch.autograd.Function):
         mask = torch.zeros_like(alpha).scatter_(-1, idx, 1.0)
         sparse = alpha * mask
         ctx.renorm = bool(renorm)
+        ctx.k = int(k)
         if ctx.renorm:
             denom = sparse.sum(dim=-1, keepdim=True).clamp(min=1e-12)
             out = sparse / denom
@@ -44,6 +45,11 @@ class SparseRouterSTE(torch.autograd.Function):
     def backward(ctx, grad_output):
         if getattr(ctx, "renorm", False):
             mask, out, denom = ctx.saved_tensors
+            if getattr(ctx, "k", 2) <= 1:
+                # K=1 时前向 sparse/denom 恒为 1.0，若直接套商法则 (grad - dot) 会使梯度恒等于 0；
+                # 采用 STE 重缩放直通 (denom 视为常数因子)，由外层 softmax(z) 的 Jacobian 自然产生
+                # 跨专家竞争梯度，确保 top_k=1 且 renorm_topk=True 时 W_router 正常更新。
+                return grad_output * mask / denom, None, None
             dot = (grad_output * out).sum(dim=-1, keepdim=True)
             grad_alpha = (grad_output - dot) * mask / denom
             return grad_alpha, None, None

@@ -324,6 +324,12 @@ def exp3_v5_core_engineering_and_bandwidth_fix() -> dict:
     bench = runner.benchmark(torch.ones(2, 16, D), capacity_factors=(1.0,), warmup=1, repeat=2)
     skip_rate_4l = bench[1.0]["skip_rate"]
 
+    # 3f. top_k=1 + renorm_topk=True 下路由器 W_router 任务梯度非零验证
+    torch.manual_seed(SEED)
+    l_k1 = HeteroFusionLayer(D, D_FF, M, 1, renorm_topk=True)
+    l_k1(torch.randn(2, 8, D))[0].pow(2).mean().backward()
+    top1_router_grad_norm = float(l_k1.W_router.grad.norm().item())
+
     return {
         "router_jacobian_rank_scalar": rank_scalar,
         "router_jacobian_rank_vecgate": rank_vec,
@@ -337,6 +343,7 @@ def exp3_v5_core_engineering_and_bandwidth_fix() -> dict:
         "grad_checkpoint_x_grad_diff": ckpt_x_grad_diff,
         "grad_checkpoint_param_grad_diff": ckpt_g_grad_diff,
         "multilayer_4L_skip_rate": skip_rate_4l,
+        "top1_renorm_router_grad_norm": top1_router_grad_norm,
     }
 
 

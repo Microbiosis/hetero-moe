@@ -298,31 +298,36 @@ class DownstreamEvalGate:
         if not single_logits_test:
             raise ValueError("必须提供至少一个单底座基线 single_logits_test")
 
-        tgt = targets_test.detach().cpu().long().reshape(-1)
+        tgt_raw = targets_test.detach().cpu().long()
+        n_seq = int(tgt_raw.shape[0]) if tgt_raw.ndim >= 2 else int(tgt_raw.numel())
+        tgt = tgt_raw.reshape(-1)
         f_log = fusion_logits_test.detach().cpu().float()
         V = int(f_log.shape[-1])
         f_log_flat = f_log.reshape(-1, V)
         assert f_log_flat.shape[0] == tgt.shape[0]
 
         f_nll_tok = F.cross_entropy(f_log_flat, tgt, reduction="none").numpy()
+        # 在独立序列级 (每条序列求平均 NLL) 上执行配对 Bootstrap，避免序列内 token 自相关虚增样本量
+        f_nll_seq = f_nll_tok.reshape(n_seq, -1).mean(axis=1)
         f_nll = float(f_nll_tok.mean())
         f_ppl = float(math.exp(min(50.0, f_nll)))
         uniform_nll = float(math.log(max(2, V)))
         uniform_ppl = float(V)
 
         singles_summary: Dict[str, Dict[str, float]] = {}
-        best_name, best_nll_val, best_nll_tok = None, float("inf"), None
+        best_name, best_nll_val, best_nll_seq = None, float("inf"), None
         for name, s_log in single_logits_test.items():
             sl_flat = s_log.detach().cpu().float().reshape(-1, V)
             snll_tok = F.cross_entropy(sl_flat, tgt, reduction="none").numpy()
+            snll_seq = snll_tok.reshape(n_seq, -1).mean(axis=1)
             snll = float(snll_tok.mean())
             sppl = float(math.exp(min(50.0, snll)))
             singles_summary[name] = {"nll": snll, "ppl": sppl}
             if snll < best_nll_val:
-                best_nll_val, best_name, best_nll_tok = snll, name, snll_tok
+                best_nll_val, best_name, best_nll_seq = snll, name, snll_seq
 
         nll_boot = paired_bootstrap_ci(
-            f_nll_tok, best_nll_tok, n_boot=self.n_boot, alpha=self.alpha, seed=self.seed, higher_is_better=False
+            f_nll_seq, best_nll_seq, n_boot=self.n_boot, alpha=self.alpha, seed=self.seed, higher_is_better=False
         )
 
         neg_summary = None
@@ -330,9 +335,10 @@ class DownstreamEvalGate:
         if negative_control_logits_test is not None:
             nl_flat = negative_control_logits_test.detach().cpu().float().reshape(-1, V)
             nnll_tok = F.cross_entropy(nl_flat, tgt, reduction="none").numpy()
+            nnll_seq = nnll_tok.reshape(n_seq, -1).mean(axis=1)
             nnll = float(nnll_tok.mean())
             neg_boot = paired_bootstrap_ci(
-                f_nll_tok, nnll_tok, n_boot=self.n_boot, alpha=self.alpha, seed=self.seed + 1, higher_is_better=False
+                f_nll_seq, nnll_seq, n_boot=self.n_boot, alpha=self.alpha, seed=self.seed + 1, higher_is_better=False
             )
             neg_summary = {
                 "nll": nnll,
