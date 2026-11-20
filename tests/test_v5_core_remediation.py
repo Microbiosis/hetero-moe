@@ -181,12 +181,19 @@ def test_v5_phase1_zero_z_loss_contamination():
 
 
 def test_v5_renorm_topk_matches_inference_capacity_route_scale():
-    """修复 6 (训练-推理幅值失配): 默认 renorm_topk=True 使训练期激活路由权重和恒为 1。"""
+    """修复 6 (训练-推理幅值失配 + K=1 STE 梯度直通): 默认 renorm_topk=True 使路由权重和恒为 1，且 top_k=1 时 W_router 梯度非零。"""
     torch.manual_seed(9)
     layer = HeteroFusionLayer(16, 32, 4, 2)
     assert layer.renorm_topk is True
     _, _, ah = layer(torch.randn(3, 8, 16), phase1=False)
     assert torch.allclose(ah.sum(dim=-1), torch.ones(3, 8), atol=1e-5)
+
+    # K=1 且 renorm_topk=True 时，W_router 必须收到非零任务梯度（修复商法则在 K=1 下恒零的缺陷）
+    layer_k1 = HeteroFusionLayer(16, 32, 4, 1, renorm_topk=True)
+    y_k1, _, ah_k1 = layer_k1(torch.randn(3, 8, 16), phase1=False)
+    assert torch.allclose(ah_k1.sum(dim=-1), torch.ones(3, 8), atol=1e-5)
+    y_k1.pow(2).mean().backward()
+    assert layer_k1.W_router.grad is not None and layer_k1.W_router.grad.norm().item() > 0.0
 
 
 def test_v5_inference_single_router_matmul_and_multilayer_skip_rate_bounded():

@@ -2,7 +2,7 @@
   "version": "84.0",
   "verdict": "REMEDIATION_PASS",
   "provenance_sha256": {
-    "audit_remediation.py": "85ab8f97b01084db54402fc221b6a7038cbb7b437c0e9a0cb0033dd3dd8576b6"
+    "audit_remediation.py": "9c7654e9896a08ff2d411e2e90a9f5dde9f073570e378ffe0833bb83f0b7fc15"
   },
   "exp1_v62_artifact_and_fix": {
     "ds": 64,
@@ -78,15 +78,16 @@
     "phase1_z_loss_grad_diff": 0.0,
     "grad_checkpoint_x_grad_diff": 0.0,
     "grad_checkpoint_param_grad_diff": 0.0,
-    "multilayer_4L_skip_rate": 0.75
+    "multilayer_4L_skip_rate": 0.75,
+    "top1_renorm_router_grad_norm": 1.7520682376925834e-05
   },
   "exp4_downstream_classification_beta_wall": {
-    "v4_legacy_frozen_test_acc": 0.7666666507720947,
+    "v4_legacy_frozen_test_acc": 0.8666666746139526,
     "v5_vs_v4_beta_wall_break": {
-      "mean_delta": 0.22777777777777777,
+      "mean_delta": 0.13333333333333333,
       "median_delta": 0.0,
-      "ci_low": 0.16666666666666666,
-      "ci_high": 0.28888888888888886,
+      "ci_low": 0.08875000000000001,
+      "ci_high": 0.18333333333333332,
       "p_one_sided": 0.0,
       "n_items": 180
     },
@@ -98,8 +99,8 @@
       "reasons": [],
       "metrics": {
         "fusion": {
-          "accuracy": 0.9944444298744202,
-          "cross_entropy": 0.13869178295135498
+          "accuracy": 1.0,
+          "cross_entropy": 0.01689489744603634
         },
         "zero_param": {
           "majority_class": 2,
@@ -125,29 +126,29 @@
           "cross_entropy": 0.9416537880897522
         },
         "margin_vs_best_single_acc": {
-          "mean_delta": 0.4722222222222222,
+          "mean_delta": 0.4777777777777778,
           "median_delta": 0.0,
-          "ci_low": 0.39444444444444443,
-          "ci_high": 0.5444444444444444,
+          "ci_low": 0.4,
+          "ci_high": 0.55,
           "p_one_sided": 0.0,
           "n_items": 180
         },
         "margin_vs_best_single_ce": {
-          "mean_delta": 0.8029619786779226,
-          "median_delta": 1.0834183134138584,
-          "ci_low": 0.4569164760652761,
-          "ci_high": 1.0252840989706982,
+          "mean_delta": 0.924758859383843,
+          "median_delta": 1.078319013602595,
+          "ci_low": 0.8102520770488509,
+          "ci_high": 1.0297573438576895,
           "p_one_sided": 0.0,
           "n_items": 180
         },
         "negative_control": {
-          "accuracy": 0.2666666805744171,
-          "cross_entropy": 24.764524459838867,
+          "accuracy": 0.2611111104488373,
+          "cross_entropy": 23.47357940673828,
           "fusion_minus_neg_acc": {
-            "mean_delta": 0.7277777777777777,
+            "mean_delta": 0.7388888888888889,
             "median_delta": 1.0,
-            "ci_low": 0.6611111111111111,
-            "ci_high": 0.7944444444444444,
+            "ci_low": 0.6722222222222223,
+            "ci_high": 0.8055555555555556,
             "p_one_sided": 0.0,
             "n_items": 180
           }
@@ -176,8 +177,8 @@
     "reasons": [],
     "metrics": {
       "fusion": {
-        "nll": 0.8494907021522522,
-        "ppl": 2.3384555782021366
+        "nll": 0.8352254033088684,
+        "ppl": 2.3053336195541645
       },
       "zero_param": {
         "uniform_nll": 3.1780538303479458,
@@ -199,24 +200,24 @@
         "ppl": 2.801040043372436
       },
       "nll_reduction_vs_best_single": {
-        "mean_delta": 0.18049996419411704,
-        "median_delta": 0.1458360916003585,
-        "ci_low": 0.12655836847149546,
-        "ci_high": 0.23341620142727493,
+        "mean_delta": 0.19476527736211816,
+        "median_delta": 0.15850918740034103,
+        "ci_low": 0.15312040876209115,
+        "ci_high": 0.23909780612157194,
         "p_one_sided": 0.0,
-        "n_items": 1536
+        "n_items": 96
       },
-      "ppl_reduction_pct": 16.514739454183246,
+      "ppl_reduction_pct": 17.69722732065778,
       "negative_control": {
-        "nll": 6.687092304229736,
-        "ppl": 801.9869245898926,
+        "nll": 6.760630130767822,
+        "ppl": 863.1859444768228,
         "nll_reduction_vs_neg": {
-          "mean_delta": 5.837601804433992,
-          "median_delta": 6.158876580186188,
-          "ci_low": 5.63699833129805,
-          "ci_high": 6.047544979213054,
+          "mean_delta": 5.9254050844659405,
+          "median_delta": 6.316593207418919,
+          "ci_low": 5.498185674693863,
+          "ci_high": 6.353556201864072,
           "p_one_sided": 0.0,
-          "n_items": 1536
+          "n_items": 96
         }
       },
       "split": {

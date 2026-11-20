@@ -8,7 +8,7 @@
       "n_positive_obs": 320,
       "median_block_delta": 0.022149248548742728,
       "mean_block_delta": 0.03716992465477164,
-      "permutation_p": 0.0,
+      "permutation_p": 9.999000099990002e-05,
       "n_perm": 10000,
       "by_direction": {
         "Qwen->BERT": {
@@ -18,7 +18,7 @@
           "n_positive_obs": 160,
           "median_block_delta": 0.039518155718403836,
           "mean_block_delta": 0.05586107334044206,
-          "permutation_p": 0.0
+          "permutation_p": 9.999000099990002e-05
         },
         "BERT->Qwen": {
           "n_obs": 160,
@@ -27,7 +27,7 @@
           "n_positive_obs": 160,
           "median_block_delta": 0.017227841782848752,
           "mean_block_delta": 0.018478775969101222,
-          "permutation_p": 0.0
+          "permutation_p": 9.999000099990002e-05
         }
       }
     },
@@ -38,7 +38,7 @@
       "n_positive_obs": 320,
       "median_block_delta": 0.0239107263707265,
       "mean_block_delta": 0.0384353791219436,
-      "permutation_p": 0.0,
+      "permutation_p": 9.999000099990002e-05,
       "n_perm": 10000,
       "by_direction": {
         "Qwen->BERT": {
@@ -48,7 +48,7 @@
           "n_positive_obs": 160,
           "median_block_delta": 0.041011283897954,
           "mean_block_delta": 0.0575996583009701,
-          "permutation_p": 0.0
+          "permutation_p": 9.999000099990002e-05
         },
         "BERT->Qwen": {
           "n_obs": 160,
@@ -57,7 +57,7 @@
           "n_positive_obs": 160,
           "median_block_delta": 0.018192039919649017,
           "mean_block_delta": 0.019271099942917105,
-          "permutation_p": 0.0
+          "permutation_p": 9.999000099990002e-05
         }
       }
     },
@@ -68,7 +68,7 @@
       "n_positive_obs": 318,
       "median_block_delta": 0.024743674708905372,
       "mean_block_delta": 0.038010313781847965,
-      "permutation_p": 0.0,
+      "permutation_p": 9.999000099990002e-05,
       "n_perm": 10000,
       "by_direction": {
         "Qwen->BERT": {
@@ -78,7 +78,7 @@
           "n_positive_obs": 160,
           "median_block_delta": 0.039456380168688576,
           "mean_block_delta": 0.05696002922000273,
-          "permutation_p": 0.0
+          "permutation_p": 9.999000099990002e-05
         },
         "BERT->Qwen": {
           "n_obs": 160,
@@ -87,7 +87,7 @@
           "n_positive_obs": 158,
           "median_block_delta": 0.016549101683785594,
           "mean_block_delta": 0.019060598343693207,
-          "permutation_p": 0.0
+          "permutation_p": 9.999000099990002e-05
         }
       }
     },
@@ -124,25 +124,31 @@
   },
   "per_sample_pipe_attention": {
     "arm1_minus_arm0_per_sample": {
-      "n_sample_obs": 7680,
-      "n_positive": 5723,
-      "positive_fraction": 0.745182,
-      "median_delta": 0.0034588766284286976,
-      "sign_test_p": 0.0
+      "eval_scope": "heldout_test_only[64:]",
+      "n_sample_obs": 3840,
+      "n_positive": 2825,
+      "positive_fraction": 0.735677,
+      "median_delta": 0.0029311878606677055,
+      "block_permutation_p": 0.0004999500049995,
+      "sign_test_p_naive_iid": 7.507489366413995e-188
     },
     "arm1_minus_arm3_per_sample": {
-      "n_sample_obs": 7680,
-      "n_positive": 5429,
-      "positive_fraction": 0.706901,
-      "median_delta": 0.0031167997512966394,
-      "sign_test_p": 3.0116223454484255e-288
+      "eval_scope": "heldout_test_only[64:]",
+      "n_sample_obs": 3840,
+      "n_positive": 2664,
+      "positive_fraction": 0.69375,
+      "median_delta": 0.0025768461637198925,
+      "block_permutation_p": 0.00029997000299970003,
+      "sign_test_p_naive_iid": 1.0294936051648692e-127
     },
     "flip_arm1_minus_arm2_per_sample": {
-      "n_sample_obs": 7680,
-      "n_positive": 6232,
-      "positive_fraction": 0.811458,
-      "median_delta": 0.008464480750262737,
-      "sign_test_p": 0.0
+      "eval_scope": "heldout_test_only[64:]",
+      "n_sample_obs": 3840,
+      "n_positive": 3014,
+      "positive_fraction": 0.784896,
+      "median_delta": 0.006314251106232405,
+      "block_permutation_p": 0.0016998300169983002,
+      "sign_test_p_naive_iid": 2.1592882798254755e-273
     }
   },
   "mvo_spectral_bottleneck": {
@@ -207,29 +213,29 @@
     "BERT": {
       "0": {
         "rank_gt_1e5": 256,
-        "top1_sv": 2.9570529460906982,
-        "mean_sv": 0.49642112851142883,
-        "frobenius_norm": 12.270275115966797
+        "top1_sv": 2.9802379608154297,
+        "mean_sv": 0.4633796513080597,
+        "frobenius_norm": 11.518485069274902
       },
       "1": {
         "rank_gt_1e5": 256,
-        "top1_sv": 2.6652212142944336,
-        "mean_sv": 0.44192981719970703,
-        "frobenius_norm": 10.330879211425781
+        "top1_sv": 2.86440372467041,
+        "mean_sv": 0.45166245102882385,
+        "frobenius_norm": 10.704129219055176
       },
       "2": {
         "rank_gt_1e5": 255,
-        "top1_sv": 3.9589178562164307,
-        "mean_sv": 0.7338125705718994,
-        "frobenius_norm": 16.270057678222656
+        "top1_sv": 3.6842217445373535,
+        "mean_sv": 0.6867803931236267,
+        "frobenius_norm": 15.354955673217773
       },
       "3": {
         "rank_gt_1e5": 254,
-        "top1_sv": 8.199732780456543,
-        "mean_sv": 1.788905143737793,
-        "frobenius_norm": 39.51565933227539
+        "top1_sv": 4.477737903594971,
+        "mean_sv": 1.3803033828735352,
+        "frobenius_norm": 30.206493377685547
       }
     },
-    "reading": "Qwen L0 的 M_vo 秩仅 128 (GQA 2 KV 头 × 64) 且 Frobenius 范数仅 0.2862 (比 BERT L0 的 12.2703 小 42.9 倍, 比 Qwen L23 的 18.6372 小 65.1 倍) ⇒ 单点第 0 层管道注入在 BERT->Qwen 方向的第 0 层读出 (tl=0) 必然受 40-65 倍带宽节流, 信息需经 L1+ 放大后才完全展开。"
+    "reading": "Qwen L0 的 M_vo 秩仅 128 (GQA 2 KV 头 × 64) 且 Frobenius 范数仅 0.2862 (比 BERT L0 的 11.5185 小 40.2 倍, 比 Qwen L23 的 18.6372 小 65.1 倍) ⇒ 单点第 0 层管道注入在 BERT->Qwen 方向的第 0 层读出 (tl=0) 必然受 40-65 倍带宽节流, 信息需经 L1+ 放大后才完全展开。"
   }
 }

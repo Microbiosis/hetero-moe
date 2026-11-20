@@ -107,7 +107,7 @@ def run_self_check(seed: int = 42) -> int:
     )
     cls_head = nn.Linear(D, N_CLS)
     opt = torch.optim.Adam(list(layer.trainable_parameters) + list(cls_head.parameters()), lr=1.5e-2)
-    best_va, best_sd_l, best_sd_h = -1.0, None, None
+    best_key, best_sd_l, best_sd_h = (-1.0, -float("inf")), None, None
     for _ in range(160):
         opt.zero_grad()
         out, _, _ = layer(X[tr_idx].unsqueeze(1))
@@ -116,9 +116,11 @@ def run_self_check(seed: int = 42) -> int:
         opt.step()
         with torch.no_grad():
             va_out, _, _ = layer(X[va_idx].unsqueeze(1))
-            va_acc = float((cls_head(va_out.squeeze(1)).argmax(-1) == y[va_idx]).float().mean())
-            if va_acc > best_va:
-                best_va = va_acc
+            va_logits = cls_head(va_out.squeeze(1))
+            va_acc = float((va_logits.argmax(-1) == y[va_idx]).float().mean())
+            va_ce = float(F.cross_entropy(va_logits, y[va_idx]).item())
+            if (va_acc, -va_ce) > best_key:
+                best_key = (va_acc, -va_ce)
                 best_sd_l = {k: v.clone() for k, v in layer.state_dict().items()}
                 best_sd_h = {k: v.clone() for k, v in cls_head.state_dict().items()}
     layer.load_state_dict(best_sd_l)

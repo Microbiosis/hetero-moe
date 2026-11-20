@@ -438,9 +438,30 @@ def main():
         pm_reconcile=_USE_PMR, pm_target=_PM_TARGET, use_vl=_USE_VL,
     ).to(DEV)
     head = nn.Linear(model.d_space, N_CLS).to(DEV)
-    trainable = [p for p in model.parameters() if p.requires_grad] + list(head.parameters())
+    _learned_opt = None
+    _lopt_managed = set()
+    if _USE_LOPT:
+        from learned_optimizer import LearnedWeightOptimizer
+        _learned_opt = LearnedWeightOptimizer(d=model.d_shared, rank=4).to(DEV)
+        for n_p, p_param in model.named_parameters():
+            if '.proj.' in n_p and '.weight' in n_p and p_param.requires_grad:
+                _lopt_managed.add(id(p_param))
+    trainable = [p for p in model.parameters() if p.requires_grad and id(p) not in _lopt_managed] + list(head.parameters())
+    if _learned_opt is not None:
+        trainable.extend(list(_learned_opt.parameters()))
     opt = torch.optim.AdamW(trainable, lr=LR)
     ce = nn.CrossEntropyLoss()
+    from self_repair import SlotHealthMonitor
+    monitor = SlotHealthMonitor(
+        n_slots=model.proj_space.n_slots,
+        slot_names=model.proj_space.slot_names,
+        threshold=0.005,
+        ema_decay=0.99,
+        cooldown=200,
+        device=str(DEV),
+    )
+    _slot_bal_w = float(os.environ.get('SLOT_BAL_W', '1.0' if _USE_MEM else '0.1'))
+    _slot_ent_w_eff = float(os.environ.get('SLOT_ENT_W2', '0.20' if _USE_MEM else str(SLOT_ENT_W)))
 
     def _eval_split(idx_arr):
         model.eval()
@@ -474,18 +495,50 @@ def main():
 
         y, alpha, aux = model(_feats(hq, hb, hv), fused_only=True)
         loss_ce = ce(head(y.mean(1)), lab)
+        ah_slot = aux['alpha']
+        ah_exp = alpha
+        top1_slot = F.one_hot(ah_slot.argmax(dim=-1), ah_slot.shape[-1]).float()
+        fm_s = top1_slot.mean(dim=(0, 1))
+        pm_s = ah_slot.mean(dim=(0, 1))
+        loss_bal_slot = ah_slot.shape[-1] * (0.5 * (fm_s * pm_s).sum() + 0.5 * (pm_s * pm_s).sum())
+        fm_e = (ah_exp > 0).float().mean(dim=(0, 1))
+        dense_exp = getattr(model.fusion, 'last_router_probs', ah_exp)
+        pm_e = dense_exp.mean(dim=(0, 1))
+        loss_bal_exp = ah_exp.shape[-1] * (fm_e * pm_e).sum()
+        loss_bal = loss_bal_exp + _slot_bal_w * loss_bal_slot
+        slot_ent = -(ah_slot * torch.log(ah_slot + 1e-9)).sum(-1).mean()
+        loss_ent = -slot_ent
         loss_consist = model.proj_space.consistency_loss()
-        loss = loss_ce + 0.1 * loss_consist
+        loss = loss_ce + BAL_W * loss_bal + _slot_ent_w_eff * loss_ent + 0.1 * loss_consist
         moa_aux = aux.get('moa_aux_loss', 0.0)
         if torch.is_tensor(moa_aux):
             loss = loss + moa_aux
         elif isinstance(moa_aux, (int, float)) and moa_aux != 0.0:
             loss = loss + moa_aux
+        if _USE_SUPCON:
+            z_sc = F.normalize(y.mean(1), dim=-1)
+            sim_sc = z_sc @ z_sc.T / 0.1
+            lab_f = lab.view(-1, 1)
+            pos = (lab_f == lab_f.T).float()
+            pos.fill_diagonal_(0)
+            neg = (torch.exp(sim_sc) * (1.0 - pos)).sum(1, keepdim=True)
+            log_prob = sim_sc - torch.log(neg + 1e-9)
+            loss_ctr = (-(pos * log_prob).sum(1) / (pos.sum(1) + 1e-9)).mean()
+            loss = loss + CTR_W * loss_ctr
         if step < STEPS:
             opt.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(trainable, 1.0)
             opt.step()
+            monitor.update(ah_slot)
+            if step % 50 == 0:
+                monitor.repair(model.proj_space, opt)
+            if _learned_opt is not None:
+                with torch.no_grad():
+                    for n_p, p_param in model.named_parameters():
+                        if '.proj.' in n_p and '.weight' in n_p and p_param.grad is not None:
+                            dW = _learned_opt.predict_delta(p_param.data, p_param.grad, float(loss_ce.detach()))
+                            p_param.data.add_(dW)
         if step % 250 == 0 or step == STEPS:
             va_acc = _eval_split(va_idx)
             if va_acc > best_val_acc:

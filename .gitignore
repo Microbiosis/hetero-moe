@@ -121,9 +121,6 @@ docs/V5_ALPHA_*.md
 # ─────────────────────────────────────────────────────────────────────
 
 
-# Local preview server state (built personal-site bundle + serve logs)
-.personal-site-staging/
-
 # ─────────────────────────────────────────────────────────────────────
 # MiniMax Code 运行时产物 + 独立 Mini App（**两者都不属于本仓库的源码**）
 #
