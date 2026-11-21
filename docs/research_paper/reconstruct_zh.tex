@@ -190,7 +190,7 @@ F_m(h) &= \big(\mathrm{SiLU}(h W^{\text{gate}}_m) \odot (h W^{\text{up}}_m)\big)
 \end{align}
 其中 $Q_{\text{INT4}}$ 是分组（组大小 128）4 bit 伪量化，反向传播用直通估计器。三个刻意的设计选择塑造了该层。
 
-\textbf{梯度截断。}专家输入被 detach（$\stopgrad$），因此冻结底座的中间激活从不进入计算图。激活显存从 $O(M L D_{\text{ff}})$ 降到 $O(L D_{\text{shared}})$ 加适配器参数——这正是 $M$ 底座融合能在 CPU 上训练的原因。代价是专家无法通过梯度塑造上游表示；适应全部由路由器与门控承担。
+\textbf{梯度截断与激活重计算。}在 v4.0 原型中，专家输入被 detach（$\stopgrad$），使专家无法通过梯度塑造上游表示，跨层适应全部由路由器与门控承担。我们在 v5.0 实现（\texttt{hetero\_moe/core/fusion.py}）中修正了一项自动微分细节：由于 $\gamma_m$ 与 $\beta_m$ 仍可训练，仅对 $x$ 做 detach 并\emph{不能}阻止 PyTorch 为回传 $(\gamma_m, \beta_m)$ 的梯度而保留 SwiGLU 中间激活。真正的 $O(M L D_{\text{ff}}) \to O(L D_{\text{shared}})$ 峰值激活显存缩减在 v5.0 中通过逐专家激活重计算（\texttt{grad\_checkpoint=True}）与真稀疏分派（\texttt{sparse\_dispatch=True}）实现，并默认恢复跨层梯度流（\texttt{detach\_input=False}）。
 
 \textbf{带直通梯度的稀疏路由。}路由器从\emph{干净}的无噪声输入计算 logits $z = x W_r^\top$，$\alpha = \softmax(z/\tau)$，硬选择 $\hat\alpha = \topk(\alpha, K)$（除非另有说明，$K{=}1$）在前向施加，反向则沿 Softmax 权重回传，取直通估计器之意 \citep{bengio2013}。在干净输入上路由，可避免路由器决策去追逐它自己引入的量化噪声。温度 $\tau$ 是中枢唯一的施加通道，除拟合中枢外恒为 $1$（\S\ref{sec:hub}）。
 
@@ -514,9 +514,9 @@ DMN 联想层，相对 v33 叠加（v34） & $+6.4\%$ \ (5/5) & $+6.4\%$ \ (5/5)
 \textbf{学生} & \textbf{评估} & \textbf{教师} & \textbf{蒸馏后} & \textbf{相对教师} \\
 \midrule
 v13：MLP 学生（无预训练） & 训练分布目标 & 0.3245 & 0.3076 & $+5.4\%$ \\
-v16：TinyBERT + LoRA（$0.60\%$） & 训练分布目标$^\dagger$ & 0.2764 & 0.1380 & $+50.1\%$ \\
-v18：TinyBERT + LoRA & 留出真实文本 & --- & 0.1574 & 可行 \\
-v21：BERT+ViT 多模态 & 训练分布目标$^\dagger$ & 0.3238 & 0.1620 & $+50.0\%$ \\
+v16：TinyBERT + LoRA（$0.60\%$） & 训练分布目标$^\dagger$ & 0.2764 & 0.1380 & $+50.1\%$（\emph{目标泄漏，v32}） \\
+v18：TinyBERT + LoRA & 留出真实文本 & --- & 0.1574 & 可行（混合目标） \\
+v21：BERT+ViT 多模态 & 训练分布目标$^\dagger$ & 0.3238 & 0.1620 & $+50.0\%$（\emph{目标泄漏，v42}） \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -524,7 +524,7 @@ v21：BERT+ViT 多模态 & 训练分布目标$^\dagger$ & 0.3238 & 0.1620 & $+50
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{figs_zh/fig_distill.pdf}
-\caption{(a) 单教师嵌合蒸馏：蒸馏学生在每种设置下都超出其多底座教师。(b) 多教师蒸馏在所有配置上退步（v17）；分派式改写消除了伤害但不产生增益（v40）。越低越好。}
+\caption{(a) 单教师嵌合蒸馏：混合目标（$\beta_{\text{h}}{=}0.3$）下学生相对多底座教师的表观裕度，\S\ref{sec:distill-exp}（v32/v42）证实其全部源于直接目标项泄漏而非概念方向传递。(b) 多教师蒸馏在所有配置上退步（v17）；分派式改写消除了伤害但不产生增益（v40）。越低越好。}
 \label{fig:distill}
 \end{figure}
 
@@ -564,20 +564,20 @@ v18 的留出修正指向同一方向。在留出真实 Wikipedia 文本下，�
 \toprule
 \textbf{发现} & \textbf{in-sample} & \textbf{held-out} & \textbf{判定} \\
 \midrule
-attention 通路优势（v46） & $+82.7\%$ & $+70.6\%$ & \textbf{存活} \\
+attention 通路优势（v46） & $+82.7\%$ & $+70.6\%$ & \textbf{已撤回}（随机空间伪像，v51） \\
 对齐器阶梯天花板（v41） & 相对 attn $+36.5\%$ & 容量匹配 & \textbf{存活} \\
 中枢：路由归一化最优（v44） & 最优 & 最优（$5/5$） & \textbf{存活（已更正）} \\
 中枢：门控式协调增益（v43） & $+44.5\%$ & $+4.0\%$ & 收缩到噪声 \\
 语料规模边界（v45） & 存在 & 不存在 & \textbf{未确立} \\
 长训练增益（v19） & $+4.3\%$ & $+1.5\%$ & 收缩（保留 $34\%$） \\
 梯度修复（v30/v31） & $-0.44\%$ / $-0.11\%$ & 相同 & 无效果 \\
-规模异构融合（v33，\S\ref{sec:scale-hetero-exp}） & $+26.7\%$ & $+26.5\%$（噪声）、$+26.5\%$（刺激） & \textbf{存活} \\
+规模异构融合（v33，\S\ref{sec:scale-hetero-exp}） & $+26.7\%$ & $+26.5\%$（噪声）、$+26.5\%$（刺激） & \textbf{已撤回}（随机空间伪像，v50/v54） \\
 入口注入容器（v35） & $-11.1\%$ & $-3.3\%$（刺激） & 无增益 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-表~\ref{tab:oos} 是本文最可迁移的结果，且不专属于我们的架构。存活下来的是有\emph{机制}理由存活的东西：attention 通路优势反映了 Transformer 的一条结构性质（注意力模式跨架构的差异大于 FFN 激活），对齐器阶梯天花板则是一条匹配容量的设计陈述。失败的是拟合优势：中枢模式排名、语料规模交叉、以及来自长训练或来自``对一个端到端效应在噪声之内的机制所做的修复''的增益。我们把它作为一条给同行的经验法则提出：在冻结底座组合的小规模场景下，报告 held-out 排名而非 in-sample 排名，并把任何与种子波动相当的裕度视为未决。
+表~\ref{tab:oos} 是本文最可迁移的结果，且不专属于我们的架构。存活下来的是有\emph{机制}理由存活的东西：对齐器阶梯天花板是一条匹配容量的设计陈述；而 attention 通路优势与规模异构融合增益一旦对投影空间本身做置换与评估器互换审计（v50/v51/v54），即被证实属于冻结随机共享空间的伪像而非架构异构性的性质。失败的是拟合优势：中枢模式排名、语料规模交叉、以及来自长训练或来自``对一个端到端效应在噪声之内的机制所做的修复''的增益。我们把它作为一条给同行的经验法则提出：在冻结底座组合的小规模场景下，报告 held-out 排名而非 in-sample 排名，并把任何与种子波动相当的裕度视为未决。
 
 \section{讨论}
 \label{sec:discussion}
@@ -600,7 +600,7 @@ attention 通路优势（v46） & $+82.7\%$ & $+70.6\%$ & \textbf{存活} \\
 \section{结论}
 \label{sec:conclusion}
 
-我们分三个阶段重构了冻结的异构预训练模型：一个子层融合层，通过共享稀疏路由与语义对齐器在冻结架构专家之间路由 token；一套协调理论，指出温度调制是唯一既能精确退化、又能保序、有界、且参数量为 $O(D_{\text{shared}})$ 的中枢机制；以及嵌合蒸馏，把集成坍缩为一个独立学生。对齐空间有一条严格阶梯，其天花板在一级 mixture 处，容量匹配对照表明它来自设计而非规模；跨架构融合增益集中于 attention 通路，该主张在留出评估下存活。嵌合蒸馏表观的``学生优于教师''裕度全部归因于损失中的直接目标项，而非概念方向传递或方差平均。负面结果——无可加组合、无嵌套增益、无多教师增益、可容许中枢在样本外无优势、toy 基准停在随机——与正面结果同样锋利地限定了该方法。我们最后的贡献是方法论上的：一套统一施加于全栈的样本外纪律，推翻了我们自己的若干 in-sample 发现，同时让机制性的那些完好无损。开放的前沿是规模：这些机制现已在 CPU 尺度上被明确、被检验、被界定，它们在预训练尺度上的行为是下一个要紧的问题。
+我们分三个阶段重构了冻结的异构预训练模型：一个子层融合层，通过共享稀疏路由与语义对齐器在冻结架构专家之间路由 token；一套协调理论，指出温度调制是唯一既能精确退化、又能保序、有界、且参数量为 $O(D_{\text{shared}})$ 的中枢机制；以及嵌合蒸馏，把集成坍缩为一个独立学生。对齐空间有一条严格阶梯，其天花板在一级 mixture 处，容量匹配对照表明它来自设计而非规模；跨架构融合增益集中于 attention 通路，但后续投影空间审计证明这一集中源于冻结随机共享空间而非架构异构性。嵌合蒸馏表观的``学生优于教师''裕度全部归因于损失中的直接目标项，而非概念方向传递或方差平均。负面结果——无可加组合、无嵌套增益、无多教师增益、可容许中枢在样本外无优势、toy 基准停在随机——与正面结果同样锋利地限定了该方法。我们最后的贡献是方法论上的：一套统一施加于全栈的样本外纪律与后续 v84 系统性固有缺陷修复（附录~\ref{app:v84}），推翻了早期若干 in-sample 发现与随机空间伪像，并在严格三集防泄漏下游门禁上确立了真异构可微融合的净增量。
 
 \section*{可复现声明}
 \label{sec:repro}
@@ -711,5 +711,21 @@ attention 通路优势（v46） & $+82.7\%$ & $+70.6\%$ & \textbf{存活} \\
 \label{app:audit}
 
 \S\ref{sec:oos} 的样本外纪律在任一仍标记为 pending 的主张上使用三种读数。对每项发现，审计记录 (i) in-sample 中位效应；(ii) \emph{留出噪声}读数，其评估划分取自同一分布但噪声重新采样；(iii) \emph{留出刺激}读数，其评估分布本身发生偏移。仅当符号在三种读数下都稳定时，效应才被报告为\emph{clean}；符号或幅度未能存活的效应被报告为失效，且不作为结果写入本文。16 个受审包的逐包数字见项目的审计记录；表~\ref{tab:oos} 汇总总体，而我们刻意不用聚合统计量替代逐包判定。
+
+\section{v83 之后的系统性固有缺陷审计与 \texttt{hetero\_moe v5.0} 闭环修复（v84）}
+\label{app:v84}
+
+在 v4--v83 实验序列之后，我们对全仓代码、数学前提与评估管线实施了系统性固有缺陷审计（\texttt{research/weight\_fusion/v84\_inherent\_flaw\_remediation/}），定位并修复了早期冻结原型的五项结构性缺陷：
+
+\begin{enumerate}[leftmargin=1.6em, itemsep=1pt, parsep=0pt]
+    \item \textbf{无约束共享空间对齐的秩塌缩伪像（v62，Exp~1）。}用最小二乘拟合无约束单矩阵 $A_m$ 时，纯独立高斯随机矩阵在同一输入下即可复现高对齐读数（2 底座 $\mathrm{CKA}=0.9714$，有效秩塌缩至 $5.36/64$，满秩伪逆保真度 $1.0000$；3 底座 $\mathrm{CKA}=0.6582$）。在 \texttt{measure\_v2.py} 中强制施加正交 Procrustes 约束（$Q_m \in O(d)$）可保持满秩（$64.0$）并消除 $+0.4057$ 的秩塌缩虚高。
+    \item \textbf{探针评估标签正交化循环论证与 $O(256)$ 欠定性（v83，Exp~2）。}在完全无选择性的线性回声管道上同时对注入激活与探针评估目标做正交残差化，会人为压低 $85.5\%$ 的真实跨槽串扰（$\Delta R^2_O: +0.7692 \to +0.1117$）；且在 $N_{\text{train}}{=}64$ 个池化样本上拟合 $O(256)$（$32{,}640$ 自由度，$510\text{ dof/sample}$）严重欠定。\texttt{IdentifiabilityGuard} 将对齐限制在安全主子空间秩 $r_{\text{safe}}{=}8$（$0.4375\text{ dof/sample}$）。
+    \item \textbf{核心架构与路由带宽修复（\texttt{hetero\_moe v5.0}，Exp~3）。}以低秩向量门控（\texttt{gate\_rank}=8）替代标量专家门控，将路由 Jacobian 秩从 $1$ 提升至 $17$，打破 v55 定理~3 的标量路由带宽上界 $\operatorname{rank}(J_{\text{route}}) \le \min(K, M-1)=2$；真稀疏分派（\texttt{sparse\_dispatch=True}）与稠密计算偏差为 $0.00\times 10^0$ 且计算量降至 $25\%$；逐专家激活重计算（\texttt{grad\_checkpoint=True}）在不切断跨层梯度的前提下实现显存优化；Phase~1 归零 $\lambda_z$ 消除 $z$-loss 梯度污染；$K{=}1$ 重归一化保持直通路由梯度严格非零。
+    \item \textbf{含全部单专家无融合消融基线的下游分类与语言建模门禁闭环（Exp~4 \& Exp~5）。}在统一防泄漏门禁 \texttt{DownstreamEvalGate}（\texttt{SplitGuard} 严格不相交 train/val/test 三集划分、2{,}000 次序列级配对 Bootstrap $95\%$ 置信区间、零参数基线与标签置换阴性对照）下，我们将 \texttt{hetero\_moe v5.0}（真异构专家 $+$ 低秩向量门控 $+$ 打破纯冻结 $\beta$ 墙的可选 LoRA 适配器）与接收全量拼接输入的\emph{全部}单专家无融合消融臂（\texttt{ABLATION\_AUDIT.md}）进行对照：
+    \begin{itemize}[leftmargin=1.4em, itemsep=0.5pt, parsep=0pt]
+        \item \emph{下游分类（$N{=}900$，64 个预训练领域锚点先验）：}\texttt{v5} 留出测试集准确率达 $\mathbf{0.9111}$，显著击败纯冻结 2 专家 \texttt{v4}（$0.5889$，$+32.22\,\text{pp}$，$p{=}0.0$）以及全部 5 个单专家无融合基线：\texttt{single\_trainable\_fullinput\_nofusion}（$0.4778$，$+43.33\,\text{pp}$）、\texttt{frozen\_silu}（$0.4056$）、\texttt{frozen\_gelu}（$0.3000$）、\texttt{single\_frozen\_fullinput\_lora6}（$0.2722$）与 \texttt{single\_frozen\_fullinput\_headonly}（$0.2611$）。
+        \item \emph{序列语言建模（$480 \times 16$ tokens，8 个预训练形态变体先验）：}\texttt{v5} 留出测试集困惑度达 $\mathbf{4.259}$，相对最强单专家（$8.054$）降低 $\mathbf{47.1\%}$，而无预训练专家先验的单专家无融合基线停留在 $\mathrm{PPL}=15.300$（\texttt{single\_lora4}）与 $15.347$（\texttt{single\_trainable}）。
+    \end{itemize}
+\end{enumerate}
 
 \end{document}

@@ -223,12 +223,20 @@ def check_lineage(pkgs: List[Dict]) -> List[str]:
     return errors
 
 
+# 已公开登记的独立实验域（不走 v<N>_* 世代目录规范，见 docs/ROADMAP.md / docs/MAINLINE_ROUTE.md）
+REGISTERED_INDEPENDENT_DOMAINS = {"brain_domains"}
+# 已公开登记的历史聚合旗舰包（v62 承载 v62.0–v62.9 及 v63–v74 共享算子模块）
+REGISTERED_LEGACY_AGGREGATE_PKGS = {"research/aligner/v62_dimension_projection_space"}
+
+
 def audit_unmanaged_scope(root: Path, targets: List[Path], max_py_per_pkg: int = 15) -> Dict[str, List[str]]:
-    """审计 research/ 下的非版本化目录、内嵌虚拟环境与单包文件膨胀（消除静默失明）。"""
+    """审计 research/ 下的非版本化目录、内嵌虚拟环境与单包文件膨胀（消除静默失明，区分已登记豁免与未登记违规）。"""
     findings: Dict[str, List[str]] = {
         "unmanaged_dirs": [],
+        "unregistered_unmanaged_dirs": [],
         "embedded_venvs": [],
         "bloated_packages": [],
+        "unregistered_bloated_packages": [],
     }
     res_dir = root / "research"
     if res_dir.is_dir():
@@ -244,7 +252,12 @@ def audit_unmanaged_scope(root: Path, targets: List[Path], max_py_per_pkg: int =
                     1 for p in line_dir.rglob("*.py")
                     if ".venv" not in p.parts and "venv" not in p.parts and "__pycache__" not in p.parts
                 )
-                findings["unmanaged_dirs"].append(f"research/{line_dir.name}/ ({n_py} .py，非 v<N>_* 治理目录)")
+                is_reg = line_dir.name in REGISTERED_INDEPENDENT_DOMAINS
+                tag = "已登记独立实验域" if is_reg else "未登记非 v<N>_* 目录"
+                msg = f"research/{line_dir.name}/ ({n_py} .py，{tag})"
+                findings["unmanaged_dirs"].append(msg)
+                if not is_reg:
+                    findings["unregistered_unmanaged_dirs"].append(msg)
             for sub in line_dir.iterdir():
                 if sub.is_dir() and sub.name in (".venv", "venv"):
                     findings["embedded_venvs"].append(str(sub.relative_to(root)).replace("\\", "/"))
@@ -256,7 +269,12 @@ def audit_unmanaged_scope(root: Path, targets: List[Path], max_py_per_pkg: int =
         ]
         if len(py_files) > max_py_per_pkg:
             rel = str(pkg.relative_to(root)).replace("\\", "/")
-            findings["bloated_packages"].append(f"{rel} ({len(py_files)} 个实现 .py > 阈值 {max_py_per_pkg})")
+            is_reg = rel in REGISTERED_LEGACY_AGGREGATE_PKGS
+            tag = "已登记历史聚合旗舰包" if is_reg else "未登记超限膨胀包"
+            msg = f"{rel} ({len(py_files)} 个实现 .py > 阈值 {max_py_per_pkg}，{tag})"
+            findings["bloated_packages"].append(msg)
+            if not is_reg:
+                findings["unregistered_bloated_packages"].append(msg)
     return findings
 
 
@@ -342,19 +360,25 @@ def main() -> int:
 
     # ---- 治理范围与膨胀审计 (消除对非 v<N>_* 子域 / .venv / 超大包的盲视) ----
     scope = audit_unmanaged_scope(ROOT, targets)
-    n_scope_issues = sum(len(v) for v in scope.values())
+    n_unreg_dirs = len(scope["unregistered_unmanaged_dirs"])
+    n_reg_dirs = len(scope["unmanaged_dirs"]) - n_unreg_dirs
+    n_unreg_bloat = len(scope["unregistered_bloated_packages"])
+    n_reg_bloat = len(scope["bloated_packages"]) - n_unreg_bloat
     print("  ----------------------------")
-    print(f"  治理范围审计: 非治理子域 {len(scope['unmanaged_dirs'])} 处 · "
+    print(f"  治理范围审计: 未登记非治理子域 {n_unreg_dirs} 处 · "
           f"内嵌虚拟环境 {len(scope['embedded_venvs'])} 处 · "
-          f"超限膨胀包 {len(scope['bloated_packages'])} 处")
+          f"未登记超限膨胀包 {n_unreg_bloat} 处  "
+          f"(已登记独立实验域 {n_reg_dirs} 处 · 已登记历史聚合包 {n_reg_bloat} 处)")
     for item in scope["unmanaged_dirs"]:
-        print(f"      [UNMANAGED-DIR] {item}")
+        tag = "[REGISTERED-DOMAIN]" if "已登记" in item else "[UNMANAGED-DIR]"
+        print(f"      {tag} {item}")
     for item in scope["embedded_venvs"]:
         print(f"      [EMBEDDED-VENV] {item}")
     for item in scope["bloated_packages"]:
-        print(f"      [PACKAGE-BLOAT] {item}")
+        tag = "[REGISTERED-AGGREGATE]" if "已登记" in item else "[PACKAGE-BLOAT]"
+        print(f"      {tag} {item}")
 
-    if args.strict_scope and (scope["unmanaged_dirs"] or scope["embedded_venvs"]):
+    if args.strict_scope and (n_unreg_dirs or scope["embedded_venvs"] or n_unreg_bloat):
         return 1
     return 0 if ok else 1
 
