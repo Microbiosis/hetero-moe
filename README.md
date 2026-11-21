@@ -12,7 +12,7 @@
 | **可加载的模型** | [HeteroMoEProjSpace-v2](https://huggingface.co/redmingwei/HeteroMoEProjSpace-v2) · 645.19M |
 | **HF 全部产物** | [Hetero-MoE 研究档案 Collection](https://huggingface.co/collections/redmingwei/hetero-moe-6ae6b67d79b0423227575c99) · 7 个仓库（4 model + 3 dataset） |
 | **仓库逐个说明** | [`docs/HF_ARTIFACTS.md`](docs/HF_ARTIFACTS.md) |
-| **最新一代（v84.0）** | [`research/weight_fusion/v84_inherent_flaw_remediation/`](research/weight_fusion/v84_inherent_flaw_remediation/) — **全历史固有缺陷实证审计与 `hetero_moe v5.0` 系统修复（裁决 `REMEDIATION_PASS`）**：揭露并修复 `v62` 无约束 `fit_shared` 随机矩阵假象（`2-W CKA=0.9714`、`eff_rank=5.36/64`）、`v83` P5d 标签覆盖循环论证（人为压低 `85.5%` 串扰）与 `O(256)` 欠定性；在主包 `v5.0` 实现真异构专家、真稀疏分派、`grad_checkpoint` 真省显存、低秩向量门控（路由 Jacobian 秩 `1 → 17` 破 `v55` 定理 3）与可选 LoRA 破纯冻结 $\beta$ 墙；首次在严格三集防泄漏下游门禁 `DownstreamEvalGate` 上实现分类（`0.9944` vs `v4_frozen 0.7667` / `best_single 0.5222`）与序列 LM PPL（`2.338` vs `best_single 2.801`, `-16.5%`）双 `PASS` |
+| **最新一代（v84.0）** | [`research/weight_fusion/v84_inherent_flaw_remediation/`](research/weight_fusion/v84_inherent_flaw_remediation/) — **全历史固有缺陷实证审计与 `hetero_moe v5.0` 系统修复（裁决 `REMEDIATION_PASS`）**：揭露并修复 `v62` 无约束 `fit_shared` 随机矩阵假象（`2-W CKA=0.9714`、`eff_rank=5.36/64`）、`v83` P5d 标签覆盖循环论证（人为压低 `85.5%` 串扰）与 `O(256)` 欠定性；在主包 `v5.0` 实现真异构专家、真稀疏分派、`grad_checkpoint` 真省显存、低秩向量门控（路由 Jacobian 秩 `1 → 17` 破 `v55` 定理 3）与可选 LoRA 破纯冻结 $\beta$ 墙；首次在严格三集防泄漏下游门禁 `DownstreamEvalGate`（含全部单专家无融合消融基线）上实现分类（`0.9111` vs `v4_2exp 0.5889` (`+32.22pp`) / `best_single 0.4778` (`+43.33pp`)）与序列 LM PPL（`4.259` vs `best_single 8.054`, `-47.1%`）双 `PASS` |
 | **上一代（v83.0）** | [`research/weight_fusion/v83_s4_aligned_pipe/`](research/weight_fusion/v83_s4_aligned_pipe/) — S4-AP 管道（5/6 机制通过，仅 P2′ `p=0.1256` 未过，裁决 `S4AP_FAIL`；见 [`docs/V83_0_S4_ALIGNED_PIPE.md`](docs/V83_0_S4_ALIGNED_PIPE.md)） |
 | **主线第一代** | [`research/weight_fusion/v75_weight_conjugation/`](research/weight_fusion/v75_weight_conjugation/) — 槽级共轭的权重级有效性检验，**负结果**（G2 未成立，见 §4.7） |
 | **v63–v74 登记批次** | [`research/aligner/`](research/aligner/) · 12 代补齐为世代包（SPEC + MANIFEST + 指标快照 + 权威测试） |
@@ -61,7 +61,7 @@ archive/                                # 负面发现 + 前基线
     ├── v12_compose/                    # v9+v10 组合无叠加
     └── v23b_hard_vqa/                  # 8 类陷阱 toy 全部 = 随机
 
-tests/                                  # 430 个 V&V 测试
+tests/                                  # 91 个测试套件 (含 78 个世代包转发层 + v5.0/历史子包专项回归)
 examples/                               # 40+ 端到端脚本
 docs/                                   # 研究规范文档
 └── research_paper/                   # 论文:reconstruct.tex(合并稿)/ 中英 PDF + 评审记录
@@ -108,9 +108,9 @@ from hetero_moe.train.trainer import HeteroTrainer
 
 ```
 hetero_moe v5.0  真异构专家 + 真稀疏分派 + 低秩向量门控 + 可选 LoRA + grad_checkpoint
-DownstreamEvalGate  强制 train/val/test 三集零重叠 + 单底座/零参数/阴性对照 + Bootstrap CI
-v84 分类门禁     test_acc 0.9944 vs v4_frozen 0.7667 / best_single 0.5222 (PASS)
-v84 LM PPL 门禁  test_ppl 2.338  vs best_single 2.801 (-16.5%, PASS)
+DownstreamEvalGate  强制 train/val/test 三集零重叠 + 全单专家无融合消融基线/零参数/阴性对照 + 序列级 Bootstrap CI
+v84 分类门禁     test_acc 0.9111 vs v4_2exp 0.5889 (+32.22pp) / best_single 0.4778 (+43.33pp) (PASS)
+v84 LM PPL 门禁  test_ppl 4.259  vs best_single 8.054 (-47.1%, PASS)
 （历史 v6/v13/v16/v21 合成 MSE 读数已由 v32/v42/v50/v54 审计归档，不再作为能力指标）
 ```
 
@@ -132,8 +132,8 @@ bash run.sh test                                       # 全仓测试套件
 | 核心依赖 | `torch>=2.0`、`numpy>=1.24`; 可选 `transformers>=4.30`、`Pillow>=9.0` |
 | 沙箱维度 | D ≤ 128 |
 | §8.1 真实验收 | 需 A100-80G + 0.5B 模型 (本沙箱不替代) |
-| 运行底座 | Linux container (Python 3.11+, PyTorch 2.x, CPU-only) |
-| 测试 | 430/430 ALL GREEN ✓ |
+| 运行底座 | Linux / Windows (Python 3.11+, PyTorch 2.x, CPU-only 可复现) |
+| 测试 | 78/78 世代包 + 37/37 专项 pytest 回归 ALL GREEN ✓ |
 
 ## V&V 矩阵
 
