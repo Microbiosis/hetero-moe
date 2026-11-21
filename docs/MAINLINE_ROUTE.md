@@ -470,7 +470,7 @@ arXiv **2606.27288**《When Does Combining Language Models Help?》（67 个模�
 
 - **方法论证伪补齐**：① 证伪 `v62` 无约束单矩阵 `fit_shared`（纯独立高斯随机矩阵即可复现 `2-W CKA=0.9714 / 3-W 0.6582 / full-rank fidelity=0.9994`，源起有效秩塌缩至 `5.36/64` + 无正则 `lstsq` 求逆），保留原 `v62/measure.py`（维持 `v75–v83` SHA256 锁 `8a20d007f5a4...`）并新增 `v62/measure_v2.py` 引入正交 Procrustes 与同输入随机权重阴性对照；② 揭露 `v83` 将正交残差化同时覆盖注入信号与评估标签在无选择性管道上人为压低 `85.5%` 真实串扰，以及 `N_train=64` 拟合 `O(256)`（`510 dof/sample`）严重欠定，引入 `IdentifiabilityGuard`（安全子空间秩 `r_safe=8`）。
 - **核心主包升级至 `hetero_moe v5.0`**：彻底修复伪异构（`ExpertSpec` / `HeteroExpert`）、伪稀疏（`sparse_dispatch=True` 计算量降至 `25%` 且数值零误差）、`x.detach()` 显存陈述错误（`grad_checkpoint=True` 真省显存且梯度零偏差）、`v55` 定理 3 路由带宽上界（低秩向量门控 `gate_rank=8` 将 `rank(J_route)` 从 `1` 提至 `17`）、纯冻结 $\beta$ 墙死锁（可选原生 `LoRALinearAdapter`）、训练/推理幅值对齐（`renorm_topk=True`）、Phase 1 零 `z_loss` 梯度污染与 `InferenceRunner` 单次路由乘 / 多层 `skip_rate ≤ 1.0`。
-- **真实下游防泄漏门禁双 `PASS`**：建立统一门禁 `DownstreamEvalGate`（严格三集零重叠 + 零参数基线 + 全单底座基线 + 阴性对照 + Bootstrap 95% CI），在下游分类（`0.9944` vs `v4_frozen 0.7667` / `best_single 0.5222`）与序列 LM PPL（`2.338` vs `best_single 2.801`, `-16.5%`）均 `PASS`。
+- **真实下游防泄漏门禁双 `PASS`（含全部单专家无融合消融闭环）**：建立统一门禁 `DownstreamEvalGate`（严格三集零重叠 + 零参数基线 + 全单底座与单专家无融合消融基线 + 阴性对照 + 序列级 Bootstrap 95% CI），在 64 锚点预训练先验下游分类（`v5 0.9111` vs `v4_2exp 0.5889` / `single_trainable 0.4778` / `single_frozen 0.2611`）与 8 形态变体序列 LM PPL（`v5 4.259` vs `best_single 8.054` / `single_trainable 15.347`, `-47.1%`）均 `PASS`。
 - **治理与文档对齐**：`check_self_containment.py` 补齐动态加载全扫描（75/75，历史动态加载 21 处公开登记），`validate_generations.py` 补齐非治理子域/内嵌 `.venv`/膨胀包审计（78 包 0 错），同步修复 `v62/train_v2.py`、`v65/extract_snli_ve_v65.py`、`reconstruct.tex`、`README.md` 与 `research/README.md`。
 
 ---

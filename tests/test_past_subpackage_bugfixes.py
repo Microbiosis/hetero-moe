@@ -30,7 +30,8 @@ import torch.nn as nn
 def test_v62_measure_sha256_restored_and_measure_v2_available():
     """1. v62/measure.py SHA256 精确恢复为 v75–v83 锁定值，measure_v2.py 提供修复版。"""
     p = ROOT / "research/aligner/v62_dimension_projection_space/measure.py"
-    sha = hashlib.sha256(p.read_bytes()).hexdigest()
+    raw = p.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+    sha = hashlib.sha256(raw).hexdigest()
     assert sha == "8a20d007f5a42340ee89713512c089f81157d92101610c17f92f7ae6077aa349", sha
 
     from research.aligner.v62_dimension_projection_space import measure_v2

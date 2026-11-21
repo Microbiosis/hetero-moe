@@ -2,7 +2,7 @@
   "version": "84.0",
   "verdict": "REMEDIATION_PASS",
   "provenance_sha256": {
-    "audit_remediation.py": "9c7654e9896a08ff2d411e2e90a9f5dde9f073570e378ffe0833bb83f0b7fc15"
+    "audit_remediation.py": "59eb9f07f9b90e16b9b9f22539e028d59fbad7e27fbfe6cb6a7bb56b7f3d7b62"
   },
   "exp1_v62_artifact_and_fix": {
     "ds": 64,
@@ -11,24 +11,24 @@
     "unconstrained_2_random_W": {
       "rank8": {
         "cka": 0.9968799948692322,
-        "fidelity": 0.1814594864845276,
+        "fidelity": 0.18145948607833173,
         "eff_rank_A": 2.0624423027038574
       },
       "rank32": {
         "cka": 0.9962018728256226,
-        "fidelity": 0.6836402416229248,
+        "fidelity": 0.6836401295793731,
         "eff_rank_A": 2.5878798961639404
       },
       "rank64": {
         "cka": 0.9713679552078247,
-        "fidelity": 0.9994479417800903,
+        "fidelity": 1.0,
         "eff_rank_A": 5.364971160888672
       }
     },
     "unconstrained_3_random_W": {
       "rank64": {
         "cka": 0.6582035024960836,
-        "fidelity": 0.9991046190261841,
+        "fidelity": 1.0,
         "eff_rank_A": 2.500993490219116
       }
     },
@@ -82,12 +82,13 @@
     "top1_renorm_router_grad_norm": 1.7520682376925834e-05
   },
   "exp4_downstream_classification_beta_wall": {
-    "v4_legacy_frozen_test_acc": 0.8666666746139526,
+    "v4_legacy_frozen_test_acc": 0.5888888835906982,
+    "v4_2exp_scalar_route_test_acc": 0.5888888835906982,
     "v5_vs_v4_beta_wall_break": {
-      "mean_delta": 0.13333333333333333,
+      "mean_delta": 0.32222222222222224,
       "median_delta": 0.0,
-      "ci_low": 0.08875000000000001,
-      "ci_high": 0.18333333333333332,
+      "ci_low": 0.24444444444444444,
+      "ci_high": 0.4,
       "p_one_sided": 0.0,
       "n_items": 180
     },
@@ -99,56 +100,68 @@
       "reasons": [],
       "metrics": {
         "fusion": {
-          "accuracy": 1.0,
-          "cross_entropy": 0.01689489744603634
+          "accuracy": 0.9111111164093018,
+          "cross_entropy": 0.46466386318206787
         },
         "zero_param": {
-          "majority_class": 2,
-          "majority_accuracy": 0.2777777910232544,
+          "majority_class": 3,
+          "majority_accuracy": 0.1944444477558136,
           "uniform_ce": 1.3862943611198906
         },
         "singles": {
           "frozen_gelu_20d": {
-            "accuracy": 0.4888888895511627,
-            "cross_entropy": 0.977660596370697
+            "accuracy": 0.30000001192092896,
+            "cross_entropy": 1.9140079021453857
           },
           "frozen_silu_28d": {
-            "accuracy": 0.5222222208976746,
-            "cross_entropy": 0.9416537880897522
+            "accuracy": 0.4055555462837219,
+            "cross_entropy": 1.3256465196609497
+          },
+          "single_trainable_fullinput_nofusion": {
+            "accuracy": 0.47777777910232544,
+            "cross_entropy": 1.380147099494934
+          },
+          "single_frozen_fullinput_headonly": {
+            "accuracy": 0.2611111104488373,
+            "cross_entropy": 1.4213212728500366
+          },
+          "single_frozen_fullinput_lora6": {
+            "accuracy": 0.27222222089767456,
+            "cross_entropy": 1.4175323247909546
           }
         },
         "best_single_acc": {
-          "name": "frozen_silu_28d",
-          "accuracy": 0.5222222208976746
+          "name": "single_trainable_fullinput_nofusion",
+          "accuracy": 0.47777777910232544
         },
         "best_single_ce": {
           "name": "frozen_silu_28d",
-          "cross_entropy": 0.9416537880897522
+          "cross_entropy": 1.3256465196609497
         },
         "margin_vs_best_single_acc": {
-          "mean_delta": 0.4777777777777778,
+          "mean_delta": 0.43333333333333335,
           "median_delta": 0.0,
-          "ci_low": 0.4,
-          "ci_high": 0.55,
+          "ci_low": 0.34444444444444444,
+          "ci_high": 0.5166666666666667,
           "p_one_sided": 0.0,
           "n_items": 180
         },
         "margin_vs_best_single_ce": {
-          "mean_delta": 0.924758859383843,
-          "median_delta": 1.078319013602595,
-          "ci_low": 0.8102520770488509,
-          "ci_high": 1.0297573438576895,
+          "mean_delta": 0.860982668107479,
+          "median_delta": 1.010087264701724,
+          "ci_low": 0.6596061534731416,
+          "ci_high": 1.0426938519638822,
           "p_one_sided": 0.0,
           "n_items": 180
         },
         "negative_control": {
-          "accuracy": 0.2611111104488373,
-          "cross_entropy": 23.47357940673828,
+          "accuracy": 0.21666666865348816,
+          "cross_entropy": 3.48581600189209,
           "fusion_minus_neg_acc": {
-            "mean_delta": 0.7388888888888889,
+            "mean_delta": 0.6944444444444444,
             "median_delta": 1.0,
-            "ci_low": 0.6722222222222223,
-            "ci_high": 0.8055555555555556,
+            "ci_low": 0.6111111111111112,
+            "ci_high": 0.7722222222222223,
             "p_one_sided": 0.0,
             "n_items": 180
           }
@@ -177,8 +190,8 @@
     "reasons": [],
     "metrics": {
       "fusion": {
-        "nll": 0.8352254033088684,
-        "ppl": 2.3053336195541645
+        "nll": 1.449014663696289,
+        "ppl": 4.25891598249317
       },
       "zero_param": {
         "uniform_nll": 3.1780538303479458,
@@ -186,36 +199,44 @@
       },
       "singles": {
         "lm_expert_dom0_gelu": {
-          "nll": 1.1080950498580933,
-          "ppl": 3.0285835950803413
+          "nll": 2.415374517440796,
+          "ppl": 11.193961906565221
         },
         "lm_expert_dom1_silu": {
-          "nll": 1.029990792274475,
-          "ppl": 2.801040043372436
+          "nll": 2.0861918926239014,
+          "ppl": 8.054185487323519
+        },
+        "single_trainable_fullinput_nofusion": {
+          "nll": 2.7308902740478516,
+          "ppl": 15.346543569433472
+        },
+        "single_frozen_fullinput_lora4": {
+          "nll": 2.7278385162353516,
+          "ppl": 15.299781025472518
         }
       },
       "best_single": {
         "name": "lm_expert_dom1_silu",
-        "nll": 1.029990792274475,
-        "ppl": 2.801040043372436
+        "nll": 2.0861918926239014,
+        "ppl": 8.054185487323519
       },
       "nll_reduction_vs_best_single": {
-        "mean_delta": 0.19476527736211816,
-        "median_delta": 0.15850918740034103,
-        "ci_low": 0.15312040876209115,
-        "ci_high": 0.23909780612157194,
+        "mean_delta": 0.6371769610171517,
+        "median_delta": 0.5486533641815186,
+        "ci_low": 0.5156789963366464,
+        "ci_high": 0.7687969107956936,
         "p_one_sided": 0.0,
         "n_items": 96
       },
-      "ppl_reduction_pct": 17.69722732065778,
+      "ppl_reduction_pct": 47.12170474349917,
       "negative_control": {
-        "nll": 6.760630130767822,
-        "ppl": 863.1859444768228,
+        "nll": 5.832395076751709,
+        "ppl": 341.174841226585,
         "nll_reduction_vs_neg": {
-          "mean_delta": 5.9254050844659405,
-          "median_delta": 6.316593207418919,
-          "ci_low": 5.498185674693863,
-          "ci_high": 6.353556201864072,
+          "mean_delta": 4.383380226635684,
+          "median_delta": 4.532403826713562,
+          "ci_low": 4.073601043534776,
+          "ci_high": 4.67819821544302,
           "p_one_sided": 0.0,
           "n_items": 96
         }

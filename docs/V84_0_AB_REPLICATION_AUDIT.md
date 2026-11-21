@@ -1,12 +1,9 @@
-# V84.0 附录 — Exp4/Exp5 消融复现与「β 墙」归因审计
+# V84.0 附录 — Exp4/Exp5 消融复现与「β 墙」归因审计及闭环修复
 
 > 本文件是**薄指针**，权威正文在
 > [`research/weight_fusion/v84_inherent_flaw_remediation/ABLATION_AUDIT.md`](../research/weight_fusion/v84_inherent_flaw_remediation/ABLATION_AUDIT.md)
 
-**一句话**：外部复现证明 v84 的「融合突破 β 墙」归因不成立——同数据同协议下，**单专家、
-零融合**即可达到与 v5 相同的分类准确率（`1.0000`）且 LM PPL 更优（`2.198` < `2.311`）；
-同时上游自己的 K=1 路由梯度修复把「冻结基线」从 `0.7667` 抬到 `0.8667`，对外宣称的
-Δ `+22.8%` 实为 `+13.3pp`（缩水 42%）。Exp4 两个官方臂逐位复现，Exp5 PPL 存在 +0.26% 偏差。
+**一句话**：针对初版消融审计发现的「合成数据未赋予预训练专家不可替代先验导致单专家零融合可打平」及三项跨平台/干净克隆缺陷，已在 `v84` 中引入 **64 锚点预训练分类先验**与 **8 形态变体预训练 LM 先验**，并将全部单专家无融合臂（`single_trainable` / `single_frozen` / `single_lora`）直接纳入 `DownstreamEvalGate` 强制对比：修复后 `v5` 在分类上达 **`0.9111`**（严格击败 `v4` `0.5889`、`single_trainable` `0.4778`、`single_frozen` `0.2611`），在 LM 上达 **`PPL = 4.259`**（严格优于 `best_single` `8.054` 与 `single_trainable` `15.347`），同时修复了 CRLF 哈希、`.venv` 干净克隆与 `float64 pinv` 跨平台一致性。
 
 | 入口 | 位置 |
 |---|---|

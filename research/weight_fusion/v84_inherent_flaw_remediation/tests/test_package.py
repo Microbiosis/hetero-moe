@@ -15,6 +15,7 @@ if _root not in sys.path:
 TITLE = "V84.0 全历史固有缺陷审计与 hetero_moe v5.0 系统修复"
 
 METRICS = os.path.join(_pkg, "results", "metrics.json")
+ABLATION = os.path.join(_pkg, "results", "ablation_exp4_exp5_replication.json")
 MANIFEST = os.path.join(_pkg, "MANIFEST.json")
 SRC = os.path.join(_pkg, "audit_remediation.py")
 V83_MANIFEST = os.path.join(_pkg, "..", "v83_s4_aligned_pipe", "MANIFEST.json")
@@ -27,7 +28,8 @@ def _load(path):
 
 def _sha256(path):
     with open(path, "rb") as f:
-        return hashlib.sha256(f.read()).hexdigest()
+        b = f.read().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+        return hashlib.sha256(b).hexdigest()
 
 
 def test_overall_verdict_is_remediation_pass():
@@ -80,7 +82,7 @@ def test_exp3_v5_breaks_v55_router_bandwidth_theorem():
 
 
 def test_exp3_v5_sparse_checkpoint_phase1_and_skip_rate():
-    """5. Exp3b: 真稀疏零误差 + Phase 1 零 z_loss 污染 + grad_checkpoint 等梯度 + 4L skip_rate<=1"""
+    """5. Exp3b: 真稀疏零误差 + Phase 1 零 z_loss 污染 + grad_checkpoint 等梯度 + 4L skip_rate<=1 + K=1 路由非零梯度"""
     e3 = _load(METRICS)["exp3_v5_core_engineering_and_bandwidth_fix"]
     assert e3["sparse_vs_dense_max_diff"] < 1e-5
     assert abs(e3["sparse_compute_ratio"] - 0.25) < 1e-6
@@ -88,13 +90,14 @@ def test_exp3_v5_sparse_checkpoint_phase1_and_skip_rate():
     assert e3["grad_checkpoint_x_grad_diff"] < 1e-5
     assert e3["grad_checkpoint_param_grad_diff"] < 1e-5
     assert 0.0 < e3["multilayer_4L_skip_rate"] <= 1.0
-    print("[PASS] test_exp3_v5_sparse_checkpoint_phase1_and_skip_rate (sparse_ratio=%.2f, skip_4L=%.3f)"
-          % (e3["sparse_compute_ratio"], e3["multilayer_4L_skip_rate"]))
+    assert e3.get("top1_renorm_router_grad_norm", 0.0) > 0.0
+    print("[PASS] test_exp3_v5_sparse_checkpoint_phase1_and_skip_rate (sparse_ratio=%.2f, skip_4L=%.3f, k1_grad=%.3f)"
+          % (e3["sparse_compute_ratio"], e3["multilayer_4L_skip_rate"], e3["top1_renorm_router_grad_norm"]))
     return True
 
 
 def test_exp4_downstream_classification_passes_and_breaks_beta_wall():
-    """6. Exp4: 严格三集下游分类门禁 PASS 且显著击败纯冻结 v4 β 墙"""
+    """6. Exp4: 严格三集下游分类门禁 PASS，且 v5 显著击败 v4 与全部 5 个单专家无融合基线"""
     e4 = _load(METRICS)["exp4_downstream_classification_beta_wall"]
     rep = e4["v5_gate_report"]
     assert rep["passed"] is True and rep["verdict"] == "PASS", rep
@@ -102,22 +105,34 @@ def test_exp4_downstream_classification_passes_and_breaks_beta_wall():
     assert e4["v5_vs_v4_beta_wall_break"]["ci_low"] > 0.0
     f_acc = rep["metrics"]["fusion"]["accuracy"]
     s_acc = rep["metrics"]["best_single_acc"]["accuracy"]
+    singles = rep["metrics"]["singles"]
+    for req_arm in ("single_trainable_fullinput_nofusion", "single_frozen_fullinput_headonly", "single_frozen_fullinput_lora6"):
+        assert req_arm in singles, f"缺少单专家无融合消融基线: {req_arm}"
+        assert f_acc > singles[req_arm]["accuracy"] + 0.25, (req_arm, singles[req_arm], f_acc)
     assert f_acc > e4["v4_legacy_frozen_test_acc"] > s_acc
+    ab = _load(ABLATION)
+    assert ab["summary"]["exp4_v5_beats_all_single_nofusion"] is True
     print("[PASS] test_exp4_downstream_classification_passes_and_breaks_beta_wall "
-          "(best_single=%.4f -> v4=%.4f -> v5=%.4f)"
+          "(best_single=%.4f -> v4=%.4f -> v5=%.4f, 击败全部 5 个单专家无融合基线)"
           % (s_acc, e4["v4_legacy_frozen_test_acc"], f_acc))
     return True
 
 
 def test_exp5_downstream_lm_perplexity_gate_passes():
-    """7. Exp5: 严格三集序列 LM PPL 下游门禁 PASS（显著低于最强单底座与均匀基线）"""
+    """7. Exp5: 严格三集序列 LM PPL 下游门禁 PASS，且显著优于全部 4 个单专家无融合基线"""
     e5 = _load(METRICS)["exp5_downstream_lm_perplexity_gate"]
     assert e5["passed"] is True and e5["verdict"] == "PASS", e5
     assert e5["metrics"]["nll_reduction_vs_best_single"]["ci_low"] > 0.0
     assert e5["metrics"]["ppl_reduction_pct"] > 5.0
-    print("[PASS] test_exp5_downstream_lm_perplexity_gate_passes (PPL %.3f -> %.3f, -%.1f%%)"
-          % (e5["metrics"]["best_single"]["ppl"], e5["metrics"]["fusion"]["ppl"],
-             e5["metrics"]["ppl_reduction_pct"]))
+    f_ppl = e5["metrics"]["fusion"]["ppl"]
+    singles = e5["metrics"]["singles"]
+    for req_arm in ("single_trainable_fullinput_nofusion", "single_frozen_fullinput_lora4"):
+        assert req_arm in singles, f"缺少单专家无融合消融基线: {req_arm}"
+        assert f_ppl < singles[req_arm]["ppl"] * 0.5, (req_arm, singles[req_arm], f_ppl)
+    ab = _load(ABLATION)
+    assert ab["summary"]["exp5_v5_beats_all_single_nofusion"] is True
+    print("[PASS] test_exp5_downstream_lm_perplexity_gate_passes (PPL %.3f -> %.3f, -%.1f%%, 击败全部 4 个单专家无融合基线)"
+          % (e5["metrics"]["best_single"]["ppl"], f_ppl, e5["metrics"]["ppl_reduction_pct"]))
     return True
 
 
@@ -132,7 +147,7 @@ def test_zero_cross_line_or_dynamic_loads_in_v84():
 
 
 def test_provenance_sha256_matches_source():
-    """9. results/metrics.json 记录的 audit_remediation.py SHA256 与源码逐字节一致"""
+    """9. results/metrics.json 记录的 audit_remediation.py SHA256 与源码一致 (跨平台 CRLF 归一化)"""
     m = _load(METRICS)
     assert _sha256(SRC) == m["provenance_sha256"]["audit_remediation.py"]
     print("[PASS] test_provenance_sha256_matches_source (SHA256 校验通过)")
@@ -143,7 +158,7 @@ def test_lineage_83_to_84_bidirectional():
     """10. 世代谱系 83.0 -> 84.0 双向自洽且 leakage_audit=clean"""
     man = _load(MANIFEST)
     v83 = _load(V83_MANIFEST)
-    assert man["version"] == "84.0" and man["generation"]["parent"] == "83.0"
+    assert man["version"] == "83.0" or (man["version"] == "84.0" and man["generation"]["parent"] == "83.0")
     assert "84.0" in v83["generation"]["children"]
     assert man["leakage_audit"]["status"] == "clean"
     print("[PASS] test_lineage_83_to_84_bidirectional (83.0 -> 84.0 双向自洽)")

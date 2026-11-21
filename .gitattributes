@@ -1,0 +1,3 @@
+# 保持 SHA256 溯源锁覆盖的源码文件在任意平台 (Linux/macOS/Windows) 检出时均为统一 CRLF 字节流
+research/aligner/v62_dimension_projection_space/measure.py text eol=crlf
+research/weight_fusion/**/*.py text eol=crlf

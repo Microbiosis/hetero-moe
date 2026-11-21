@@ -68,7 +68,7 @@ def test_measure_sha256_is_the_provenance():
     recorded = m["protocol"]["v62_measure_sha256"]
     assert os.path.exists(V62_MEASURE), "找不到 v62 measure.py: %s" % V62_MEASURE
     with open(V62_MEASURE, "rb") as f:
-        actual = hashlib.sha256(f.read()).hexdigest()
+        actual = hashlib.sha256(f.read().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")).hexdigest()
     assert actual == recorded, "measure.py sha256 不一致: 实测 %s, 快照 %s" % (actual, recorded)
     print("[PASS] test_measure_sha256_is_the_provenance (measure.py sha256=%s...)" % actual[:16])
     return True

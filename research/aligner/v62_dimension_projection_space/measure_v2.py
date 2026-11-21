@@ -306,11 +306,12 @@ def measure_alignment(wall: dict, p: dict, seed: int = 0) -> dict:
 
 # ---------------------------------------------------------------- 4. 秩扫描
 def _fidelity(A: torch.Tensor, orig: torch.Tensor) -> float:
-    proj = orig @ A.t()
+    orig_d = orig.detach().double()
+    proj = orig_d @ A.detach().double().t()
     ax = torch.cat([proj.reshape(-1, proj.shape[-1]),
-                    torch.ones(proj.shape[0], 1, device=orig.device, dtype=orig.dtype)], 1)
-    b = orig.reshape(-1, orig.shape[-1])
-    sol = torch.linalg.lstsq(ax, b).solution
+                    torch.ones(proj.shape[0], 1, device=orig.device, dtype=torch.float64)], 1)
+    b = orig_d.reshape(-1, orig_d.shape[-1])
+    sol = torch.linalg.pinv(ax, rtol=1e-14) @ b
     pred = ax @ sol
     return float(1 - ((b - pred) ** 2).sum() / (((b - b.mean(0)) ** 2).sum() + 1e-12))
 

@@ -270,9 +270,8 @@ def test_v62_measure_random_weight_control_and_orthogonal_fix():
     import hashlib
     from research.aligner.v62_dimension_projection_space.measure_v2 import measure_random_weight_control
 
-    orig_sha = hashlib.sha256(
-        (ROOT / "research/aligner/v62_dimension_projection_space/measure.py").read_bytes()
-    ).hexdigest()
+    raw_m = (ROOT / "research/aligner/v62_dimension_projection_space/measure.py").read_bytes()
+    orig_sha = hashlib.sha256(raw_m.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")).hexdigest()
     assert orig_sha == "8a20d007f5a42340ee89713512c089f81157d92101610c17f92f7ae6077aa349"
 
     rc = measure_random_weight_control(ds=32, n_samples=256, iters=550, seed=0)
@@ -340,5 +339,12 @@ def test_governance_checkers_detect_dynamic_loads_and_unmanaged_dirs():
 
     scope = vg.audit_unmanaged_scope(ROOT, vg.discover_generations())
     assert any("brain_domains" in s for s in scope["unmanaged_dirs"])
-    assert any("vqc/.venv" in s for s in scope["embedded_venvs"])
     assert any("v62_dimension_projection_space" in s for s in scope["bloated_packages"])
+
+    # 在临时目录内构造内嵌 .venv，避免依赖未入版本库的本地 research/vqc/.venv 导致干净克隆失败
+    with tempfile.TemporaryDirectory() as td_venv:
+        venv_cfg = Path(td_venv) / "research" / "mock_domain" / ".venv" / "pyvenv.cfg"
+        venv_cfg.parent.mkdir(parents=True, exist_ok=True)
+        venv_cfg.write_text("home = /usr/bin\n", encoding="utf-8")
+        mock_scope = vg.audit_unmanaged_scope(Path(td_venv), [])
+        assert any(".venv" in s for s in mock_scope["embedded_venvs"])

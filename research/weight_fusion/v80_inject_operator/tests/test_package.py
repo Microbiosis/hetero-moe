@@ -86,7 +86,8 @@ def _calib_src():
 
 def _sha256(path):
     with open(path, "rb") as f:
-        return hashlib.sha256(f.read()).hexdigest()
+        b = f.read().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+        return hashlib.sha256(b).hexdigest()
 
 
 def _expected_blocks():
