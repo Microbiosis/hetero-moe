@@ -76,11 +76,11 @@ not_applicable   5
 -------------------
 合计            53   （另有 3 个 archive 老包无该字段）
 
-⚠️ **本表是 2026-11-01 当时的快照（53 包）。** 此后新增的世代包（v63–v84）各自带自己的
+⚠️ **本表是 2026-11-01 当时的快照（53 包）。** 此后新增的世代包（v63–v85）各自带自己的
 `leakage_audit.status` 字段并已结清，2026-11-19 第二轮全仓深度审计已将 `v18_real_corpus`
 （`run_v18_wiki_distill.py:139` 仍含 `0.3` 目标泄漏项且 `v16-fake` 为死分支）由 `clean` 纠正为 `invalidated`。
 **当前全库统计**（由 `tools/validate_generations.py` / `tools/audit_leakage_chain.py` 重算）：
-`research/` 下 **75/75 全部结清**（clean 40 / invalidated 12 / not_applicable 23，无 pending；
+`research/` 下 **76/76 全部结清**（clean 41 / invalidated 12 / not_applicable 23，无 pending；
 各已封存历史包及审计包 `v32/v41/v43–v47/v51` 的深层代码混杂边界详见 `docs/PAST_SUBPACKAGES_ERRATA.md`）。
 ```
 

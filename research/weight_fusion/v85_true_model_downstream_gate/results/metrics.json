@@ -1,0 +1,233 @@
+{
+  "version": "85.0",
+  "verdict": "TRUE_MODEL_DOWNSTREAM_GATE_FAIL",
+  "provenance_sha256": {
+    "true_downstream_gate.py": "ec3c30c78beb29084ed0fa1dd5d7b1c827d6b8e7f2a39914ed59bc20ab7ae1b3"
+  },
+  "exp1_real_agnews_classification": {
+    "doc_split": {
+      "ok": true,
+      "n_train": 64,
+      "n_val": 26,
+      "n_test": 38,
+      "overlap_count": 0
+    },
+    "view_split": {
+      "ok": true,
+      "n_train": 192,
+      "n_val": 78,
+      "n_test": 114,
+      "overlap_count": 0
+    },
+    "identifiability": {
+      "ok": true,
+      "n_train": 192,
+      "dof": 80,
+      "dof_per_sample": 0.4166666666666667,
+      "max_dof_per_sample": 1.0
+    },
+    "real_model_massive_activation_audit": {
+      "bert_l1_rms": 1.1558977365493774,
+      "bert_l3_rms": 1.1281927824020386,
+      "bert_l4_rms": 0.8750401735305786,
+      "bert_l3_max": 11.66251277923584,
+      "qwen_l1_rms": 0.1806640625,
+      "qwen_l3_rms": 2.984375,
+      "qwen_l4_rms": 7.0625,
+      "qwen_l3_max": 844.0,
+      "qwen_l4_max": 183.0,
+      "qwen_l3_to_bert_l3_max_ratio": 72.36862381001406,
+      "qwen_massive_constant_consistency": 0.8725160956382751
+    },
+    "classification_gate_report": {
+      "task": "classification",
+      "passed": false,
+      "verdict": "FAIL",
+      "reasons": [
+        "margin_not_significant(acc_ci_lo=-0.0088, ce_ci_lo=+0.0106)"
+      ],
+      "metrics": {
+        "fusion": {
+          "accuracy": 0.6315789222717285,
+          "cross_entropy": 0.8350918889045715
+        },
+        "zero_param": {
+          "majority_class": 0,
+          "majority_accuracy": 0.31578946113586426,
+          "uniform_ce": 1.3862943611198906
+        },
+        "singles": {
+          "bert_l4_frozen_probe": {
+            "accuracy": 0.5614035129547119,
+            "cross_entropy": 1.1503056287765503
+          },
+          "qwen_05b_frozen_probe": {
+            "accuracy": 0.5087719559669495,
+            "cross_entropy": 1.066010594367981
+          },
+          "naive_unnormalized_massive_qwen_bert": {
+            "accuracy": 0.5526315569877625,
+            "cross_entropy": 1.0401537418365479
+          },
+          "static_unrouted_equal_average": {
+            "accuracy": 0.5701754093170166,
+            "cross_entropy": 0.9616372585296631
+          },
+          "bert_l4_single_internal_lora_nofusion": {
+            "accuracy": 0.5701754093170166,
+            "cross_entropy": 1.1270229816436768
+          },
+          "qwen_05b_single_internal_lora_nofusion": {
+            "accuracy": 0.5175438523292542,
+            "cross_entropy": 1.0551584959030151
+          }
+        },
+        "best_single_acc": {
+          "name": "static_unrouted_equal_average",
+          "accuracy": 0.5701754093170166
+        },
+        "best_single_ce": {
+          "name": "static_unrouted_equal_average",
+          "cross_entropy": 0.9616372585296631
+        },
+        "margin_vs_best_single_acc": {
+          "mean_delta": 0.06140350877192982,
+          "median_delta": 0.0,
+          "ci_low": -0.008771929824561403,
+          "ci_high": 0.13157894736842105,
+          "p_one_sided": 0.06,
+          "n_items": 114
+        },
+        "margin_vs_best_single_ce": {
+          "mean_delta": 0.1265452925356824,
+          "median_delta": 0.18651859648525715,
+          "ci_low": 0.010632123538341963,
+          "ci_high": 0.24719033728919412,
+          "p_one_sided": 0.016,
+          "n_items": 114
+        },
+        "negative_control": {
+          "accuracy": 0.25438597798347473,
+          "cross_entropy": 2.6461141109466553,
+          "fusion_minus_neg_acc": {
+            "mean_delta": 0.37719298245614036,
+            "median_delta": 0.0,
+            "ci_low": 0.2543859649122807,
+            "ci_high": 0.49122807017543857,
+            "p_one_sided": 0.0,
+            "n_items": 114
+          }
+        },
+        "split": {
+          "ok": true,
+          "n_train": 192,
+          "n_val": 78,
+          "n_test": 114,
+          "overlap_count": 0
+        },
+        "identifiability": {
+          "ok": true,
+          "n_train": 192,
+          "dof": 80,
+          "dof_per_sample": 0.4166666666666667,
+          "max_dof_per_sample": 1.0
+        }
+      }
+    }
+  },
+  "exp2_real_corpus_lm_perplexity": {
+    "task": "language_modeling",
+    "passed": false,
+    "verdict": "FAIL",
+    "reasons": [
+      "nll_reduction_not_significant(ci_lo=-0.0272)"
+    ],
+    "metrics": {
+      "fusion": {
+        "nll": 2.641619920730591,
+        "ppl": 14.035922283018216
+      },
+      "zero_param": {
+        "uniform_nll": 2.772588722239781,
+        "uniform_ppl": 16.0
+      },
+      "singles": {
+        "bert_l4_causal_prefix_probe": {
+          "nll": 2.667168378829956,
+          "ppl": 14.399138506142094
+        },
+        "qwen_05b_causal_prefix_probe": {
+          "nll": 2.720268726348877,
+          "ppl": 15.18440214568942
+        },
+        "static_unrouted_equal_avg_lm": {
+          "nll": 2.6688735485076904,
+          "ppl": 14.423712425905418
+        },
+        "bert_l4_single_internal_lora_lm": {
+          "nll": 2.647853136062622,
+          "ppl": 14.123684445067392
+        },
+        "qwen_05b_single_internal_lora_lm": {
+          "nll": 2.703415632247925,
+          "ppl": 14.930642312819883
+        }
+      },
+      "best_single": {
+        "name": "bert_l4_single_internal_lora_lm",
+        "nll": 2.647853136062622,
+        "ppl": 14.123684445067392
+      },
+      "nll_reduction_vs_best_single": {
+        "mean_delta": 0.006233102396914833,
+        "median_delta": 0.00020456314086914062,
+        "ci_low": -0.027189403144936813,
+        "ci_high": 0.038056751144559746,
+        "p_one_sided": 0.357,
+        "n_items": 38
+      },
+      "ppl_reduction_pct": 0.6213829145682026,
+      "negative_control": {
+        "nll": 2.7566089630126953,
+        "ppl": 15.746355836071732,
+        "nll_reduction_vs_neg": {
+          "mean_delta": 0.11498891052446868,
+          "median_delta": 0.0905911922454834,
+          "ci_low": 0.06765130460262299,
+          "ci_high": 0.1629042656798111,
+          "p_one_sided": 0.0,
+          "n_items": 38
+        }
+      },
+      "split": {
+        "ok": true,
+        "n_train": 64,
+        "n_val": 26,
+        "n_test": 38,
+        "overlap_count": 0
+      },
+      "identifiability": {
+        "ok": true,
+        "n_train": 1024,
+        "dof": 256,
+        "dof_per_sample": 0.25,
+        "max_dof_per_sample": 1.0
+      }
+    }
+  },
+  "exp3_v5_1_engineering_and_brain_isomorphism": {
+    "internal_sublayer_lora_count": 5,
+    "internal_sublayer_min_grad_norm": 2.803482402669033e-06,
+    "train_capacity_max_tokens_observed": 12,
+    "train_capacity_bound": 20,
+    "tp_swiglu_vs_single_max_diff": 1.862645149230957e-09,
+    "phase1_to_phase2_adam_momentum_preserved": true,
+    "brain_interface_on_qwen_massive_activations": {
+      "consistency_after": 0.006317891180515289,
+      "token_norm_median": 1.0,
+      "target_norm": 1.0,
+      "amplitude_ratio": 1.0
+    },
+    "all_v5_1_checks_passed": true
+  }
+}

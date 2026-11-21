@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "version": "85.0",
+  "package": "v85_true_model_downstream_gate",
+  "line": "weight_fusion",
+  "title": "真预训练异构底座 (Qwen2.5-0.5B + BERT-L4) 与真实 AG_News 语料下游防泄漏门禁合龙 (hetero_moe v5.1)",
+  "generation": {
+    "one_mechanism_added": "完成真预训练模型、真实文本语料、hetero_moe v5.1 核心包与幻脑线去坍缩算子 (DeCollapsedLocalInterface) 的全面合龙: ① 彻底摒弃人造高斯锚点玩具，直接装载 24 层全模型 Qwen/Qwen2.5-0.5B-Instruct (因果 GQA 解码器, D=896, SwiGLU) 与 4 层 google/bert_uncased_L-4_H-256_A-4 (双向 MHA 编码器, D=256, GELU) 的真实激活与预训练 FFN 权重切片；② 严格在真实 AG_News 文档级执行三集零重叠划分 (SplitGuard 64/26/38 篇，384 视角样本跨集交集严格为 0)，仅在训练集内执行去常数中心化、安全秩主子空间与任务锚定判别对齐 (IdentifiabilityGuard dof/sample<=0.42)；③ 利用各底座自身观测张量的内生中心化跨层/跨窗口余弦自洽度驱动 HeteroFusionLayer (v5.1) 稀疏路由与低秩向量门控（零人工域 ID、零位置索引）；④ hetero_moe 升级至 v5.1（内部非线性子层 LoRA、向量化预筛真稀疏、训练期容量截断 STE、权重+激活双端 INT4 量化、可微 TensorParallelSwiGLU、Phase 1->2 Adam 动量无损保留），并导出与主线去 Massive-Activation 数学同构的 DeCollapsedLocalInterface。",
+    "parent": "84.0",
+    "children": []
+  },
+  "lineage": {
+    "line_parent": "84.0",
+    "line_children": [],
+    "note": "承接 v84 (REMEDIATION_PASS) 的方法论收官代: 将 DownstreamEvalGate 与 hetero_moe v5.1 从 v84 的受控合成锚点基准正式推进至 100% 真实预训练异构底座 (Qwen2.5-0.5B + BERT-L4) 与 100% 真实 AG_News 新闻语料，攻克 Qwen Massive Activations (L3 max=844, L4 max=1696, 常数方向一致性 0.9971) 与跨词表网格不可通约性，实现分类 (+10.53pp) 与序列语言建模 PPL (-10.65%) 双门禁全通 (TRUE_MODEL_DOWNSTREAM_GATE_PASS)。"
+  },
+  "implementation": {
+    "location": "self",
+    "lifted_to": "hetero_moe",
+    "modules": [
+      "true_downstream_gate.py"
+    ],
+    "note": "完全自包含（零静态/动态跨研究线加载），直接调用 hetero_moe v5.1 主包 API（含 DeCollapsedLocalInterface、TensorParallelSwiGLU、ExpertSpec(internal_lora=True)、DownstreamEvalGate）；true_downstream_gate.py 的 LF 归一化 SHA256 锁定于 results/v85_true_model_downstream_gate.json。"
+  },
+  "claim": {
+    "asserts": "三大真模型与工程合龙实验全部通过 (TRUE_MODEL_DOWNSTREAM_GATE_PASS): (1) Exp1 真实 AG_News 新闻分类 (文档级零重叠 192/78/114, dof/sample=0.417<=1.0): 实测 Qwen L3/L4 存在 72.4x 于 BERT 的 Massive Activations (L3 max=844.0, L4 max=1696.0, 常数一致性 0.9971)，直接融合未去常数的 naive_unnormalized_massive_qwen_bert 仅 0.5175 (CE=2.0751)；经训练集去常数锁相、任务锚定安全秩对齐与内生跨层/跨窗口自洽度路由后，hetero_moe v5.1 达 0.7193 (CE=0.6978)，显著击败 bert_l4_frozen_probe (0.5439)、bert_l4_single_internal_lora_nofusion (0.5439)、qwen_05b_frozen_probe (0.5877)、qwen_05b_single_internal_lora_nofusion (0.5965, Δ=+12.28pp) 以及最强基线 static_unrouted_equal_average (0.6140, Δ=+10.53pp, 95% CI [+0.0088, +0.1930], p=0.0195; CE 95% CI [+0.0768, +0.3001], p=0.0)；(2) Exp2 真实 AG_News 因果前缀序列 LM (文档级 64/26/38×16 token, dof/sample=0.250<=1.0): hetero_moe v5.1 达 NLL=2.4475 (PPL=11.559)，显著优于 bert_l4_causal_prefix_probe (PPL=14.189)、bert_l4_single_internal_lora_lm (13.898)、static_unrouted_equal_avg_lm (13.428)、qwen_05b_causal_prefix_probe (13.297) 与最强单底座 qwen_05b_single_internal_lora_lm (PPL=12.937, 降幅 10.65%, 序列级 95% CI [+0.0761, +0.1468], p=0.0)；(3) Exp3 hetero_moe v5.1 五项工程升级与脑接口同构验证全部通过 (5 个内部非线性子层 LoRA 梯度非零、训练容量截断 max_tokens=12<=20、4 分片 TensorParallelSwiGLU 偏差 9.31e-10、Phase 1->2 Adam 动量无损保留、DeCollapsedLocalInterface 将 Qwen Massive Activations 跨样本常数一致性从 0.9971 压至 0.0253<0.05 且幅值比精确锁定 1.0000)。",
+    "metric": "real_agnews_classification_accuracy_gain_pp",
+    "direction": "higher_is_better",
+    "value": 10.53,
+    "baseline": {
+      "ref": "best_baseline_static_unrouted_equal_average_acc (0.6140) & best_single_backbone_qwen_05b_internal_lora_acc (0.5965)",
+      "value": 0.0
+    },
+    "delta_pct": 10.53,
+    "seeds": 1,
+    "outcome_label": "confirmed",
+    "note": "全部评测在真实预训练 Qwen2.5-0.5B-Instruct (24L) + BERT-L4 (4L) 与真实 AG_News 语料的文档级零重叠测试集上完成，零合成高斯锚点、零人工域 ID、零位置索引，由 tests/test_v85_true_model_downstream_gate.py、tests/test_v5_core_remediation.py 与 tests/test_brain_domains_core.py 联合验证。"
+  },
+  "protocol": {
+    "eval_set": "真实 AG_News 新闻语料文档级严格三集零重叠划分 (SplitGuard.verify): 文档级 128 篇 (64/26/38)，分类多视角 384 条 (192/78/114)，序列 LM 128×16 token (64/26/38 篇)；val 集选模，held-out test 集单次报告。",
+    "input": "真实预训练 Qwen/Qwen2.5-0.5B-Instruct (24 层) + google/bert_uncased_L-4_H-256_A-4 (4 层) 隐状态与预训练 FFN 权重切片 + hetero_moe v5.1 (内部子层 LoRA + 双端 INT4 量化 + 低秩向量门控 + 内生层间自洽度路由)。",
+    "caveat": "首跑从本地 HF 预训练模型权重与真实 AG_News 语料提取特征并缓存至 ~/.cache/hetero-moe/，确保离线确定性秒级复现。"
+  },
+  "acceptance": {
+    "criterion": "verdict == TRUE_MODEL_DOWNSTREAM_GATE_PASS（Exp1 真实 AG_News 分类门禁 PASS、Exp2 真实 AG_News 序列 LM PPL 门禁 PASS、Exp3 v5.1 五项工程升级与主线-幻脑线算子同构检验全部 PASS）。",
+    "outcome": "pass",
+    "note": "3/3 预登记真模型与工程实验全部通过，verdict = TRUE_MODEL_DOWNSTREAM_GATE_PASS。"
+  },
+  "leakage_audit": {
+    "required": true,
+    "status": "clean",
+    "audited_in": "docs/LEAKAGE_AUDIT_CHAIN.md",
+    "note": "先在文档级做 train/val/test 三集零重叠划分再展开视角与序列，所有去常数均值、主子空间、任务锚定对齐矩阵与 LM 语义词表码本仅在 tr_docs / tr_idx 上拟合，IdentifiabilityGuard 自由度守卫 (<=0.42 dof/sample)、零参数基线与阴性对照全部通过。"
+  },
+  "falsified": [
+    {
+      "hypothesis": "无需去常数中心化与层间自洽路由，直接将原始 Qwen2.5-0.5B 浅中层 (L3/L4) 激活与 BERT-L4 等权融合即可在下游分类获益",
+      "verdict": "证伪 —— Qwen L3/L4 存在幅值达 844–1696 的 Massive Activations（跨样本常数方向一致性 0.9971，为 BERT L3 的 72.4 倍），直接融合导致 naive_unnormalized_massive_qwen_bert 准确率跌至 0.5175 (CE=2.0751)，劣于任一单底座。",
+      "evidence": "research/weight_fusion/v85_true_model_downstream_gate/results/v85_true_model_downstream_gate.json (exp1_real_agnews_classification)"
+    },
+    {
+      "hypothesis": "无路由静态等权平均 (static_unrouted_equal_average) 在多视角非对称信道退化下可替代基于内生层间自洽度的动态稀疏门控路由",
+      "verdict": "证伪 —— 静态等权平均在单侧信道受扰时无差别混入退化流，分类准确率仅 0.6140 (LM PPL=13.428)；而基于内生跨层/跨窗口余弦自洽度路由的 hetero_moe v5.1 达 0.7193 (+10.53pp, p=0.0195) 且 LM PPL 降至 11.559 (p=0.0)。",
+      "evidence": "research/weight_fusion/v85_true_model_downstream_gate/results/v85_true_model_downstream_gate.json (exp1 & exp2)"
+    }
+  ],
+  "superseded_by": null,
+  "artifacts": {
+    "spec": "SPEC.md",
+    "tests": "tests/test_package.py",
+    "results": "results/v85_true_model_downstream_gate.json",
+    "forwarder_tests": "tests/test_v85_true_model_downstream_gate.py",
+    "forwarder_spec": "docs/V85_0_TRUE_MODEL_DOWNSTREAM_GATE.md"
+  },
+  "tests_status": "present"
+}

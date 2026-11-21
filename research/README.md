@@ -17,8 +17,8 @@ research/<line>/v<N>_<name>/
 ```
 
 ```bash
-python tools/validate_generations.py                    # L2 交付自包含 (78 包) + 非治理范围审计
-python tools/check_self_containment.py --strict         # L1 静态 + 动态加载自包含 (75 包)
+python tools/validate_generations.py                    # L2 交付自包含 (79 包) + 非治理范围审计
+python tools/check_self_containment.py --strict         # L1 静态 + 动态加载自包含 (76 包)
 ```
 
 校验器分两层, 且**两层都要求产物真的随仓库分发** —— 只在作者本机存在不算自包含。
@@ -36,7 +36,7 @@ python tools/check_self_containment.py --strict         # L1 静态 + 动态加�
 | 6 | [multimodal](./multimodal/) | 多模态能超单模态? | v21→v23→v24 | BERT+ViT 蒸馏可; toy 不可行 |
 | 7 | [corpus_scale](./corpus_scale/) | 中枢机制在真实语料下还稳吗? | v25→v26→v27→v28→v29 | 最优模式依赖数据规模 |
 | 8 | [scale_heterogeneous](./scale_heterogeneous/) | "1大+N小" + "大模型容器"独立范式 | v33→v34→v35→v36→v37→v38→v39 | 容器范式与路由范式是两条路径 |
-| 9 | [weight_fusion](./weight_fusion/) | 异构底座的权重与激活能否跨架构融合，并系统修复项目固有缺陷? | v75→**v84** | v75 证伪 G2 槽共轭；v76–v83 推进 A1 激活管道至 5/6 (`S4AP_FAIL`)；**v84 系统审计并修复全历史固有缺陷（`REMEDIATION_PASS`）**：揭露 v62 随机矩阵假象与 v83 P5d 循环论证/欠定性，将主包升级至 `hetero_moe v5.0`（真异构+真稀疏+向量门控破 v55 带宽墙+LoRA 破纯冻结 β 墙），并在严格三集下游分类与 LM PPL 门禁上双 `PASS` |
+| 9 | [weight_fusion](./weight_fusion/) | 异构底座的权重与激活能否跨架构融合，并系统修复项目固有缺陷? | v75→**v85** | v75 证伪 G2 槽共轭；v76–v83 推进 A1 激活管道至 5/6 (`S4AP_FAIL`)；**v84 系统审计并修复全历史固有缺陷（`REMEDIATION_PASS`）**；**v85 完成真预训练异构底座 (`Qwen2.5-0.5B` 24L + `BERT-L4`) 与真实 `AG_News` 语料在 `hetero_moe v5.1` 及 `DownstreamEvalGate` 上的分类 (+10.53pp) 与序列 LM PPL (-10.65%) 双门禁合龙（`TRUE_MODEL_DOWNSTREAM_GATE_PASS`）** |
 
 ## 关键交叉复用
 
@@ -65,7 +65,7 @@ research/scale_heterogeneous/ (独立范式)
 2. **纯冻结随机投影增益 (`v6/v7/v33`) 与单师蒸馏 `+47.5%/+50%` (`v16/v21`) 均为审计撤回项**，分别源于随机空间伪像 (`v50/v51/v54`) 与目标泄漏 (`v32/v42`)
 3. **标量路由存在严格低秩带宽上界 `rank(J_route) ≤ min(top_k, M-1)`** (`v55`)，且 `v62` 无约束单矩阵对齐可在纯随机矩阵上因秩塌缩复现 (`v84`)
 4. **纯冻结异构底座同时受表征不可通约与 $\beta$ 墙锁死** (`v75` G2 负结果 + `v81–v83` 激活管道局限)
-5. **`hetero_moe v5.0` 通过真异构专家 + 真稀疏分派 + 低秩向量门控 + 可选 LoRA 联合适配**，首次在严格三集防泄漏下游分类与序列 LM PPL 门禁上显著击败最强单底座 (`v84`)
+5. **`hetero_moe v5.0/v5.1` 通过真异构专家内部非线性子层 LoRA + 向量化预筛真稀疏 + 低秩向量门控 + 训练集去常数锁相 (`DeCollapsedLocalInterface`) + 内生层间自洽度路由**，在受控多锚点基准 (`v84`) 与 100% 真实预训练模型 (`Qwen2.5-0.5B` 24L + `BERT-L4`) 及真实 `AG_News` 语料 (`v85`) 的严格三集下游分类与序列 LM PPL 门禁上均显著击败最强单底座与无路由静态均值基线
 
 ## 最重要的 5 个负结果 (跨线总结)
 

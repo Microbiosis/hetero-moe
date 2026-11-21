@@ -1,0 +1,255 @@
+{
+  "generation": "85.0",
+  "slug": "v85_true_model_downstream_gate",
+  "title": "真预训练异构底座 (Qwen2.5-0.5B + BERT-L4) 与真实 AG_News 语料下游防泄漏门禁合龙 (v5.1)",
+  "seed": 42,
+  "script_sha256": "9a1774259fa1f24385b090eaa6f761cd4f4b69857ab4caa2e91fcd48e0dfbb23",
+  "pretrained_models": {
+    "causal_gqa_decoder": "Qwen/Qwen2.5-0.5B-Instruct (24 layers, D=896, BPE 151k, SwiGLU FFN)",
+    "bidir_mha_encoder": "google/bert_uncased_L-4_H-256_A-4 (4 layers, D=256, WordPiece 30k, GELU FFN)",
+    "dataset": "AG_News (128 real articles, 384 non-overlapping document-split views, 4 classes)"
+  },
+  "exp1_real_agnews_classification": {
+    "doc_split": {
+      "ok": true,
+      "n_train": 64,
+      "n_val": 26,
+      "n_test": 38,
+      "overlap_count": 0
+    },
+    "view_split": {
+      "ok": true,
+      "n_train": 192,
+      "n_val": 78,
+      "n_test": 114,
+      "overlap_count": 0
+    },
+    "identifiability": {
+      "ok": true,
+      "n_train": 192,
+      "dof": 80,
+      "dof_per_sample": 0.4166666666666667,
+      "max_dof_per_sample": 1.0
+    },
+    "real_model_massive_activation_audit": {
+      "bert_l1_rms": 1.1558977365493774,
+      "bert_l3_rms": 1.1281927824020386,
+      "bert_l4_rms": 0.8750401735305786,
+      "bert_l3_max": 11.66251277923584,
+      "qwen_l1_rms": 0.1806640625,
+      "qwen_l3_rms": 2.984375,
+      "qwen_l4_rms": 6.53125,
+      "qwen_l20_rms": 6.75,
+      "qwen_l24_rms": 10.0,
+      "qwen_l3_max": 844.0,
+      "qwen_l4_max": 1696.0,
+      "qwen_l20_max": 1720.0,
+      "qwen_l3_to_bert_l3_max_ratio": 72.36862381001406,
+      "qwen_massive_constant_consistency": 0.997075617313385
+    },
+    "classification_gate_report": {
+      "task": "classification",
+      "passed": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "metrics": {
+        "fusion": {
+          "accuracy": 0.719298243522644,
+          "cross_entropy": 0.6978117227554321
+        },
+        "zero_param": {
+          "majority_class": 0,
+          "majority_accuracy": 0.31578946113586426,
+          "uniform_ce": 1.3862943611198906
+        },
+        "singles": {
+          "bert_l4_frozen_probe": {
+            "accuracy": 0.5438596606254578,
+            "cross_entropy": 1.0777226686477661
+          },
+          "qwen_05b_frozen_probe": {
+            "accuracy": 0.5877193212509155,
+            "cross_entropy": 1.1759740114212036
+          },
+          "naive_unnormalized_massive_qwen_bert": {
+            "accuracy": 0.5175438523292542,
+            "cross_entropy": 2.0751121044158936
+          },
+          "static_unrouted_equal_average": {
+            "accuracy": 0.6140350699424744,
+            "cross_entropy": 0.8870440721511841
+          },
+          "bert_l4_single_internal_lora_nofusion": {
+            "accuracy": 0.5438596606254578,
+            "cross_entropy": 1.0676132440567017
+          },
+          "qwen_05b_single_internal_lora_nofusion": {
+            "accuracy": 0.5964912176132202,
+            "cross_entropy": 1.1519683599472046
+          }
+        },
+        "best_single_acc": {
+          "name": "static_unrouted_equal_average",
+          "accuracy": 0.6140350699424744
+        },
+        "best_single_ce": {
+          "name": "static_unrouted_equal_average",
+          "cross_entropy": 0.8870440721511841
+        },
+        "margin_vs_best_single_acc": {
+          "mean_delta": 0.10526315789473684,
+          "median_delta": 0.0,
+          "ci_low": 0.008771929824561403,
+          "ci_high": 0.19298245614035087,
+          "p_one_sided": 0.0195,
+          "n_items": 114
+        },
+        "margin_vs_best_single_ce": {
+          "mean_delta": 0.18923236347894234,
+          "median_delta": 0.1991792917251587,
+          "ci_low": 0.07681297706496255,
+          "ci_high": 0.3000699515103182,
+          "p_one_sided": 0.0,
+          "n_items": 114
+        },
+        "negative_control": {
+          "accuracy": 0.2368421107530594,
+          "cross_entropy": 2.6396772861480713,
+          "fusion_minus_neg_acc": {
+            "mean_delta": 0.4824561403508772,
+            "median_delta": 1.0,
+            "ci_low": 0.3684210526315789,
+            "ci_high": 0.5964912280701754,
+            "p_one_sided": 0.0,
+            "n_items": 114
+          }
+        },
+        "split": {
+          "ok": true,
+          "n_train": 192,
+          "n_val": 78,
+          "n_test": 114,
+          "overlap_count": 0
+        },
+        "identifiability": {
+          "ok": true,
+          "n_train": 192,
+          "dof": 80,
+          "dof_per_sample": 0.4166666666666667,
+          "max_dof_per_sample": 1.0
+        }
+      }
+    }
+  },
+  "exp2_real_agnews_lm_perplexity": {
+    "task": "language_modeling",
+    "passed": true,
+    "verdict": "PASS",
+    "reasons": [],
+    "metrics": {
+      "fusion": {
+        "nll": 2.4474806785583496,
+        "ppl": 11.559188693502184
+      },
+      "zero_param": {
+        "uniform_nll": 2.772588722239781,
+        "uniform_ppl": 16.0
+      },
+      "singles": {
+        "bert_l4_causal_prefix_probe": {
+          "nll": 2.6524384021759033,
+          "ppl": 14.188593996806953
+        },
+        "qwen_05b_causal_prefix_probe": {
+          "nll": 2.5875039100646973,
+          "ppl": 13.29654078526586
+        },
+        "static_unrouted_equal_avg_lm": {
+          "nll": 2.5973458290100098,
+          "ppl": 13.428050353647157
+        },
+        "bert_l4_single_internal_lora_lm": {
+          "nll": 2.6317780017852783,
+          "ppl": 13.898459432294558
+        },
+        "qwen_05b_single_internal_lora_lm": {
+          "nll": 2.5600578784942627,
+          "ppl": 12.936566042838752
+        }
+      },
+      "best_single": {
+        "name": "qwen_05b_single_internal_lora_lm",
+        "nll": 2.5600578784942627,
+        "ppl": 12.936566042838752
+      },
+      "nll_reduction_vs_best_single": {
+        "mean_delta": 0.11257716229087428,
+        "median_delta": 0.13215768337249756,
+        "ci_low": 0.07608745600047864,
+        "ci_high": 0.14682690312987878,
+        "p_one_sided": 0.0,
+        "n_items": 38
+      },
+      "ppl_reduction_pct": 10.647163588663755,
+      "negative_control": {
+        "nll": 2.731853485107422,
+        "ppl": 15.361332651285915,
+        "nll_reduction_vs_neg": {
+          "mean_delta": 0.28437266224309016,
+          "median_delta": 0.272849440574646,
+          "ci_low": 0.20332568899581308,
+          "ci_high": 0.36691054733175976,
+          "p_one_sided": 0.0,
+          "n_items": 38
+        }
+      },
+      "split": {
+        "ok": true,
+        "n_train": 64,
+        "n_val": 26,
+        "n_test": 38,
+        "overlap_count": 0
+      },
+      "identifiability": {
+        "ok": true,
+        "n_train": 1024,
+        "dof": 256,
+        "dof_per_sample": 0.25,
+        "max_dof_per_sample": 1.0
+      }
+    }
+  },
+  "exp3_v5_1_engineering_and_brain_isomorphism": {
+    "internal_sublayer_lora_count": 5,
+    "internal_sublayer_min_grad_norm": 3.237338205508422e-06,
+    "train_capacity_max_tokens_observed": 12,
+    "train_capacity_bound": 20,
+    "tp_swiglu_vs_single_max_diff": 9.313225746154785e-10,
+    "phase1_to_phase2_adam_momentum_preserved": true,
+    "brain_interface_on_qwen_massive_activations": {
+      "consistency_after": 0.02526308037340641,
+      "token_norm_median": 1.0,
+      "target_norm": 1.0,
+      "amplitude_ratio": 1.0
+    },
+    "all_v5_1_checks_passed": true
+  },
+  "summary": {
+    "cls_fusion_acc": 0.719298243522644,
+    "cls_best_single_name": "static_unrouted_equal_average",
+    "cls_best_single_acc": 0.6140350699424744,
+    "cls_delta_acc_over_best_single": 0.10526315789473684,
+    "cls_ci_low": 0.008771929824561403,
+    "cls_ci_high": 0.19298245614035087,
+    "lm_fusion_nll": 2.4474806785583496,
+    "lm_best_single_name": "qwen_05b_single_internal_lora_lm",
+    "lm_best_single_nll": 2.5600578784942627,
+    "lm_fusion_ppl": 11.559188693502184,
+    "lm_best_single_ppl": 12.936566042838752,
+    "lm_ppl_reduction_pct": 10.647163588663755,
+    "lm_ci_low": 0.07608745600047864,
+    "lm_ci_high": 0.14682690312987878,
+    "v5_1_engineering_all_passed": true
+  },
+  "verdict": "TRUE_MODEL_DOWNSTREAM_GATE_PASS"
+}

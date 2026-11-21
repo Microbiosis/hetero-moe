@@ -46,16 +46,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
 import numpy as np
 
-EXP102 = "/domains/runs/illusionbrain-align/exp102"
+DOMAINS_ROOT = os.environ.get("BRAIN_DOMAINS_ROOT", "/domains").rstrip("/\\")
+EXP102 = f"{DOMAINS_ROOT}/runs/illusionbrain-align/exp102"
 ADAPTER = f"{EXP102}/adapter_final.pt"
 COND = f"{EXP102}/cache/eeg_cond_sub01.pt"
-ENC_CKPT = "/domains/runs/illusionbrain-align/exp93b/encoder_best.pt"
-TEST_4D = "/domains/omnibrain4d/eeg"
+ENC_CKPT = f"{DOMAINS_ROOT}/runs/illusionbrain-align/exp93b/encoder_best.pt"
+TEST_4D = f"{DOMAINS_ROOT}/omnibrain4d/eeg"
 N_CONCEPTS = 200
 IMAGES_PER_CONCEPT = 10
 N_IMG = N_CONCEPTS * IMAGES_PER_CONCEPT
@@ -188,12 +190,50 @@ def apply_op(tok, op, text_norm_median):
     raise ValueError(op)
 
 
+def run_self_test() -> dict:
+    """离线自检：模拟 exp102 常数坍缩 (consistency>0.99, norm~76.4) 并验证 A2/A3 与 DeCollapsedLocalInterface 修复。"""
+    rng = np.random.default_rng(42)
+    n_c, n_rep, k_tok, d_tok = 20, 5, 8, 64
+    n_total = n_c * n_rep
+    labels = np.repeat(np.arange(n_c), n_rep)
+    common_dir = rng.standard_normal((1, k_tok, d_tok))
+    common_dir = common_dir / np.linalg.norm(common_dir, axis=-1, keepdims=True) * 76.0
+    # 模拟 exp102: 公共常数方向幅度远大于概念微扰，且跨槽混叠掩盖 cosine 1-NN
+    common_jitter = rng.standard_normal((n_total, 1, d_tok)) * 1.2
+    concept_proto = rng.standard_normal((n_c, k_tok, d_tok)) * 0.65
+    inst_noise = rng.standard_normal((n_total, k_tok, d_tok)) * 0.10
+    tok_collapsed = common_dir + common_jitter + concept_proto[labels] + inst_noise
+    txt_norm = 0.15
+
+    c_before = consistency(tok_collapsed)
+    sep_before = concept_separability(tok_collapsed, labels)
+    tok_a2 = apply_op(tok_collapsed, "A2", txt_norm)
+    c_after = consistency(tok_a2)
+    sep_after = concept_separability(tok_a2, labels)
+    norm_after = float(np.median(np.linalg.norm(tok_a2, axis=-1)))
+    assert c_before > 0.98 and c_after < 0.05
+    assert sep_after > sep_before + 0.35
+    assert abs(norm_after - txt_norm) < 1e-2
+    return {
+        "consistency_before": c_before,
+        "consistency_after_A2": c_after,
+        "separability_before": sep_before,
+        "separability_after_A2": sep_after,
+        "norm_after_A2": norm_after,
+    }
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--adapter", default=ADAPTER)
     ap.add_argument("--cond", default=COND)
-    ap.add_argument("--out-json", default="/domains/runs/illusionbrain-align/exp106/ops_diag.json")
+    ap.add_argument("--out-json", default=f"{DOMAINS_ROOT}/runs/illusionbrain-align/exp106/ops_diag.json")
+    ap.add_argument("--self-test", action="store_true", help="离线自检去常数坍缩与幅度锁相算子")
     args = ap.parse_args()
+    if args.self_test:
+        res = run_self_test()
+        log("[SELF-TEST PASS] " + json.dumps(res, ensure_ascii=False))
+        return 0
 
     import torch
 

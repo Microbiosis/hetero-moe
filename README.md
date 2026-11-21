@@ -1,8 +1,8 @@
 # 异构 Mixture-of-Experts (Hetero-MoE)
 
 > 异构架构底座做专家的 MoE — Heterogeneous-Bases Mixture-of-Experts
-> 核心主包: **hetero_moe v5.0**（向下兼容 v4.0 Final，系统修复伪异构/伪稀疏/路由低秩瓶颈/β 墙/显存梯度/评测门禁等固有缺陷）
-> 研究演进: **v4.0 → v84 (9 条研究线, 78 个世代包: research 75 + archive 3)**
+> 核心主包: **hetero_moe v5.1**（向下兼容 v4.0/v5.0，包含真异构专家内部非线性子层 LoRA、向量化预筛真稀疏、训练容量截断 STE、双端 INT4 伪量化、可微 TensorParallelSwiGLU、Phase 1→2 动量保留、脑启发去坍缩局部接口 `DeCollapsedLocalInterface` 及防泄漏门禁 `DownstreamEvalGate`）
+> 研究演进: **v4.0 → v85 (9 条治理研究线 + 1 个脑启发独立实验域, 79 个世代包: research 76 + archive 3)**
 > GitHub: https://github.com/Microbiosis/hetero-moe
 
 **产物入口**
@@ -12,8 +12,9 @@
 | **可加载的模型** | [HeteroMoEProjSpace-v2](https://huggingface.co/redmingwei/HeteroMoEProjSpace-v2) · 645.19M |
 | **HF 全部产物** | [Hetero-MoE 研究档案 Collection](https://huggingface.co/collections/redmingwei/hetero-moe-6ae6b67d79b0423227575c99) · 7 个仓库（4 model + 3 dataset） |
 | **仓库逐个说明** | [`docs/HF_ARTIFACTS.md`](docs/HF_ARTIFACTS.md) |
-| **最新一代（v84.0）** | [`research/weight_fusion/v84_inherent_flaw_remediation/`](research/weight_fusion/v84_inherent_flaw_remediation/) — **全历史固有缺陷实证审计与 `hetero_moe v5.0` 系统修复（裁决 `REMEDIATION_PASS`）**：揭露并修复 `v62` 无约束 `fit_shared` 随机矩阵假象（`2-W CKA=0.9714`、`eff_rank=5.36/64`）、`v83` P5d 标签覆盖循环论证（人为压低 `85.5%` 串扰）与 `O(256)` 欠定性；在主包 `v5.0` 实现真异构专家、真稀疏分派、`grad_checkpoint` 真省显存、低秩向量门控（路由 Jacobian 秩 `1 → 17` 破 `v55` 定理 3）与可选 LoRA 破纯冻结 $\beta$ 墙；首次在严格三集防泄漏下游门禁 `DownstreamEvalGate`（含全部单专家无融合消融基线）上实现分类（`0.9111` vs `v4_2exp 0.5889` (`+32.22pp`) / `best_single 0.4778` (`+43.33pp`)）与序列 LM PPL（`4.259` vs `best_single 8.054`, `-47.1%`）双 `PASS` |
-| **上一代（v83.0）** | [`research/weight_fusion/v83_s4_aligned_pipe/`](research/weight_fusion/v83_s4_aligned_pipe/) — S4-AP 管道（5/6 机制通过，仅 P2′ `p=0.1256` 未过，裁决 `S4AP_FAIL`；见 [`docs/V83_0_S4_ALIGNED_PIPE.md`](docs/V83_0_S4_ALIGNED_PIPE.md)） |
+| **最新一代（v85.0）** | [`research/weight_fusion/v85_true_model_downstream_gate/`](research/weight_fusion/v85_true_model_downstream_gate/) — **真预训练异构底座（`Qwen2.5-0.5B-Instruct` 24L + `BERT-L4`）与真实 `AG_News` 语料下游防泄漏门禁合龙（`hetero_moe v5.1`，裁决 `TRUE_MODEL_DOWNSTREAM_GATE_PASS`）**：彻底解决 `v84` 用合成高斯锚点替代真模型的断层；在文档级零重叠三集划分（`SplitGuard` 64/26/38 篇，384 视角）上实测 Qwen L3/L4 存在 72.4× 于 BERT 的 Massive Activations（`L3 max=844`, `L4 max=1696`, 常数方向一致性 `0.9971`），通过训练集去常数锁相、任务锚定安全秩对齐与零人工域 ID 的内生跨层/跨窗口余弦自洽度路由，在真实 `AG_News` 分类（`v5.1 0.7193` vs `best_baseline 0.6140` (`+10.53pp`, `p=0.0195`) / `best_single_backbone 0.5965` (`+12.28pp`) / `naive_massive 0.5175`）与真实 `AG_News` 序列 LM PPL（`v5.1 11.559` vs `best_single 12.937`, `-10.65%`, `p=0.0`）双门禁全通；同步验证 `v5.1` 五项工程升级与主线-幻脑线去坍缩算子 `DeCollapsedLocalInterface` 数学同构（将 Qwen 巨幅常数一致性从 `0.9971` 压至 `0.0253 < 0.05`，幅值比锁定 `1.0000`） |
+| **上一代（v84.0）** | [`research/weight_fusion/v84_inherent_flaw_remediation/`](research/weight_fusion/v84_inherent_flaw_remediation/) — **全历史固有缺陷实证审计与 `hetero_moe v5.0` 系统修复（裁决 `REMEDIATION_PASS`）**：揭露并修复 `v62` 无约束 `fit_shared` 随机矩阵假象（`2-W CKA=0.9714`、`eff_rank=5.36/64`）、`v83` P5d 标签覆盖循环论证（人为压低 `85.5%` 串扰）与 `O(256)` 欠定性；在主包 `v5.0` 实现真异构专家、真稀疏分派、`grad_checkpoint` 真省显存、低秩向量门控（路由 Jacobian 秩 `1 → 17` 破 `v55` 定理 3）与可选 LoRA 破纯冻结 $\beta$ 墙；在受控多锚点下游门禁 `DownstreamEvalGate` 上实现分类（`0.9111` vs `v4_2exp 0.5889` / `best_single 0.4778`）与序列 LM PPL（`4.259` vs `best_single 8.054`, `-47.1%`）双 `PASS` |
+| **前序管道代（v83.0）** | [`research/weight_fusion/v83_s4_aligned_pipe/`](research/weight_fusion/v83_s4_aligned_pipe/) — S4-AP 管道（5/6 机制通过，仅 P2′ `p=0.1256` 未过，裁决 `S4AP_FAIL`；见 [`docs/V83_0_S4_ALIGNED_PIPE.md`](docs/V83_0_S4_ALIGNED_PIPE.md)） |
 | **主线第一代** | [`research/weight_fusion/v75_weight_conjugation/`](research/weight_fusion/v75_weight_conjugation/) — 槽级共轭的权重级有效性检验，**负结果**（G2 未成立，见 §4.7） |
 | **v63–v74 登记批次** | [`research/aligner/`](research/aligner/) · 12 代补齐为世代包（SPEC + MANIFEST + 指标快照 + 权威测试） |
 | **主线路线（正本）** | [`docs/MAINLINE_ROUTE.md`](docs/MAINLINE_ROUTE.md) — 晶壁系几何 → 工程语言映射、逐条主张状态表、第一代实验设计 |
@@ -26,10 +27,10 @@
 - **干什么**: 把多个异构底座（不同宽度、不同架构、可冻结或 LoRA 轻解冻）通过稀疏高带宽路由融合，并在严格防泄漏的下游分类/LM PPL 门禁上验证净增量
 - **核心结论（已剔除早期被证伪项）**:
   - 早期纯冻结随机投影增益（`v6/v7/v33`）与单师蒸馏 `+47.5%/+50%`（`v16/v21`）已分别被 `v50/v51/v54` 与 `v32/v42` 审计撤回；`v62` 无约束 `fit_shared` 也被 `v84` 证伪为随机矩阵可复现的秩塌缩伪像
-  - `hetero_moe v5.0` + `v84` 通过**真异构专家 + 真稀疏分派 + 低秩向量门控（破 `v55` 定理 3）+ 可选 LoRA（破纯冻结 $\beta$ 墙）+ 统一三集防泄漏门禁 `DownstreamEvalGate`**，在真实下游分类与 LM PPL 基准上显著击败最强单底座与纯冻结基线
-- **测试状态**: 核心主包 `tests/test_{fusion,router,losses,quant,train_infer,7_2_isolation,7_3_convergence,v5_core_remediation}.py` + `v84` 权威测试全绿；由 `./run.sh` 动态扫描 `tests/test_*.py`
-- **结构与自包含校验**: `python tools/validate_generations.py` → **78 包 / 错误 0**（含非治理子域/内嵌 `.venv`/膨胀包透明审计）；`python tools/check_self_containment.py --strict` → **75/75**（含静态 + 动态加载全扫描，历史 SHA256 锁定包的动态依赖公开登记在案，新增未登记动态跨线直接判红）
-- **泄漏审计**: **75/75 全部结清**（`research/` 下 75 个世代包全有 `leakage_audit.status`，无 pending；`archive/` 下 3 个老包不计入）。见 [`docs/LEAKAGE_AUDIT_CHAIN.md`](docs/LEAKAGE_AUDIT_CHAIN.md)
+  - `hetero_moe v5.1` + `v84/v85` 通过**真异构专家内部非线性子层 LoRA + 向量化预筛真稀疏 + 低秩向量门控（破 `v55` 定理 3）+ 训练去常数锁相/脑启发 `DeCollapsedLocalInterface` + 内生跨层自洽度路由 + 统一三集防泄漏门禁 `DownstreamEvalGate`**，在 100% 真实预训练模型（`Qwen2.5-0.5B-Instruct` 24L + `BERT-L4`）与真实 `AG_News` 语料分类（`+10.53pp`）及序列 LM PPL（`-10.65%`）基准上显著击败最强单底座与无路由静态均值基线
+- **测试状态**: 核心主包 `tests/test_{fusion,router,losses,quant,train_infer,7_2_isolation,7_3_convergence,v5_core_remediation,brain_domains_core}.py` + `v84/v85` 权威测试全绿；由 `./run.sh` 动态扫描 `tests/test_*.py`
+- **结构与自包含校验**: `python tools/validate_generations.py` → **79 包 / 错误 0**（含非治理子域/内嵌 `.venv`/膨胀包透明审计）；`python tools/check_self_containment.py --strict` → **76/76**（含静态 + 动态加载全扫描，历史 SHA256 锁定包的动态依赖公开登记在案，新增未登记动态跨线直接判红）
+- **泄漏审计**: **76/76 全部结清**（`research/` 下 76 个世代包全有 `leakage_audit.status`，无 pending；`archive/` 下 3 个老包不计入）。见 [`docs/LEAKAGE_AUDIT_CHAIN.md`](docs/LEAKAGE_AUDIT_CHAIN.md)
 - **注**(2026-10-11 更新):`research/scale_heterogeneous/`、`results/`、`archive/`、`docs/_archive/` 原为公开排除(理由是依赖专有辅助模型)。经核实所依赖的四个模型 (EverMind-AI/MSA-4B、skillcorpus-embedding-0.6b、skillcorpus-reranker-0.6b、occams/Xiaomi-TabLDM) **全部公开可下**,排除理由已不成立,四个目录均已恢复入库。
 - **论文**(2026-10-12 更新):`microfusion` + `paper` 已合并重构为单一长稿 `docs/research_paper/reconstruct.tex` / `reconstruct_zh.tex`(23 / 24 页),旧稿三份 `.tex` 标记 DEPRECATED。v47 审计使摘要里一条无支撑的「规模异构增益存活」主张暴露出来,已补 §6.3 实验。入口见 [`docs/research_paper/PAPER_README.md`](docs/research_paper/PAPER_README.md)。
 - **注**(2026-10-11 更新):v47 样本外审计在补 held-out 时挖出**五个此前无人发现的缺陷**—— v12 / v19 / v35 的 runner **从未真正跑起来** (函数体用了未导入的裸名)、v19 声称的「容量对照臂」与基线逐位同构、attn 专家的输出投影不受种子控制 (跨进程不可复现)。均已修复并记录在案,详见 [`docs/V47_0_HELDOUT_AUDIT.md`](docs/V47_0_HELDOUT_AUDIT.md)。
@@ -38,13 +39,13 @@
 ## 项目结构
 
 ```
-hetero_moe/                          # v5.0 主包（兼容 v4.0）— 真异构/真稀疏/高带宽/防泄漏门禁
-├── core/                               # 融合核心 (experts/fusion/router/quant/losses/parallel)
-├── train/                              # 两阶段训练器 (Phase 1 零 z_loss 污染)
+hetero_moe/                          # v5.1 主包（兼容 v4.0/v5.0）— 内部子层 LoRA/真稀疏/高带宽/双端量化/脑接口/防泄漏门禁
+├── core/                               # 融合核心 (experts/fusion/router/quant/losses/parallel/interface)
+├── train/                              # 两阶段训练器 (Phase 1 零 z_loss 污染 + Phase 1->2 Adam 动量无损保留)
 ├── infer/                              # 容量感知推理器 (单次路由乘 + 校准多层 skip_rate)
 └── eval/                               # 统一防泄漏下游评测门禁 (SplitGuard/IdentifiabilityGuard/DownstreamEvalGate)
 
-research/                               # 9 条研究线 — 每条解决一个独立研究问题
+research/                               # 9 条治理研究线 + 1 个脑启发独立实验域
 ├── routing_evolution/                  # 线 1: 路由机制演化 (v7/v8/v9)
 ├── central_diagnostics/                # 线 2: C-1 失败根因诊断 (v19/v20)
 ├── central_stability/                  # 线 3: 中枢稳定性修复 (v22/v30/v31)
@@ -53,7 +54,8 @@ research/                               # 9 条研究线 — 每条解决一个�
 ├── multimodal/                         # 线 6: 多模态扩展 (v21/v23/v24/v42)
 ├── corpus_scale/                       # 线 7: 真实语料下中枢稳定性 (v25-v29)
 ├── scale_heterogeneous/                # 线 8: 规模异构 + 容器范式 (v33-v39, v56)
-└── weight_fusion/                      # 线 9: 权重级合并 → 管道审计 → v5.0 系统修复 (v75→v84)
+├── weight_fusion/                      # 线 9: 权重级合并 → 管道审计 → v5.0/v5.1 真模型门禁合龙 (v75→v85)
+└── brain_domains/                      # 脑启发实验域: 局部模块去常数坍缩与宿主范数锁相接口 (DeCollapsedLocalInterface)
 
 archive/                                # 负面发现 + 前基线
 ├── pre_baseline/v5_alpha/              # 序列级路由前基线 (与 v6 范式不同)
@@ -61,7 +63,7 @@ archive/                                # 负面发现 + 前基线
     ├── v12_compose/                    # v9+v10 组合无叠加
     └── v23b_hard_vqa/                  # 8 类陷阱 toy 全部 = 随机
 
-tests/                                  # 91 个测试套件 (含 78 个世代包转发层 + v5.0/历史子包专项回归)
+tests/                                  # 93 个测试套件 (含 79 个世代包转发层 + v5.1/幻脑线/历史子包专项回归)
 examples/                               # 40+ 端到端脚本
 docs/                                   # 研究规范文档
 └── research_paper/                   # 论文:reconstruct.tex(合并稿)/ 中英 PDF + 评审记录
@@ -100,17 +102,18 @@ from hetero_moe.train.trainer import HeteroTrainer
 | 6 | multimodal | v21→v23→v24→**v42** | v21 表观 +50% 已由 **v42 证伪为目标泄漏**；v23b 8 类陷阱 toy = 随机 |
 | 7 | corpus_scale | v25→v26→v27→v28→v29→**v45** | 语料规模边界样本外未成立 (v45)；v27/v28 patch/架构变体全负 |
 | 8 | scale_heterogeneous | v33→v39→**v56** | v33 表观 +26.7% 已由 v50/v54 证实为冻结随机投影伪像；v56 证实 2560d 容器有效秩仅 1.32% |
-| 9 | weight_fusion | v75→**v84** | v75 证伪 G2 权重共轭；v76–v83 推进 A1 激活管道至 5/6 (`S4AP_FAIL`)；**v84 全面审计并修复 v4–v83 固有缺陷**（`hetero_moe v5.0` 破路由带宽墙与纯冻结 β 墙，真实下游分类与 LM PPL 防泄漏门禁双 `PASS` ⇒ `REMEDIATION_PASS`） |
+| 9 | weight_fusion | v75→**v85** | v75 证伪 G2 权重共轭；v76–v83 推进 A1 激活管道至 5/6 (`S4AP_FAIL`)；**v84 系统审计并修复 v4–v83 固有缺陷**（`REMEDIATION_PASS`）；**v85 完成真预训练底座 (`Qwen2.5-0.5B` 24L + `BERT-L4`) 与真实 `AG_News` 语料在 `hetero_moe v5.1` 及 `DownstreamEvalGate` 上的分类 (+10.53pp) 与序列 LM PPL (-10.65%) 双门禁合龙**（`TRUE_MODEL_DOWNSTREAM_GATE_PASS`） |
 
 → 详见 [research/README.md](./research/README.md)
 
-## 当前有效工程入口（v5.0 / v84.0）
+## 当前有效工程入口（v5.1 / v85.0）
 
 ```
-hetero_moe v5.0  真异构专家 + 真稀疏分派 + 低秩向量门控 + 可选 LoRA + grad_checkpoint
-DownstreamEvalGate  强制 train/val/test 三集零重叠 + 全单专家无融合消融基线/零参数/阴性对照 + 序列级 Bootstrap CI
-v84 分类门禁     test_acc 0.9111 vs v4_2exp 0.5889 (+32.22pp) / best_single 0.4778 (+43.33pp) (PASS)
-v84 LM PPL 门禁  test_ppl 4.259  vs best_single 8.054 (-47.1%, PASS)
+hetero_moe v5.1  内部非线性子层 LoRA + 向量化预筛真稀疏 + 低秩向量门控 + 训练容量 STE + 双端 INT4 量化 + TensorParallelSwiGLU + DeCollapsedLocalInterface
+DownstreamEvalGate  强制文档/样本级 train/val/test 零重叠 + 全单底座/内部 LoRA/静态平均/零参数/阴性对照 + 序列级 Bootstrap CI
+v85 真模型分类门禁 (Qwen2.5-0.5B + BERT-L4 on AG_News)  test_acc 0.7193 vs best_baseline 0.6140 (+10.53pp) / best_single_backbone 0.5965 (+12.28pp) (PASS)
+v85 真模型 LM 门禁 (Qwen2.5-0.5B + BERT-L4 on AG_News)  test_ppl 11.559 vs best_single 12.937 (-10.65%, PASS)
+v84 受控多锚点分类/LM 门禁                              test_acc 0.9111 vs best_single 0.4778 (+43.33pp); test_ppl 4.259 vs 8.054 (-47.1%, PASS)
 （历史 v6/v13/v16/v21 合成 MSE 读数已由 v32/v42/v50/v54 审计归档，不再作为能力指标）
 ```
 
@@ -118,9 +121,10 @@ v84 LM PPL 门禁  test_ppl 4.259  vs best_single 8.054 (-47.1%, PASS)
 
 ```bash
 python tools/eval_gate.py --self-check                 # 运行防泄漏下游门禁自检
-python tools/validate_generations.py                   # 78 世代包 L2 校验 + 治理范围审计
-python tools/check_self_containment.py --strict        # 75 研究包静态+动态自包含校验
-python -m pytest tests/test_v5_core_remediation.py -v  # v5.0 固有缺陷修复回归套件 (14 项)
+python tools/validate_generations.py                   # 79 世代包 L2 校验 + 治理范围审计
+python tools/check_self_containment.py --strict        # 76 研究包静态+动态自包含校验
+python -m pytest tests/test_v5_core_remediation.py tests/test_brain_domains_core.py -v  # v5.1 与幻脑线核心回归套件 (18 项)
+python tests/test_v85_true_model_downstream_gate.py    # v85 真预训练模型下游门禁权威测试 (10 项)
 python tests/test_v84_inherent_flaw_remediation.py     # v84 权威测试 (10 项)
 bash run.sh test                                       # 全仓测试套件
 ```
@@ -133,7 +137,7 @@ bash run.sh test                                       # 全仓测试套件
 | 沙箱维度 | D ≤ 128 |
 | §8.1 真实验收 | 需 A100-80G + 0.5B 模型 (本沙箱不替代) |
 | 运行底座 | Linux / Windows (Python 3.11+, PyTorch 2.x, CPU-only 可复现) |
-| 测试 | 78/78 世代包 + 37/37 专项 pytest 回归 ALL GREEN ✓ |
+| 测试 | 79/79 世代包 + 41/41 专项 pytest 回归 ALL GREEN ✓ |
 
 ## V&V 矩阵
 

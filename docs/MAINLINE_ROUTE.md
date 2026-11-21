@@ -3,7 +3,7 @@
 > **状态**: 路线正本（设计方向），**非实验事实来源**。所有实测数字以对应世代包的 `SPEC.md` / `results/metrics.json` / `MANIFEST.json` 为准。
 > **起草**: 2026-11-12（用户口述路线 → 工程语言翻译）　**更新**: 2026-11-12（v75 实测回填：§1.2② 限定、§1.4 G 表、§3 表、§4.7、§5 计数、§6 第 1 项）；2026-11-13（补 §1.3.1「轨道的新定义」、§1.1 三行降级、§1.4 加 A1 关卡、§4.8 A1 设计；v76 S1 实测回填：§1.4 A1 状态、§4.8 重写、§5 计数、§6 第 4 项落定）；2026-11-13（v77 路线 β 回填：新增 §4.9、§1.4 A1 状态、§5 计数、§6 第 4 项）；2026-11-16（v78 前置诊断回填：新增 §4.10、§5 计数、§6 第 4 项；S3 四个范围拍板并落成 `docs/S3_PROTOCOL.md`）；2026-11-17（v79 S2-0 回填：新增 §4.11、§5 计数、§6 第 4 项；**S3 注入算子口径已拍板**：保留共享空间载体、不学映射）；2026-11-17（v80 S2 回填：新增 §4.12、§5 计数、§6 第 4 项）；2026-11-17（v80 **三步链**回填：§4.12 重写、§1.4 A1 状态、§5 计数、§6 第 4 项；**λ 口径已定死 λ\* = 0.03**）；2026-11-17（v81 **S3 语义判据**回填：新增 §4.13、§1.4 A1 状态改为 🔴、§5 计数、§6 第 4 项 —— **裁决 `S3_FAIL`**：P1a 穿透通过（信息流存在且内容特异），P1b/P2/P3② 未过 ⇒ **没有槽对应、没有深度对应** ⇒ A1 激活级核心前提被证伪）；2026-11-18（v82 **S4-P 管道**回填：新增 §4.14、§1.4 A1 状态、§5 计数、§6 第 4 项 —— **裁决 `S4PIPE_FAIL`**：P5b 通道寻址 / P5c 贯通 / P3① 守门 通过，但 P5a 管道连通 / P5d 选择性 / P2′ 深度语义 未过）；2026-11-18（v83 **S4-AP 正交对齐管道**回填：新增 §4.15 —— **5/6 主判据通过**，裁决 `S4AP_FAIL`，仅 P2′ `p=0.1256` 因 Qwen L0 GQA 谱瓶颈未达 0.01）；2026-11-19~21（v84 **全历史固有缺陷审计与 `hetero_moe v5.0` 系统修复**回填：新增 §4.16、更新 §1.4/§5/§6 —— 揭露 v62 随机矩阵假象与 v83 P5d 循环论证/欠定性，主包升级 `v5.0` 并在含全部单专家无融合消融基线的下游分类与 LM PPL 门禁上双 `PASS` ⇒ **裁决 `REMEDIATION_PASS`**）
 > **定位**: 主线的**唯一正本**。后续文档只写指针，不复述本文事实。
-> **关系**: 本文是「主线」的路线层正本；[`docs/ROADMAP.md`](ROADMAP.md) 是**脑机制验证维度**的路线（互补，不是替代）；实验事实层是 `research/<line>/v<N>_<name>/` 与 `archive/` 的 78 个世代包。
+> **关系**: 本文是「主线」的路线层正本；[`docs/ROADMAP.md`](ROADMAP.md) 是**脑机制验证维度**的路线（互补，不是替代）；实验事实层是 `research/<line>/v<N>_<name>/` 与 `archive/` 的 79 个世代包。
 
 ---
 
@@ -473,18 +473,28 @@ arXiv **2606.27288**《When Does Combining Language Models Help?》（67 个模�
 - **真实下游防泄漏门禁双 `PASS`（含全部单专家无融合消融闭环）**：建立统一门禁 `DownstreamEvalGate`（严格三集零重叠 + 零参数基线 + 全单底座与单专家无融合消融基线 + 阴性对照 + 序列级 Bootstrap 95% CI），在 64 锚点预训练先验下游分类（`v5 0.9111` vs `v4_2exp 0.5889` / `single_trainable 0.4778` / `single_frozen 0.2611`）与 8 形态变体序列 LM PPL（`v5 4.259` vs `best_single 8.054` / `single_trainable 15.347`, `-47.1%`）均 `PASS`。
 - **治理与文档对齐**：`check_self_containment.py` 补齐动态加载全扫描（75/75，历史动态加载 21 处公开登记），`validate_generations.py` 补齐非治理子域/内嵌 `.venv`/膨胀包审计（78 包 0 错），同步修复 `v62/train_v2.py`、`v65/extract_snli_ve_v65.py`、`reconstruct.tex`、`README.md` 与 `research/README.md`。
 
+### 4.17 v85.0：真预训练异构底座 (`Qwen2.5-0.5B` + `BERT-L4`) 与真实 `AG_News` 语料下游防泄漏门禁合龙（`hetero_moe v5.1`，裁决 `TRUE_MODEL_DOWNSTREAM_GATE_PASS`）
+
+在 `v84` 完成方法论审计与 `hetero_moe v5.0` 修复后，针对 `v84` 仍使用人造 64 锚点高斯合成表征替代真预训练模型、以及主线 `v77–v83` 真模型长期停留在层边界残差探针而未通过 `DownstreamEvalGate` 的断层，在 [`research/weight_fusion/v85_true_model_downstream_gate/`](../research/weight_fusion/v85_true_model_downstream_gate/) 完成真模型、真语料、`hetero_moe v5.1` 与幻脑线去坍缩算子的全面合龙：
+
+- **`hetero_moe v5.1` 核心包五项工程升级**：① `ExpertSpec(internal_lora=True)` 将低秩适应器直接深入 `HeteroExpert` 内部非线性子层（`_SwiGLUBase` 的 `w_gate/w_up/w_down`、`_GELUMLPBase` 的 `fc1/fc2` 及自定义模块内部全部 `nn.Linear`）；② `HeteroFusionLayer` 向量化活跃 token 计数预筛；③ 训练期容量截断直通算子 `CapacityRouterSTE` (`train_capacity_factor`)；④ `quant_target` (`"activation" | "weight" | "both" | "none"`) 权重+激活双端 INT4 `FakeQuantSTE`；⑤ 可微 `TensorParallelSwiGLU` 列/行并行算子与 `HeteroTrainer.begin_phase(2)` 无损保留 Phase 1 Adam 一阶/二阶动量状态。
+- **主线与幻脑线（`research/brain_domains/`）数学同构算子 `DeCollapsedLocalInterface`**：针对主线 `Qwen2.5-0.5B` L3–L20 的 Massive Activations（`L3 max=844.0`, `L4 max=1696.0` vs `BERT L3 max=11.66`，相差 `72.4×`，跨样本常数方向一致性 `0.9971`）与幻脑线 `exp102–106` 的跨样本常数方向坍缩（`consistency = 0.9905`）及宿主范数失配（`76.4 vs 0.1`），实现分脑区局部瓶颈模块 + 正交公模剥离 + 二阶重中心化 + 宿主目标范数 RMS 锁相，将常数一致性压至 `< 0.03` 并锁定幅值比 `1.0000`。
+- **双真实下游任务通过 `DownstreamEvalGate`（零合成锚点、零人工域 ID、零位置索引）**：
+  - **Exp 1（真实 `AG_News` 新闻分类，文档级零重叠 64/26/38 篇、384 视角，`dof/sample = 0.417 ≤ 1.0`）**：直接融合未去常数的 `naive_unnormalized_massive_qwen_bert` 仅 `0.5175` (`CE = 2.0751`)；经训练集去常数锁相、任务锚定安全秩对齐与内生跨层/跨窗口余弦自洽度路由后，`hetero_moe v5.1` 达 **`0.7193`** (`CE = 0.6978`)，显著击败 `bert_l4_frozen_probe` (`0.5439`)、`bert_l4_single_internal_lora_nofusion` (`0.5439`)、`qwen_05b_frozen_probe` (`0.5877`)、`qwen_05b_single_internal_lora_nofusion` (`0.5965`, `+12.28pp`) 与最强基线 `static_unrouted_equal_average` (`0.6140`, **`+10.53pp`**, 95% CI `[+0.0088, +0.1930]`, `p = 0.0195`; CE 95% CI `[+0.0768, +0.3001]`, `p = 0.0`) ⇒ **`PASS`**。
+  - **Exp 2（真实 `AG_News` 因果前缀序列语言建模，文档级 64/26/38×16 token，`dof/sample = 0.250 ≤ 1.0`）**：`hetero_moe v5.1` 达 **`NLL = 2.4475` (`PPL = 11.559`)**，显著优于 `bert_l4_causal_prefix_probe` (`PPL = 14.189`)、`bert_l4_single_internal_lora_lm` (`13.898`)、`static_unrouted_equal_avg_lm` (`13.428`)、`qwen_05b_causal_prefix_probe` (`13.297`) 与最强单底座 `qwen_05b_single_internal_lora_lm` (`PPL = 12.937`, **`-10.65%`**, 序列级 95% CI `[+0.0761, +0.1468]`, `p = 0.0`) ⇒ **`PASS`**。
+
 ---
 
-## 5. 登记地基：已补齐（2026-11-12；v84 治理补盲 2026-11-19）
+## 5. 登记地基：已补齐（2026-11-12；v84/v85 治理与真模型合龙 2026-11-22）
 
-v63–v74 这 12 代原本以裸文件堆在 v62 的目录里，没有一个成为世代包——校验器只覆盖**已登记**的包，对它们完全失明。**现已补齐并升级至 78 包**：
+v63–v74 这 12 代原本以裸文件堆在 v62 的目录里，没有一个成为世代包——校验器只覆盖**已登记**的包，对它们完全失明。**现已补齐并升级至 79 包**：
 
 | 事实 | 数字 |
 |---|---|
-| 已登记世代包 | **78**（`tools/validate_generations.py --require-leakage-audit` → 错误 0，含治理范围审计） |
+| 已登记世代包 | **79**（`tools/validate_generations.py --require-leakage-audit` → 错误 0，含治理范围审计） |
 | v63–v74 每代交付物 | `SPEC.md` + `MANIFEST.json` + `results/metrics.json` + `tests/test_package.py`；另配仓库级薄转发层 `tests/test_v<N>_*.py` 与 `docs/V<N>_0_*.md` |
-| 权威测试断言数 | **84**（v63–v74）+ **11**（v76）+ **12**（v77）+ **13**（v78）+ **13**（v79）+ **18**（v80）+ **21**（v81）+ **15**（v82）+ **10**（v83）+ **10**（v84）= 207（均本地 CPU 通过） |
-| 静态+动态自包含 | `tools/check_self_containment.py --strict` → 75/75 ✓（公开登记 21 处历史动态加载） |
+| 权威测试断言数 | **84**（v63–v74）+ **11**（v76）+ **12**（v77）+ **13**（v78）+ **13**（v79）+ **18**（v80）+ **21**（v81）+ **15**（v82）+ **10**（v83）+ **10**（v84）+ **10**（v85）= 217（均本地 CPU 通过） |
+| 静态+动态自包含 | `tools/check_self_containment.py --strict` → 76/76 ✓（公开登记 21 处历史动态加载） |
 
 补登记过程中查出并已处置的三处真实断层：
 

@@ -1,10 +1,13 @@
-"""§4 / v5.0 — 训练协议：冷启动与渐进解锁。
+"""§4 / v5.1 — 训练协议：冷启动、渐进解锁与跨阶段 Adam 动量状态无损保留。
 
-v5.0 修复:
+v5.0 / v5.1 修复:
     1. Phase 1 z_loss 梯度污染修复: Phase 1 冻结 W_router 时同时强制 _cur_lam_z = 0.0，
        防止深层 (l >= 2) 的 z_l = y_{l-1} W_router^T 把前层适配器拉向冻结随机矩阵的零空间。
-    2. 支持 v5.0 异构专家投影 (in_proj/out_proj)、低秩向量门控 (gate_u/gate_v) 与可选
-       LoRA/解冻参数分组。
+    2. 支持 v5.0/v5.1 异构专家投影 (in_proj/out_proj)、低秩向量门控 (gate_u/gate_v) 与内部子层 LoRA 分组。
+    3. 跨阶段 Adam 动量保留 (v5.1):
+       `begin_phase(2)` 从 Phase 1 切换到 Phase 2 时不再销毁重建 `AdamW`（避免清空 Phase 1 积累的
+       `exp_avg` / `exp_avg_sq` 一阶二阶动量导致冷启动震荡），而是通过 `optimizer.add_param_group`
+       增量注入新解冻的 `W_router` 参数组。
 """
 from __future__ import annotations
 
@@ -21,7 +24,7 @@ from ..core.losses import balance_loss, lm_loss, z_loss
 # ---- §4.2 / §4.3 学习率隔离常量 ----
 LR_ROUTER = 1e-4     # §4.3: W_router
 LR_ADAPTER = 1e-2    # §4.2/§4.3: γ_m, β_m, 异构投影适配器
-LR_ALPHA = 1e-3      # §4.2/§4.3: α_m, 低秩向量门控, LoRA/解冻参数
+LR_ALPHA = 1e-3      # §4.2/§4.3: α_m, 低秩向量门控, 内部子层 LoRA/解冻参数
 
 
 def _dedup_trainable(params: Sequence[nn.Parameter]) -> List[nn.Parameter]:
@@ -35,7 +38,7 @@ def _dedup_trainable(params: Sequence[nn.Parameter]) -> List[nn.Parameter]:
 
 
 def build_param_groups(layers: Sequence[HeteroFusionLayer], phase: int) -> List[Dict]:
-    """构造优化器参数组 (§4.2 / §4.3 / v5.0)。
+    """构造优化器参数组 (§4.2 / §4.3 / v5.1)。
 
     phase=1: 不含 W_router (§4.2 冻结)；适配器用 1e-2，门控/LoRA 用 1e-3。
     phase=2: 含 W_router 1e-4，适配器用 1e-2，门控/LoRA 用 1e-3。
@@ -46,16 +49,16 @@ def build_param_groups(layers: Sequence[HeteroFusionLayer], phase: int) -> List[
     if phase == 2:
         routers = _dedup_trainable([l.W_router for l in layers])
         if routers:
-            groups.append({"params": routers, "lr": LR_ROUTER})
+            groups.append({"params": routers, "lr": LR_ROUTER, "group_role": "router"})
     if adapters:
-        groups.append({"params": adapters, "lr": LR_ADAPTER})
+        groups.append({"params": adapters, "lr": LR_ADAPTER, "group_role": "adapter"})
     if gates_lora:
-        groups.append({"params": gates_lora, "lr": LR_ALPHA})
+        groups.append({"params": gates_lora, "lr": LR_ALPHA, "group_role": "gate_lora"})
     return groups
 
 
 class HeteroTrainer:
-    """两阶段训练器 (§4 / v5.0)。"""
+    """两阶段训练器 (§4 / v5.1)。"""
 
     def __init__(
         self,
@@ -66,9 +69,6 @@ class HeteroTrainer:
         top_k: Optional[int] = None,
         objective: str = "lm",
     ):
-        """Args:
-            objective: 'lm' (§3.1 交叉熵, 需 lm_head) 或 'mse' (隐藏态回归)。
-        """
         self.layers = list(layers)
         self.lm_head = lm_head
         self.lam_balance = float(lam_balance)
@@ -80,23 +80,39 @@ class HeteroTrainer:
         self._cur_lam1 = 0.0
         self._cur_lam_z = 0.0
 
-    def begin_phase(self, phase: int) -> None:
-        """切换阶段: 设置 requires_grad + 辅助损失门控 + 重建优化器 (§4.2/§4.3)。"""
+    def begin_phase(self, phase: int, preserve_optimizer_state: bool = True) -> None:
+        """切换阶段: 设置 requires_grad + 辅助损失门控 + 增量更新或重建优化器 (§4.2/§4.3/v5.1)。"""
         assert phase in (1, 2), "phase 必须为 1 或 2"
         self.phase = phase
         if phase == 1:
-            # §4.2: 冻结 W_router，同时关闭 balance_loss 与 z_loss（防止梯度污染前层适配器）
             for l in self.layers:
                 l.W_router.requires_grad_(False)
             self._cur_lam1 = 0.0
             self._cur_lam_z = 0.0
         else:
-            # §4.3: 解冻 W_router 并恢复辅助损失
             for l in self.layers:
                 l.W_router.requires_grad_(True)
             self._cur_lam1 = self.lam_balance
             self._cur_lam_z = self.lam_z
-        self.optimizer = torch.optim.AdamW(build_param_groups(self.layers, phase))
+
+        if self.optimizer is None or not preserve_optimizer_state:
+            self.optimizer = torch.optim.AdamW(build_param_groups(self.layers, phase))
+            return
+
+        # v5.1: 保留已有 Adam 动量状态 (exp_avg / exp_avg_sq)，增量同步 W_router 参数组
+        existing_ids = {id(p) for g in self.optimizer.param_groups for p in g["params"]}
+        if phase == 2:
+            routers = _dedup_trainable([l.W_router for l in self.layers])
+            new_routers = [p for p in routers if id(p) not in existing_ids]
+            if new_routers:
+                self.optimizer.add_param_group({"params": new_routers, "lr": LR_ROUTER, "group_role": "router"})
+            for g in self.optimizer.param_groups:
+                if g.get("group_role") == "router":
+                    g["lr"] = LR_ROUTER
+        else:
+            for g in self.optimizer.param_groups:
+                if g.get("group_role") == "router":
+                    g["lr"] = 0.0
 
     def forward(self, x: torch.Tensor):
         """层间传递 (第一层输出作为第二层输入)。"""

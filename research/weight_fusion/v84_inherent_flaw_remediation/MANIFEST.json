@@ -7,7 +7,9 @@
   "generation": {
     "one_mechanism_added": "系统性修复 v4–v83 五层固有缺陷并补齐单专家消融闭环: ① hetero_moe v5.0 引入真异构专家 (ExpertSpec/HeteroExpert)、可选 LoRA 破 β 墙、低秩向量门控 (gate_rank>0) 破 v55 路由带宽定理、真稀疏分派、grad_checkpoint 真显存优化、K=1 重归一化 STE 梯度直通、Phase 1 零 z_loss 污染与 InferenceRunner 口径修正；② 新增统一防泄漏下游评测门禁 DownstreamEvalGate（强制三集零重叠+全单专家无融合消融基线/零参数/阴性对照+序列级 Bootstrap CI）；③ 实证揭露并修复 v62 无约束 fit_shared 随机矩阵假象（float64 pinv 跨 BLAS 稳定复现）、v62 伪槽/伪稀疏/选模泄漏、v65 caption 泄漏及 v83 P5d 循环论证与欠定拟合；④ 补齐 check_self_containment 动态加载检测、validate_generations 非治理范围审计与 .gitattributes 跨平台 CRLF 哈希一致性。",
     "parent": "83.0",
-    "children": []
+    "children": [
+      "85.0"
+    ]
   },
   "lineage": {
     "line_parent": "75.0",

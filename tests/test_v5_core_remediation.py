@@ -348,3 +348,85 @@ def test_governance_checkers_detect_dynamic_loads_and_unmanaged_dirs():
         venv_cfg.write_text("home = /usr/bin\n", encoding="utf-8")
         mock_scope = vg.audit_unmanaged_scope(Path(td_venv), [])
         assert any(".venv" in s for s in mock_scope["embedded_venvs"])
+
+
+def test_v5_1_internal_lora_weight_quant_train_capacity_tp_and_momentum_preservation():
+    """修复 15 (v5.1 五项核心工程闭环):
+    (a) 内部子层 LoRA (internal_lora=True) 深入 SwiGLU/GELU/custom 非线性子层且 base 参数严格保持冻结；
+    (b) 专家权重级 INT4 伪量化 (quant_target='weight'|'both') 生效且可微；
+    (c) 训练期容量感知路由 (train_capacity_factor) 强制执行容量上界并回传 STE 梯度；
+    (d) 张量并行 TensorParallelSwiGLU (列并行+行并行+All-Reduce) 与未切分 swiglu_forward 数值等价；
+    (e) HeteroTrainer 从 Phase 1 切换 Phase 2 时无损保留已有 Adam 一阶/二阶动量状态 (exp_avg / exp_avg_sq)。
+    """
+    from hetero_moe import TensorParallelSwiGLU, swiglu_forward
+
+    torch.manual_seed(2026)
+    D, D_FF = 16, 32
+
+    # (a) 内部子层 LoRA
+    class CustomMLP(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.l1 = nn.Linear(D, 24)
+            self.l2 = nn.Linear(24, D)
+
+        def forward(self, inp: torch.Tensor) -> torch.Tensor:
+            return self.l2(torch.relu(self.l1(inp)))
+
+    specs = [
+        ExpertSpec("sw", "swiglu", d_in=D, d_ff=D_FF, d_out=D, freeze_base=True, lora_rank=4, internal_lora=True),
+        ExpertSpec("ge", "gelu_mlp", d_in=D, d_ff=D_FF, d_out=D, freeze_base=True, lora_rank=4, internal_lora=True),
+        ExpertSpec("cu", "custom", d_in=D, d_out=D, freeze_base=True, lora_rank=4, module=CustomMLP(), internal_lora=True),
+    ]
+    lyr = HeteroFusionLayer(D, D_FF, 3, top_k=2, expert_specs=specs, quant_target="both", train_capacity_factor=1.25)
+    for exp in lyr.experts:
+        assert exp.sublayer_loras is not None and len(exp.sublayer_loras) >= 2
+        assert all(not p.requires_grad for p in exp.base.parameters())
+        # 使子层 LoRA B 非零以验证第一层子层 LoRA A 同样获得非零梯度
+        for adp in exp.sublayer_loras.values():
+            nn.init.normal_(adp.B, std=0.05)
+
+    x = torch.randn(4, 8, D, requires_grad=True)
+    y, _, ah = lyr(x)
+    # (c) 验证 train_capacity_factor=1.25 生效: 每个专家接纳 token 数 <= int(1.25 * 32 / 3) = 13
+    for cnt in lyr.last_expert_token_counts:
+        assert cnt <= int(1.25 * 32 / 3)
+    y.pow(2).mean().backward()
+    for exp in lyr.experts:
+        for adp in exp.sublayer_loras.values():
+            assert adp.A.grad is not None and adp.A.grad.norm() > 0
+            assert adp.B.grad is not None and adp.B.grad.norm() > 0
+
+    # (b) 验证权重级 INT4 伪量化与无量化输出存在预期的权重离散化差异
+    lyr_noq = HeteroFusionLayer(D, D_FF, 3, top_k=2, quant_bits=4, quant_target="none")
+    lyr_wq = HeteroFusionLayer(D, D_FF, 3, top_k=2, quant_bits=4, quant_target="weight")
+    lyr_wq.load_state_dict(lyr_noq.state_dict())
+    y_noq, _, _ = lyr_noq(x.detach())
+    y_wq, _, _ = lyr_wq(x.detach())
+    assert not torch.allclose(y_noq, y_wq, atol=1e-6)
+
+    # (d) 张量并行 Column-Parallel + Row-Parallel + All-Reduce 严格等价于单卡 swiglu_forward
+    wg = torch.randn(D_FF, D)
+    wu = torch.randn(D_FF, D)
+    wd = torch.randn(D, D_FF)
+    tp_mod = TensorParallelSwiGLU(wg, wu, wd, num_shards=4)
+    out_ref = swiglu_forward(x.detach(), wg, wu, wd)
+    out_tp = tp_mod(x.detach())
+    assert torch.allclose(out_ref, out_tp, atol=1e-5)
+
+    # (e) HeteroTrainer Phase 1 -> Phase 2 保留 Adam exp_avg / exp_avg_sq 状态
+    t_layers = nn.ModuleList([HeteroFusionLayer(D, D_FF, 3, top_k=1, lora_rank=2)])
+    head = nn.Linear(D, 8, bias=False)
+    trainer = HeteroTrainer(t_layers, lm_head=head)
+    trainer.begin_phase(1)
+    trainer.step(torch.randn(2, 6, D), torch.randint(0, 8, (2, 6)))
+    g0 = t_layers[0].gammas[0]
+    assert g0 in trainer.optimizer.state and "exp_avg" in trainer.optimizer.state[g0]
+    saved_exp_avg = trainer.optimizer.state[g0]["exp_avg"].clone()
+    trainer.begin_phase(2)
+    assert g0 in trainer.optimizer.state
+    assert torch.allclose(trainer.optimizer.state[g0]["exp_avg"], saved_exp_avg)
+    # 且 W_router 已被增量加入 param_groups 并可在 Phase 2 正常更新
+    trainer.step(torch.randn(2, 6, D), torch.randint(0, 8, (2, 6)))
+    assert t_layers[0].W_router in trainer.optimizer.state
+

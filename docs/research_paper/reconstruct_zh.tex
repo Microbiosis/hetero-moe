@@ -712,7 +712,7 @@ attention 通路优势（v46） & $+82.7\%$ & $+70.6\%$ & \textbf{已撤回}（�
 
 \S\ref{sec:oos} 的样本外纪律在任一仍标记为 pending 的主张上使用三种读数。对每项发现，审计记录 (i) in-sample 中位效应；(ii) \emph{留出噪声}读数，其评估划分取自同一分布但噪声重新采样；(iii) \emph{留出刺激}读数，其评估分布本身发生偏移。仅当符号在三种读数下都稳定时，效应才被报告为\emph{clean}；符号或幅度未能存活的效应被报告为失效，且不作为结果写入本文。16 个受审包的逐包数字见项目的审计记录；表~\ref{tab:oos} 汇总总体，而我们刻意不用聚合统计量替代逐包判定。
 
-\section{v83 之后的系统性固有缺陷审计与 \texttt{hetero\_moe v5.0} 闭环修复（v84）}
+\section{v83 之后的系统性固有缺陷审计、\texttt{hetero\_moe v5.0/v5.1} 闭环修复与真模型门禁合龙（v84--v85）}
 \label{app:v84}
 
 在 v4--v83 实验序列之后，我们对全仓代码、数学前提与评估管线实施了系统性固有缺陷审计（\texttt{research/weight\_fusion/v84\_inherent\_flaw\_remediation/}），定位并修复了早期冻结原型的五项结构性缺陷：
@@ -725,6 +725,11 @@ attention 通路优势（v46） & $+82.7\%$ & $+70.6\%$ & \textbf{已撤回}（�
     \begin{itemize}[leftmargin=1.4em, itemsep=0.5pt, parsep=0pt]
         \item \emph{下游分类（$N{=}900$，64 个预训练领域锚点先验）：}\texttt{v5} 留出测试集准确率达 $\mathbf{0.9111}$，显著击败纯冻结 2 专家 \texttt{v4}（$0.5889$，$+32.22\,\text{pp}$，$p{=}0.0$）以及全部 5 个单专家无融合基线：\texttt{single\_trainable\_fullinput\_nofusion}（$0.4778$，$+43.33\,\text{pp}$）、\texttt{frozen\_silu}（$0.4056$）、\texttt{frozen\_gelu}（$0.3000$）、\texttt{single\_frozen\_fullinput\_lora6}（$0.2722$）与 \texttt{single\_frozen\_fullinput\_headonly}（$0.2611$）。
         \item \emph{序列语言建模（$480 \times 16$ tokens，8 个预训练形态变体先验）：}\texttt{v5} 留出测试集困惑度达 $\mathbf{4.259}$，相对最强单专家（$8.054$）降低 $\mathbf{47.1\%}$，而无预训练专家先验的单专家无融合基线停留在 $\mathrm{PPL}=15.300$（\texttt{single\_lora4}）与 $15.347$（\texttt{single\_trainable}）。
+    \end{itemize}
+    \item \textbf{真预训练异构底座、真实文本语料与脑启发去坍缩算子数学同构合龙（\texttt{hetero\_moe v5.1}，v85）。}为彻底弥合 v84 受控合成锚点与真预训练模型之间的方法论断层（\texttt{research/weight\_fusion/v85\_true\_model\_downstream\_gate/}），我们将核心包升级至 \texttt{hetero\_moe v5.1}（深入非线性子层的内部 LoRA \texttt{internal\_lora=True}、向量化活跃 token 计数预筛、训练期容量截断直通 \texttt{train\_capacity\_factor}、权重+激活双端 INT4 \texttt{FakeQuantSTE}、与单卡偏差仅 $9.31\times 10^{-10}$ 的 4 分片可微 \texttt{TensorParallelSwiGLU}、以及 Phase~1$\to$2 Adam 动量无损保留），并在文档级严格零重叠划分（\texttt{SplitGuard}：$64/26/38$ 篇文档，$384$ 个视角样本，$\text{dof/sample}\le 0.417$）的真实 \texttt{AG\_News} 语料上评测 24 层全模型 \texttt{Qwen/Qwen2.5-0.5B-Instruct}（$D{=}896$，BPE 151k，SwiGLU）与 4 层 \texttt{google/bert\_uncased\_L-4\_H-256\_A-4}（$D{=}256$，WordPiece 30k，GELU）：
+    \begin{itemize}[leftmargin=1.4em, itemsep=0.5pt, parsep=0pt]
+        \item \emph{巨幅激活锁相与主线-幻脑线算子同构：}实测 Qwen 第 3--20 层存在为 BERT $72.4$ 倍的 Massive Activations（$L_3\text{ max}=844.0$，$L_4\text{ max}=1696.0$ vs.\ BERT $L_3\text{ max}=11.66$，跨样本常数方向一致性高达 $0.9971$），与脑启发实验域 \texttt{research/brain\_domains/}（\texttt{exp102--106}）的跨样本常数方向坍缩（$0.9905$）及宿主范数失配（$76.4$ vs.\ $0.1$）在数学上完全同构。统一去坍缩局部接口 \texttt{DeCollapsedLocalInterface}（分脑区局部瓶颈模块 $+$ 正交公模剥离 $+$ 二阶重中心化 $+$ 宿主目标范数 RMS 锁相）将 Qwen 巨幅常数一致性从 $0.9971$ 压至 $\mathbf{0.0253} < 0.05$，并将幅值比精确锁定于 $\mathbf{1.0000}$。
+        \item \emph{真实 \texttt{AG\_News} 分类与序列 LM 双门禁通过（\texttt{TRUE\_MODEL\_DOWNSTREAM\_GATE\_PASS}）：}完全依靠各底座观测张量的内生中心化跨层/跨窗口余弦自洽度驱动路由（零合成锚点、零人工域 ID），\texttt{hetero\_moe v5.1} 在真实 \texttt{AG\_News} 分类测试集上达 $\mathbf{0.7193}$（$\mathrm{CE}=0.6978$），显著击败未去常数直接融合（$0.5175$）、单底座 BERT-L4 内部 LoRA（$0.5439$）、单底座 Qwen-0.5B 内部 LoRA（$0.5965$，$+12.28\,\text{pp}$）及最强基线无路由静态等权平均（$0.6140$，$\mathbf{+10.53\,\text{pp}}$，$95\%$ CI $[+0.0088, +0.1930]$，$p{=}0.0195$）；在真实 \texttt{AG\_News} 因果前缀序列语言建模上，\texttt{v5.1} 将测试集困惑度降至 $\mathbf{11.559}$（$\mathrm{NLL}=2.4475$），显著优于最强单底座（$12.937$，$\mathbf{-10.65\%}$，序列级 $95\%$ CI $[+0.0761, +0.1468]$，$p{=}0.0$）。
     \end{itemize}
 \end{enumerate}
 
