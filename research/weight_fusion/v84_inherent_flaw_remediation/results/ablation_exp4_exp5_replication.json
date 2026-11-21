@@ -1,0 +1,57 @@
+{
+  "exp4_classification": [
+    {
+      "arm": "v5_upstream_2exp_gate8_lora6",
+      "test_acc": 1.0,
+      "best_val_acc": 1.0,
+      "trainable_params": 3818
+    },
+    {
+      "arm": "v4_frozen_2exp_gate0_lora0_detach",
+      "test_acc": 0.8666666746139526,
+      "best_val_acc": 0.8722222447395325,
+      "trainable_params": 1946
+    },
+    {
+      "arm": "single_trainable_fullinput_nofusion",
+      "test_acc": 0.9888888597488403,
+      "best_val_acc": 1.0,
+      "trainable_params": 7917
+    },
+    {
+      "arm": "single_frozen_fullinput_headonly",
+      "test_acc": 1.0,
+      "best_val_acc": 1.0,
+      "trainable_params": 1261
+    },
+    {
+      "arm": "single_frozen_fullinput_lora6",
+      "test_acc": 1.0,
+      "best_val_acc": 1.0,
+      "trainable_params": 1669
+    }
+  ],
+  "exp5_language_model": [
+    {
+      "arm": "v5_upstream_2lmexp_gate6_lora4",
+      "test_nll": 0.8377615809440613,
+      "test_ppl": 2.3111877755735972,
+      "best_val_nll": 0.750329315662384,
+      "trainable_params": 3378
+    },
+    {
+      "arm": "single_trainable_fullinput_nofusion",
+      "test_nll": 0.7876035571098328,
+      "test_ppl": 2.198122434490068,
+      "best_val_nll": 0.7375220656394958,
+      "trainable_params": 6241
+    },
+    {
+      "arm": "single_frozen_fullinput_lora4",
+      "test_nll": 0.8608787059783936,
+      "test_ppl": 2.365238129729316,
+      "best_val_nll": 0.8367865085601807,
+      "trainable_params": 353
+    }
+  ]
+}
